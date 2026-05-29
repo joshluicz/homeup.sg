@@ -26,15 +26,17 @@ This skill governs all frontend work on `homeup.sg`. Before writing any componen
 ### Typefaces
 
 ```
-Display / Headings:  "Playfair Display"   (Google Fonts — serif, editorial weight contrast)
-Body / UI:           "Plus Jakarta Sans"  (Google Fonts — humanist, modern, not Inter)
+Display / Headings:  "Plus Jakarta Sans"  (Google Fonts — humanist sans-serif, weights 700–800 for headings)
+Body / UI:           "Plus Jakarta Sans"  (same family, weights 300–600 for body/UI text)
 Mono (data/prices):  "JetBrains Mono"     (for fee amounts, CEA numbers, data tables)
 ```
+
+Single-typeface system: hierarchy comes entirely from weight and size contrast, not a serif/sans mix. Gives a clean, minimal, Apple-like feel — premium without being old-fashioned.
 
 **Import:**
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 
 ### Scale (Perfect Fourth ratio — 1.333 — from 16px base)
@@ -42,7 +44,7 @@ Mono (data/prices):  "JetBrains Mono"     (for fee amounts, CEA numbers, data ta
 ```css
 :root {
   /* Font families */
-  --font-display:  'Playfair Display', Georgia, serif;
+  --font-display:  'Plus Jakarta Sans', system-ui, sans-serif;
   --font-body:     'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono:     'JetBrains Mono', 'Courier New', monospace;
 
@@ -83,8 +85,8 @@ Mono (data/prices):  "JetBrains Mono"     (for fee amounts, CEA numbers, data ta
 
 | Role | Font | Size token | Weight | Notes |
 |---|---|---|---|---|
-| Hero heading | Playfair Display | `--text-4xl` / `--text-5xl` | 700 | `tracking-tight`, `leading-tight` |
-| Section heading | Playfair Display | `--text-3xl` | 600 | |
+| Hero heading | Plus Jakarta Sans | `--text-4xl` / `--text-5xl` | 800 | `tracking-tight`, `leading-tight` |
+| Section heading | Plus Jakarta Sans | `--text-3xl` | 700 | |
 | Card heading | Plus Jakarta Sans | `--text-lg` | 600 | |
 | Body paragraph | Plus Jakarta Sans | `--text-base` | 400 | `leading-relaxed` |
 | Lead/intro paragraph | Plus Jakarta Sans | `--text-md` | 400 | `leading-relaxed` |

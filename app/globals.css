@@ -14,7 +14,7 @@
 }
 
 :root {
-  --font-display: var(--font-playfair), Georgia, serif;
+  --font-display: var(--font-jakarta), system-ui, sans-serif;
   --font-body: var(--font-jakarta), system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), "Courier New", monospace;
 
@@ -179,6 +179,8 @@ select {
 h1,
 h2 {
   font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
 @layer components {
@@ -202,7 +204,7 @@ h2 {
     color: var(--text-primary);
     font-family: var(--font-display);
     font-size: clamp(var(--text-2xl), 4vw, var(--text-3xl));
-    font-weight: var(--weight-bold);
+    font-weight: 700;
     letter-spacing: var(--tracking-tight);
     line-height: var(--leading-tight);
   }

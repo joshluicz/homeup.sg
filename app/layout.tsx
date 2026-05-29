@@ -1,18 +1,11 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
+import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
 import "./globals.css";
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-jakarta",
   display: "swap",
 });
@@ -36,10 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${playfair.variable} ${jakarta.variable} ${jetbrains.variable}`}
-    >
+    <html lang="en" className={`${jakarta.variable} ${jetbrains.variable}`}>
       <body>
         {children}
         <WhatsAppFloat />
