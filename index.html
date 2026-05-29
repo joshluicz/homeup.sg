@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeUP Preview</title>
+    <style>
+      :root {
+        --bg: #faf9f7;
+        --card: #ffffff;
+        --text: #1e1812;
+        --muted: #6b5f52;
+        --border: #e8e3db;
+        --brand: #0e853e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 24px;
+      }
+      .card {
+        width: min(680px, 100%);
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 28px;
+      }
+      p {
+        margin: 0 0 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+      code {
+        background: #f3f0eb;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 2px 6px;
+      }
+      a {
+        color: var(--brand);
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>HomeUP runs on Next.js</h1>
+      <p>
+        This project does not use a static root page. If you opened it with
+        Live Server, use the Next.js dev server instead.
+      </p>
+      <p>From the project root, run: <code>npm run dev</code></p>
+      <p>Then open: <a href="http://localhost:3000">http://localhost:3000</a></p>
+    </main>
+  </body>
+</html>
