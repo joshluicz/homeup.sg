@@ -32,11 +32,9 @@ const portraitImage = {
   alt: "Professional HomeUP property advisor",
 };
 
-const stats = [
-  { value: "1,000+", label: "Transactions" },
-  { value: "100+",   label: "Families helped" },
-  { value: "$3M+",   label: "Commissions saved" },
-  { value: "3 mo",   label: "Avg. timeline" },
+const agentStats = [
+  { value: "800+",  label: "HDB Resale",      agent: "Edmund Lee" },
+  { value: "220+",  label: "Condo & Landed",  agent: "Dennis Lim" },
 ];
 
 /* ─────────────────────────────────────────
@@ -125,18 +123,28 @@ function MobileHero() {
           </p>
         </motion.div>
 
-        {/* Stats — 2×2 grid */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.46 }}
-          className="mt-6 grid grid-cols-2 gap-4 border-t border-neutral-100 pt-5"
+          className="mt-6 border-t border-neutral-100 pt-5"
         >
-          {stats.map((s) => (
-            <div key={s.label}>
-              <p className="font-display text-2xl font-extrabold text-neutral-900">{s.value}</p>
-              <p className="mt-0.5 text-xs text-neutral-500">{s.label}</p>
+          <div className="flex items-center gap-5">
+            <div className="shrink-0">
+              <p className="font-display text-2xl font-extrabold text-neutral-900">1,000+</p>
+              <p className="mt-0.5 text-xs text-neutral-500">Transactions</p>
             </div>
-          ))}
+            <div className="h-8 w-px shrink-0 bg-neutral-200" />
+            <div className="flex flex-col gap-1.5">
+              {agentStats.map((s) => (
+                <span key={s.agent} className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1">
+                  <span className="font-display text-sm font-bold text-neutral-900">{s.value}</span>
+                  <span className="text-xs text-neutral-500">{s.label}</span>
+                  <span className="text-xs font-medium text-primary-600">· {s.agent}</span>
+                </span>
+              ))}
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>
@@ -193,15 +201,25 @@ function DesktopHero() {
             </p>
           </motion.div>
 
-          {/* Stats — 4-col, short labels */}
+          {/* Stats */}
           <motion.div custom={0.42} initial="hidden" animate="show" variants={fade}
-            className="mt-6 grid grid-cols-4 gap-3 border-t border-neutral-100 pt-5">
-            {stats.map((s) => (
-              <div key={s.label}>
-                <p className="font-display text-xl font-extrabold text-neutral-900">{s.value}</p>
-                <p className="mt-0.5 text-[11px] leading-snug text-neutral-500">{s.label}</p>
+            className="mt-6 border-t border-neutral-100 pt-5">
+            <div className="flex items-center gap-6">
+              <div className="shrink-0">
+                <p className="font-display text-xl font-extrabold text-neutral-900">1,000+</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-neutral-500">Transactions</p>
               </div>
-            ))}
+              <div className="h-8 w-px shrink-0 bg-neutral-200" />
+              <div className="flex flex-wrap gap-2">
+                {agentStats.map((s) => (
+                  <span key={s.agent} className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1">
+                    <span className="font-display text-sm font-bold text-neutral-900">{s.value}</span>
+                    <span className="text-[11px] text-neutral-500">{s.label}</span>
+                    <span className="text-[11px] font-medium text-primary-600">· {s.agent}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -238,7 +256,7 @@ function DesktopHero() {
               ✓
             </span>
             <span className="text-xs font-semibold text-neutral-800">
-              1,000+ transactions · $3M+ saved
+              1,000+ transactions
             </span>
           </div>
         </motion.div>

@@ -3,28 +3,35 @@ DirectoryIndex index.html
 
 RewriteEngine On
 
-# Serve existing files and directories directly
+# ── Redirect the bare root to /index.html ──────────────────────────────
+# Bypasses any stale proxy-cache entry keyed on exactly "/", while
+# /index.html is always served fresh from disk.
+RewriteCond %{THE_REQUEST} ^[A-Z]+\ /\ HTTP
+RewriteRule ^$ /index.html [R=302,L]
+
+# ── Clean-URL rewrite (for any future subpages) ─────────────────────────
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-
-# Try appending .html for clean URLs
 RewriteRule ^([^.]+)$ $1.html [L]
 
 # Custom 404
 ErrorDocument 404 /404.html
 
 <IfModule mod_headers.c>
-  # Hashed build assets are immutable — cache aggressively
+  # ── Hashed Next.js assets: immutable, cache forever ─────────────────
   <FilesMatch "\.(js|css|woff2?|png|jpe?g|gif|svg|webp|avif|ico)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
 
-  # HTML must never be cached by the browser or the proxy, so it always
-  # revalidates and never points at deleted (hashed) chunk files
+  # ── HTML: tell every caching layer not to store this ────────────────
   <FilesMatch "\.html$">
     Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
     Header set Pragma "no-cache"
-    # Hint to host-level / proxy caches not to store this response
+    # Nginx proxy cache
     Header set X-Accel-Expires "0"
+    # Varnish / Fastly / generic surrogate caches
+    Header set Surrogate-Control "no-store"
+    # Cloudflare / LiteSpeed / generic CDN caches
+    Header set CDN-Cache-Control "no-store"
   </FilesMatch>
 </IfModule>

@@ -120,7 +120,7 @@ export function SavingsSlider() {
             <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
               HomeUP fee
             </p>
-            <p className="mt-2 font-mono text-2xl font-bold text-neutral-900">
+            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-neutral-900">
               S$<NumberFlow value={homeupFee} format={{ style: "decimal" }} />
             </p>
             <p className="mt-1 text-xs text-neutral-400">fixed · {propertyType}</p>
@@ -131,7 +131,7 @@ export function SavingsSlider() {
             <p className="text-xs font-medium uppercase tracking-wider text-red-400">
               Typical 2%
             </p>
-            <p className="mt-2 font-mono text-2xl font-bold text-red-400 line-through decoration-red-300">
+            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-red-400 line-through decoration-red-300">
               S$<NumberFlow value={typicalFee} format={{ style: "decimal" }} />
             </p>
             <p className="mt-1 text-xs text-red-300">commission</p>
@@ -142,7 +142,7 @@ export function SavingsSlider() {
             <p className="text-xs font-medium uppercase tracking-wider text-primary-600">
               You save
             </p>
-            <p className="mt-2 font-mono text-2xl font-bold text-primary-600">
+            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-primary-600">
               S$<NumberFlow value={Math.max(0, savings)} format={{ style: "decimal" }} />
             </p>
             <p className="mt-1 text-xs text-primary-400">with HomeUP</p>
