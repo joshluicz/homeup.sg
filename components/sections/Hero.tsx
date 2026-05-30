@@ -73,7 +73,7 @@ function MobileHero() {
       </motion.div>
 
       {/* Content block */}
-      <div className="px-5 pb-10 pt-6">
+      <div className="mx-auto w-full max-w-[1200px] px-8 pb-10 pt-6 sm:px-12">
         <motion.p
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -153,7 +153,7 @@ function DesktopHero() {
       aria-label="Fixed-fee property agents hero"
       className="relative hidden overflow-x-hidden bg-white lg:flex lg:h-[calc(100svh-4rem)] lg:items-center"
     >
-      <div className="container-page flex w-full items-center gap-16">
+      <div className="mx-auto flex w-full max-w-[1200px] items-center gap-16 px-12 xl:px-20">
         {/* ── Left column ── */}
         <div className="flex-1" style={{ maxWidth: "520px" }}>
           <motion.p custom={0} initial="hidden" animate="show" variants={fade}
