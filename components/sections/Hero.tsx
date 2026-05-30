@@ -151,11 +151,11 @@ function DesktopHero() {
   return (
     <section
       aria-label="Fixed-fee property agents hero"
-      className="relative hidden overflow-x-hidden bg-white lg:flex lg:h-[calc(100svh-4rem)] lg:items-center"
+      className="relative hidden overflow-x-hidden bg-white lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-center"
     >
       <div className="mx-auto flex w-full max-w-[1200px] items-center gap-16 px-12 xl:px-20">
         {/* ── Left column ── */}
-        <div className="flex-1" style={{ maxWidth: "520px" }}>
+        <div className="flex-1 py-8" style={{ maxWidth: "520px" }}>
           <motion.p custom={0} initial="hidden" animate="show" variants={fade}
             className="text-sm font-semibold uppercase tracking-widest text-primary-600">
             Fixed-Fee Property Agents · Singapore
