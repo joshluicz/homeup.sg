@@ -34,4 +34,3 @@ jobs:
           password: ${{ secrets.SFTP_PASS }}
           local-dir: ./out/
           server-dir: /
-          dangerous-clean-slate: true

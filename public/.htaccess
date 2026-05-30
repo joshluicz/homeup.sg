@@ -12,3 +12,19 @@ RewriteRule ^([^.]+)$ $1.html [L]
 
 # Custom 404
 ErrorDocument 404 /404.html
+
+<IfModule mod_headers.c>
+  # Hashed build assets are immutable — cache aggressively
+  <FilesMatch "\.(js|css|woff2?|png|jpe?g|gif|svg|webp|avif|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # HTML must never be cached by the browser or the proxy, so it always
+  # revalidates and never points at deleted (hashed) chunk files
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    # Hint to host-level / proxy caches not to store this response
+    Header set X-Accel-Expires "0"
+  </FilesMatch>
+</IfModule>
