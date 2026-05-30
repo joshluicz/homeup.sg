@@ -1,0 +1,14 @@
+Options -MultiViews
+DirectoryIndex index.html
+
+RewriteEngine On
+
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Try appending .html for clean URLs
+RewriteRule ^([^.]+)$ $1.html [L]
+
+# Custom 404
+ErrorDocument 404 /404.html
