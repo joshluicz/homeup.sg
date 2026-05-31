@@ -21,6 +21,7 @@ const plans = [
     price: "$1,999",
     description: "Full guidance through grants, financing and the resale process for your next flat.",
     popular: false,
+    buttonText: "Connect with HDB Specialist",
     includes: ["Affordability & grant planning", "Financing guidance", "Resale procedure support", "Negotiation & OTP"],
   },
   {
@@ -28,6 +29,7 @@ const plans = [
     price: "Complimentary",
     description: "Market insights, project comparisons and negotiation support — at no cost to you.",
     popular: false,
+    buttonText: "Connect with Condo Specialist",
     includes: ["Market & project comparisons", "Unbiased shortlisting", "Viewing coordination", "Negotiation support"],
   },
   {
@@ -35,6 +37,7 @@ const plans = [
     price: "Complimentary",
     description: "End-to-end representation for landed purchases, fully covered.",
     popular: false,
+    buttonText: "Connect with Landed Specialist",
     includes: ["Tenure & zoning checks", "Valuation guidance", "Negotiation support", "Documentation"],
   },
 ];
@@ -135,7 +138,7 @@ export function BuyPricing() {
                         : "border border-neutral-200 text-neutral-800 hover:border-primary-400 hover:text-primary-600",
                     ].join(" ")}
                   >
-                    Book a Free Call
+                    {plan.buttonText}
                   </a>
                 </div>
               </motion.div>

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { BuyTeamAwards } from "@/components/ui/BuyTeamAwards";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 const WA = "https://wa.me/6580877015";
@@ -30,10 +31,12 @@ const HERO_IMAGE =
 export function BuyHero() {
   return (
     <section aria-label="Buying with HomeUP" className="bg-white">
-      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
+      <div className="mx-auto w-full max-w-[1200px] px-8 py-12 sm:px-12 lg:py-16 xl:px-20">
+        <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm">
+          <div className="flex flex-col items-center gap-10 lg:flex-row lg:items-start lg:gap-12 lg:p-2 xl:p-4">
 
         {/* Left — same rhythm as homepage Hero */}
-        <div className="w-full shrink-0 lg:w-[44%] lg:pt-4">
+        <div className="w-full shrink-0 lg:w-[44%] lg:px-8 lg:pt-4 lg:pb-8">
           <motion.p
             custom={0} initial="hidden" animate="show" variants={fade}
             className="text-sm font-semibold uppercase tracking-widest text-primary-600"
@@ -100,7 +103,7 @@ export function BuyHero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.25, ease }}
-          className="w-full lg:flex-1"
+          className="w-full px-8 pb-8 lg:flex-1 lg:px-8 lg:pb-8 lg:pt-4"
         >
           <div className="relative overflow-hidden rounded-2xl" style={{ aspectRatio: "4/3" }}>
             <Image
@@ -132,6 +135,10 @@ export function BuyHero() {
           </div>
         </motion.div>
 
+          </div>
+
+          <BuyTeamAwards compact className="rounded-b-3xl" />
+        </div>
       </div>
     </section>
   );

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { BuyTeamAwards } from "@/components/ui/BuyTeamAwards";
 import { FadeInUp } from "@/components/ui/motion-primitives";
 
 const HERO_IMAGE =
@@ -45,6 +46,8 @@ export function BuyCta() {
                 />
               </div>
             </div>
+
+            <BuyTeamAwards compact className="rounded-b-3xl" />
           </div>
         </FadeInUp>
       </div>

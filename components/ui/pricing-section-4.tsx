@@ -17,7 +17,7 @@ const plans = [
       "Full-service support for HDB homeowners ready to sell and plan their next move with complete transparency.",
     price: 1999,
     typicalPrice: 10000,
-    buttonText: "Book a Free Call",
+    buttonText: "Connect with HDB Specialist",
     buttonVariant: "outline" as const,
     includes: [
       "Financial calculation",
@@ -34,7 +34,7 @@ const plans = [
       "Best value for condo owners who want full transparency and maximum savings on agent commission.",
     price: 4999,
     typicalPrice: 24000,
-    buttonText: "Book a Free Call",
+    buttonText: "Connect with Condo Specialist",
     buttonVariant: "default" as const,
     popular: false,
     includes: [
@@ -52,7 +52,7 @@ const plans = [
       "Comprehensive support for landed property owners — the highest commission savings of any package.",
     price: 9999,
     typicalPrice: 60000,
-    buttonText: "Book a Free Call",
+    buttonText: "Connect with Landed Specialist",
     buttonVariant: "outline" as const,
     includes: [
       "Financial calculation",

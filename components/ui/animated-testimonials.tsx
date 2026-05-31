@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Quote, Star } from "lucide-react";
 import { motion, useAnimation, useInView } from "framer-motion";
@@ -13,7 +12,7 @@ export interface Testimonial {
   company: string;
   content: string;
   rating: number;
-  avatar: string;
+  avatar?: string;
 }
 
 export interface AnimatedTestimonialsProps {
@@ -152,17 +151,11 @@ export function AnimatedTestimonials({
                   <Separator className="my-4" />
 
                   {/* Author */}
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12 border border-neutral-200">
-                      <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                      <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold text-neutral-900">{testimonial.name}</p>
-                      <p className="text-sm text-neutral-500">
-                        {testimonial.role} · {testimonial.company}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="font-semibold text-neutral-900">{testimonial.name}</p>
+                    <p className="text-sm text-neutral-500">
+                      {testimonial.role} · {testimonial.company}
+                    </p>
                   </div>
                 </div>
               </motion.div>
