@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { animate, motion, useInView } from "framer-motion";
 import Image from "next/image";
-import NumberFlow from "@number-flow/react";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 const WA = "https://wa.me/6580877015";
 const ease = [0.22, 1, 0.36, 1] as const;
+const COUNT_DURATION = 2.5;
 
 const fade = {
   hidden: { opacity: 0, y: 20 },
@@ -18,42 +18,69 @@ const fade = {
   }),
 };
 
-const STATS = [
-  { target: 1000, label: "Transactions" },
-  { target: 860,  label: "HDB" },
-  { target: 260,  label: "Condo & Landed" },
-];
-
-function AnimatedStat({ target, label }: { target: number; label: string }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.5 });
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    if (inView) setValue(target);
-  }, [inView, target]);
-
-  return (
-    <div ref={ref} className="flex flex-col items-center">
-      <p className="font-display text-sm font-extrabold text-neutral-900 tabular-nums">
-        <NumberFlow value={value} /><span>+</span>
-      </p>
-      <p className="mt-0.5 text-sm font-normal text-neutral-500">{label}</p>
-    </div>
-  );
-}
+const breakdown = [
+  { key: "hdb", target: 860, label: "HDB" },
+  { key: "condo", target: 260, label: "Condo & Landed" },
+] as const;
 
 function StatsRow() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const [total, setTotal] = useState(0);
+  const [hdb, setHdb] = useState(0);
+  const [condo, setCondo] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+
+    // Linear count-up — all three finish together at COUNT_DURATION
+    const controls = [
+      animate(0, 1000, {
+        duration: COUNT_DURATION,
+        ease: "linear",
+        onUpdate: (v) => setTotal(Math.round(v)),
+      }),
+      animate(0, 860, {
+        duration: COUNT_DURATION,
+        ease: "linear",
+        onUpdate: (v) => setHdb(Math.round(v)),
+      }),
+      animate(0, 260, {
+        duration: COUNT_DURATION,
+        ease: "linear",
+        onUpdate: (v) => setCondo(Math.round(v)),
+      }),
+    ];
+
+    return () => controls.forEach((c) => c.stop());
+  }, [inView]);
+
+  const breakdownValues = { hdb, condo };
+
   return (
-    <div className="flex items-center justify-center gap-6 sm:gap-10">
-      {STATS.map((s, i) => (
-        <div key={s.label} className="flex items-center gap-6 sm:gap-10">
-          <AnimatedStat target={s.target} label={s.label} />
-          {i < STATS.length - 1 && (
-            <div className="h-8 w-px shrink-0 bg-neutral-200" aria-hidden="true" />
-          )}
-        </div>
-      ))}
+    <div ref={ref} className="flex items-center justify-center gap-5">
+      <div className="shrink-0 text-center">
+        <p className="font-display text-sm font-extrabold text-neutral-900 tabular-nums">
+          {total.toLocaleString()}+
+        </p>
+        <p className="mt-0.5 text-sm font-normal text-neutral-500">Transactions</p>
+      </div>
+
+      <div className="h-10 w-px shrink-0 bg-neutral-200" aria-hidden="true" />
+
+      <div className="flex flex-col gap-1.5">
+        {breakdown.map((b) => (
+          <span
+            key={b.key}
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1"
+          >
+            <span className="font-display text-sm font-bold text-neutral-900 tabular-nums">
+              {breakdownValues[b.key].toLocaleString()}+
+            </span>
+            <span className="text-sm font-normal text-neutral-500">{b.label}</span>
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -66,7 +93,6 @@ export function Hero() {
     >
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
 
-        {/* ── Left: text content ── */}
         <div className="w-full shrink-0 lg:w-[44%] lg:pt-4">
           <motion.p
             custom={0} initial="hidden" animate="show" variants={fade}
@@ -116,7 +142,6 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* ── Right: photo + stats (all screen sizes) ── */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -133,7 +158,6 @@ export function Hero() {
             sizes="(max-width: 1024px) 100vw, 56vw"
           />
 
-          {/* Stats — below photo on both mobile and desktop */}
           <div className="mt-6 border-t border-neutral-100 pt-5">
             <StatsRow />
           </div>

@@ -174,7 +174,7 @@ export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
               <p className="text-xs font-medium uppercase tracking-wider text-red-400">
                 Typical {isBuy ? "1%" : "2%"}
               </p>
-              <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-red-400 line-through decoration-red-300"
+              <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-red-400"
                  style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
                 S$<NumberFlow value={typicalFee} format={{ style: "decimal" }} />
               </p>

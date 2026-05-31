@@ -29,9 +29,9 @@ export default function Home() {
         <GreenDivider />
         <PropertyListings />
         <GreenDivider />
-        <AgentProfiles />
-        <GreenDivider />
         <BuyCta />
+        <GreenDivider />
+        <AgentProfiles />
         <CtaBanner />
       </main>
       <Footer />

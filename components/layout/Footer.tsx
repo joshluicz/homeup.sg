@@ -1,12 +1,13 @@
 import Link from "next/link";
 
-const quickLinks = [
-  { label: "Services", href: "#pricing" },
-  { label: "Sell HDB", href: "/sell-hdb" },
-  { label: "Sell Condo", href: "/sell-condo" },
-  { label: "Sell Landed", href: "/sell-landed" },
-  { label: "About", href: "#agents" },
-  { label: "Property Listing", href: "#comparison" },
+const quickLinks: { label: string; href: string; external?: boolean }[] = [
+  { label: "Services", href: "/#pricing" },
+  { label: "Sell HDB", href: "/#pricing" },
+  { label: "Sell Condo", href: "/#pricing" },
+  { label: "Sell Landed", href: "/#pricing" },
+  { label: "Buy", href: "/buy" },
+  { label: "About", href: "/#agents" },
+  { label: "Property Listing", href: "https://homeup.sg/property-listing/", external: true },
   { label: "Privacy Policy", href: "/privacy-policy" },
 ];
 
@@ -30,9 +31,20 @@ export function Footer() {
           <ul className="mt-4 grid gap-3 text-sm text-neutral-200">
             {quickLinks.map((link) => (
               <li key={link.label}>
-                <Link className="transition-colors hover:text-primary-200" href={link.href}>
-                  {link.label}
-                </Link>
+                {link.external ? (
+                  <a
+                    className="transition-colors hover:text-primary-200"
+                    href={link.href}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link className="transition-colors hover:text-primary-200" href={link.href}>
+                    {link.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
