@@ -49,7 +49,7 @@ const plans = [
   {
     name: "Landed Seller",
     description:
-      "Comprehensive support for landed property owners — the highest commission savings of any package.",
+      "Comprehensive support for landed property owners, with the highest commission savings of any package.",
     price: 9999,
     typicalPrice: 60000,
     buttonText: "Connect with Landed Specialist",

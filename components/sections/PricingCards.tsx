@@ -56,7 +56,7 @@ export function PricingCards() {
           <Eyebrow>Affordable Fixed Fee Services</Eyebrow>
           <h2 className="section-title">
             A smarter way to sell and upgrade with fixed-fee property agents in
-            Singapore — transparent pricing, coordinated sell-buy planning, and
+            Singapore: transparent pricing, coordinated sell-buy planning, and
             strategy built for your family&#39;s future.
           </h2>
         </FadeInUp>

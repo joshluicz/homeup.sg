@@ -112,54 +112,56 @@ export function AnimatedTestimonials({
             </div>
           </motion.div>
 
-          {/* ── Right: testimonial cards ── */}
-          <motion.div
-            variants={itemVariants}
-            className="relative min-h-[340px] md:min-h-[420px]"
-          >
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.id}
-                className="absolute inset-0"
-                initial={{ opacity: 0, x: 100 }}
-                animate={{
-                  opacity: activeIndex === index ? 1 : 0,
-                  x: activeIndex === index ? 0 : 100,
-                  scale: activeIndex === index ? 1 : 0.95,
-                }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                style={{ zIndex: activeIndex === index ? 10 : 0 }}
-              >
-                <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
-                  {/* Stars */}
-                  <div className="mb-5 flex gap-1">
-                    {Array(testimonial.rating)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                      ))}
-                  </div>
+          {/* ── Right: testimonial cards (grid stack = uniform height from tallest review) ── */}
+          <motion.div variants={itemVariants} className="relative">
+            <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={testimonial.id}
+                  className="col-start-1 row-start-1"
+                  initial={false}
+                  animate={{
+                    opacity: activeIndex === index ? 1 : 0,
+                    x: activeIndex === index ? 0 : 40,
+                    scale: activeIndex === index ? 1 : 0.98,
+                  }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  style={{
+                    visibility: activeIndex === index ? "visible" : "hidden",
+                    zIndex: activeIndex === index ? 10 : 0,
+                  }}
+                >
+                  <div className="flex min-h-[420px] flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:min-h-[400px] sm:p-8">
+                    {/* Stars */}
+                    <div className="mb-4 flex shrink-0 gap-1 sm:mb-5">
+                      {Array(testimonial.rating)
+                        .fill(0)
+                        .map((_, i) => (
+                          <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                        ))}
+                    </div>
 
-                  {/* Quote */}
-                  <div className="relative mb-6 flex-1">
-                    <Quote className="absolute -left-2 -top-2 h-8 w-8 rotate-180 text-primary-100" />
-                    <p className="relative z-10 text-base leading-relaxed text-neutral-700">
-                      &ldquo;{testimonial.content}&rdquo;
-                    </p>
-                  </div>
+                    {/* Quote */}
+                    <div className="relative mb-4 min-h-0 flex-1 sm:mb-6">
+                      <Quote className="absolute -left-1 -top-2 h-7 w-7 rotate-180 text-primary-100 sm:-left-2 sm:h-8 sm:w-8" />
+                      <p className="relative z-10 text-sm leading-relaxed text-neutral-700 sm:text-base">
+                        &ldquo;{testimonial.content}&rdquo;
+                      </p>
+                    </div>
 
-                  <Separator className="my-4" />
+                    <Separator className="my-3 shrink-0 sm:my-4" />
 
-                  {/* Author */}
-                  <div>
-                    <p className="font-semibold text-neutral-900">{testimonial.name}</p>
-                    <p className="text-sm text-neutral-500">
-                      {testimonial.role} · {testimonial.company}
-                    </p>
+                    {/* Author */}
+                    <div className="shrink-0">
+                      <p className="font-semibold text-neutral-900">{testimonial.name}</p>
+                      <p className="text-sm text-neutral-500">
+                        {testimonial.role} · {testimonial.company}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
 
             {/* Decorative corners */}
             <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-2xl bg-primary-50" />

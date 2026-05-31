@@ -5,10 +5,9 @@ import { useId, type ReactNode } from "react";
 const WREATH_W = 1024;
 const WREATH_H = 777;
 const HALF_W = WREATH_W / 2;
-/** Left / right half aspect — keeps the wreath uncropped at any height. */
 const HALF_ASPECT = `${HALF_W} / ${WREATH_H}`;
 
-function LaurelSide({ flip, uid }: { flip?: boolean; uid: string }) {
+function LaurelSide({ flip, uid, fluid }: { flip?: boolean; uid: string; fluid?: boolean }) {
   const suffix = flip ? "r" : "l";
   const invId = `${uid}-inv-${suffix}`;
   const goldId = `${uid}-gold-${suffix}`;
@@ -17,7 +16,11 @@ function LaurelSide({ flip, uid }: { flip?: boolean; uid: string }) {
   return (
     <svg
       viewBox={`0 0 ${HALF_W} ${WREATH_H}`}
-      className="h-[3.25rem] w-auto shrink-0 sm:h-[3.5rem]"
+      className={
+        fluid
+          ? "h-[clamp(2rem,7vw,3.5rem)] w-auto shrink-0"
+          : "h-[2.35rem] w-auto shrink-0 sm:h-[3rem] lg:h-[3.5rem]"
+      }
       style={{ aspectRatio: HALF_ASPECT }}
       aria-hidden="true"
     >
@@ -49,14 +52,26 @@ function LaurelSide({ flip, uid }: { flip?: boolean; uid: string }) {
   );
 }
 
-export function LaurelFrame({ children }: { children: ReactNode }) {
+export function LaurelFrame({
+  children,
+  fluid,
+}: {
+  children: ReactNode;
+  fluid?: boolean;
+}) {
   const uid = useId().replace(/:/g, "");
 
   return (
-    <div className="flex min-w-0 flex-1 items-center justify-center gap-1 sm:gap-1.5">
-      <LaurelSide uid={uid} />
-      <div className="flex min-w-0 flex-col items-center px-0.5 text-center sm:px-1">{children}</div>
-      <LaurelSide uid={uid} flip />
+    <div
+      className={
+        fluid
+          ? "flex w-full min-w-0 items-center justify-center gap-[clamp(0.0625rem,0.4vw,0.375rem)]"
+          : "mx-auto flex w-full max-w-[9.5rem] items-center justify-center gap-0.5 sm:max-w-none sm:gap-1 lg:min-w-0 lg:flex-1 lg:gap-1.5"
+      }
+    >
+      <LaurelSide uid={uid} fluid={fluid} />
+      <div className="flex min-w-0 flex-1 flex-col items-center px-0 text-center sm:px-1">{children}</div>
+      <LaurelSide uid={uid} flip fluid={fluid} />
     </div>
   );
 }

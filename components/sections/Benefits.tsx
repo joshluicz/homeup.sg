@@ -29,7 +29,7 @@ const benefits = [
   },
   {
     title: "Wider Visibility That Drives Real Interest",
-    body: "Your home is marketed across major property platforms and channels, ensuring broad exposure to serious buyers — not just a single listing. So we can get you more qualified enquiries, stronger viewing momentum, and a better chance of competitive offers — without unrealistic pricing.",
+    body: "Your home is marketed across major property platforms and channels, ensuring broad exposure to serious buyers, not just a single listing. That means more qualified enquiries, stronger viewing momentum, and a better chance of competitive offers without unrealistic pricing.",
     icon: Megaphone,
   },
   {

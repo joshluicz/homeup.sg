@@ -94,40 +94,32 @@ export function Hero() {
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
 
         <div className="w-full shrink-0 lg:w-[44%] lg:pt-4">
-          <motion.p
-            custom={0} initial="hidden" animate="show" variants={fade}
-            className="text-sm font-semibold uppercase tracking-widest text-primary-600"
-          >
-            Fixed-Fee Property Agents · Singapore
-          </motion.p>
-
           <motion.h1
-            custom={0.1} initial="hidden" animate="show" variants={fade}
-            className="mt-3 font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900"
+            custom={0} initial="hidden" animate="show" variants={fade}
+            className="font-display leading-[1.08] tracking-tight text-neutral-900"
             style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}
           >
-            Sell your home for more.
-            <br />
-            <span className="text-primary-600">Save on commissions.</span>
+            <span className="block font-semibold">
+              <span className="text-primary-600">Fixed Fee</span> Agent
+            </span>
+            <span className="block font-bold">
+              <span className="text-primary-600">Keep the Commission</span>
+            </span>
+            <span className="block font-extrabold">
+              Sell Your Home for <span className="text-primary-600">More.</span>
+            </span>
           </motion.h1>
 
           <motion.p
-            custom={0.18} initial="hidden" animate="show" variants={fade}
-            className="mt-3 text-sm font-medium text-neutral-500"
-          >
-            Your family fixed-fee agent.
-          </motion.p>
-
-          <motion.p
-            custom={0.26} initial="hidden" animate="show" variants={fade}
-            className="mt-3 max-w-md text-sm font-normal leading-relaxed text-neutral-600"
+            custom={0.08} initial="hidden" animate="show" variants={fade}
+            className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
           >
             Most Singapore homeowners give away $10,000–$70,000 in commission.
-            HomeUP charges a fixed fee — same full service, radically more honest.
+            HomeUP charges a fixed fee for the same full service.
           </motion.p>
 
           <motion.div
-            custom={0.34} initial="hidden" animate="show" variants={fade}
+            custom={0.16} initial="hidden" animate="show" variants={fade}
             className="mt-6"
           >
             <Button size="lg" asChild className="w-full sm:w-auto">
@@ -150,7 +142,7 @@ export function Hero() {
         >
           <Image
             src="/images/team-group.png"
-            alt="The HomeUP team — five agents giving thumbs up"
+            alt="The HomeUP team, five agents giving thumbs up"
             width={920}
             height={614}
             priority

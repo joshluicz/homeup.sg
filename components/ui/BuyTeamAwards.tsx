@@ -31,16 +31,16 @@ export const BUY_TEAM_AWARDS: TeamAward[] = [
   },
 ];
 
-function LaurelAwardBadge({ award }: { award: TeamAward }) {
+function LaurelAwardBadge({ award, fluid }: { award: TeamAward; fluid?: boolean }) {
   return (
-    <LaurelFrame>
-      <p className="text-sm font-bold leading-tight text-white sm:text-base">
+    <LaurelFrame fluid={fluid}>
+      <p className="whitespace-nowrap font-bold leading-none text-white text-[clamp(0.625rem,2.6vw,1rem)]">
         {award.source}
       </p>
-      <p className="mt-1 max-w-[130px] text-xs font-normal leading-snug text-white/85 sm:max-w-[150px] sm:text-sm">
+      <p className="mt-0.5 font-normal leading-tight text-white/85 text-[clamp(0.5625rem,2.1vw,0.875rem)] sm:mt-1">
         {award.title}
       </p>
-      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-white sm:text-sm">
+      <p className="mt-0.5 whitespace-nowrap font-bold uppercase tracking-wide text-white text-[clamp(0.5625rem,2.1vw,0.875rem)] sm:mt-1">
         {award.highlight}
       </p>
     </LaurelFrame>
@@ -50,9 +50,32 @@ function LaurelAwardBadge({ award }: { award: TeamAward }) {
 interface BuyTeamAwardsProps {
   className?: string;
   compact?: boolean;
+  /** Full-width strip — scales with viewport (buy page) */
+  strip?: boolean;
 }
 
-export function BuyTeamAwards({ className = "", compact = false }: BuyTeamAwardsProps) {
+export function BuyTeamAwards({
+  className = "",
+  compact = false,
+  strip = false,
+}: BuyTeamAwardsProps) {
+  if (strip) {
+    return (
+      <div
+        className={["w-full bg-[#0f1629] py-[clamp(0.75rem,2.5vw,1.25rem)]", className]
+          .filter(Boolean)
+          .join(" ")}
+        aria-label="HomeUP buying team awards and credentials"
+      >
+        <div className="grid w-full grid-cols-2 items-center gap-x-[clamp(0.25rem,1.5vw,1rem)] gap-y-[clamp(0.75rem,3vw,1.25rem)] px-[clamp(0.375rem,2vw,1.5rem)] sm:grid-cols-4">
+          {BUY_TEAM_AWARDS.map((award) => (
+            <LaurelAwardBadge key={`${award.source}-${award.title}`} award={award} fluid />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={[
@@ -64,7 +87,7 @@ export function BuyTeamAwards({ className = "", compact = false }: BuyTeamAwards
         .join(" ")}
       aria-label="HomeUP buying team awards and credentials"
     >
-      <div className="flex flex-wrap items-center justify-center gap-y-4 sm:gap-x-0 lg:flex-nowrap">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-5 sm:gap-x-4 lg:flex lg:flex-nowrap lg:items-center lg:justify-center lg:gap-y-4">
         {BUY_TEAM_AWARDS.map((award) => (
           <LaurelAwardBadge key={`${award.source}-${award.title}`} award={award} />
         ))}

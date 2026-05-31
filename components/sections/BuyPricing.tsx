@@ -27,7 +27,7 @@ const plans = [
   {
     name: "Resale Condo Purchase",
     price: "Complimentary",
-    description: "Market insights, project comparisons and negotiation support — at no cost to you.",
+    description: "Market insights, project comparisons and negotiation support, at no cost to you.",
     popular: false,
     buttonText: "Connect with Condo Specialist",
     includes: ["Market & project comparisons", "Unbiased shortlisting", "Viewing coordination", "Negotiation support"],
@@ -44,10 +44,10 @@ const plans = [
 
 export function BuyPricing() {
   return (
-    <section aria-label="Buying services and pricing" id="buy-pricing" className="section-padding bg-neutral-50">
+    <section aria-label="Buying services and pricing" id="buy-pricing" className="bg-neutral-50 py-12 sm:section-padding">
       <div className="container-page">
         {/* Services */}
-        <FadeInUp className="section-header">
+        <FadeInUp className="section-header mb-8 sm:mb-12">
           <Eyebrow>Buying Services</Eyebrow>
           <h2 className="section-title">Support that fits your situation</h2>
           <p className="section-lead">
@@ -57,12 +57,12 @@ export function BuyPricing() {
           </p>
         </FadeInUp>
 
-        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerContainer className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
           {services.map((s) => {
             const Icon = s.icon;
             return (
               <StaggerItem key={s.title}>
-                <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                <div className="flex h-full flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
                   <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
@@ -75,16 +75,16 @@ export function BuyPricing() {
         </StaggerContainer>
 
         {/* Pricing */}
-        <FadeInUp className="section-header mt-20">
+        <FadeInUp className="section-header mb-8 mt-12 sm:mb-12 sm:mt-16 lg:mt-20">
           <Eyebrow>Buying Packages</Eyebrow>
           <h2 className="section-title">Transparent fees for buyers</h2>
           <p className="section-lead">
-            Clear, upfront pricing — with complimentary representation for condo and
+            Clear, upfront pricing, with complimentary representation for condo and
             landed purchases.
           </p>
         </FadeInUp>
 
-        <StaggerContainer className="mt-10 grid gap-6 md:grid-cols-3">
+        <StaggerContainer className="mt-6 grid gap-4 sm:mt-10 sm:gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <StaggerItem key={plan.name}>
               <motion.div
@@ -94,7 +94,7 @@ export function BuyPricing() {
               >
                 <div
                   className={[
-                    "relative flex h-full flex-col rounded-2xl border bg-white p-6",
+                    "relative flex h-full flex-col rounded-2xl border bg-white p-5 sm:p-6",
                     plan.popular
                       ? "border-primary-400 shadow-[0_4px_32px_rgba(14,133,62,0.12)]"
                       : "border-neutral-200 shadow-sm",
@@ -106,10 +106,10 @@ export function BuyPricing() {
                     </span>
                   )}
 
-                  <h3 className="text-lg font-semibold text-neutral-900">{plan.name}</h3>
+                  <h3 className="text-base font-semibold text-neutral-900 sm:text-lg">{plan.name}</h3>
 
-                  <div className="mt-3">
-                    <span className="font-display text-3xl font-bold tracking-tight text-neutral-900">
+                  <div className="mt-2 sm:mt-3">
+                    <span className="font-display text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
                       {plan.price}
                     </span>
                   </div>
@@ -132,7 +132,7 @@ export function BuyPricing() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={[
-                      "mt-6 block rounded-lg py-3 text-center text-sm font-semibold transition-all duration-200",
+                      "mt-5 block rounded-lg px-3 py-3 text-center text-xs font-semibold leading-snug transition-all duration-200 sm:mt-6 sm:text-sm",
                       plan.popular
                         ? "bg-primary-600 text-white hover:bg-primary-700"
                         : "border border-neutral-200 text-neutral-800 hover:border-primary-400 hover:text-primary-600",
@@ -152,9 +152,8 @@ export function BuyPricing() {
           </p>
         </FadeInUp>
 
-        {/* Fee calculator */}
         <FadeInUp delay={0.25}>
-          <SavingsSlider mode="buy" />
+          <SavingsSlider mode="buy" className="mt-8 sm:mt-12" />
         </FadeInUp>
       </div>
     </section>

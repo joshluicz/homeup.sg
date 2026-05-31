@@ -36,9 +36,10 @@ function formatSGD(value: number): string {
 
 interface SavingsSliderProps {
   mode?: "sell" | "buy";
+  className?: string;
 }
 
-export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
+export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSliderProps) {
   const isBuy = mode === "buy";
   const FEES = isBuy ? BUY_FEES : SELL_FEES;
 
@@ -56,13 +57,13 @@ export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
   const pct           = ((propertyValue - MIN) / (MAX - MIN)) * 100;
 
   return (
-    <div className="mt-12 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+    <div className={["overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm", className].filter(Boolean).join(" ")}>
       {/* Top band */}
-      <div className="border-b border-neutral-100 bg-neutral-50 px-8 py-5 text-center">
+      <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-4 text-center sm:px-8 sm:py-5">
         <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
           {isBuy ? "Buying Fee Calculator" : "Savings Calculator"}
         </p>
-        <h3 className="mt-1 font-display text-2xl font-bold text-neutral-900">
+        <h3 className="mt-1 font-display text-xl font-bold text-neutral-900 sm:text-2xl">
           {isBuy ? "What will it cost to buy?" : "How much will you save?"}
         </h3>
         <p className="mt-1 text-sm text-neutral-500">
@@ -72,19 +73,19 @@ export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
         </p>
       </div>
 
-      <div className="px-8 py-8">
+      <div className="px-4 py-5 sm:px-8 sm:py-8">
         {/* ── Property type toggle ── */}
         <div className="mb-6">
           <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
             {isBuy ? "I am buying a…" : "I am selling a…"}
           </p>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             {TYPES.map((t) => (
               <button
                 key={t}
                 onClick={() => setPropertyType(t)}
                 className={[
-                  "flex-1 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
+                  "flex-1 rounded-xl border px-2 py-2 text-xs font-semibold transition-all sm:px-3 sm:py-2.5 sm:text-sm",
                   propertyType === t
                     ? "border-primary-600 bg-primary-600 text-white shadow-sm"
                     : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50",
@@ -97,7 +98,7 @@ export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
         </div>
 
         {/* ── Property value label + type-in input ── */}
-        <div className="mb-4 flex items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <span className="text-sm font-medium text-neutral-600">Property value</span>
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-neutral-500">S$</span>
@@ -115,7 +116,7 @@ export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
                 const raw = Number(e.target.value);
                 setPropertyValue(clamp(isNaN(raw) ? MIN : raw));
               }}
-              className="w-36 rounded-xl border border-neutral-200 px-4 py-1.5 text-right font-display text-sm font-bold text-neutral-900 transition-colors focus:border-primary-500 focus:outline-none"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-1.5 text-right font-display text-sm font-bold text-neutral-900 transition-colors focus:border-primary-500 focus:outline-none sm:w-36"
               aria-label="Property value in SGD"
             />
           </div>
@@ -156,7 +157,7 @@ export function SavingsSlider({ mode = "sell" }: SavingsSliderProps) {
           </div>
         ) : (
           /* ── Sell mode: three-column comparison ── */
-          <div className="mt-7 grid grid-cols-3 gap-3">
+          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {/* HomeUP fee */}
             <div className="flex flex-col items-center rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
               <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">

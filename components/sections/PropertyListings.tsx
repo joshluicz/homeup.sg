@@ -101,7 +101,7 @@ export function PropertyListings() {
           <Eyebrow>Current Listings</Eyebrow>
           <h2 className="section-title">Homes we&apos;re selling right now</h2>
           <p className="section-lead">
-            A selection of properties currently listed by HomeUP across Singapore —
+            A selection of properties currently listed by HomeUP across Singapore:
             HDB flats, condominiums and landed homes, all guided by our fixed-fee advisors.
           </p>
         </FadeInUp>
