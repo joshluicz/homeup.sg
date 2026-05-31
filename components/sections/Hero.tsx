@@ -16,195 +16,74 @@ const fade = {
   }),
 };
 
-const mosaicImages = [
-  {
-    src: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80",
-    alt: "Modern Singapore home interior",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1501183638710-841dd1904471?w=600&q=80",
-    alt: "Happy Singapore homeowner couple",
-  },
-];
-
-const portraitImage = {
-  src: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=700&q=85",
-  alt: "Professional HomeUP property advisor",
-};
-
 const agentStats = [
-  { value: "800+",  label: "HDB Resale",      agent: "Edmund Lee" },
-  { value: "220+",  label: "Condo & Landed",  agent: "Dennis Lim" },
+  { value: "800+", label: "HDB Resale",     agent: "Edmund Lee" },
+  { value: "220+", label: "Condo & Landed", agent: "Dennis Lim" },
 ];
 
-/* ─────────────────────────────────────────
-   MOBILE HERO  (<lg)
-   Full-width image banner → content block
-───────────────────────────────────────── */
-function MobileHero() {
-  return (
-    <section aria-label="Fixed-fee property agents hero" className="bg-white lg:hidden">
-      {/* Image banner */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative w-full overflow-hidden"
-        style={{ height: "min(62vw, 300px)" }}
-      >
-        <Image
-          src={portraitImage.src}
-          alt={portraitImage.alt}
-          fill
-          className="object-cover object-[center_12%]"
-          priority
-          sizes="100vw"
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
-
-        {/* Trust chip — bottom left */}
-        <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/90 px-3 py-1.5 backdrop-blur-sm">
-          <span className="text-xs font-bold text-primary-600">✓</span>
-          <span className="text-xs font-semibold text-neutral-800">1,000+ transactions</span>
-        </div>
-      </motion.div>
-
-      {/* Content block */}
-      <div className="mx-auto w-full max-w-[1200px] px-8 pb-10 pt-6 sm:px-12">
-        <motion.p
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-xs font-semibold uppercase tracking-widest text-primary-600"
-        >
-          Fixed-Fee Property Agents · Singapore
-        </motion.p>
-
-        <motion.h1
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.18 }}
-          className="mt-2 font-display text-[2rem] font-extrabold leading-[1.08] tracking-tight text-neutral-900"
-        >
-          Sell for more.
-          <br />
-          <span className="text-primary-600">Save on commissions.</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.24 }}
-          className="mt-2 text-base font-medium text-neutral-500"
-        >
-          Your family fixed-fee agent.
-        </motion.p>
-
-        <motion.p
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.30 }}
-          className="mt-3 text-sm leading-relaxed text-neutral-600"
-        >
-          Most homeowners give away $10,000–$70,000 in commission. HomeUP charges a
-          fixed fee — same full service, radically more honest.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.38 }}
-          className="mt-5"
-        >
-          <Button size="lg" asChild className="w-full">
-            <a href={WA} target="_blank" rel="noopener noreferrer" className="gap-2 justify-center">
-              <WhatsAppIcon className="h-5 w-5 shrink-0" />
-              Book a Free Call
-            </a>
-          </Button>
-          <p className="mt-2 text-center text-xs text-neutral-400">
-            No commitment · Free 45-min planning session
-          </p>
-        </motion.div>
-
-        {/* Stats */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.46 }}
-          className="mt-6 border-t border-neutral-100 pt-5"
-        >
-          <div className="flex items-center gap-5">
-            <div className="shrink-0">
-              <p className="font-display text-2xl font-extrabold text-neutral-900">1,000+</p>
-              <p className="mt-0.5 text-xs text-neutral-500">Transactions</p>
-            </div>
-            <div className="h-8 w-px shrink-0 bg-neutral-200" />
-            <div className="flex flex-col gap-1.5">
-              {agentStats.map((s) => (
-                <span key={s.agent} className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1">
-                  <span className="font-display text-sm font-bold text-neutral-900">{s.value}</span>
-                  <span className="text-xs text-neutral-500">{s.label}</span>
-                  <span className="text-xs font-medium text-primary-600">· {s.agent}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────
-   DESKTOP HERO  (lg+)
-   Two-column: copy left, mosaic right
-───────────────────────────────────────── */
-function DesktopHero() {
+export function Hero() {
   return (
     <section
       aria-label="Fixed-fee property agents hero"
-      className="relative hidden overflow-x-hidden bg-white lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-center"
+      className="bg-white lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-center"
     >
-      <div className="mx-auto flex w-full max-w-[1200px] items-center gap-16 px-12 xl:px-20">
-        {/* ── Left column ── */}
-        <div className="flex-1 py-8" style={{ maxWidth: "520px" }}>
-          <motion.p custom={0} initial="hidden" animate="show" variants={fade}
-            className="text-sm font-semibold uppercase tracking-widest text-primary-600">
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-10 px-8 py-12 sm:px-12 lg:flex-row lg:gap-16 lg:py-8 xl:px-20">
+
+        {/* ── Text content (left on desktop, top on mobile) ── */}
+        <div className="w-full flex-1 lg:max-w-[520px]">
+          <motion.p
+            custom={0} initial="hidden" animate="show" variants={fade}
+            className="text-xs font-semibold uppercase tracking-widest text-primary-600 sm:text-sm"
+          >
             Fixed-Fee Property Agents · Singapore
           </motion.p>
 
-          <motion.h1 custom={0.1} initial="hidden" animate="show" variants={fade}
+          <motion.h1
+            custom={0.1} initial="hidden" animate="show" variants={fade}
             className="mt-3 font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900"
-            style={{ fontSize: "clamp(2.2rem, 4vw, 3.2rem)" }}>
+            style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}
+          >
             Sell your home for more.
             <br />
             <span className="text-primary-600">Save on commissions.</span>
           </motion.h1>
 
-          <motion.p custom={0.18} initial="hidden" animate="show" variants={fade}
-            className="mt-3 text-lg font-medium text-neutral-500">
+          <motion.p
+            custom={0.18} initial="hidden" animate="show" variants={fade}
+            className="mt-3 text-base font-medium text-neutral-500 sm:text-lg"
+          >
             Your family fixed-fee agent.
           </motion.p>
 
-          <motion.p custom={0.26} initial="hidden" animate="show" variants={fade}
-            className="mt-3 max-w-md text-base leading-relaxed text-neutral-600">
+          <motion.p
+            custom={0.26} initial="hidden" animate="show" variants={fade}
+            className="mt-3 max-w-md text-sm leading-relaxed text-neutral-600 sm:text-base"
+          >
             Most Singapore homeowners give away $10,000–$70,000 in commission.
             HomeUP charges a fixed fee — same full service, radically more honest.
           </motion.p>
 
-          <motion.div custom={0.34} initial="hidden" animate="show" variants={fade}
-            className="mt-6">
-            <Button size="lg" asChild>
-              <a href={WA} target="_blank" rel="noopener noreferrer" className="gap-2">
+          <motion.div
+            custom={0.34} initial="hidden" animate="show" variants={fade}
+            className="mt-6"
+          >
+            <Button size="lg" asChild className="w-full sm:w-auto">
+              <a href={WA} target="_blank" rel="noopener noreferrer" className="justify-center gap-2">
                 <WhatsAppIcon className="h-5 w-5 shrink-0" />
                 Book a Free Call
               </a>
             </Button>
-            <p className="mt-2 text-xs text-neutral-400">
+            <p className="mt-2 text-xs text-neutral-400 sm:text-left text-center">
               No commitment · Free 45-min planning session
             </p>
           </motion.div>
 
           {/* Stats */}
-          <motion.div custom={0.42} initial="hidden" animate="show" variants={fade}
-            className="mt-6 border-t border-neutral-100 pt-5">
-            <div className="flex items-center gap-6">
+          <motion.div
+            custom={0.42} initial="hidden" animate="show" variants={fade}
+            className="mt-6 border-t border-neutral-100 pt-5"
+          >
+            <div className="flex items-center gap-5">
               <div className="shrink-0">
                 <p className="font-display text-xl font-extrabold text-neutral-900">1,000+</p>
                 <p className="mt-0.5 text-[11px] leading-snug text-neutral-500">Transactions</p>
@@ -212,7 +91,10 @@ function DesktopHero() {
               <div className="h-8 w-px shrink-0 bg-neutral-200" />
               <div className="flex flex-wrap gap-2">
                 {agentStats.map((s) => (
-                  <span key={s.agent} className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1">
+                  <span
+                    key={s.agent}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1"
+                  >
                     <span className="font-display text-sm font-bold text-neutral-900">{s.value}</span>
                     <span className="text-[11px] text-neutral-500">{s.label}</span>
                     <span className="text-[11px] font-medium text-primary-600">· {s.agent}</span>
@@ -223,53 +105,39 @@ function DesktopHero() {
           </motion.div>
         </div>
 
-        {/* ── Right column — photo mosaic ── */}
+        {/* ── Team photo (right on desktop, bottom on mobile) ── */}
         <motion.div
-          initial={{ opacity: 0, x: 28 }} animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.85, delay: 0.2, ease }}
-          className="relative flex-shrink-0 lg:w-[44%]"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, delay: 0.25, ease }}
+          className="w-full lg:w-[46%] lg:shrink-0"
         >
-          <div
-            className="grid grid-cols-2 grid-rows-2 gap-3"
-            style={{ height: "min(calc(100svh - 10rem), 480px)" }}
-          >
-            <div className="overflow-hidden rounded-2xl">
-              <Image src={mosaicImages[0].src} alt={mosaicImages[0].alt}
-                width={600} height={400}
-                className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+          <div className="relative">
+            <Image
+              src="/images/team-group.png"
+              alt="The HomeUP team — five agents giving thumbs up"
+              width={920}
+              height={614}
+              priority
+              className="w-full object-contain"
+              sizes="(max-width: 1024px) 100vw, 46vw"
+            />
+            {/* Trust chip */}
+            <div className="absolute bottom-0 right-0 inline-flex items-center gap-2 rounded-xl border border-neutral-100 bg-white px-3 py-2 shadow-md sm:px-4 sm:py-2.5">
+              <span
+                aria-hidden="true"
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700"
+              >
+                ✓
+              </span>
+              <span className="text-xs font-semibold text-neutral-800">
+                1,000+ transactions
+              </span>
             </div>
-            <div className="row-span-2 overflow-hidden rounded-2xl">
-              <Image src={portraitImage.src} alt={portraitImage.alt}
-                width={700} height={900} priority
-                className="h-full w-full object-cover object-top transition-transform duration-700 hover:scale-105" />
-            </div>
-            <div className="overflow-hidden rounded-2xl">
-              <Image src={mosaicImages[1].src} alt={mosaicImages[1].alt}
-                width={600} height={400}
-                className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
-            </div>
-          </div>
-
-          <div className="mt-3 ml-2 inline-flex items-center gap-2.5 rounded-xl border border-neutral-100 bg-white px-4 py-2.5 shadow-md">
-            <span aria-hidden="true"
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-100 text-xs font-bold text-primary-700">
-              ✓
-            </span>
-            <span className="text-xs font-semibold text-neutral-800">
-              1,000+ transactions
-            </span>
           </div>
         </motion.div>
+
       </div>
     </section>
-  );
-}
-
-export function Hero() {
-  return (
-    <>
-      <MobileHero />
-      <DesktopHero />
-    </>
   );
 }

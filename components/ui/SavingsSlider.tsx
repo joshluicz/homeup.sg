@@ -90,7 +90,7 @@ export function SavingsSlider() {
                 const raw = Number(e.target.value);
                 setPropertyValue(clamp(isNaN(raw) ? MIN : raw));
               }}
-              className="w-36 rounded-xl border border-neutral-200 px-4 py-1.5 text-right font-mono text-sm font-bold text-neutral-900 transition-colors focus:border-primary-500 focus:outline-none"
+              className="w-36 rounded-xl border border-neutral-200 px-4 py-1.5 text-right font-display text-sm font-bold text-neutral-900 transition-colors focus:border-primary-500 focus:outline-none"
               aria-label="Property value in SGD"
             />
           </div>
@@ -116,33 +116,36 @@ export function SavingsSlider() {
         {/* ── Three-column comparison ── */}
         <div className="mt-7 grid grid-cols-3 gap-3">
           {/* HomeUP fee */}
-          <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
+          <div className="flex flex-col items-center rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
               HomeUP fee
             </p>
-            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-neutral-900">
+            <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-neutral-900"
+               style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
               S$<NumberFlow value={homeupFee} format={{ style: "decimal" }} />
             </p>
             <p className="mt-1 text-xs text-neutral-400">fixed · {propertyType}</p>
           </div>
 
           {/* Typical 2% — faded red */}
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-center opacity-60">
+          <div className="flex flex-col items-center rounded-xl border border-red-100 bg-red-50 p-4 text-center opacity-60">
             <p className="text-xs font-medium uppercase tracking-wider text-red-400">
               Typical 2%
             </p>
-            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-red-400 line-through decoration-red-300">
+            <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-red-400 line-through decoration-red-300"
+               style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
               S$<NumberFlow value={typicalFee} format={{ style: "decimal" }} />
             </p>
             <p className="mt-1 text-xs text-red-300">commission</p>
           </div>
 
           {/* Savings — green */}
-          <div className="rounded-xl border border-primary-200 bg-primary-50 p-4 text-center">
+          <div className="flex flex-col items-center rounded-xl border border-primary-200 bg-primary-50 p-4 text-center">
             <p className="text-xs font-medium uppercase tracking-wider text-primary-600">
               You save
             </p>
-            <p className="mt-2 font-display text-2xl font-bold tracking-tight text-primary-600">
+            <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-primary-600"
+               style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
               S$<NumberFlow value={Math.max(0, savings)} format={{ style: "decimal" }} />
             </p>
             <p className="mt-1 text-xs text-primary-400">with HomeUP</p>
