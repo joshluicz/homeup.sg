@@ -9,8 +9,9 @@ import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 const navLinks = [
   { label: "Home", href: "/" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Our Team", href: "#agents" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "Buy", href: "/buy" },
+  { label: "Our Team", href: "/#agents" },
 ];
 
 const whatsappUrl = "https://wa.me/6580877015";

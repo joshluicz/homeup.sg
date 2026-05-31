@@ -1,0 +1,31 @@
+---
+description: Typography sizing standard — keep font sizes uniform, vary weight/color for hierarchy
+globs: **/*.tsx, **/*.css
+alwaysApply: false
+---
+
+# Font Sizing Consistency
+
+Within a given UI region (a section, card, or row), **do not vary font size to signal
+importance**. Keep text at one consistent size and instead differentiate using:
+
+- **weight** (`font-normal` → `font-medium` → `font-semibold` → `font-bold`)
+- **color** (e.g. `text-neutral-400` for muted, `text-neutral-900` for primary, `text-primary-600` for brand emphasis)
+
+The default body size is `text-sm`. Large display type (page hero `h1`, `.section-title`)
+is the deliberate exception and may scale with `clamp()`.
+
+```tsx
+// ❌ BAD — three different sizes to show hierarchy
+<p className="text-base font-semibold">Dennis Lim</p>
+<p className="text-xs text-neutral-400">R055990G</p>
+<p className="text-sm text-neutral-600">{bio}</p>
+
+// ✅ GOOD — one size, hierarchy via weight + color
+<p className="text-sm font-bold text-neutral-900">Dennis Lim</p>
+<p className="text-sm font-normal text-neutral-400">R055990G</p>
+<p className="text-sm font-normal text-neutral-600">{bio}</p>
+```
+
+Avoid mixing `font-mono` into content rows that otherwise use the body font — it changes
+the visual size/rhythm even at the same nominal size.

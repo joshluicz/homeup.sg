@@ -65,13 +65,13 @@ export function AgentProfiles() {
                   />
                 </div>
 
-                <h3 className="m-0 font-display text-base font-semibold text-neutral-900">
+                <h3 className="m-0 font-display text-sm font-bold text-neutral-900">
                   {agent.name}
                 </h3>
-                <p className="mt-1 font-mono text-xs tracking-wide text-neutral-400">
+                <p className="mt-1 text-sm font-normal tracking-wide text-neutral-400">
                   {agent.cea}
                 </p>
-                <p className="mt-3 text-sm leading-normal text-neutral-600">{agent.bio}</p>
+                <p className="mt-3 text-sm font-normal leading-normal text-neutral-600">{agent.bio}</p>
               </article>
             </StaggerItem>
           ))}

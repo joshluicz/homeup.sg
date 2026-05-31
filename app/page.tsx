@@ -1,9 +1,10 @@
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { AgentProfiles } from "@/components/sections/AgentProfiles";
+import { BuyCta } from "@/components/sections/BuyCta";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { FAQ } from "@/components/sections/FAQ";
 import { Hero } from "@/components/sections/Hero";
+import { PropertyListings } from "@/components/sections/PropertyListings";
 import { Testimonials } from "@/components/sections/Testimonials";
 import PricingSection4 from "@/components/ui/pricing-section-4";
 
@@ -26,9 +27,11 @@ export default function Home() {
         <GreenDivider />
         <Testimonials />
         <GreenDivider />
+        <PropertyListings />
+        <GreenDivider />
         <AgentProfiles />
         <GreenDivider />
-        <FAQ />
+        <BuyCta />
         <CtaBanner />
       </main>
       <Footer />
