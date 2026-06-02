@@ -96,22 +96,23 @@ export function Hero() {
         <div className="w-full shrink-0 lg:w-[44%] lg:pt-4">
           <motion.h1
             custom={0} initial="hidden" animate="show" variants={fade}
-            className="font-display leading-[1.08] tracking-tight text-neutral-900"
+            className="font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900"
             style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)" }}
           >
-            <span className="block font-semibold">
-              <span className="text-primary-600">Fixed Fee</span> Agent
-            </span>
-            <span className="block font-bold">
-              <span className="text-primary-600">Keep the Commission</span>
-            </span>
-            <span className="block font-extrabold">
-              Sell Your Home for <span className="text-primary-600">More.</span>
-            </span>
+            Sell your home for more.
+            <br />
+            <span className="text-primary-600">Save on Commissions.</span>
           </motion.h1>
 
           <motion.p
             custom={0.08} initial="hidden" animate="show" variants={fade}
+            className="mt-3 text-sm font-medium text-neutral-500"
+          >
+            Your family fixed-fee agent.
+          </motion.p>
+
+          <motion.p
+            custom={0.14} initial="hidden" animate="show" variants={fade}
             className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
           >
             Most Singapore homeowners give away $10,000–$70,000 in commission.
@@ -119,7 +120,7 @@ export function Hero() {
           </motion.p>
 
           <motion.div
-            custom={0.16} initial="hidden" animate="show" variants={fade}
+            custom={0.22} initial="hidden" animate="show" variants={fade}
             className="mt-6"
           >
             <Button size="lg" asChild className="w-full sm:w-auto">
