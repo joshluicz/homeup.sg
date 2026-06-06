@@ -1,4 +1,5 @@
 "use client";
+import { useMemo, useState } from "react";
 import { BedDouble, Bath, Maximize2 } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp } from "@/components/ui/motion-primitives";
@@ -38,11 +39,23 @@ const listings: Listing[] = [
 ];
 
 const LISTINGS_URL = "https://homeup.sg/property-listing/";
+const MOBILE_PREVIEW = 6;
+
+type FilterType = "All" | "HDB" | "Condo" | "Landed";
+
+const FILTERS: FilterType[] = ["All", "HDB", "Condo", "Landed"];
 
 const typeBadge: Record<string, string> = {
   HDB:    "bg-blue-50 text-blue-700 border-blue-200",
   Condo:  "bg-primary-50 text-primary-700 border-primary-200",
   Landed: "bg-amber-50 text-amber-700 border-amber-200",
+};
+
+const filterActive: Record<FilterType, string> = {
+  All:    "bg-neutral-900 text-white border-neutral-900",
+  HDB:    "bg-blue-600 text-white border-blue-600",
+  Condo:  "bg-primary-600 text-white border-primary-600",
+  Landed: "bg-amber-600 text-white border-amber-600",
 };
 
 function ListingCard({ l }: { l: Listing }) {
@@ -53,7 +66,6 @@ function ListingCard({ l }: { l: Listing }) {
       rel="noopener noreferrer"
       className="group flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-sm"
     >
-      {/* Type + rental */}
       <div className="flex flex-wrap items-center gap-1.5">
         <span className={`inline-flex rounded-full border px-2 py-0.5 text-sm font-medium ${typeBadge[l.type]}`}>
           {l.type}
@@ -65,15 +77,12 @@ function ListingCard({ l }: { l: Listing }) {
         )}
       </div>
 
-      {/* Name */}
       <p className="text-sm font-semibold leading-snug text-neutral-900 group-hover:text-primary-700">
         {l.name}
       </p>
 
-      {/* Price */}
       <p className="font-display text-sm font-bold text-primary-600">{l.price}</p>
 
-      {/* Specs */}
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
         {l.beds !== null && (
           <span className="inline-flex items-center gap-1 text-sm font-normal text-neutral-400">
@@ -94,19 +103,60 @@ function ListingCard({ l }: { l: Listing }) {
 }
 
 export function PropertyListings() {
+  const [filter, setFilter] = useState<FilterType>("All");
+
+  const filtered = useMemo(
+    () => (filter === "All" ? listings : listings.filter((l) => l.type === filter)),
+    [filter],
+  );
+
+  const mobileVisible = filtered.slice(0, MOBILE_PREVIEW);
+  const hasMoreOnMobile = filtered.length > MOBILE_PREVIEW;
+
   return (
     <section aria-label="Current property listings" className="bg-white section-padding">
       <div className="container-page">
         <FadeInUp className="section-header">
           <Eyebrow>Current Listings</Eyebrow>
-          <h2 className="section-title">Homes we&apos;re selling right now</h2>
-          <p className="section-lead">
-            A selection of properties currently listed by HomeUP across Singapore:
-            HDB flats, condominiums and landed homes, all guided by our fixed-fee advisors.
-          </p>
+          <h2 className="section-title">
+            More than <span className="text-primary-600">100 active listings</span> across Singapore
+          </h2>
         </FadeInUp>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {/* Mobile filter */}
+        <FadeInUp delay={0.08}>
+          <div className="mb-4 flex flex-wrap justify-center gap-2 lg:hidden">
+            {FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={[
+                  "rounded-full border px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                  filter === f ? filterActive[f] : "border-neutral-200 bg-white text-neutral-600",
+                ].join(" ")}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </FadeInUp>
+
+        {/* Mobile: capped preview */}
+        <div className="grid grid-cols-2 gap-3 lg:hidden">
+          {mobileVisible.map((l) => (
+            <ListingCard key={l.id} l={l} />
+          ))}
+        </div>
+
+        {hasMoreOnMobile && (
+          <p className="mt-3 text-center text-sm text-neutral-500 lg:hidden">
+            More listings available on HomeUP.sg
+          </p>
+        )}
+
+        {/* Desktop: full grid */}
+        <div className="hidden grid-cols-3 gap-3 lg:grid xl:grid-cols-4">
           {listings.map((l) => (
             <ListingCard key={l.id} l={l} />
           ))}
@@ -120,7 +170,7 @@ export function PropertyListings() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-100"
             >
-              View all our listings →
+              View all listings →
             </a>
           </div>
         </FadeInUp>

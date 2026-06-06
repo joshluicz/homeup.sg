@@ -58,29 +58,40 @@ function StatsRow() {
   const breakdownValues = { hdb, condo };
 
   return (
-    <div ref={ref} className="flex items-center justify-center gap-5">
-      <div className="shrink-0 text-center">
-        <p className="font-display text-sm font-extrabold text-neutral-900 tabular-nums">
-          {total.toLocaleString()}+
-        </p>
-        <p className="mt-0.5 text-sm font-normal text-neutral-500">Transactions</p>
-      </div>
+    <div>
+      <div
+        ref={ref}
+        className="rounded-2xl bg-primary-600 px-5 py-4 shadow-[0_4px_24px_rgba(14,133,62,0.28)] sm:px-6 sm:py-5"
+      >
+        <div className="flex items-center justify-center gap-6 sm:gap-8">
+          <div className="shrink-0 text-center">
+            <p className="font-display text-3xl font-extrabold text-white tabular-nums sm:text-4xl md:text-5xl">
+              {total.toLocaleString()}+
+              <span className="text-lg font-semibold sm:text-xl md:text-2xl">*</span>
+            </p>
+            <p className="mt-1 text-sm font-medium text-primary-100 sm:text-base">Transactions</p>
+          </div>
 
-      <div className="h-10 w-px shrink-0 bg-neutral-200" aria-hidden="true" />
+          <div className="h-14 w-px shrink-0 bg-white/25 sm:h-16 md:h-20" aria-hidden="true" />
 
-      <div className="flex flex-col gap-1.5">
-        {breakdown.map((b) => (
-          <span
-            key={b.key}
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1"
-          >
-            <span className="font-display text-sm font-bold text-neutral-900 tabular-nums">
-              {breakdownValues[b.key].toLocaleString()}+
-            </span>
-            <span className="text-sm font-normal text-neutral-500">{b.label}</span>
-          </span>
-        ))}
+          <div className="flex flex-col gap-2 sm:gap-2.5">
+            {breakdown.map((b) => (
+              <span
+                key={b.key}
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 sm:px-4 sm:py-2"
+              >
+                <span className="font-display text-xl font-bold text-white tabular-nums sm:text-2xl md:text-3xl">
+                  {breakdownValues[b.key].toLocaleString()}+
+                </span>
+                <span className="text-sm font-medium text-primary-100 sm:text-base">{b.label}</span>
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
+      <p className="mt-1.5 text-center text-[10px] leading-snug text-neutral-400">
+        * CEA records under Dennis, Tongboon, Edmund
+      </p>
     </div>
   );
 }
@@ -130,7 +141,7 @@ export function Hero() {
               </a>
             </Button>
             <p className="mt-2 text-sm font-normal text-neutral-400">
-              No commitment · Free 45-min planning session
+              No commitment · Free 30-min planning session
             </p>
           </motion.div>
         </div>
@@ -151,7 +162,7 @@ export function Hero() {
             sizes="(max-width: 1024px) 100vw, 56vw"
           />
 
-          <div className="mt-6 border-t border-neutral-100 pt-5">
+          <div className="mt-6">
             <StatsRow />
           </div>
         </motion.div>

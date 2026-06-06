@@ -1,10 +1,11 @@
 "use client";
 
 import { motion, useMotionTemplate, useScroll, useTransform } from "framer-motion";
-import { Home, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 const navLinks = [
@@ -15,21 +16,6 @@ const navLinks = [
 ];
 
 const whatsappUrl = "https://wa.me/6580877015";
-
-function Logo() {
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <Home
-        aria-hidden="true"
-        className="h-5 w-5 text-primary-600"
-        strokeWidth={2.5}
-      />
-      <span className="font-display text-xl font-bold tracking-tight text-primary-600">
-        HomeUP
-      </span>
-    </span>
-  );
-}
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,7 +48,7 @@ export function Navbar() {
         >
           <div className="container-page flex items-center justify-between py-4">
             <Link href="/" onClick={() => setIsOpen(false)}>
-              <Logo />
+              <HomeUpLogo imageClassName="h-7 w-7" />
             </Link>
 
             {/* Desktop nav */}

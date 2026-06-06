@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
 
 const quickLinks: { label: string; href: string; external?: boolean }[] = [
   { label: "Services", href: "/#pricing" },
@@ -16,8 +17,11 @@ export function Footer() {
     <footer aria-label="Footer" className="bg-neutral-950 text-neutral-50">
       <div className="container-page grid gap-10 py-16 lg:grid-cols-3">
         <div>
-          <Link className="font-display text-3xl font-bold tracking-tight text-primary-500" href="/">
-            HomeUP
+          <Link href="/">
+            <HomeUpLogo
+              imageClassName="h-10 w-10"
+              textClassName="font-display text-3xl font-bold tracking-tight text-primary-500"
+            />
           </Link>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-300">
             More Value. Less Guesswork. Better Decisions.

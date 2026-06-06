@@ -5,6 +5,7 @@ import { BuyCta } from "@/components/sections/BuyCta";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { Hero } from "@/components/sections/Hero";
 import { PropertyListings } from "@/components/sections/PropertyListings";
+import { SocialPanel } from "@/components/sections/SocialPanel";
 import { Testimonials } from "@/components/sections/Testimonials";
 import PricingSection4 from "@/components/ui/pricing-section-4";
 
@@ -32,6 +33,7 @@ export default function Home() {
         <BuyCta />
         <GreenDivider />
         <AgentProfiles />
+        <SocialPanel />
         <CtaBanner />
       </main>
       <Footer />

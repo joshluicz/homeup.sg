@@ -1,9 +1,18 @@
 "use client";
 
 import { Separator } from "@/components/ui/separator";
-import { Quote, Star } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleUser,
+  Flower2,
+  Quote,
+  Sparkles,
+  Star,
+  UserRound,
+} from "lucide-react";
 import { motion, useAnimation, useInView } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface Testimonial {
   id: number;
@@ -23,6 +32,15 @@ export interface AnimatedTestimonialsProps {
   autoRotateInterval?: number;
   className?: string;
 }
+
+const SWIPE_THRESHOLD = 60;
+
+const REVIEWER_AVATARS = [
+  { Icon: Flower2, className: "bg-primary-100 text-primary-600" },
+  { Icon: UserRound, className: "bg-blue-100 text-blue-600" },
+  { Icon: CircleUser, className: "bg-amber-100 text-amber-700" },
+  { Icon: Sparkles, className: "bg-violet-100 text-violet-600" },
+] as const;
 
 export function AnimatedTestimonials({
   title = "Loved by the community",
@@ -51,6 +69,18 @@ export function AnimatedTestimonials({
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" as const } },
   } as const;
 
+  const goTo = useCallback(
+    (index: number) => {
+      if (testimonials.length === 0) return;
+      const next = (index + testimonials.length) % testimonials.length;
+      setActiveIndex(next);
+    },
+    [testimonials.length],
+  );
+
+  const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo]);
+  const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo]);
+
   useEffect(() => {
     if (isInView) controls.start("visible");
   }, [isInView, controls]);
@@ -78,7 +108,7 @@ export function AnimatedTestimonials({
           variants={containerVariants}
           className="grid grid-cols-1 gap-16 lg:grid-cols-2 lg:gap-24"
         >
-          {/* ── Left: heading + dot nav ── */}
+          {/* Left: heading + nav */}
           <motion.div variants={itemVariants} className="flex flex-col justify-center">
             <div className="space-y-6">
               {badgeText && (
@@ -94,12 +124,12 @@ export function AnimatedTestimonials({
 
               <p className="max-w-lg text-lg leading-relaxed text-neutral-500">{subtitle}</p>
 
-              {/* Dot navigation */}
-              <div className="flex items-center gap-3 pt-4">
+              <div className="hidden items-center gap-3 pt-4 lg:flex">
                 {testimonials.map((_, index) => (
                   <button
                     key={index}
-                    onClick={() => setActiveIndex(index)}
+                    type="button"
+                    onClick={() => goTo(index)}
                     aria-label={`View testimonial ${index + 1}`}
                     className={`h-2.5 rounded-full transition-all duration-300 ${
                       activeIndex === index
@@ -112,58 +142,118 @@ export function AnimatedTestimonials({
             </div>
           </motion.div>
 
-          {/* ── Right: testimonial cards (grid stack = uniform height from tallest review) ── */}
+          {/* Right: swipeable cards */}
           <motion.div variants={itemVariants} className="relative">
-            <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
-              {testimonials.map((testimonial, index) => (
-                <motion.div
-                  key={testimonial.id}
-                  className="col-start-1 row-start-1"
-                  initial={false}
-                  animate={{
-                    opacity: activeIndex === index ? 1 : 0,
-                    x: activeIndex === index ? 0 : 40,
-                    scale: activeIndex === index ? 1 : 0.98,
-                  }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  style={{
-                    visibility: activeIndex === index ? "visible" : "hidden",
-                    zIndex: activeIndex === index ? 10 : 0,
-                  }}
-                >
-                  <div className="flex min-h-[420px] flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:min-h-[400px] sm:p-8">
-                    {/* Stars */}
-                    <div className="mb-4 flex shrink-0 gap-1 sm:mb-5">
-                      {Array(testimonial.rating)
-                        .fill(0)
-                        .map((_, i) => (
-                          <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                        ))}
-                    </div>
+            <motion.div
+              className="touch-pan-y cursor-grab active:cursor-grabbing"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.15}
+              onDragEnd={(_, info) => {
+                if (info.offset.x < -SWIPE_THRESHOLD) goNext();
+                else if (info.offset.x > SWIPE_THRESHOLD) goPrev();
+              }}
+            >
+              <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
+                {testimonials.map((testimonial, index) => {
+                  const avatar = REVIEWER_AVATARS[index % REVIEWER_AVATARS.length];
+                  const AvatarIcon = avatar.Icon;
 
-                    {/* Quote */}
-                    <div className="relative mb-4 min-h-0 flex-1 sm:mb-6">
-                      <Quote className="absolute -left-1 -top-2 h-7 w-7 rotate-180 text-primary-100 sm:-left-2 sm:h-8 sm:w-8" />
-                      <p className="relative z-10 text-sm leading-relaxed text-neutral-700 sm:text-base">
-                        &ldquo;{testimonial.content}&rdquo;
-                      </p>
-                    </div>
+                  return (
+                  <motion.div
+                    key={testimonial.id}
+                    className="col-start-1 row-start-1 select-none"
+                    initial={false}
+                    animate={{
+                      opacity: activeIndex === index ? 1 : 0,
+                      x: activeIndex === index ? 0 : 40,
+                      scale: activeIndex === index ? 1 : 0.98,
+                    }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    style={{
+                      visibility: activeIndex === index ? "visible" : "hidden",
+                      zIndex: activeIndex === index ? 10 : 0,
+                    }}
+                  >
+                    <div className="flex min-h-[420px] flex-col rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:min-h-[400px] sm:p-8">
+                      <div className="mb-4 flex shrink-0 gap-1 sm:mb-5">
+                        {Array(testimonial.rating)
+                          .fill(0)
+                          .map((_, i) => (
+                            <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                          ))}
+                      </div>
 
-                    <Separator className="my-3 shrink-0 sm:my-4" />
+                      <div className="relative mb-4 min-h-0 flex-1 sm:mb-6">
+                        <Quote className="absolute -left-1 -top-2 h-7 w-7 rotate-180 text-primary-100 sm:-left-2 sm:h-8 sm:w-8" />
+                        <p className="relative z-10 text-sm leading-relaxed text-neutral-700 sm:text-base">
+                          &ldquo;{testimonial.content}&rdquo;
+                        </p>
+                      </div>
 
-                    {/* Author */}
-                    <div className="shrink-0">
-                      <p className="font-semibold text-neutral-900">{testimonial.name}</p>
-                      <p className="text-sm text-neutral-500">
-                        {testimonial.role} · {testimonial.company}
-                      </p>
+                      <Separator className="my-3 shrink-0 sm:my-4" />
+
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span
+                          aria-hidden="true"
+                          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${avatar.className}`}
+                        >
+                          <AvatarIcon className="h-5 w-5" />
+                        </span>
+                        <div>
+                          <p className="font-semibold text-neutral-900">{testimonial.name}</p>
+                          <p className="text-sm text-neutral-500">
+                            {testimonial.role} · {testimonial.company}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {/* Swipe + arrow controls */}
+            <div className="mt-5 flex items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={goPrev}
+                aria-label="Previous review"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              <div className="flex flex-1 flex-col items-center gap-2">
+                <div className="flex items-center gap-2">
+                  {testimonials.map((_, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => goTo(index)}
+                      aria-label={`View testimonial ${index + 1}`}
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        activeIndex === index
+                          ? "w-8 bg-primary-600"
+                          : "w-2 bg-neutral-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-neutral-400 lg:hidden">Swipe or tap arrows to browse</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={goNext}
+                aria-label="Next review"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
             </div>
 
-            {/* Decorative corners */}
             <div className="pointer-events-none absolute -bottom-6 -left-6 h-24 w-24 rounded-2xl bg-primary-50" />
             <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-2xl bg-primary-50" />
           </motion.div>
