@@ -151,7 +151,7 @@ export function PropertyListings() {
 
         {hasMoreOnMobile && (
           <p className="mt-3 text-center text-sm text-neutral-500 lg:hidden">
-            More listings available on HomeUP.sg
+            More listings available on HOMEUP.sg
           </p>
         )}
 

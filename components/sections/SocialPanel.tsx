@@ -46,13 +46,13 @@ const SOCIALS = [
 
 export function SocialPanel() {
   return (
-    <section aria-label="Follow HomeUP on social media" className="bg-primary-50 py-12 sm:py-14">
+    <section aria-label="Follow HOMEUP on social media" className="bg-primary-50 py-12 sm:py-14">
       <div className="container-page">
         <FadeInUp>
           <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
             <Eyebrow>Stay Connected</Eyebrow>
             <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              Follow HomeUP
+              Follow HOMEUP
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600 sm:text-base">
               Tips, market updates, and behind-the-scenes from our team.
@@ -65,7 +65,7 @@ export function SocialPanel() {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Follow HomeUP on ${s.name}`}
+                  aria-label={`Follow HOMEUP on ${s.name}`}
                   className={[
                     "inline-flex h-12 w-12 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 shadow-sm transition-all duration-200",
                     "hover:text-white hover:shadow-md",

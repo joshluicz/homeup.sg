@@ -47,13 +47,13 @@ export function HomeUpLogo({
     <span className={cn("inline-flex items-center gap-2", className)}>
       <Image
         src={asset.src}
-        alt="HomeUP"
+        alt="HOMEUP"
         width={asset.width}
         height={asset.height}
         className={cn("object-contain", imageClassName ?? asset.defaultClassName)}
         priority
       />
-      {showLabel && <span className={textClassName}>HomeUP</span>}
+      {showLabel && <span className={textClassName}>HOMEUP</span>}
     </span>
   );
 }

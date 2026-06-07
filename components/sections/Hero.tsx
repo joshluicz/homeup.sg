@@ -23,18 +23,14 @@ const breakdown = [
   { key: "condo" as const, target: 260, label: "Condo & Landed" },
 ];
 
+const AGENT_COUNT = 7;
+
 const agents = [
   { src: "/images/agent-dennis.png", name: "Dennis" },
   { src: "/images/agent-tong-boon.png", name: "Tong Boon" },
   { src: "/images/agent-edmund.png", name: "Edmund" },
   { src: "/images/agent-olivia.png", name: "Olivia" },
   { src: "/images/agent-kenji.png", name: "Kenji" },
-];
-
-const portals = [
-  { src: "/images/portals/propertyguru.png", name: "PropertyGuru", width: 108, height: 20 },
-  { src: "/images/portals/srx.png", name: "SRX", width: 44, height: 20 },
-  { src: "/images/portals/99co.png", name: "99.co", width: 52, height: 20 },
 ];
 
 function StatsCard() {
@@ -84,7 +80,10 @@ function StatsCard() {
             {total.toLocaleString()}
             {showPlus && "+"}
           </p>
-          <p className="mt-1.5 text-sm font-semibold text-neutral-700">Transactions closed</p>
+          <p className="mt-1.5 leading-tight text-neutral-700">
+            <span className="font-display text-xl font-bold sm:text-2xl">Transactions</span>
+            <span className="text-sm font-medium"> closed</span>
+          </p>
           <p className="mt-0.5 text-[11px] leading-snug text-neutral-400">
             CEA records · Dennis, Tongboon, Edmund
           </p>
@@ -111,47 +110,45 @@ function StatsCard() {
   );
 }
 
+function AgentAvatars({ className = "" }: { className?: string }) {
+  const overflowCount = AGENT_COUNT - agents.length;
+
+  return (
+    <div className={`flex items-center gap-2.5 ${className}`.trim()}>
+      <div className="flex -space-x-2.5" aria-label={`${AGENT_COUNT} CEA-licensed agents`}>
+        {agents.map((agent) => (
+          <div
+            key={agent.name}
+            className="relative h-9 w-9 overflow-hidden rounded-full border-2 border-white shadow-sm"
+          >
+            <Image
+              src={agent.src}
+              alt={agent.name}
+              fill
+              className="object-cover object-center"
+            />
+          </div>
+        ))}
+        {overflowCount > 0 && (
+          <div
+            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white bg-primary-50 text-xs font-bold tabular-nums text-primary-700 shadow-sm"
+            aria-hidden="true"
+          >
+            +{overflowCount}
+          </div>
+        )}
+      </div>
+      <span className="text-sm font-medium text-neutral-600">
+        {AGENT_COUNT} CEA-licensed agents
+      </span>
+    </div>
+  );
+}
+
 function SocialProofRow() {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      {/* Agent avatar stack */}
-      <div className="flex items-center gap-2.5">
-        <div className="flex -space-x-2.5">
-          {agents.map((agent) => (
-            <div
-              key={agent.name}
-              className="relative h-9 w-9 overflow-hidden rounded-full border-2 border-white shadow-sm"
-            >
-              <Image
-                src={agent.src}
-                alt={agent.name}
-                fill
-                className="object-cover object-center"
-              />
-            </div>
-          ))}
-        </div>
-        <span className="text-sm font-medium text-neutral-600">
-          5 CEA-licensed specialists
-        </span>
-      </div>
-
-      {/* Portal logos */}
-      <div className="flex items-center gap-3">
-        <span className="text-xs font-medium text-neutral-400">Listed on</span>
-        <div className="flex items-center gap-3">
-          {portals.map((p) => (
-            <Image
-              key={p.name}
-              src={p.src}
-              alt={p.name}
-              width={p.width}
-              height={p.height}
-              className="h-5 w-auto object-contain opacity-60 transition-opacity duration-200 hover:opacity-100"
-            />
-          ))}
-        </div>
-      </div>
+    <div className="flex justify-center lg:justify-start">
+      <AgentAvatars />
     </div>
   );
 }
@@ -162,7 +159,7 @@ export function Hero() {
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
 
         {/* Left: copy */}
-        <div className="w-full shrink-0 lg:w-[44%] lg:pt-4">
+        <div className="w-full shrink-0 lg:w-[44%]">
           <motion.h1
             custom={0} initial="hidden" animate="show" variants={fade}
             className="whitespace-nowrap font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
@@ -174,7 +171,7 @@ export function Hero() {
 
           <motion.p
             custom={0.08} initial="hidden" animate="show" variants={fade}
-            className="mt-3 text-sm font-medium text-neutral-500"
+            className="mt-3 text-sm font-medium leading-normal text-neutral-500 [font-feature-settings:'liga'_off,'calt'_off]"
           >
             Your family fixed-fee agent.
           </motion.p>
@@ -184,7 +181,7 @@ export function Hero() {
             className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
           >
             Most Singapore homeowners give away $10,000–$70,000 in commission.
-            HomeUP charges a fixed fee for the same full service.
+            HOMEUP charges a fixed fee for the same full service.
           </motion.p>
 
           <motion.div
@@ -203,25 +200,32 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* Right: visuals */}
+        {/* Right: visuals — stats first on desktop to align with headline */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.25, ease }}
-          className="flex w-full flex-col gap-4 lg:flex-1"
+          className="flex w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
         >
-          <Image
-            src="/images/team-group.png"
-            alt="The HomeUP team, five agents giving thumbs up"
-            width={920}
-            height={614}
-            priority
-            className="w-full object-contain"
-            sizes="(max-width: 1024px) 100vw, 56vw"
-          />
+          <div className="order-2 w-full lg:order-1">
+            <StatsCard />
+          </div>
 
-          <StatsCard />
-          <SocialProofRow />
+          <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
+            <Image
+              src="/images/team-group.png"
+              alt="The HOMEUP team, five agents giving thumbs up"
+              width={920}
+              height={614}
+              priority
+              className="block w-full object-contain object-top"
+              sizes="(max-width: 1024px) 100vw, 56vw"
+            />
+          </div>
+
+          <div className="order-3">
+            <SocialProofRow />
+          </div>
         </motion.div>
 
       </div>

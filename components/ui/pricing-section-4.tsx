@@ -32,7 +32,7 @@ function ListingPlatformIcons() {
       <Image src="/images/portals/99co.png" alt="99.co" width={14} height={14} className={listingIconClass} />
       <Image
         src="/images/homeup-logo-icon.svg"
-        alt="HomeUP"
+        alt="HOMEUP"
         width={14}
         height={14}
         className={listingIconClass}
@@ -126,7 +126,7 @@ export default function PricingSection4() {
           <h2 className="section-title">Plans that work for you</h2>
           <p className="section-lead">
             One flat fee. No surprise commissions. Typical agents charge around 2%
-            commission, which varies by agent and property value. HomeUP keeps it
+            commission, which varies by agent and property value. HOMEUP keeps it
             simple with a fixed fee and the same full service.
           </p>
         </FadeInUp>

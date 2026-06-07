@@ -1,4 +1,4 @@
-# HomeUP Design System — Claude Code Skill
+# HOMEUP Design System — Claude Code Skill
 **Fixed-Fee Property Agents · Singapore**
 
 This skill governs all frontend work on `homeup.sg`. Before writing any component, layout, or style, internalise these tokens and rules. Do not deviate from them without explicit instruction.
@@ -144,7 +144,7 @@ All spacing values are multiples of 8. The base unit is `--space-2` = 8px.
 
 ## 3. Color Tokens
 
-The palette is built on HomeUP's brand green (#0e853e) with warm neutrals and a deliberate amber accent. Every color used in the UI must come from these tokens.
+The palette is built on HOMEUP's brand green (#0e853e) with warm neutrals and a deliberate amber accent. Every color used in the UI must come from these tokens.
 
 ```css
 :root {
@@ -758,7 +758,7 @@ These are **hard prohibitions**. Violating them makes the site look like every o
 
 ### ✅ Instead, do this
 
-| Generic → | HomeUP version |
+| Generic → | HOMEUP version |
 |---|---|
 | Floating blob backgrounds | Subtle grain texture on `--bg-raised` sections; a single editorial image as section anchor |
 | "3 equal icon cards" benefit section | 2-column editorial layout: large typographic number + benefit text, staggered vertically |

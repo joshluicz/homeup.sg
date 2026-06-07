@@ -64,7 +64,7 @@ export function Footer() {
       </div>
       <div className="border-t border-neutral-800">
         <div className="container-page py-6 text-xs leading-relaxed text-neutral-400">
-          © 2026 HomeUP. All Rights Reserved. C &amp; H Properties Pte Ltd (CEA:
+          © 2026 HOMEUP. All Rights Reserved. C &amp; H Properties Pte Ltd (CEA:
           L3007139C)
         </div>
       </div>

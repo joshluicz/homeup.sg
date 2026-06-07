@@ -4,9 +4,9 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | HomeUP",
+  title: "Privacy Policy | HOMEUP",
   description:
-    "How HomeUP (Haus Plus Pte. Ltd.) collects, uses, discloses, and protects your personal data in accordance with Singapore's Personal Data Protection Act (PDPA).",
+    "How HOMEUP (Haus Plus Pte. Ltd.) collects, uses, discloses, and protects your personal data in accordance with Singapore's Personal Data Protection Act (PDPA).",
 };
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-neutral-600">
             This Privacy Policy / Data Protection Notice (<strong>&ldquo;Notice&rdquo;</strong>)
-            sets out the basis on which Haus Plus Pte. Ltd. (<strong>&ldquo;HomeUP&rdquo;</strong>,{" "}
+            sets out the basis on which Haus Plus Pte. Ltd. (<strong>&ldquo;HOMEUP&rdquo;</strong>,{" "}
             <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong>, or{" "}
             <strong>&ldquo;our&rdquo;</strong>) may collect, use, disclose or otherwise process
             personal data of individuals in accordance with the Personal Data Protection Act 2012

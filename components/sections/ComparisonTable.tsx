@@ -36,19 +36,19 @@ const whatsappUrl = "https://wa.me/6580877015";
 export function ComparisonTable() {
   return (
     <section
-      aria-label="HomeUP versus typical property agents"
+      aria-label="HOMEUP versus typical property agents"
       className="section-padding"
       id="comparison"
     >
       <div className="container-page">
         <FadeInUp className="section-header">
-          <Eyebrow>HomeUP vs Typical Property Agents</Eyebrow>
-          <h2 className="section-title">HomeUP vs Typical Property Agents</h2>
+          <Eyebrow>HOMEUP vs Typical Property Agents</Eyebrow>
+          <h2 className="section-title">HOMEUP vs Typical Property Agents</h2>
           <p className="section-lead">
             Selling a home isn&#39;t just about listing it. It&#39;s about
             visibility, follow-through, clear planning, and working with
             fixed-fee property agents in Singapore who stay committed from start
-            to finish. HomeUP is built to deliver strong outcomes and real
+            to finish. HOMEUP is built to deliver strong outcomes and real
             value. Without inflated commissions, pressure tactics, or guesswork.
           </p>
         </FadeInUp>

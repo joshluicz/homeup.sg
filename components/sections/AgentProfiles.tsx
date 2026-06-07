@@ -38,13 +38,13 @@ const agents = [
 
 export function AgentProfiles() {
   return (
-    <section aria-label="HomeUP agent profiles" className="section-padding bg-neutral-50" id="agents">
+    <section aria-label="HOMEUP agent profiles" className="section-padding bg-neutral-50" id="agents">
       <div className="container-page">
         <FadeInUp className="section-header">
           <Eyebrow>The Team</Eyebrow>
           <h2 className="section-title">Advisors with perspective,<br />not sales targets</h2>
           <p className="section-lead">
-            HomeUP advisors combine deep transaction experience as homeowners
+            HOMEUP advisors combine deep transaction experience as homeowners
             and investors themselves, bringing grounded, practical guidance
             across upgrades, timing decisions, and long-term planning.
           </p>
@@ -58,7 +58,7 @@ export function AgentProfiles() {
                 <div className="relative mx-auto mb-4 h-28 w-28">
                   <Image
                     src={agent.photo}
-                    alt={`${agent.name}, HomeUP property advisor`}
+                    alt={`${agent.name}, HOMEUP property advisor`}
                     width={112}
                     height={112}
                     className="h-full w-full rounded-full border-2 border-neutral-200 object-cover object-top shadow-sm"

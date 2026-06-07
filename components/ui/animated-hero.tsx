@@ -61,7 +61,7 @@ function AnimatedHero() {
             </h1>
 
             <p className="max-w-2xl text-center text-lg leading-relaxed tracking-tight text-neutral-500 md:text-xl">
-              HomeUP charges a fixed fee for the same full-service experience.
+              HOMEUP charges a fixed fee for the same full-service experience.
               Most Singapore homeowners save $10,000–$70,000 by switching from
               a 2% commission agent.
             </p>

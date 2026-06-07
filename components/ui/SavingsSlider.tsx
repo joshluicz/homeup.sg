@@ -68,7 +68,7 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
         </h3>
         <p className="mt-1 text-sm text-neutral-500">
           {isBuy
-            ? "Select the property type you're buying to see your transparent HomeUP fee."
+            ? "Select the property type you're buying to see your transparent HOMEUP fee."
             : "Select your property type and enter its value to see your exact savings."}
         </p>
       </div>
@@ -144,7 +144,7 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
           <div className="mt-7">
             <div className="flex flex-col items-center rounded-xl border border-primary-200 bg-primary-50 p-6 text-center">
               <p className="text-xs font-medium uppercase tracking-wider text-primary-600">
-                Your HomeUP buying fee
+                Your HOMEUP buying fee
               </p>
               <p className="mt-2 font-display font-bold tracking-tight text-primary-600"
                  style={{ fontSize: "clamp(1.5rem, 5vw, 2.25rem)" }}>
@@ -158,10 +158,10 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
         ) : (
           /* ── Sell mode: three-column comparison ── */
           <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {/* HomeUP fee */}
+            {/* HOMEUP fee */}
             <div className="flex flex-col items-center rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
               <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
-                HomeUP fee
+                HOMEUP fee
               </p>
               <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-neutral-900"
                  style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
@@ -191,15 +191,15 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
                  style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
                 S$<NumberFlow value={Math.max(0, savings)} format={{ style: "decimal" }} />
               </p>
-              <p className="mt-1 text-xs text-primary-400">with HomeUP</p>
+              <p className="mt-1 text-xs text-primary-400">with HOMEUP</p>
             </div>
           </div>
         )}
 
         <p className="mt-5 text-center text-xs text-neutral-400">
           {isBuy
-            ? "Buyer representation fees shown are indicative. GST applicable on HomeUP fees."
-            : "Calculation uses a 2% agent commission. Actual savings vary by negotiated rate. GST applicable on HomeUP fees."}
+            ? "Buyer representation fees shown are indicative. GST applicable on HOMEUP fees."
+            : "Calculation uses a 2% agent commission. Actual savings vary by negotiated rate. GST applicable on HOMEUP fees."}
         </p>
       </div>
     </div>

@@ -6,7 +6,7 @@ const whatsappUrl = "https://wa.me/6580877015";
 
 export function CtaBanner() {
   return (
-    <section aria-label="Schedule a HomeUP planning conversation" className="bg-neutral-900 py-12 sm:py-16 lg:py-20">
+    <section aria-label="Schedule a HOMEUP planning conversation" className="bg-neutral-900 py-12 sm:py-16 lg:py-20">
       <div className="container-page text-center">
         <FadeInUp>
           <div className="mx-auto max-w-3xl">

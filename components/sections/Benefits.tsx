@@ -46,10 +46,10 @@ const benefits = [
 
 export function Benefits() {
   return (
-    <section aria-label="Why homeowners choose HomeUP" className="section-padding bg-neutral-100">
+    <section aria-label="Why homeowners choose HOMEUP" className="section-padding bg-neutral-100">
       <div className="container-page">
         <FadeInUp className="section-header">
-          <Eyebrow>Why Homeowners Choose HomeUP</Eyebrow>
+          <Eyebrow>Why Homeowners Choose HOMEUP</Eyebrow>
           <h2 className="section-title">
             Designed for Homeowners Who Value Clarity and Coordinated Planning
           </h2>

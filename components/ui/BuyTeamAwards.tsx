@@ -20,7 +20,7 @@ export const BUY_TEAM_AWARDS: TeamAward[] = [
     highlight: "Agency Best",
   },
   {
-    source: "HomeUP",
+    source: "HOMEUP",
     title: "$200M+ Real Estate Transacted",
     highlight: "Singapore",
   },
@@ -65,7 +65,7 @@ export function BuyTeamAwards({
         className={["w-full bg-[#0f1629] py-[clamp(0.75rem,2.5vw,1.25rem)]", className]
           .filter(Boolean)
           .join(" ")}
-        aria-label="HomeUP buying team awards and credentials"
+        aria-label="HOMEUP buying team awards and credentials"
       >
         <div className="grid w-full grid-cols-2 items-center gap-x-[clamp(0.25rem,1.5vw,1rem)] gap-y-[clamp(0.75rem,3vw,1.25rem)] px-[clamp(0.375rem,2vw,1.5rem)] sm:grid-cols-4">
           {BUY_TEAM_AWARDS.map((award) => (
@@ -85,7 +85,7 @@ export function BuyTeamAwards({
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label="HomeUP buying team awards and credentials"
+      aria-label="HOMEUP buying team awards and credentials"
     >
       <div className="grid grid-cols-2 gap-x-2 gap-y-5 sm:gap-x-4 lg:flex lg:flex-nowrap lg:items-center lg:justify-center lg:gap-y-4">
         {BUY_TEAM_AWARDS.map((award) => (
