@@ -85,7 +85,7 @@ export function BuyPricing() {
       <div className="container-page">
         <FadeInUp className="section-header mb-8 sm:mb-12">
           <Eyebrow>Buying Services</Eyebrow>
-          <h2 className="section-title">Support that fits your situation</h2>
+          <h2 className="section-title">What buying support does HomeUP offer?</h2>
           <p className="section-lead">
             Every buyer is different. Whether you need guidance on a single purchase, a
             concurrent sell-and-buy, or full end-to-end representation, we tailor the
@@ -112,7 +112,7 @@ export function BuyPricing() {
 
         <FadeInUp className="section-header mb-8 mt-12 sm:mb-12 sm:mt-16 lg:mt-20">
           <Eyebrow>Buying Packages</Eyebrow>
-          <h2 className="section-title">Transparent fees for buyers</h2>
+          <h2 className="section-title">How much does it cost to buy property with HomeUP?</h2>
           <p className="section-lead">
             Clear, upfront pricing, with complimentary representation for condo and
             landed purchases.

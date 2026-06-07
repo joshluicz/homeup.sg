@@ -17,10 +17,52 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
+const BASE_URL = "https://lp.homeup.sg";
+const OG_IMAGE = `${BASE_URL}/images/team-group.png`;
+
 export const metadata: Metadata = {
-  title: "Fixed-Fee Property Agents in Singapore | HomeUP",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "Fixed-Fee Property Agents Singapore | HomeUP",
+    template: "%s | HomeUP",
+  },
   description:
-    "HomeUP helps Singapore homeowners sell faster and upgrade smarter using a proven fixed commission system designed for today's market.",
+    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by 5 CEA-licensed agents.",
+  keywords: [
+    "fixed fee property agent Singapore",
+    "sell HDB Singapore",
+    "property commission Singapore",
+    "fixed commission agent",
+    "HomeUP Singapore",
+  ],
+  openGraph: {
+    type: "website",
+    locale: "en_SG",
+    siteName: "HomeUP",
+    title: "Fixed-Fee Property Agents Singapore | HomeUP",
+    description:
+      "Sell your Singapore home for more. HomeUP charges a flat fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed. 5 CEA-licensed agents.",
+    images: [
+      {
+        url: OG_IMAGE,
+        width: 920,
+        height: 614,
+        alt: "The HomeUP team — 5 CEA-licensed property agents in Singapore",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fixed-Fee Property Agents Singapore | HomeUP",
+    description:
+      "Sell your Singapore home for more. Fixed fee from $1,999. 1,000+ transactions closed.",
+    images: [OG_IMAGE],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
 };
 
 export default function RootLayout({
