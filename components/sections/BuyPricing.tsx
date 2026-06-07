@@ -23,7 +23,7 @@ const plans = [
     theme: "blue" as const,
     price: "$1,999",
     description: "Full guidance through grants, financing and the resale process for your next flat.",
-    buttonText: "Connect with HDB Specialist",
+    buttonText: "Connect with HOMEUP agent",
     includes: ["Affordability & grant planning", "Financing guidance", "Resale procedure support", "Negotiation & OTP"],
   },
   {
@@ -32,7 +32,7 @@ const plans = [
     theme: "green" as const,
     price: "Complimentary",
     description: "Market insights, project comparisons and negotiation support, at no cost to you.",
-    buttonText: "Connect with Condo Specialist",
+    buttonText: "Connect with HOMEUP agent",
     includes: ["Market & project comparisons", "Unbiased shortlisting", "Viewing coordination", "Negotiation support"],
   },
   {
@@ -41,7 +41,7 @@ const plans = [
     theme: "amber" as const,
     price: "Complimentary",
     description: "End-to-end representation for landed purchases, fully covered.",
-    buttonText: "Connect with Landed Specialist",
+    buttonText: "Connect with HOMEUP agent",
     includes: ["Tenure & zoning checks", "Valuation guidance", "Negotiation support", "Documentation"],
   },
 ];
@@ -65,7 +65,7 @@ const themeStyles = {
     price: "text-primary-700",
     check: "text-primary-600",
     cta: "bg-primary-600 text-white hover:bg-primary-700",
-    shadow: "shadow-[0_4px_32px_rgba(14,133,62,0.15)]",
+    shadow: "shadow-[0_4px_32px_rgba(0,154,68,0.15)]",
   },
   amber: {
     topBar: "bg-amber-500",

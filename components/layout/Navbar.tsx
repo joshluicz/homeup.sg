@@ -47,8 +47,11 @@ export function Navbar() {
           className="border border-transparent backdrop-blur-md"
         >
           <div className="container-page flex items-center justify-between py-4">
-            <Link href="/" onClick={() => setIsOpen(false)}>
-              <HomeUpLogo imageClassName="h-7 w-7" />
+            <Link href="/" onClick={() => setIsOpen(false)} className="shrink-0">
+              <HomeUpLogo
+                variant="wordmark"
+                imageClassName="h-12 w-auto sm:h-14 lg:h-16"
+              />
             </Link>
 
             {/* Desktop nav */}

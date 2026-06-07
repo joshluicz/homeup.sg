@@ -11,9 +11,9 @@ import { SavingsSlider } from "@/components/ui/SavingsSlider";
 const WHATSAPP = "https://wa.me/6580877015";
 
 const PACKAGE_FEATURES = [
-  { id: "consultation", label: "Consultation" },
+  { id: "consultation", label: "Full agent services" },
   { id: "listing", label: "List on" },
-  { id: "documentation", label: "Full documentation" },
+  { id: "documentation", label: "Full documentation (e.g. OTP)" },
 ] as const;
 
 const listingIconClass = "h-3.5 w-3.5 shrink-0 rounded-sm object-contain";
@@ -31,7 +31,7 @@ function ListingPlatformIcons() {
       <Image src="/images/portals/srx.png" alt="SRX" width={14} height={14} className={listingIconClass} />
       <Image src="/images/portals/99co.png" alt="99.co" width={14} height={14} className={listingIconClass} />
       <Image
-        src="/images/homeup-logo.png"
+        src="/images/homeup-logo-icon.svg"
         alt="HomeUP"
         width={14}
         height={14}
@@ -60,7 +60,7 @@ const plans = [
     theme: "blue" as const,
     price: 1999,
     typicalPrice: 10000,
-    buttonText: "Connect with HDB Specialist",
+    buttonText: "Connect with HOMEUP agent",
   },
   {
     name: "Condo Seller",
@@ -68,7 +68,7 @@ const plans = [
     theme: "green" as const,
     price: 4999,
     typicalPrice: 24000,
-    buttonText: "Connect with Condo Specialist",
+    buttonText: "Connect with HOMEUP agent",
   },
   {
     name: "Landed Seller",
@@ -76,7 +76,7 @@ const plans = [
     theme: "amber" as const,
     price: 9999,
     typicalPrice: 60000,
-    buttonText: "Connect with Landed Specialist",
+    buttonText: "Connect with HOMEUP agent",
   },
 ];
 
@@ -99,7 +99,7 @@ const themeStyles = {
     price: "text-primary-700",
     check: "text-primary-600",
     cta: "bg-primary-600 text-white hover:bg-primary-700",
-    shadow: "shadow-[0_4px_32px_rgba(14,133,62,0.15)]",
+    shadow: "shadow-[0_4px_32px_rgba(0,154,68,0.15)]",
   },
   amber: {
     topBar: "bg-amber-500",

@@ -18,10 +18,7 @@ export function Footer() {
       <div className="container-page grid gap-10 py-16 lg:grid-cols-3">
         <div>
           <Link href="/">
-            <HomeUpLogo
-              imageClassName="h-10 w-10"
-              textClassName="font-display text-3xl font-bold tracking-tight text-primary-500"
-            />
+            <HomeUpLogo variant="wordmark-light" />
           </Link>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-neutral-300">
             More Value. Less Guesswork. Better Decisions.
