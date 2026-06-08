@@ -1,9 +1,22 @@
-name: Build & Deploy to homeup.sg
+name: Build & Deploy LP (Static FTP)
 
 on:
   push:
     branches:
       - master
+    paths:
+      - "app/(public)/**"
+      - "app/layout.tsx"
+      - "app/globals.css"
+      - "app/robots.ts"
+      - "app/sitemap.ts"
+      - "components/**"
+      - "public/**"
+      - "tailwind.config.ts"
+      - "postcss.config.js"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy.yml"
 
 jobs:
   deploy:
@@ -24,6 +37,8 @@ jobs:
 
       - name: Build static export
         run: npm run build
+        env:
+          STATIC_EXPORT: "true"
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

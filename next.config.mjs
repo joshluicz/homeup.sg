@@ -1,12 +1,18 @@
 /** @type {import('next').NextConfig} */
+const isStaticExport = process.env.STATIC_EXPORT === "true";
+
 const nextConfig = {
-  output: "export",
+  ...(isStaticExport ? { output: "export" } : {}),
   images: {
-    unoptimized: true,
+    unoptimized: isStaticExport,
     remotePatterns: [
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
       },
     ],
   },

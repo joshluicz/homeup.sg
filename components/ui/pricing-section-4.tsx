@@ -126,7 +126,7 @@ export default function PricingSection4() {
           <h2 className="section-title">Plans that work for you</h2>
           <p className="section-lead">
             One flat fee. No surprise commissions. Typical agents charge around 2%
-            commission, which varies by agent and property value. HOMEUP keeps it
+            commission. HOMEUP keeps it
             simple with a fixed fee and the same full service.
           </p>
         </FadeInUp>

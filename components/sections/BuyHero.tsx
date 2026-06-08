@@ -28,7 +28,7 @@ const HERO_IMAGE =
 
 export function BuyHero() {
   return (
-    <section aria-label="Buying with HOMEUP" className="bg-white pb-6 sm:pb-8">
+    <section aria-label="Buying with HomeUP" className="bg-white pb-6 sm:pb-8">
       <div className="container-page pt-8 sm:pt-12 lg:pt-16">
         <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
           {/* Copy */}
@@ -63,7 +63,7 @@ export function BuyHero() {
               variants={fade}
               className="mt-3 max-w-md text-sm font-normal leading-relaxed text-neutral-600"
             >
-              From your first HDB to a condo upgrade or new launch, HOMEUP guides
+              From your first HDB to a condo upgrade or new launch, HomeUP guides
               every stage: financing, shortlisting, negotiation and timing your
               next move, so you buy with confidence.
             </motion.p>
@@ -132,7 +132,7 @@ export function BuyHero() {
                   className="h-10 w-10 shrink-0 rounded-full border border-neutral-200 object-cover object-top sm:h-11 sm:w-11"
                 />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-neutral-900 sm:text-sm">HOMEUP Buying Team</p>
+                  <p className="text-xs font-bold text-neutral-900 sm:text-sm">HomeUP Buying Team</p>
                   <p className="text-xs font-normal text-neutral-500 sm:text-sm">
                     Yeo Tong Boon · Senior Advisor
                   </p>

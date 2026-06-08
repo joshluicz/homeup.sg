@@ -173,7 +173,7 @@ export function Hero() {
             custom={0.08} initial="hidden" animate="show" variants={fade}
             className="mt-3 text-sm font-medium leading-normal text-neutral-500 [font-feature-settings:'liga'_off,'calt'_off]"
           >
-            Your family fixed-fee agent.
+            Fixed Fee Agents | Dedicated to Families
           </motion.p>
 
           <motion.p
@@ -181,7 +181,7 @@ export function Hero() {
             className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
           >
             Most Singapore homeowners give away $10,000–$70,000 in commission.
-            HOMEUP charges a fixed fee for the same full service.
+            HomeUP charges a fixed fee for the same full service.
           </motion.p>
 
           <motion.div
@@ -214,7 +214,7 @@ export function Hero() {
           <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
             <Image
               src="/images/team-group.png"
-              alt="The HOMEUP team, five agents giving thumbs up"
+              alt="The HomeUP team — 5 CEA-licensed property agents in Singapore"
               width={920}
               height={614}
               priority

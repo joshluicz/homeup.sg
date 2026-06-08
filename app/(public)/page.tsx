@@ -29,9 +29,25 @@ const organizationSchema = {
     url: "https://lp.homeup.sg/images/homeup-logo-wordmark.png",
   },
   description:
-    "HomeUP is a Singapore fixed-fee property agency offering full-service property sales and purchases at a transparent flat fee. HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999. Over 1,000 transactions closed by 5 CEA-licensed agents under C & H Properties (CEA L3007139C).",
+    "HomeUP is a Singapore fixed-fee property agency offering full-service property sales and purchases at a transparent flat fee. HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999. Over 1,000 transactions closed by CEA-licensed agents under C & H Properties (CEA L3007139C).",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: "125A Lor 2 Toa Payoh, #02-138",
+    addressLocality: "Singapore",
+    postalCode: "311125",
+    addressCountry: "SG",
+  },
   areaServed: { "@type": "Country", name: "Singapore" },
   telephone: "+6580877015",
+  openingHoursSpecification: {
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: [
+      "Monday", "Tuesday", "Wednesday", "Thursday",
+      "Friday", "Saturday", "Sunday",
+    ],
+    opens: "09:00",
+    closes: "21:00",
+  },
   contactPoint: {
     "@type": "ContactPoint",
     telephone: "+6580877015",
@@ -135,6 +151,65 @@ const faqSchema = {
         text: "HomeUP lists properties on Singapore's major property portals — PropertyGuru, SRX, and 99.co — as part of the fixed-fee package, ensuring maximum buyer visibility for your property.",
       },
     },
+    {
+      "@type": "Question",
+      name: "How long does it take to sell a property with HomeUP?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "HomeUP uses a structured 3-month exclusive engagement period. Most properties are listed within days of signing up, and average time-to-offer varies by property type and market conditions. HomeUP's coordinated marketing across 8 platforms is designed to generate qualified buyer interest as quickly as possible.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What is the HomeUP selling process?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "HomeUP follows a clear 4-step process: (1) Planning consultation to review your financial position and pricing strategy; (2) Listing and multi-platform marketing across PropertyGuru, SRX, 99.co, and social media; (3) Coordinated viewings and offer management; (4) Documentation, negotiation, and completion. A fixed fee applies with no hidden charges.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Is HomeUP the same as a traditional property agent in Singapore?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "HomeUP offers the same full service as a traditional property agent — listing, viewings, negotiation, and documentation — but charges a transparent fixed fee instead of a percentage commission. This typically saves Singapore homeowners $10,000 to $70,000 per transaction compared to the standard 1–2% commission model.",
+      },
+    },
+  ],
+};
+
+const howToSchema = {
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  name: "How to sell your property with HomeUP",
+  description:
+    "HomeUP's transparent 4-step process for selling your Singapore property at a fixed fee — no percentage commission, no hidden charges.",
+  totalTime: "P3M",
+  step: [
+    {
+      "@type": "HowToStep",
+      position: 1,
+      name: "Book a free planning consultation",
+      text: "Speak with a HomeUP advisor to review your financial position, outstanding CPF, estimated net proceeds, and selling timeline. This session is free and obligation-free.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 2,
+      name: "List and market your property",
+      text: "HomeUP lists your property on Singapore's major portals — PropertyGuru, SRX, 99.co, and HomeUP.sg — plus social media channels including Instagram, TikTok, Facebook, and YouTube for maximum buyer reach.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 3,
+      name: "Manage viewings and evaluate offers",
+      text: "Your dedicated HomeUP agent coordinates all viewings, handles buyer enquiries, and presents offers with a clear assessment of terms, timing, and net proceeds.",
+    },
+    {
+      "@type": "HowToStep",
+      position: 4,
+      name: "Complete the sale and documentation",
+      text: "HomeUP handles all sales documentation — OTP, contract, and HDB submission where applicable — through to a smooth handover. Your fixed fee is charged on completion with no additional charges.",
+    },
   ],
 };
 
@@ -159,6 +234,10 @@ export default function Home() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }}
       />
       <Navbar />
       <main>

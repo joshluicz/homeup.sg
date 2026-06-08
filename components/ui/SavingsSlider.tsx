@@ -50,45 +50,53 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
 
   const homeupFee     = FEES[propertyType].fee;
   const complimentary = FEES[propertyType].complimentary ?? false;
-  // Buyer's agent fee for HDB is typically 1%; seller is typically 2%
   const typicalRate   = isBuy ? 0.01 : 0.02;
   const typicalFee    = Math.round(propertyValue * typicalRate);
   const savings       = typicalFee - homeupFee;
   const pct           = ((propertyValue - MIN) / (MAX - MIN)) * 100;
+  const savingsPct    = typicalFee > 0 ? Math.round((Math.max(0, savings) / typicalFee) * 100) : 0;
 
   return (
-    <div className={["overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm", className].filter(Boolean).join(" ")}>
-      {/* Top band */}
-      <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-4 text-center sm:px-8 sm:py-5">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
-          {isBuy ? "Buying Fee Calculator" : "Savings Calculator"}
-        </p>
-        <h3 className="mt-1 font-display text-xl font-bold text-neutral-900 sm:text-2xl">
-          {isBuy ? "What will it cost to buy?" : "How much will you save?"}
-        </h3>
-        <p className="mt-1 text-sm text-neutral-500">
-          {isBuy
-            ? "Select the property type you're buying to see your transparent HOMEUP fee."
-            : "Select your property type and enter its value to see your exact savings."}
-        </p>
+    <div className={["overflow-hidden rounded-3xl ring-1 ring-black/[0.06] shadow-2xl shadow-black/[0.08]", className].filter(Boolean).join(" ")}>
+
+      {/* ── Dark header ── */}
+      <div className="relative overflow-hidden bg-neutral-900 px-6 py-8 sm:px-10 sm:py-10">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary-600/20 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-primary-600/12 blur-2xl" aria-hidden="true" />
+
+        <div className="relative z-10">
+          <span className="inline-flex items-center rounded-full bg-primary-600/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary-400 ring-1 ring-primary-500/30">
+            {isBuy ? "Buying Fee Calculator" : "Savings Calculator"}
+          </span>
+          <h3 className="mt-4 font-display text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl">
+            {isBuy ? "What will it cost to buy?" : "How much will you save?"}
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-400">
+            {isBuy
+              ? "Select the property type you're buying to see your transparent HOMEUP fee."
+              : "Select your property type and enter its value to see your exact savings."}
+          </p>
+        </div>
       </div>
 
-      <div className="px-4 py-5 sm:px-8 sm:py-8">
-        {/* ── Property type toggle ── */}
-        <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-neutral-400">
+      {/* ── Body ── */}
+      <div className="bg-white px-6 py-8 sm:px-10 sm:py-9">
+
+        {/* Property type toggle — segmented control */}
+        <div className="mb-7">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
             {isBuy ? "I am buying a…" : "I am selling a…"}
           </p>
-          <div className="flex gap-1.5 sm:gap-2">
+          <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">
             {TYPES.map((t) => (
               <button
                 key={t}
                 onClick={() => setPropertyType(t)}
                 className={[
-                  "flex-1 rounded-xl border px-2 py-2 text-xs font-semibold transition-all sm:px-3 sm:py-2.5 sm:text-sm",
+                  "flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1",
                   propertyType === t
-                    ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50",
+                    ? "bg-white text-neutral-900 shadow shadow-black/10"
+                    : "text-neutral-500 hover:text-neutral-700",
                 ].join(" ")}
               >
                 {t}
@@ -97,11 +105,11 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
           </div>
         </div>
 
-        {/* ── Property value label + type-in input ── */}
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <span className="text-sm font-medium text-neutral-600">Property value</span>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-neutral-500">S$</span>
+        {/* Property value label + input */}
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <span className="text-sm font-medium text-neutral-500">Property value</span>
+          <div className="flex items-center gap-1.5 rounded-xl bg-neutral-100 px-3 py-2 transition-shadow focus-within:ring-2 focus-within:ring-primary-500">
+            <span className="text-sm font-semibold text-neutral-400">S$</span>
             <input
               type="number"
               min={MIN}
@@ -116,13 +124,13 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
                 const raw = Number(e.target.value);
                 setPropertyValue(clamp(isNaN(raw) ? MIN : raw));
               }}
-              className="w-full rounded-xl border border-neutral-200 px-4 py-1.5 text-right font-display text-sm font-bold text-neutral-900 transition-colors focus:border-primary-500 focus:outline-none sm:w-36"
+              className="w-28 bg-transparent text-right font-display text-sm font-bold text-neutral-900 focus:outline-none"
               aria-label="Property value in SGD"
             />
           </div>
         </div>
 
-        {/* ── Range slider ── */}
+        {/* Range slider */}
         <input
           type="range"
           min={MIN}
@@ -134,66 +142,83 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
           style={{ "--slider-pct": `${pct}%` } as React.CSSProperties}
           aria-label="Property value slider"
         />
-        <div className="mt-2 flex justify-between text-xs text-neutral-400">
+        <div className="mt-2.5 flex justify-between text-xs font-medium text-neutral-400">
           <span>{formatSGD(MIN)}</span>
           <span>{formatSGD(MAX)}</span>
         </div>
 
         {isBuy && complimentary ? (
-          /* ── Buy mode (Condo / Landed): complimentary ── */
-          <div className="mt-7">
-            <div className="flex flex-col items-center rounded-xl border border-primary-200 bg-primary-50 p-6 text-center">
-              <p className="text-xs font-medium uppercase tracking-wider text-primary-600">
-                Your HOMEUP buying fee
-              </p>
-              <p className="mt-2 font-display font-bold tracking-tight text-primary-600"
-                 style={{ fontSize: "clamp(1.5rem, 5vw, 2.25rem)" }}>
-                Complimentary
-              </p>
-              <p className="mt-1 text-xs text-primary-400">
-                {propertyType} purchase · fully covered
-              </p>
-            </div>
+          /* ── Complimentary (Condo / Landed buy) ── */
+          <div className="mt-8 overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 p-8 text-center shadow-lg shadow-primary-600/25">
+            <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary-100 ring-1 ring-white/20">
+              Your HOMEUP buying fee
+            </span>
+            <p
+              className="mt-4 font-display font-black tracking-tight text-white"
+              style={{ fontSize: "clamp(2rem, 7vw, 3rem)" }}
+            >
+              Complimentary
+            </p>
+            <p className="mt-2 text-sm text-primary-200">
+              {propertyType} purchase · fully covered by HOMEUP
+            </p>
           </div>
         ) : (
-          /* ── Sell mode: three-column comparison ── */
-          <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {/* HOMEUP fee */}
-            <div className="flex flex-col items-center rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
-              <p className="text-xs font-medium uppercase tracking-wider text-neutral-500">
-                HOMEUP fee
-              </p>
-              <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-neutral-900"
-                 style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
-                S$<NumberFlow value={homeupFee} format={{ style: "decimal" }} />
-              </p>
-              <p className="mt-1 text-xs text-neutral-400">fixed · {propertyType}</p>
+          /* ── Comparison (sell mode or HDB buy) ── */
+          <>
+            {/* Two supporting cards */}
+            <div className="mt-8 grid grid-cols-2 gap-3">
+              {/* HOMEUP fee */}
+              <div className="flex flex-col gap-1 rounded-2xl border border-neutral-100 bg-neutral-50 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">HOMEUP fee</p>
+                <p className="font-display text-xl font-bold text-neutral-900 sm:text-2xl">
+                  S$<NumberFlow value={homeupFee} format={{ style: "decimal" }} />
+                </p>
+                <p className="text-xs text-neutral-400">fixed · {propertyType}</p>
+              </div>
+
+              {/* Typical commission */}
+              <div className="flex flex-col gap-1 rounded-2xl border border-red-100 bg-red-50/60 p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-red-400">
+                  Typical {isBuy ? "1%" : "2%"}
+                </p>
+                <p className="font-display text-xl font-bold text-red-400 sm:text-2xl">
+                  S$<NumberFlow value={typicalFee} format={{ style: "decimal" }} />
+                </p>
+                <p className="text-xs text-red-300">{isBuy ? "buyer agent fee" : "commission"}</p>
+              </div>
             </div>
 
-            {/* Typical commission — faded red */}
-            <div className="flex flex-col items-center rounded-xl border border-red-100 bg-red-50 p-4 text-center opacity-60">
-              <p className="text-xs font-medium uppercase tracking-wider text-red-400">
-                Typical {isBuy ? "1%" : "2%"}
+            {/* You Save — hero card */}
+            <div className="mt-3 overflow-hidden rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 px-6 py-6 shadow-lg shadow-primary-600/20">
+              <p className="text-center text-xs font-semibold uppercase tracking-widest text-primary-200">
+                You save with HOMEUP
               </p>
-              <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-red-400"
-                 style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
-                S$<NumberFlow value={typicalFee} format={{ style: "decimal" }} />
-              </p>
-              <p className="mt-1 text-xs text-red-300">{isBuy ? "buyer agent fee" : "commission"}</p>
-            </div>
-
-            {/* Savings — green */}
-            <div className="flex flex-col items-center rounded-xl border border-primary-200 bg-primary-50 p-4 text-center">
-              <p className="text-xs font-medium uppercase tracking-wider text-primary-600">
-                You save
-              </p>
-              <p className="mt-2 flex items-baseline justify-center font-display font-bold tracking-tight text-primary-600"
-                 style={{ fontSize: "clamp(0.9rem, 4vw, 1.5rem)" }}>
+              <p
+                className="mt-2 text-center font-display font-black tracking-tight text-white"
+                style={{ fontSize: "clamp(2rem, 7vw, 3rem)" }}
+              >
                 S$<NumberFlow value={Math.max(0, savings)} format={{ style: "decimal" }} />
               </p>
-              <p className="mt-1 text-xs text-primary-400">with HOMEUP</p>
+
+              {/* Savings progress bar */}
+              <div className="mt-5 flex items-center gap-3">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-primary-800/50">
+                  <div
+                    className="h-full rounded-full bg-white/70 transition-all duration-500 ease-out"
+                    style={{ width: `${savingsPct}%` }}
+                    role="progressbar"
+                    aria-valuenow={savingsPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  />
+                </div>
+                <span className="shrink-0 text-xs font-bold tabular-nums text-primary-200">
+                  {savingsPct}% saved
+                </span>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
         <p className="mt-5 text-center text-xs text-neutral-400">
