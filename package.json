@@ -34,7 +34,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "autoprefixer": "latest",
-    "eslint": "latest",
+    "eslint": "^8",
     "eslint-config-next": "14",
     "postcss": "latest",
     "tailwindcss": "^3.4.19",
