@@ -17,7 +17,7 @@ interface ParticleButtonProps extends ButtonProps {
 function SuccessParticles({
     buttonRef,
 }: {
-    buttonRef: React.RefObject<HTMLButtonElement>;
+    buttonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return null;
