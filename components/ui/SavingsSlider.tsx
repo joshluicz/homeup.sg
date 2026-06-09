@@ -93,14 +93,16 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
             {TYPES.map((t) => (
               <ParticleButton
                 key={t}
+                variant="ghost"
+                size="sm"
                 showIcon={false}
                 successDuration={600}
                 onClick={() => setPropertyType(t)}
                 className={cn(
-                  "flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1",
+                  "h-auto min-h-0 flex-1 rounded-lg border-0 px-3 py-2.5 text-sm font-semibold shadow-none ring-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1",
                   propertyType === t
-                    ? "bg-white text-neutral-900 shadow shadow-black/10"
-                    : "text-neutral-500 hover:text-neutral-700",
+                    ? "bg-primary-600 text-white hover:bg-primary-700 hover:text-white"
+                    : "bg-transparent text-neutral-500 hover:bg-white/80 hover:text-neutral-800",
                 )}
               >
                 {t}
