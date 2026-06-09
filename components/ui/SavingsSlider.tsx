@@ -1,6 +1,8 @@
 "use client";
 import NumberFlow from "@number-flow/react";
 import { useState } from "react";
+import { ParticleButton } from "@/components/ui/particle-button";
+import { cn } from "@/lib/utils";
 
 const MIN = 300_000;
 const MAX = 6_000_000;
@@ -81,18 +83,20 @@ export function SavingsSlider({ mode = "sell", className = "mt-12" }: SavingsSli
           </p>
           <div className="flex gap-1.5 sm:gap-2">
             {TYPES.map((t) => (
-              <button
+              <ParticleButton
                 key={t}
+                showIcon={false}
+                successDuration={600}
                 onClick={() => setPropertyType(t)}
-                className={[
+                className={cn(
                   "flex-1 rounded-xl border px-2 py-2 text-xs font-semibold transition-all sm:px-3 sm:py-2.5 sm:text-sm",
                   propertyType === t
-                    ? "border-primary-600 bg-primary-600 text-white shadow-sm"
-                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50",
-                ].join(" ")}
+                    ? "border-primary-600 bg-primary-600 text-white shadow-sm hover:bg-primary-700"
+                    : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:bg-neutral-50"
+                )}
               >
                 {t}
-              </button>
+              </ParticleButton>
             ))}
           </div>
         </div>
