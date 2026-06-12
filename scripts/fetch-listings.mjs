@@ -161,11 +161,14 @@ async function fetchJSON(url) {
 
 async function fetchAllProperties() {
   const allProps = [];
-  // property-status=50 filters to only "Active" listings (excludes sold/untagged)
+  // property-status=50   → only "Active" listings (excludes sold/untagged)
+  // modified_after       → only listings updated since 2026-03-01 (~120+ recently-active ones)
+  //                        Stale entries (last touched before this date) are typically
+  //                        already sold/off-market and haven't been removed from the CMS yet.
   for (let page = 1; page <= 5; page++) {
     try {
       const batch = await fetchJSON(
-        `${BASE_API}/property?property-status=50&per_page=100&page=${page}&_fields=id,title,slug,link,featured_media`
+        `${BASE_API}/property?property-status=50&modified_after=2026-03-01T00:00:00&per_page=100&page=${page}&_fields=id,title,slug,link,featured_media`
       );
       if (!batch.length) break;
       allProps.push(...batch);
