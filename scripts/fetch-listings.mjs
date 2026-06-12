@@ -161,10 +161,11 @@ async function fetchJSON(url) {
 
 async function fetchAllProperties() {
   const allProps = [];
+  // property-status=50 filters to only "Active" listings (excludes sold/untagged)
   for (let page = 1; page <= 5; page++) {
     try {
       const batch = await fetchJSON(
-        `${BASE_API}/property?per_page=100&page=${page}&_fields=id,title,slug,link,featured_media`
+        `${BASE_API}/property?property-status=50&per_page=100&page=${page}&_fields=id,title,slug,link,featured_media`
       );
       if (!batch.length) break;
       allProps.push(...batch);

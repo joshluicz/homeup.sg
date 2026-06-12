@@ -19,8 +19,39 @@ const listingsPath = path.join(__dirname, "..", "lib", "data", "listings.ts");
 // ─── Known specific PropertyGuru listing URLs ──────────────────────────────
 // Add entries here as: "homeup-slug": "https://www.propertyguru.com.sg/listing/..."
 const KNOWN_PG_URLS = {
-  "371-bukit-batok-street-31":
-    "https://www.propertyguru.com.sg/listing/hdb-for-sale-371-bukit-batok-street-31-500165902",
+  "160-woodlands-street-13": "https://www.propertyguru.com.sg/listing/hdb-for-sale-160-woodlands-street-13-500166916",
+  "175-ang-mo-kio-avenue-4": "https://www.propertyguru.com.sg/listing/hdb-for-sale-175-ang-mo-kio-avenue-4-500150255",
+  "309-bukit-batok-street-31": "https://www.propertyguru.com.sg/listing/hdb-for-sale-309-bukit-batok-street-31-500143079",
+  "319-bukit-batok-street-33": "https://www.propertyguru.com.sg/listing/hdb-for-sale-319-bukit-batok-street-33-500030555",
+  "371-bukit-batok-street-31": "https://www.propertyguru.com.sg/listing/hdb-for-sale-371-bukit-batok-street-31-500165902",
+  "377a-hougang-street-32": "https://www.propertyguru.com.sg/listing/hdb-for-sale-377a-hougang-street-32-500139783",
+  "406-choa-chu-kang-avenue-3": "https://www.propertyguru.com.sg/listing/hdb-for-sale-406-choa-chu-kang-avenue-3-500167112",
+  "430a-yishun-avenue-11": "https://www.propertyguru.com.sg/listing/hdb-for-sale-430a-yishun-avenue-11-500160565",
+  "476a-upper-serangoon-view": "https://www.propertyguru.com.sg/listing/hdb-for-sale-476a-upper-serangoon-view-500140336",
+  "477-pasir-ris-drive-6": "https://www.propertyguru.com.sg/listing/hdb-for-sale-477-pasir-ris-drive-6-500043353",
+  "547a-segar-road": "https://www.propertyguru.com.sg/listing/hdb-for-sale-547a-segar-road-500143515",
+  "68-geylang-bahru": "https://www.propertyguru.com.sg/listing/hdb-for-sale-68-geylang-bahru-500156541",
+  "699c-hougang-street-52": "https://www.propertyguru.com.sg/listing/hdb-for-sale-699c-hougang-street-52-500167646",
+  "890a-tampines-avenue-1": "https://www.propertyguru.com.sg/listing/hdb-for-sale-890a-tampines-avenue-1-500120568",
+  "citylights": "https://www.propertyguru.com.sg/listing/for-sale-citylights-500169182",
+  "clavon": "https://www.propertyguru.com.sg/listing/for-sale-clavon-500165931",
+  "dover-parkview": "https://www.propertyguru.com.sg/listing/for-sale-dover-parkview-500164693",
+  "ecopolitan": "https://www.propertyguru.com.sg/listing/for-sale-ecopolitan-500167641",
+  "flo-residence": "https://www.propertyguru.com.sg/listing/for-sale-flo-residence-60011979",
+  "hdb-134-bedok-reservoir-road": "https://www.propertyguru.com.sg/listing/hdb-for-sale-132-bedok-reservoir-road-60216273",
+  "hdb-377b-hougang-street-32": "https://www.propertyguru.com.sg/listing/hdb-for-sale-377b-hougang-street-32-500043096",
+  "hdb-484-choa-chu-kang-ave-5": "https://www.propertyguru.com.sg/listing/hdb-for-sale-408-choa-chu-kang-avenue-3-500095518",
+  "hdb-494g-tampines-street-45": "https://www.propertyguru.com.sg/listing/hdb-for-sale-494g-tampines-street-45-500126621",
+  "hdb-643-yishun-street-61": "https://www.propertyguru.com.sg/listing/hdb-for-sale-643-yishun-street-61-500076214",
+  "jool-suites": "https://www.propertyguru.com.sg/listing/for-sale-jool-suites-500161004",
+  "piccadilly-grand": "https://www.propertyguru.com.sg/listing/for-sale-piccadilly-grand-25463680",
+  "tembusu-grand": "https://www.propertyguru.com.sg/listing/for-sale-tembusu-grand-500132236",
+  "tembusu-grand-2": "https://www.propertyguru.com.sg/listing/for-sale-tembusu-grand-500132236",
+  "tembusu-grand-3": "https://www.propertyguru.com.sg/listing/for-sale-tembusu-grand-500132236",
+  "the-tapestry": "https://www.propertyguru.com.sg/listing/for-rent-the-tapestry-500085874",
+  "the-vales": "https://www.propertyguru.com.sg/listing/for-rent-the-vales-25121733",
+  "the-waterline": "https://www.propertyguru.com.sg/listing/for-sale-the-waterline-500157257",
+  "waterbay": "https://www.propertyguru.com.sg/listing/for-rent-kingsford-waterbay-24490665",
 };
 // ──────────────────────────────────────────────────────────────────────────
 
