@@ -1,44 +1,14 @@
 "use client";
 import { useMemo, useState } from "react";
 import { BedDouble, Bath, Maximize2 } from "lucide-react";
+import Link from "next/link";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp } from "@/components/ui/motion-primitives";
+import { LISTINGS, LISTINGS_URL } from "@/lib/data/listings";
+import type { Listing } from "@/lib/data/listings";
 
-interface Listing {
-  id: number;
-  name: string;
-  price: string;
-  beds: number | null;
-  baths: number | null;
-  size: string;
-  type: "HDB" | "Condo" | "Landed";
-  isRental?: boolean;
-}
-
-const listings: Listing[] = [
-  { id: 1,  name: "68 Geylang Bahru",          price: "$438,888",    beds: 2,    baths: 1,    size: "700 sqft",   type: "HDB" },
-  { id: 2,  name: "D'Ixoras",                   price: "$1,450,000",  beds: 2,    baths: 2,    size: "840 sqft",   type: "Condo" },
-  { id: 3,  name: "The Botany at Dairy Farm",   price: "$2,398,000",  beds: 3,    baths: 2,    size: "1,033 sqft", type: "Condo" },
-  { id: 4,  name: "94 Dawson Road",             price: "$1,288,000",  beds: 3,    baths: 2,    size: "893 sqft",   type: "HDB" },
-  { id: 5,  name: "Bartley Vue",                price: "$2,299,900",  beds: null, baths: null, size: "947 sqft",   type: "Condo" },
-  { id: 6,  name: "Eight Riversuites",          price: "$2,699,000",  beds: null, baths: null, size: "1,356 sqft", type: "Condo" },
-  { id: 7,  name: "Oleander Towers",            price: "$1,899,000",  beds: 3,    baths: 3,    size: "1,151 sqft", type: "Condo" },
-  { id: 8,  name: "Arc at Tampines",            price: "$5,500 / mo", beds: 3,    baths: 3,    size: "1,679 sqft", type: "Condo", isRental: true },
-  { id: 9,  name: "Novelis @ Novena",           price: "$1,880,000",  beds: 2,    baths: 2,    size: "839 sqft",   type: "Condo" },
-  { id: 10, name: "Cairnhill Residences",       price: "$3,400,000",  beds: 3,    baths: 3,    size: "1,174 sqft", type: "Condo" },
-  { id: 11, name: "Tampines St 45",             price: "$648,000",    beds: 4,    baths: 2,    size: "1,195 sqft", type: "HDB" },
-  { id: 12, name: "Bishan St 23",               price: "$778,000",    beds: 3,    baths: 2,    size: "930 sqft",   type: "HDB" },
-  { id: 13, name: "One-North Eden",             price: "$1,780,000",  beds: 2,    baths: 2,    size: "732 sqft",   type: "Condo" },
-  { id: 14, name: "Punggol Central",            price: "$528,000",    beds: 3,    baths: 2,    size: "893 sqft",   type: "HDB" },
-  { id: 15, name: "Marine Blue",                price: "$2,180,000",  beds: 2,    baths: 2,    size: "980 sqft",   type: "Condo" },
-  { id: 16, name: "Jurong West St 61",          price: "$578,000",    beds: 4,    baths: 2,    size: "1,140 sqft", type: "HDB" },
-  { id: 17, name: "Rivière",                    price: "$3,080,000",  beds: 3,    baths: 2,    size: "1,109 sqft", type: "Condo" },
-  { id: 18, name: "Sengkang West Ave",          price: "$542,000",    beds: 3,    baths: 2,    size: "893 sqft",   type: "HDB" },
-  { id: 19, name: "Dairy Farm Residences",      price: "$1,650,000",  beds: 2,    baths: 2,    size: "764 sqft",   type: "Condo" },
-  { id: 20, name: "Bukit Timah Link",           price: "$5,200,000",  beds: 4,    baths: 3,    size: "2,400 sqft", type: "Landed" },
-];
-
-const LISTINGS_URL = "https://homeup.sg/property-listing/";
+const listings = LISTINGS;
+const TOTAL = LISTINGS.length;
 const MOBILE_PREVIEW = 6;
 
 type FilterType = "All" | "HDB" | "Condo" | "Landed";
@@ -61,42 +31,57 @@ const filterActive: Record<FilterType, string> = {
 function ListingCard({ l }: { l: Listing }) {
   return (
     <a
-      href={LISTINGS_URL}
+      href={l.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-4 transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-sm"
+      className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md"
     >
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className={`inline-flex rounded-full border px-2 py-0.5 text-sm font-medium ${typeBadge[l.type]}`}>
-          {l.type}
-        </span>
-        {l.isRental && (
-          <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-sm font-medium text-amber-700">
-            Rent
+      {/* Property photo */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={l.image}
+          alt={l.name}
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        {/* Type badge overlay */}
+        <div className="absolute left-2 top-2 flex flex-wrap gap-1">
+          <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold backdrop-blur-sm ${typeBadge[l.type]}`}>
+            {l.type}
           </span>
-        )}
+          {l.status === "For Rent" && (
+            <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 backdrop-blur-sm">
+              Rent
+            </span>
+          )}
+        </div>
       </div>
 
-      <p className="text-sm font-semibold leading-snug text-neutral-900 group-hover:text-primary-700">
-        {l.name}
-      </p>
+      {/* Card body */}
+      <div className="flex flex-col gap-1.5 p-3">
+        <p className="text-sm font-semibold leading-snug text-neutral-900 group-hover:text-primary-700">
+          {l.name}
+        </p>
 
-      <p className="font-display text-sm font-bold text-primary-600">{l.price}</p>
+        <p className="font-display text-sm font-bold text-primary-600">{l.price}</p>
 
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-        {l.beds !== null && (
-          <span className="inline-flex items-center gap-1 text-sm font-normal text-neutral-400">
-            <BedDouble className="h-3 w-3 shrink-0" />{l.beds}
-          </span>
-        )}
-        {l.baths !== null && (
-          <span className="inline-flex items-center gap-1 text-sm font-normal text-neutral-400">
-            <Bath className="h-3 w-3 shrink-0" />{l.baths}
-          </span>
-        )}
-        <span className="inline-flex items-center gap-1 text-sm font-normal text-neutral-400">
-          <Maximize2 className="h-3 w-3 shrink-0" />{l.size}
-        </span>
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          {l.beds !== null && (
+            <span className="inline-flex items-center gap-1 text-xs text-neutral-400">
+              <BedDouble className="h-3 w-3 shrink-0" />{l.beds}
+            </span>
+          )}
+          {l.baths !== null && (
+            <span className="inline-flex items-center gap-1 text-xs text-neutral-400">
+              <Bath className="h-3 w-3 shrink-0" />{l.baths}
+            </span>
+          )}
+          {l.size !== "—" && (
+            <span className="inline-flex items-center gap-1 text-xs text-neutral-400">
+              <Maximize2 className="h-3 w-3 shrink-0" />{l.size}
+            </span>
+          )}
+        </div>
       </div>
     </a>
   );
@@ -119,7 +104,7 @@ export function PropertyListings() {
         <FadeInUp className="section-header">
           <Eyebrow>Current Listings</Eyebrow>
           <h2 className="section-title">
-            More than <span className="text-primary-600">100 active listings</span> across Singapore
+            <span className="text-primary-600">{TOTAL}+ active listings</span> across Singapore
           </h2>
         </FadeInUp>
 
@@ -163,14 +148,20 @@ export function PropertyListings() {
         </div>
 
         <FadeInUp delay={0.15}>
-          <div className="mt-8 text-center">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link
+              href="/listings"
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-100"
+            >
+              Browse all listings →
+            </Link>
             <a
               href={LISTINGS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-100"
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-600 transition hover:bg-neutral-50"
             >
-              View all listings →
+              View on HOMEUP.sg ↗
             </a>
           </div>
         </FadeInUp>

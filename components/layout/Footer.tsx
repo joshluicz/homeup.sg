@@ -7,6 +7,8 @@ const quickLinks: { label: string; href: string; external?: boolean }[] = [
   { label: "Sell Condo", href: "/#pricing" },
   { label: "Sell Landed", href: "/#pricing" },
   { label: "Buy", href: "/buy" },
+  { label: "Listings", href: "/listings" },
+  { label: "Playbook", href: "/playbook" },
   { label: "About", href: "/#agents" },
   { label: "Property Listing", href: "https://homeup.sg/property-listing/", external: true },
   { label: "Privacy Policy", href: "/privacy-policy" },
