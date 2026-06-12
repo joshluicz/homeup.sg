@@ -104,7 +104,7 @@ export function PropertyListings() {
         <FadeInUp className="section-header">
           <Eyebrow>Current Listings</Eyebrow>
           <h2 className="section-title">
-            <span className="text-primary-600">{TOTAL}+ active listings</span> across Singapore
+            <span className="text-primary-600">120+ active listings</span> across Singapore
           </h2>
         </FadeInUp>
 
