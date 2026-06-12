@@ -11,6 +11,7 @@ on:
       - "app/robots.ts"
       - "app/sitemap.ts"
       - "components/**"
+      - "lib/data/**"
       - "public/**"
       - "tailwind.config.ts"
       - "postcss.config.js"
