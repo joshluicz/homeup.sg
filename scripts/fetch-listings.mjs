@@ -168,7 +168,7 @@ async function fetchAllProperties() {
   for (let page = 1; page <= 5; page++) {
     try {
       const batch = await fetchJSON(
-        `${BASE_API}/property?property-status=50&modified_after=2026-03-01T00:00:00&per_page=100&page=${page}&_fields=id,title,slug,link,featured_media`
+        `${BASE_API}/property?property-status=50&modified_after=2026-03-08T23:59:59&per_page=100&page=${page}&_fields=id,title,slug,link,featured_media`
       );
       if (!batch.length) break;
       allProps.push(...batch);
