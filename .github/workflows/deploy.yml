@@ -19,6 +19,7 @@ on:
       - "postcss.config.js"
       - "package.json"
       - "package-lock.json"
+      - "scripts/build-lp-static.mjs"
       - ".github/workflows/deploy.yml"
 
 jobs:
@@ -38,17 +39,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Remove server-only routes before static export
-        run: |
-          # Admin CMS, API routes, and middleware require a live Node.js server (Supabase, cookies).
-          # They are incompatible with output:export and are deployed separately on the CMS branch.
-          rm -rf app/api app/'(admin)'
-          rm -f middleware.ts
-
       - name: Build static export
-        run: npm run build
-        env:
-          STATIC_EXPORT: "true"
+        run: npm run build:lp
 
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5

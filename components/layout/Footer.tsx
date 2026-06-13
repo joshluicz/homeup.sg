@@ -63,7 +63,7 @@ export function Footer() {
           </h2>
           <div className="mt-4 grid gap-3 text-sm leading-relaxed text-neutral-200">
             <p>+65 8087 7015</p>
-            <p>Mon–Sun 9am–9pm</p>
+            <p>Mon to Sun, 9am to 9pm</p>
             <p>125A Lor 2 Toa Payoh #02-138</p>
           </div>
         </div>
@@ -71,7 +71,7 @@ export function Footer() {
       <div className="border-t border-neutral-800">
         <div className="container-page py-6 text-xs leading-relaxed text-neutral-400">
           © 2026 HOMEUP. All Rights Reserved. C &amp; H Properties Pte Ltd (CEA:
-          L3007139C)
+          L3007139C). Haus Plus Pte. Ltd. (UEN 202538756D).
         </div>
       </div>
     </footer>

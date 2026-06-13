@@ -4,14 +4,15 @@ import { Navbar } from "@/components/layout/Navbar";
 import { AgentProfiles } from "@/components/sections/AgentProfiles";
 import { BuyCta } from "@/components/sections/BuyCta";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { FixedFeeDefinition } from "@/components/sections/FixedFeeDefinition";
 import { Hero } from "@/components/sections/Hero";
 import { PropertyListings } from "@/components/sections/PropertyListings";
 import { SocialPanel } from "@/components/sections/SocialPanel";
+import { FAQSection } from "@/components/sections/FAQSection";
 import { Testimonials } from "@/components/sections/Testimonials";
+import { WhyCheaperTeaser } from "@/components/sections/WhyCheaperTeaser";
 import PricingSection4 from "@/components/ui/pricing-section-4";
 import { LastUpdated } from "@/components/ui/LastUpdated";
-import { HOMEPAGE_FAQ } from "@/lib/seo/homepage";
+import { HOMEPAGE_FAQ } from "@/lib/data/faqs";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   breadcrumbSchema,
@@ -55,7 +56,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <FixedFeeDefinition />
+        <WhyCheaperTeaser />
         <PricingSection4 />
         <GreenDivider />
         <Testimonials />
@@ -65,6 +66,13 @@ export default function Home() {
         <BuyCta />
         <GreenDivider />
         <AgentProfiles />
+        <GreenDivider />
+        <FAQSection
+          items={HOMEPAGE_FAQ}
+          eyebrow="Common questions"
+          title="What homeowners ask before they list with us"
+          lead="Straight answers on fees, incentives, and what you handle yourself. No textbook HDB basics."
+        />
         <SocialPanel />
         <CtaBanner />
         <LastUpdated className="pb-8" />

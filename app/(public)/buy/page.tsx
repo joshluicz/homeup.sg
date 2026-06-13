@@ -2,6 +2,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { LandingPageJsonLd } from "@/components/seo/LandingPageJsonLd";
 import { BuyLandingContent } from "@/components/sections/BuyLandingContent";
+import { LastUpdated } from "@/components/ui/LastUpdated";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
 import { BUY_FAQ_GENERAL } from "@/lib/data/faqs";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -63,6 +64,7 @@ export default function BuyPage() {
       <Navbar />
       <main className="bg-white">
         <BuyLandingContent config={config} showAwardsStrip />
+        <LastUpdated className="pb-8" />
       </main>
       <Footer />
     </>

@@ -3,6 +3,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AgentsDirectory } from "@/components/sections/AgentsDirectory";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { LastUpdated } from "@/components/ui/LastUpdated";
 import { AGENTS } from "@/lib/data/agents";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, personSchema } from "@/lib/seo/schema";
@@ -10,7 +11,7 @@ import { breadcrumbSchema, personSchema } from "@/lib/seo/schema";
 export const metadata = buildPageMetadata({
   title: "Our Agents",
   description:
-    "Meet HomeUP's CEA-licensed property advisors — experienced across HDB, condo, and landed sales and purchases in Singapore.",
+    "Meet HomeUP's CEA-licensed property advisors, experienced across HDB, condo, and landed sales and purchases in Singapore.",
   path: "/agents",
 });
 
@@ -30,6 +31,7 @@ export default function AgentsPage() {
       <main>
         <AgentsDirectory />
         <CtaBanner />
+        <LastUpdated className="pb-8" />
       </main>
       <Footer />
     </>

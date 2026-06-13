@@ -96,8 +96,11 @@ export const AGENTS: Agent[] = [
     specialties: ["HDB resale", "Senior owners", "Resale documentation"],
     social: {
       instagram: "https://www.instagram.com/edmundleesw?igsh=MXQyaWNkdDY4dTZmZg==",
+      youtube: "https://www.youtube.com/@edmundlee9189",
+      facebook: "https://facebook.com/edmund.lee.55",
       tiktok: "https://www.tiktok.com/@edmundleesiewwah?_r=1&_t=ZS-97B51ZndzSX",
     },
+    youtubeChannelHandle: "edmundlee9189",
   },
   {
     slug: "kenji-ching",
@@ -140,6 +143,7 @@ export const AGENTS: Agent[] = [
     social: {
       instagram: "https://www.instagram.com/homeup_olivia?igsh=bWZ6OGx1MGE0OGk0",
       youtube: "https://youtube.com/@homeupolivia?si=F2FV-VZvBRmaAnXe",
+      facebook: "https://www.facebook.com/share/1DmWFr81pr/?mibextid=wwXIfr",
       tiktok: "https://www.tiktok.com/@homeup_olivia?_r=1&_t=ZS-97B4y7SmVLZ",
     },
     youtubeChannelHandle: "homeupolivia",

@@ -57,6 +57,11 @@ export default function PrivacyPolicyPage() {
             of Singapore (<strong>&ldquo;PDPA&rdquo;</strong>).
           </p>
           <p className="mt-3 text-sm leading-relaxed text-neutral-600">
+            Property agency services marketed under the HomeUP brand are operated by C and H
+            Properties Pte Ltd (CEA Licence L3007139C). Haus Plus Pte. Ltd. (UEN 202538756D) is
+            the parent company of the HomeUP brand.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-600">
             This Notice applies to personal data in our possession or under our control, including
             personal data in the possession of third party organisations which we have engaged to
             collect, use, disclose or process personal data for our purposes.
@@ -414,7 +419,8 @@ export default function PrivacyPolicyPage() {
               personal data, you may contact our Data Protection Officer at:
               <div className="mt-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm leading-relaxed text-neutral-700">
                 <p className="font-semibold">Data Protection Officer</p>
-                <p>Haus Plus Pte. Ltd.</p>
+                <p>Haus Plus Pte. Ltd. (UEN 202538756D)</p>
+                <p>Property services: C and H Properties Pte Ltd</p>
                 <p>
                   Email:{" "}
                   <a

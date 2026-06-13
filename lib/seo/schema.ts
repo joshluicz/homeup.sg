@@ -6,6 +6,9 @@ import {
   LEGAL_NAME,
   ORG_ID,
   ORG_SAME_AS,
+  PARENT_ORG_ID,
+  PARENT_ORG_NAME,
+  PARENT_ORG_UEN,
   SITE_URL,
 } from "./constants";
 
@@ -75,7 +78,7 @@ export const SELL_HOW_TO_STEPS: HowToStep[] = [
   },
   {
     name: "List and market",
-    text: "Your property is listed on PropertyGuru, SRX, 99.co, and HomeUP.sg — plus social channels for maximum buyer reach.",
+    text: "Your property is listed on PropertyGuru, SRX, 99.co, and HomeUP.sg, plus social channels for maximum buyer reach.",
   },
   {
     name: "Viewings and offers",
@@ -83,7 +86,7 @@ export const SELL_HOW_TO_STEPS: HowToStep[] = [
   },
   {
     name: "Documentation and completion",
-    text: "HomeUP handles all sales documentation — OTP, contracts, and HDB submission where applicable — through to a smooth handover.",
+    text: "HomeUP handles all sales documentation, including OTP, contracts, and HDB submission where applicable, through to a smooth handover.",
   },
 ];
 
@@ -102,7 +105,7 @@ export const BUY_HOW_TO_STEPS: HowToStep[] = [
   },
   {
     name: "Complete the purchase",
-    text: "HomeUP supports OTP, financing, and documentation through to completion — with a fixed $1,999 fee for HDB or complimentary representation for most private purchases.",
+    text: "HomeUP supports OTP, financing, and documentation through to completion, with a fixed $1,999 fee for HDB or complimentary representation for most private purchases.",
   },
 ];
 
@@ -114,6 +117,20 @@ export function organizationSchema() {
     name: "HomeUP",
     alternateName: ["HOMEUP", LEGAL_NAME],
     legalName: LEGAL_NAME,
+    parentOrganization: {
+      "@type": "Organization",
+      "@id": PARENT_ORG_ID,
+      name: PARENT_ORG_NAME,
+      identifier: {
+        "@type": "PropertyValue",
+        name: "UEN",
+        value: PARENT_ORG_UEN,
+      },
+      address: {
+        "@type": "PostalAddress",
+        addressCountry: "SG",
+      },
+    },
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",
@@ -194,25 +211,64 @@ export function organizationSchema() {
       name: "CEA Licence",
       value: CEA_LICENSE,
     },
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "HomeUP Fixed-Fee Selling Packages",
+      itemListElement: [
+        {
+          "@type": "Offer",
+          name: "HDB Selling Package",
+          price: "1999",
+          priceCurrency: "SGD",
+          description:
+            "Full HDB resale service. Fixed fee of $1,999 plus 9% GST. Not a percentage of sale price.",
+        },
+        {
+          "@type": "Offer",
+          name: "Condo or EC Selling Package",
+          price: "4999",
+          priceCurrency: "SGD",
+          description:
+            "Full condo or EC resale service. Fixed fee of $4,999 plus 9% GST.",
+        },
+        {
+          "@type": "Offer",
+          name: "Landed Selling Package",
+          price: "9999",
+          priceCurrency: "SGD",
+          description:
+            "Full landed resale service. Fixed fee of $9,999 plus 9% GST.",
+        },
+      ],
+    },
   };
 }
 
-export function aboutPageSchema() {
+export function websiteSchema() {
   return {
     "@context": "https://schema.org",
-    "@type": "AboutPage",
-    "@id": `${SITE_URL}/about#webpage`,
-    url: `${SITE_URL}/about`,
-    name: "About HomeUP",
+    "@type": "WebSite",
+    "@id": `${SITE_URL}/#website`,
+    url: SITE_URL,
+    name: "HomeUP",
     description:
-      "Learn about HomeUP — Singapore's fixed-fee property agency operated by C & H Properties Pte Ltd, with CEA-licensed advisors, transparent pricing, and 1,000+ transactions closed.",
-    isPartOf: { "@id": ORG_ID },
-    about: { "@id": ORG_ID },
-    mainEntity: { "@id": ORG_ID },
+      "Fixed-fee property agents in Singapore. Operated by C and H Properties Pte Ltd under the HomeUP brand.",
+    publisher: { "@id": ORG_ID },
+    inLanguage: "en-SG",
   };
+}
+
+function agentSameAs(agent: Agent): string[] {
+  const links: string[] = [];
+  if (agent.social?.instagram) links.push(agent.social.instagram);
+  if (agent.social?.youtube) links.push(agent.social.youtube);
+  if (agent.social?.facebook) links.push(agent.social.facebook);
+  if (agent.social?.tiktok) links.push(agent.social.tiktok);
+  return links;
 }
 
 export function personSchema(agent: Agent) {
+  const sameAs = agentSameAs(agent);
   return {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -229,10 +285,12 @@ export function personSchema(agent: Agent) {
       value: agent.cea,
     },
     knowsAbout: agent.specialties,
+    ...(sameAs.length > 0 && { sameAs }),
   };
 }
 
 export function realEstateAgentSchema(agent: Agent) {
+  const sameAs = agentSameAs(agent);
   return {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
@@ -247,6 +305,22 @@ export function realEstateAgentSchema(agent: Agent) {
       name: "CEA Registration Number",
       value: agent.cea,
     },
+    ...(sameAs.length > 0 && { sameAs }),
+  };
+}
+
+export function aboutPageSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${SITE_URL}/about#webpage`,
+    url: `${SITE_URL}/about`,
+    name: "About HomeUP",
+    description:
+      "Learn about HomeUP, Singapore's fixed-fee property agency operated by C and H Properties Pte Ltd under the HomeUP brand, with CEA-licensed advisors and transparent pricing.",
+    isPartOf: { "@id": ORG_ID },
+    about: { "@id": ORG_ID },
+    mainEntity: { "@id": ORG_ID },
   };
 }
 

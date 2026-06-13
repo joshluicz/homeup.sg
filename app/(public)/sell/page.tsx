@@ -2,6 +2,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { LandingPageJsonLd } from "@/components/seo/LandingPageJsonLd";
 import { SellLandingContent } from "@/components/sections/SellLandingContent";
+import { LastUpdated } from "@/components/ui/LastUpdated";
 import { SELL_FAQ_GENERAL } from "@/lib/data/faqs";
 import { SELL_PAGE_GENERAL } from "@/lib/data/sell-pages";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -56,6 +57,7 @@ export default function SellPage() {
       <Navbar />
       <main>
         <SellLandingContent config={config} />
+        <LastUpdated className="pb-8" />
       </main>
       <Footer />
     </>

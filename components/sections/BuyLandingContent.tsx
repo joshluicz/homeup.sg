@@ -25,7 +25,7 @@ const FAQ_BY_TYPE = {
     items: BUY_FAQ_HDB,
     eyebrow: "Buying HDB — Common Questions",
     title: "What HDB buyers ask us most",
-    lead: "Grants, loan eligibility, MOP implications, and how to sequence a sell-and-buy — answered clearly before you commit.",
+    lead: "Grants, loan choice, sell-and-buy sequencing, and eligibility rules that actually change your budget.",
   },
   CondoLanded: {
     items: BUY_FAQ_CONDO,

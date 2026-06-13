@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
+import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -73,6 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${jakarta.variable} ${jetbrains.variable}`}>
       <body>
+        <JsonLd data={websiteSchema()} />
         {children}
         <WhatsAppFloat />
       </body>

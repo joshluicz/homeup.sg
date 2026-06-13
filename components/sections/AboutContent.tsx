@@ -46,8 +46,9 @@ export function AboutContent() {
             </h1>
             <p className="section-lead mx-auto">
               HomeUP is a Singapore property agency built around transparent fixed fees,
-              named CEA-licensed advisors, and coordinated sell-and-buy planning — operated
-              by {`C & H Properties Pte Ltd`} (CEA Licence L3007139C).
+              named CEA-licensed advisors, and coordinated sell-and-buy planning. Property
+              services are operated by C and H Properties Pte Ltd (CEA Licence L3007139C).
+              The HomeUP brand is registered under Haus Plus Pte. Ltd. (UEN 202538756D).
             </p>
           </FadeInUp>
 
@@ -165,8 +166,12 @@ export function AboutContent() {
             <h2 className="text-sm font-bold text-neutral-900">Company information</h2>
             <dl className="mt-4 grid gap-4 text-sm text-neutral-600 sm:grid-cols-2">
               <div>
-                <dt className="font-semibold text-neutral-900">Operating entity</dt>
+                <dt className="font-semibold text-neutral-900">Operating agency</dt>
                 <dd className="mt-1 font-normal">C &amp; H Properties Pte Ltd</dd>
+              </div>
+              <div>
+                <dt className="font-semibold text-neutral-900">Parent company</dt>
+                <dd className="mt-1 font-normal">Haus Plus Pte. Ltd. (UEN 202538756D)</dd>
               </div>
               <div>
                 <dt className="font-semibold text-neutral-900">CEA licence</dt>
@@ -176,9 +181,9 @@ export function AboutContent() {
                 <dt className="font-semibold text-neutral-900">Office</dt>
                 <dd className="mt-1 font-normal">125A Lor 2 Toa Payoh #02-138, Singapore 311125</dd>
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <dt className="font-semibold text-neutral-900">Contact</dt>
-                <dd className="mt-1 font-normal">+65 8087 7015 · Mon–Sun 9am–9pm</dd>
+                <dd className="mt-1 font-normal">+65 8087 7015 · Mon to Sun, 9am to 9pm</dd>
               </div>
             </dl>
             <LastUpdated className="mt-6" />

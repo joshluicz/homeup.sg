@@ -28,7 +28,7 @@ const FAQ_BY_TYPE = {
     items: SELL_FAQ_HDB,
     eyebrow: "Selling HDB — Common Questions",
     title: "What HDB sellers ask us most",
-    lead: "From MOP eligibility to CPF refunds and HDB Portal submission — the answers you need before you decide to sell.",
+    lead: "CPF refunds, valuation timing, sell-and-buy dates, and pricing discipline. Practical answers before you commit to a sale.",
   },
   Condo: {
     items: SELL_FAQ_CONDO,
@@ -64,6 +64,7 @@ export function SellLandingContent({ config }: SellLandingContentProps) {
     return (
       <>
         <SellHero content={config.hero} />
+        <WhyCheaper />
         <PropertyTypeNav mode="sell" />
         <PricingSection4
           id="pricing"
@@ -73,7 +74,6 @@ export function SellLandingContent({ config }: SellLandingContentProps) {
           showSlider
         />
         <SellFeeExplainer />
-        <WhyCheaper />
         <Benefits />
         <ComparisonTable />
         <FAQSection
