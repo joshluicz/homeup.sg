@@ -24,11 +24,6 @@ export const BUY_TEAM_AWARDS: TeamAward[] = [
     title: "$200M+ Real Estate Transacted",
     highlight: "Singapore",
   },
-  {
-    source: "NUS",
-    title: "Real Estate Graduate",
-    highlight: "Distinction",
-  },
 ];
 
 function LaurelAwardBadge({ award, fluid }: { award: TeamAward; fluid?: boolean }) {
@@ -67,7 +62,7 @@ export function BuyTeamAwards({
           .join(" ")}
         aria-label="HOMEUP buying team awards and credentials"
       >
-        <div className="grid w-full grid-cols-2 items-center gap-x-[clamp(0.25rem,1.5vw,1rem)] gap-y-[clamp(0.75rem,3vw,1.25rem)] px-[clamp(0.375rem,2vw,1.5rem)] sm:grid-cols-4">
+        <div className="grid w-full grid-cols-1 items-center gap-x-[clamp(0.25rem,1.5vw,1rem)] gap-y-[clamp(0.75rem,3vw,1.25rem)] px-[clamp(0.375rem,2vw,1.5rem)] sm:grid-cols-3">
           {BUY_TEAM_AWARDS.map((award) => (
             <LaurelAwardBadge key={`${award.source}-${award.title}`} award={award} fluid />
           ))}

@@ -141,7 +141,7 @@ export function PropertyListings() {
         )}
 
         {/* Desktop: full grid */}
-        <div className="hidden grid-cols-3 gap-3 lg:grid xl:grid-cols-4">
+        <div className="hidden grid-cols-3 gap-3 lg:grid">
           {listings.map((l) => (
             <ListingCard key={l.id} l={l} />
           ))}

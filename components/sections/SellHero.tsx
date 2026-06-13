@@ -1,9 +1,11 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import type { SellPageHero } from "@/lib/data/sell-pages";
 
 const WA = "https://wa.me/6580877015";
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -19,12 +21,11 @@ const fade = {
 };
 
 const breakdown = [
-  { key: "hdb" as const, target: 860, label: "HDB" },
-  { key: "condo" as const, target: 260, label: "Condo & Landed" },
+  { key: "hdb" as const, label: "HDB" },
+  { key: "condo" as const, label: "Condo & Landed" },
 ];
 
 const AGENT_COUNT = 7;
-
 const agents = [
   { src: "/images/agent-dennis.png", name: "Dennis" },
   { src: "/images/agent-tong-boon.png", name: "Tong Boon" },
@@ -73,9 +74,7 @@ function StatsCard() {
       ref={ref}
       className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-[0_2px_20px_rgba(0,0,0,0.07)] sm:px-6 sm:py-5"
     >
-      {/* Mobile: stacked; sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-        {/* Primary stat */}
         <div className="shrink-0">
           <p className="font-display text-4xl font-extrabold leading-none tabular-nums text-primary-600 sm:text-5xl">
             {total.toLocaleString()}
@@ -92,7 +91,6 @@ function StatsCard() {
 
         <div className="hidden h-14 w-px shrink-0 bg-neutral-200 sm:block sm:h-16" aria-hidden="true" />
 
-        {/* Breakdown */}
         <div className="flex flex-row gap-4 sm:flex-col sm:gap-2.5">
           {breakdown.map((b) => (
             <div key={b.key} className="flex items-center gap-2">
@@ -111,97 +109,60 @@ function StatsCard() {
   );
 }
 
-function AgentAvatars({ className = "" }: { className?: string }) {
+interface SellHeroProps {
+  content: SellPageHero;
+}
+
+export function SellHero({ content }: SellHeroProps) {
   const overflowCount = AGENT_COUNT - agents.length;
 
   return (
-    <div className={`flex items-center gap-2.5 ${className}`.trim()}>
-      <div className="flex -space-x-2.5" aria-label={`${AGENT_COUNT} CEA-licensed agents`}>
-        {agents.map((agent) => (
-          <div
-            key={agent.name}
-            className="relative h-9 w-9 overflow-hidden rounded-full border-2 border-white shadow-sm"
-          >
-            <Image
-              src={agent.src}
-              alt={agent.name}
-              fill
-              className="object-cover object-center"
-            />
-          </div>
-        ))}
-        {overflowCount > 0 && (
-          <div
-            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white bg-primary-50 text-xs font-bold tabular-nums text-primary-700 shadow-sm"
-            aria-hidden="true"
-          >
-            +{overflowCount}
-          </div>
-        )}
-      </div>
-      <span className="text-sm font-medium text-neutral-600">
-        {AGENT_COUNT} CEA-licensed agents
-      </span>
-    </div>
-  );
-}
-
-function SocialProofRow() {
-  return (
-    <div className="flex justify-center lg:justify-start">
-      <AgentAvatars />
-    </div>
-  );
-}
-
-export function Hero() {
-  return (
-    <section aria-label="Fixed-fee property agents hero" className="bg-white">
+    <section aria-label="Sell with HomeUP" className="bg-white">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
-
-        {/* Left: copy */}
         <div className="w-full shrink-0 lg:w-[44%]">
           <motion.h1
-            custom={0} initial="hidden" animate="show" variants={fade}
-            className="whitespace-nowrap font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
+            custom={0}
+            initial="hidden"
+            animate="show"
+            variants={fade}
+            className="font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
           >
-            Sell Your Home for More.
+            {content.title}
             <br />
-            <span className="text-primary-600">Save on Commissions.</span>
+            <span className="text-primary-600">{content.highlight}</span>
           </motion.h1>
 
           <motion.p
-            custom={0.08} initial="hidden" animate="show" variants={fade}
-            className="mt-3 text-sm font-medium leading-normal text-neutral-500 [font-feature-settings:'liga'_off,'calt'_off]"
+            custom={0.08}
+            initial="hidden"
+            animate="show"
+            variants={fade}
+            className="mt-3 text-sm font-medium leading-normal text-neutral-500"
           >
-            Fixed Fee Agents | Dedicated to Families
+            {content.subtitle}
           </motion.p>
 
           <motion.p
-            custom={0.14} initial="hidden" animate="show" variants={fade}
+            custom={0.14}
+            initial="hidden"
+            animate="show"
+            variants={fade}
             className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
           >
-            Most Singapore homeowners give away $10,000–$70,000 in commission.
-            HomeUP charges a fixed fee for the same full service.
+            {content.body}
           </motion.p>
 
-          <motion.div
-            custom={0.22} initial="hidden" animate="show" variants={fade}
-            className="mt-6"
-          >
+          <motion.div custom={0.22} initial="hidden" animate="show" variants={fade} className="mt-6">
             <Button size="lg" asChild className="w-full sm:w-auto">
               <a href={WA} target="_blank" rel="noopener noreferrer" className="justify-center gap-2">
                 <WhatsAppIcon className="h-5 w-5 shrink-0" />
                 Book a Free Call
               </a>
             </Button>
-            <p className="mt-2 text-sm font-normal text-neutral-400">
-              No commitment · Free 30-min planning session
-            </p>
+            <p className="mt-2 text-sm font-normal text-neutral-400">{content.ctaNote}</p>
           </motion.div>
         </div>
 
-        {/* Right: visuals — stats first on desktop to align with headline */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -215,7 +176,7 @@ export function Hero() {
           <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
             <Image
               src="/images/team-group.png"
-              alt="The HomeUP team — 5 CEA-licensed property agents in Singapore"
+              alt="The HomeUP team — CEA-licensed property agents in Singapore"
               width={920}
               height={614}
               priority
@@ -224,11 +185,30 @@ export function Hero() {
             />
           </div>
 
-          <div className="order-3">
-            <SocialProofRow />
+          <div className="order-3 flex items-center gap-2.5">
+            <div className="flex -space-x-2.5" aria-label={`${AGENT_COUNT} CEA-licensed agents`}>
+              {agents.map((agent) => (
+                <div
+                  key={agent.name}
+                  className="relative h-9 w-9 overflow-hidden rounded-full border-2 border-white shadow-sm"
+                >
+                  <Image src={agent.src} alt={agent.name} fill className="object-cover object-center" />
+                </div>
+              ))}
+              {overflowCount > 0 && (
+                <div
+                  className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white bg-primary-50 text-xs font-bold tabular-nums text-primary-700 shadow-sm"
+                  aria-hidden="true"
+                >
+                  +{overflowCount}
+                </div>
+              )}
+            </div>
+            <span className="text-sm font-medium text-neutral-600">
+              {AGENT_COUNT} CEA-licensed agents
+            </span>
           </div>
         </motion.div>
-
       </div>
     </section>
   );

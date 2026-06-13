@@ -1,9 +1,12 @@
 "use client";
+
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import type { BuyPageHero } from "@/lib/data/buy-pages";
+import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
 
 const WA = "https://wa.me/6580877015";
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -17,21 +20,18 @@ const fade = {
   }),
 };
 
-const points = [
-  "Affordability, grants and financing guidance",
-  "HDB, resale condo and new launch comparisons",
-  "Negotiation and sell-and-buy coordination",
-];
-
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
-export function BuyHero() {
+interface BuyHeroProps {
+  content?: BuyPageHero;
+}
+
+export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
   return (
     <section aria-label="Buying with HomeUP" className="bg-white pb-6 sm:pb-8">
       <div className="container-page pt-8 sm:pt-12 lg:pt-16">
         <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
-          {/* Copy */}
           <div className="w-full shrink-0 lg:w-[44%] lg:pt-4">
             <motion.h1
               custom={0}
@@ -41,9 +41,9 @@ export function BuyHero() {
               className="font-display font-extrabold leading-[1.08] tracking-tight text-neutral-900"
               style={{ fontSize: "clamp(1.75rem, 4vw, 3.2rem)" }}
             >
-              Buy with a clear plan.
+              {content.title}
               <br />
-              <span className="text-primary-600">Not guesswork.</span>
+              <span className="text-primary-600">{content.highlight}</span>
             </motion.h1>
 
             <motion.p
@@ -53,7 +53,7 @@ export function BuyHero() {
               variants={fade}
               className="mt-3 text-sm font-medium text-neutral-500"
             >
-              A coordinated buying team, not a solo agent.
+              {content.subtitle}
             </motion.p>
 
             <motion.p
@@ -63,9 +63,7 @@ export function BuyHero() {
               variants={fade}
               className="mt-3 max-w-md text-sm font-normal leading-relaxed text-neutral-600"
             >
-              From your first HDB to a condo upgrade or new launch, HomeUP guides
-              every stage: financing, shortlisting, negotiation and timing your
-              next move, so you buy with confidence.
+              {content.body}
             </motion.p>
 
             <motion.ul
@@ -75,7 +73,7 @@ export function BuyHero() {
               variants={fade}
               className="mt-4 space-y-2 sm:mt-5"
             >
-              {points.map((p) => (
+              {content.points.map((p) => (
                 <li key={p} className="flex items-start gap-2 text-sm font-normal text-neutral-700">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
                   {p}
@@ -83,36 +81,24 @@ export function BuyHero() {
               ))}
             </motion.ul>
 
-            <motion.div
-              custom={0.32}
-              initial="hidden"
-              animate="show"
-              variants={fade}
-              className="mt-5 sm:mt-6"
-            >
+            <motion.div custom={0.32} initial="hidden" animate="show" variants={fade} className="mt-5 sm:mt-6">
               <Button size="lg" asChild className="w-full sm:w-auto">
                 <a href={WA} target="_blank" rel="noopener noreferrer" className="justify-center gap-2">
                   <WhatsAppIcon className="h-5 w-5 shrink-0" />
                   Book a Free Consultation
                 </a>
               </Button>
-              <p className="mt-2 text-sm font-normal text-neutral-400">
-                No commitment · Build a clear roadmap for your next move
-              </p>
+              <p className="mt-2 text-sm font-normal text-neutral-400">{content.ctaNote}</p>
             </motion.div>
           </div>
 
-          {/* Photo */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, delay: 0.25, ease }}
             className="w-full lg:flex-1"
           >
-            <div
-              className="relative overflow-hidden rounded-xl sm:rounded-2xl"
-              style={{ aspectRatio: "4/3" }}
-            >
+            <div className="relative overflow-hidden rounded-xl sm:rounded-2xl" style={{ aspectRatio: "4/3" }}>
               <Image
                 src={HERO_IMAGE}
                 alt="Modern Singapore home"
