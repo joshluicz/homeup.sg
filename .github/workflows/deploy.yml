@@ -12,6 +12,8 @@ on:
       - "app/sitemap.ts"
       - "components/**"
       - "lib/data/**"
+      - "lib/seo/**"
+      - "lib/youtube.ts"
       - "public/**"
       - "tailwind.config.ts"
       - "postcss.config.js"

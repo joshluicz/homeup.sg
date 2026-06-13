@@ -1,0 +1,316 @@
+import type { Agent } from "@/lib/data/agents";
+import type { FaqItem } from "@/lib/data/faqs";
+import type { Listing } from "@/lib/data/listings";
+import {
+  CEA_LICENSE,
+  LEGAL_NAME,
+  ORG_ID,
+  ORG_SAME_AS,
+  SITE_URL,
+} from "./constants";
+
+export interface BreadcrumbItem {
+  name: string;
+  path: string;
+}
+
+export function breadcrumbSchema(items: BreadcrumbItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: `${SITE_URL}${item.path}`,
+    })),
+  };
+}
+
+export function faqSchema(items: FaqItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.q,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.a,
+      },
+    })),
+  };
+}
+
+export interface HowToStep {
+  name: string;
+  text: string;
+}
+
+export function howToSchema(
+  name: string,
+  description: string,
+  steps: HowToStep[],
+  totalTime = "P3M",
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description,
+    totalTime,
+    step: steps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  };
+}
+
+export const SELL_HOW_TO_STEPS: HowToStep[] = [
+  {
+    name: "Planning consultation",
+    text: "Review your financial position, outstanding CPF, estimated net proceeds, and selling timeline. Free and obligation-free.",
+  },
+  {
+    name: "List and market",
+    text: "Your property is listed on PropertyGuru, SRX, 99.co, and HomeUP.sg — plus social channels for maximum buyer reach.",
+  },
+  {
+    name: "Viewings and offers",
+    text: "Your dedicated agent coordinates all viewings, handles buyer enquiries, and presents offers with a clear assessment of terms and net proceeds.",
+  },
+  {
+    name: "Documentation and completion",
+    text: "HomeUP handles all sales documentation — OTP, contracts, and HDB submission where applicable — through to a smooth handover.",
+  },
+];
+
+export const BUY_HOW_TO_STEPS: HowToStep[] = [
+  {
+    name: "Book a free planning consultation",
+    text: "Speak with a HomeUP advisor to review affordability, financing options, and your buying timeline. No commitment required.",
+  },
+  {
+    name: "Shortlist and compare properties",
+    text: "HomeUP helps you compare HDB, condo, landed, or new launch options with clear guidance on grants, ABSD, and sell-and-buy timing.",
+  },
+  {
+    name: "Viewings and offer strategy",
+    text: "Your advisor coordinates viewings, reviews unit condition and comparables, and structures an offer strategy aligned with your budget.",
+  },
+  {
+    name: "Complete the purchase",
+    text: "HomeUP supports OTP, financing, and documentation through to completion — with a fixed $1,999 fee for HDB or complimentary representation for most private purchases.",
+  },
+];
+
+export function organizationSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": ["Organization", "RealEstateAgent", "LocalBusiness"],
+    "@id": ORG_ID,
+    name: "HomeUP",
+    alternateName: ["HOMEUP", LEGAL_NAME],
+    legalName: LEGAL_NAME,
+    url: SITE_URL,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITE_URL}/images/homeup-logo-wordmark.png`,
+    },
+    image: `${SITE_URL}/images/team-group.png`,
+    description:
+      "HomeUP is a Singapore fixed-fee property agency offering full-service property sales and purchases at a transparent flat fee. HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999. Over 1,000 transactions closed by CEA-licensed agents under C & H Properties (CEA L3007139C).",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "125A Lor 2 Toa Payoh, #02-138",
+      addressLocality: "Singapore",
+      postalCode: "311125",
+      addressCountry: "SG",
+    },
+    areaServed: { "@type": "Country", name: "Singapore" },
+    telephone: "+6580877015",
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "09:00",
+      closes: "21:00",
+    },
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: "+6580877015",
+      contactType: "customer service",
+      availableLanguage: ["English"],
+    },
+    sameAs: [...ORG_SAME_AS],
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "5",
+      reviewCount: "4",
+      bestRating: "5",
+      worstRating: "1",
+    },
+    review: [
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Ernest Lim" },
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+        reviewBody:
+          "The team led by Dennis has done a wonderful job in selling my house. Their professionalism, friendliness, and efficiency made selling my house a wonderful experience.",
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Terrence Koh" },
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+        reviewBody:
+          "If I can give more than 5 stars, I will unreservedly do so. Tong Boon provided top notch agency service for the sale of my condo. His commitment towards meeting the best interests of the seller is exceptional.",
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Mark Kwok Leong" },
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+        reviewBody:
+          "Highly recommend Kenji for his professional and honest service. He helped us secure a buyer for my dad's HDB flat quickly at a price higher than the last transacted price.",
+      },
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Kwok Yung" },
+        reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+        reviewBody:
+          "Second time engaging Dennis and Kenji to sell my property and it has been as smooth as the first time. Great work and excellent value for money.",
+      },
+    ],
+    identifier: {
+      "@type": "PropertyValue",
+      name: "CEA Licence",
+      value: CEA_LICENSE,
+    },
+  };
+}
+
+export function aboutPageSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    "@id": `${SITE_URL}/about#webpage`,
+    url: `${SITE_URL}/about`,
+    name: "About HomeUP",
+    description:
+      "Learn about HomeUP — Singapore's fixed-fee property agency operated by C & H Properties Pte Ltd, with CEA-licensed advisors, transparent pricing, and 1,000+ transactions closed.",
+    isPartOf: { "@id": ORG_ID },
+    about: { "@id": ORG_ID },
+    mainEntity: { "@id": ORG_ID },
+  };
+}
+
+export function personSchema(agent: Agent) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": `${SITE_URL}/agents/${agent.slug}#person`,
+    name: agent.name,
+    url: `${SITE_URL}/agents/${agent.slug}`,
+    image: `${SITE_URL}${agent.photo}`,
+    description: agent.bio,
+    jobTitle: "CEA-Licensed Property Advisor",
+    worksFor: { "@id": ORG_ID },
+    identifier: {
+      "@type": "PropertyValue",
+      name: "CEA Registration Number",
+      value: agent.cea,
+    },
+    knowsAbout: agent.specialties,
+  };
+}
+
+export function realEstateAgentSchema(agent: Agent) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "RealEstateAgent",
+    "@id": `${SITE_URL}/agents/${agent.slug}#agent`,
+    name: agent.name,
+    url: `${SITE_URL}/agents/${agent.slug}`,
+    image: `${SITE_URL}${agent.photo}`,
+    description: agent.bio,
+    parentOrganization: { "@id": ORG_ID },
+    identifier: {
+      "@type": "PropertyValue",
+      name: "CEA Registration Number",
+      value: agent.cea,
+    },
+  };
+}
+
+export function listingsItemListSchema(listings: Listing[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "HomeUP Property Listings Singapore",
+    description:
+      "Active HDB, condo, and landed property listings represented by HomeUP's CEA-licensed agents.",
+    numberOfItems: listings.length,
+    itemListElement: listings.slice(0, 50).map((listing, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "RealEstateListing",
+        name: listing.name,
+        url: listing.url,
+        offers: {
+          "@type": "Offer",
+          price: listing.priceValue,
+          priceCurrency: "SGD",
+          availability:
+            listing.status === "For Sale"
+              ? "https://schema.org/InStock"
+              : "https://schema.org/ForRent",
+        },
+      },
+    })),
+  };
+}
+
+export function serviceSchema({
+  name,
+  description,
+  path,
+  offers,
+}: {
+  name: string;
+  description: string;
+  path: string;
+  offers?: Array<{ name: string; price: string; description: string }>;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${SITE_URL}${path}#service`,
+    name,
+    description,
+    url: `${SITE_URL}${path}`,
+    provider: { "@id": ORG_ID },
+    areaServed: { "@type": "Country", name: "Singapore" },
+    ...(offers && {
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: `${name} Packages`,
+        itemListElement: offers.map((offer) => ({
+          "@type": "Offer",
+          name: offer.name,
+          price: offer.price,
+          priceCurrency: "SGD",
+          description: offer.description,
+        })),
+      },
+    }),
+  };
+}

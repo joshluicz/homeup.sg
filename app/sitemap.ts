@@ -26,5 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/agents`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
     ...agentPages,
     { url: `${BASE}/playbook`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${BASE}/privacy-policy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

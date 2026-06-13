@@ -11,7 +11,7 @@ export interface TeamAward {
 export const BUY_TEAM_AWARDS: TeamAward[] = [
   {
     source: "C & H",
-    title: "Top 3 Producer in Agency · 2025",
+    title: "Top Sale (Residential)",
     highlight: "Singapore",
   },
   {
@@ -83,8 +83,13 @@ export function BuyTeamAwards({
       aria-label="HOMEUP buying team awards and credentials"
     >
       <div className="grid grid-cols-2 gap-x-2 gap-y-5 sm:gap-x-4 lg:flex lg:flex-nowrap lg:items-center lg:justify-center lg:gap-y-4">
-        {BUY_TEAM_AWARDS.map((award) => (
-          <LaurelAwardBadge key={`${award.source}-${award.title}`} award={award} />
+        {BUY_TEAM_AWARDS.map((award, index) => (
+          <div
+            key={`${award.source}-${award.title}`}
+            className={index === 2 ? "col-span-2 flex justify-center lg:col-span-1" : undefined}
+          >
+            <LaurelAwardBadge award={award} />
+          </div>
         ))}
       </div>
     </div>

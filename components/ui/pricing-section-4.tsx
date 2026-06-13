@@ -1,50 +1,41 @@
 "use client";
-import { cn } from "@/lib/utils";
-import NumberFlow from "@number-flow/react";
-import { Check } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { motion } from "motion/react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
 import { SavingsSlider } from "@/components/ui/SavingsSlider";
-import {
-  SELL_PLANS,
-  SELL_THEME_STYLES,
-  type SellPropertyType,
-} from "@/lib/data/sell-pricing";
+import { SellPlanCard } from "@/components/ui/SellPlanCard";
+import { motion } from "motion/react";
+import { SELL_PLANS, type SellPropertyType } from "@/lib/data/sell-pricing";
 
-const WHATSAPP = "https://wa.me/6580877015";
-
-const PACKAGE_FEATURES = [
-  { id: "consultation", label: "Full agent services" },
-  { id: "listing", label: "List on" },
-  { id: "documentation", label: "Full documentation (e.g. OTP)" },
+const COMPARISON_ROWS = [
+  {
+    type: "HDB Flat",
+    examplePrice: "$500,000",
+    typicalCommission: "$10,000",
+    homeupFee: SELL_PLANS[0].price,
+    savings: SELL_PLANS[0].typicalPrice - SELL_PLANS[0].price,
+  },
+  {
+    type: "Condo / EC",
+    examplePrice: "$1,200,000",
+    typicalCommission: "$24,000",
+    homeupFee: SELL_PLANS[1].price,
+    savings: SELL_PLANS[1].typicalPrice - SELL_PLANS[1].price,
+  },
+  {
+    type: "Landed Home",
+    examplePrice: "$3,000,000",
+    typicalCommission: "$60,000",
+    homeupFee: SELL_PLANS[2].price,
+    savings: SELL_PLANS[2].typicalPrice - SELL_PLANS[2].price,
+  },
 ] as const;
 
-const listingIconClass = "h-3.5 w-3.5 shrink-0 rounded-sm object-contain";
+function formatFee(amount: number) {
+  return `$${amount.toLocaleString("en-SG")} + GST`;
+}
 
-function ListingPlatformIcons() {
-  return (
-    <span className="ml-1.5 inline-flex flex-wrap items-center gap-1 text-neutral-500">
-      <Image
-        src="/images/portals/propertyguru.png"
-        alt="PropertyGuru"
-        width={14}
-        height={14}
-        className={listingIconClass}
-      />
-      <Image src="/images/portals/srx.png" alt="SRX" width={14} height={14} className={listingIconClass} />
-      <Image src="/images/portals/99co.png" alt="99.co" width={14} height={14} className={listingIconClass} />
-      <Image
-        src="/images/homeup-logo-icon.svg"
-        alt="HOMEUP"
-        width={14}
-        height={14}
-        className={listingIconClass}
-      />
-    </span>
-  );
+function formatSavings(amount: number) {
+  return `~$${amount.toLocaleString("en-SG")}`;
 }
 
 interface PricingSection4Props {
@@ -77,118 +68,78 @@ export default function PricingSection4({
       <div className="container-page">
         <FadeInUp className="section-header">
           <Eyebrow>Transparent Fixed Fees</Eyebrow>
-          <h2 className="section-title">Plans that work for you</h2>
+          <h2 className="section-title">How much does a property agent cost in Singapore?</h2>
           <p className="section-lead">
-            One flat fee. No surprise commissions. Typical agents charge around 2%
-            commission. HOMEUP keeps it simple with a fixed fee and the same full
-            service.
+            Most agents charge 1–2% commission on your sale price. HomeUP charges one flat
+            fee with the same full service — listing, marketing, viewings, negotiation, and
+            documentation.
           </p>
         </FadeInUp>
 
         <StaggerContainer className={gridClass}>
-          {plans.map((plan) => {
-            const t = SELL_THEME_STYLES[plan.theme];
-            return (
-              <StaggerItem key={plan.name}>
-                <motion.div
-                  whileHover={{ y: -10 }}
-                  transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full cursor-default"
-                >
-                  <div
-                    className={cn(
-                      "relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white",
-                      t.border,
-                      t.shadow,
-                    )}
-                  >
-                    <div className={cn("h-1.5 w-full", t.topBar)} />
-
-                    <div className={cn("p-6", t.header)}>
-                      <span
-                        className={cn(
-                          "inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                          t.badge,
-                        )}
-                      >
-                        {plan.tag}
-                      </span>
-
-                      <h3 className="mt-3 text-lg font-semibold text-neutral-900">{plan.name}</h3>
-
-                      <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-                        <span className={cn("font-display text-4xl font-bold tracking-tight", t.price)}>
-                          $
-                          <NumberFlow format={{ style: "decimal" }} value={plan.price} />
-                        </span>
-                        <span className="text-sm font-medium text-neutral-500">+ GST</span>
-                        <span className="text-sm text-neutral-500">/ fixed fee</span>
-                      </div>
-
-                      <p className="mt-1.5 text-xs text-neutral-500">
-                        Typical 2% agent fee: ~${plan.typicalPrice.toLocaleString()} + GST (varies by
-                        agent)
-                      </p>
-                    </div>
-
-                    <div className="flex flex-1 flex-col px-6 pb-6">
-                      <div className="mb-5 h-px bg-neutral-100" />
-
-                      <ul className="flex-1 space-y-2.5">
-                        {PACKAGE_FEATURES.map((feature) => (
-                          <li
-                            key={feature.id}
-                            className="flex items-start gap-2.5 text-sm text-neutral-700"
-                          >
-                            <Check
-                              aria-hidden="true"
-                              className={cn("mt-0.5 h-4 w-4 shrink-0", t.check)}
-                            />
-                            <span className="flex flex-wrap items-center">
-                              {feature.id === "listing" ? (
-                                <>
-                                  List on
-                                  <ListingPlatformIcons />
-                                </>
-                              ) : (
-                                feature.label
-                              )}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-
-                      <div className="mt-6 flex flex-col gap-2.5">
-                        <a
-                          href={WHATSAPP}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={cn(
-                            "flex min-h-12 items-center justify-center rounded-lg px-3 py-2.5 text-center text-xs font-semibold leading-tight transition-all duration-200 sm:text-sm",
-                            t.cta,
-                          )}
-                        >
-                          {plan.buttonText}
-                        </a>
-                        {showLearnMore && (
-                          <Link
-                            href={plan.learnMoreHref}
-                            className={cn(
-                              "flex min-h-10 items-center justify-center rounded-lg border px-3 py-2.5 text-center text-xs font-semibold leading-tight transition-all duration-200 sm:text-sm",
-                              t.ctaOutline,
-                            )}
-                          >
-                            Learn more
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </StaggerItem>
-            );
-          })}
+          {plans.map((plan) => (
+            <StaggerItem key={plan.name}>
+              <motion.div
+                whileHover={{ y: -10 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                className="h-full cursor-default"
+              >
+                <SellPlanCard
+                  filterType={plan.type}
+                  showLearnMore={showLearnMore}
+                  learnMoreHref={plan.learnMoreHref}
+                />
+              </motion.div>
+            </StaggerItem>
+          ))}
         </StaggerContainer>
+
+        <FadeInUp delay={0.15} className="mt-10 overflow-x-auto">
+          <table className="w-full min-w-[640px] border-collapse overflow-hidden rounded-2xl border border-neutral-200 bg-white text-sm shadow-sm">
+            <caption className="sr-only">
+              HomeUP fixed fee compared to typical 2% agent commission in Singapore
+            </caption>
+            <thead>
+              <tr className="border-b border-neutral-200 bg-neutral-50 text-left">
+                <th scope="col" className="px-4 py-3 font-semibold text-neutral-900 sm:px-6">
+                  Property type
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold text-neutral-900 sm:px-6">
+                  Example sale price
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold text-neutral-900 sm:px-6">
+                  Typical 2% commission
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold text-neutral-900 sm:px-6">
+                  HomeUP fixed fee
+                </th>
+                <th scope="col" className="px-4 py-3 font-semibold text-primary-700 sm:px-6">
+                  You save
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARISON_ROWS.map((row) => (
+                <tr key={row.type} className="border-b border-neutral-100 last:border-b-0">
+                  <th scope="row" className="px-4 py-4 text-left font-semibold text-neutral-900 sm:px-6">
+                    {row.type}
+                  </th>
+                  <td className="px-4 py-4 font-normal text-neutral-600 sm:px-6">{row.examplePrice}</td>
+                  <td className="px-4 py-4 font-normal text-neutral-600 sm:px-6">{row.typicalCommission}</td>
+                  <td className="px-4 py-4 font-semibold text-neutral-900 sm:px-6">
+                    {formatFee(row.homeupFee)}
+                  </td>
+                  <td className="px-4 py-4 font-semibold text-primary-700 sm:px-6">
+                    {formatSavings(row.savings)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-3 text-center text-xs font-normal text-neutral-400">
+            Based on 2% commission vs HomeUP fixed fee before GST. Actual savings vary by sale price.
+          </p>
+        </FadeInUp>
 
         <FadeInUp delay={0.2}>
           <p className="mt-6 text-center text-xs text-neutral-400">

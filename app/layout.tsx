@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: "%s | HomeUP",
   },
   description:
-    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by 5 CEA-licensed agents.",
+    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by CEA-licensed agents.",
   keywords: [
     "fixed fee property agent Singapore",
     "sell HDB Singapore",

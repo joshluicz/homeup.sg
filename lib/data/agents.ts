@@ -4,6 +4,13 @@ export interface AgentVideo {
   publishedAt?: string;
 }
 
+export interface AgentSocialLinks {
+  instagram?: string;
+  youtube?: string;
+  facebook?: string;
+  tiktok?: string;
+}
+
 export interface Agent {
   slug: string;
   name: string;
@@ -15,6 +22,7 @@ export interface Agent {
   /** Expanded about bullets — agent-specific, not site-wide copy */
   about: string[];
   specialties: string[];
+  social?: AgentSocialLinks;
   /** YouTube @handle without the @ prefix */
   youtubeChannelHandle?: string;
   /** Optional hard-coded channel ID — skips handle resolution */
@@ -39,6 +47,12 @@ export const AGENTS: Agent[] = [
       "Regular contributor on HomeUP's property education content",
     ],
     specialties: ["HDB upgrades", "Landed sales", "Sell-and-buy planning"],
+    social: {
+      instagram: "https://www.instagram.com/homeup_dennis?igsh=MXhvY2drMTFqN2hoYQ==",
+      youtube: "https://youtube.com/@homeupdennis?si=iPds4zsCVepIc0Lr",
+      facebook: "https://www.facebook.com/share/1BxJ6MEvmH/?mibextid=wwXIfr",
+      tiktok: "https://www.tiktok.com/@homeup_dennis?_r=1&_t=ZS-97B1n2NKNtM",
+    },
     youtubeChannelHandle: "homeupdennis",
   },
   {
@@ -56,6 +70,13 @@ export const AGENTS: Agent[] = [
       "Focused on structured planning rather than transactional pressure",
     ],
     specialties: ["Buyer representation", "New launch", "Upgrader planning"],
+    social: {
+      instagram: "https://www.instagram.com/homeup_tongboon?igsh=azdldjc4NWNoZmUy",
+      youtube: "https://youtube.com/@homeup_tongboon?si=CVzemx3d-Qco95Vm",
+      facebook: "https://www.facebook.com/share/1DAfh57HRg/?mibextid=wwXIfr",
+      tiktok: "https://www.tiktok.com/@homeup_tongboon?_r=1&_t=ZS-97B4uCSU72i",
+    },
+    youtubeChannelHandle: "homeup_tongboon",
     featuredVideos: [],
   },
   {
@@ -73,6 +94,10 @@ export const AGENTS: Agent[] = [
       "Trusted by homeowners who value patience over pressure",
     ],
     specialties: ["HDB resale", "Senior owners", "Resale documentation"],
+    social: {
+      instagram: "https://www.instagram.com/edmundleesw?igsh=MXQyaWNkdDY4dTZmZg==",
+      tiktok: "https://www.tiktok.com/@edmundleesiewwah?_r=1&_t=ZS-97B51ZndzSX",
+    },
   },
   {
     slug: "kenji-ching",
@@ -89,6 +114,13 @@ export const AGENTS: Agent[] = [
       "Patient, practical guidance from listing through completion",
     ],
     specialties: ["First-time sellers", "HDB resale", "Viewing coordination"],
+    social: {
+      instagram: "https://www.instagram.com/homeup_kenji?igsh=MW8wbTI1em05c253dQ==",
+      youtube: "https://youtube.com/@homeup_kenji?si=eXa0m8tdnGrH-W7G",
+      facebook: "https://www.facebook.com/share/1GtmXmPGDT/?mibextid=wwXIfr",
+      tiktok: "https://www.tiktok.com/@homeup_kenji?_r=1&_t=ZS-97B4xfP5Hme",
+    },
+    youtubeChannelHandle: "homeup_kenji",
   },
   {
     slug: "olivia-neo",
@@ -105,6 +137,12 @@ export const AGENTS: Agent[] = [
       "Dedicated to keeping clients informed at every step",
     ],
     specialties: ["Documentation", "Buyer support", "Transaction coordination"],
+    social: {
+      instagram: "https://www.instagram.com/homeup_olivia?igsh=bWZ6OGx1MGE0OGk0",
+      youtube: "https://youtube.com/@homeupolivia?si=F2FV-VZvBRmaAnXe",
+      tiktok: "https://www.tiktok.com/@homeup_olivia?_r=1&_t=ZS-97B4y7SmVLZ",
+    },
+    youtubeChannelHandle: "homeupolivia",
   },
   {
     slug: "isaac-tay",
@@ -121,6 +159,13 @@ export const AGENTS: Agent[] = [
       "Committed to responsive follow-through from listing through completion",
     ],
     specialties: ["Fixed-fee sales", "Honest advisory", "HDB & private property"],
+    social: {
+      instagram: "https://www.instagram.com/homeup_isaac?igsh=MWZwOXJsc2o1d3dleA==",
+      youtube: "https://youtube.com/@homeup_isaac?si=jzrsjTdhT_c8uMzo",
+      facebook: "https://www.facebook.com/share/192khvLkLn/?mibextid=wwXIfr",
+      tiktok: "https://www.tiktok.com/@homeupisaac?_r=1&_t=ZS-97B4wwo3mKr",
+    },
+    youtubeChannelHandle: "homeup_isaac",
   },
 ];
 

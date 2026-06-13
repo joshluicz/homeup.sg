@@ -1,39 +1,34 @@
-import type { Metadata } from "next";
-import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { Navbar } from "@/components/layout/Navbar";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { ListingsHero } from "@/components/sections/ListingsHero";
 import { ListingsGrid } from "@/components/sections/ListingsGrid";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { LISTINGS } from "@/lib/data/listings";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import { breadcrumbSchema, listingsItemListSchema } from "@/lib/seo/schema";
 
-// ── Metadata ──────────────────────────────────────────────────────────────────
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Property Listings Singapore",
   description:
     "Browse HomeUP's active HDB, Condo, and Landed property listings across Singapore. Every listing is handled by a CEA-licensed agent at a transparent fixed fee — HDB from $1,999, Condo from $4,999.",
-  alternates: { canonical: "https://lp.homeup.sg/listings" },
-  openGraph: {
-    url: "https://lp.homeup.sg/listings",
-    title: "Property Listings Singapore | HomeUP",
-    description:
-      "Browse active HDB, Condo, and Landed listings. Fixed-fee representation from $1,999. Enquire directly via WhatsApp.",
-  },
-};
+  path: "/listings",
+});
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-//
-// BACKEND INTEGRATION NOTE:
-//   Replace `LISTINGS` with an async fetch when your CMS/API is ready:
-//
-//     import { getListings } from "@/lib/data/listings";
-//     const listings = await getListings();
-//
 export default function ListingsPage() {
-  // Ready for async: const listings = await getListings();
   const listings = LISTINGS;
 
   return (
     <>
+      <JsonLd
+        data={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Listings", path: "/listings" },
+          ]),
+          listingsItemListSchema(listings),
+        ]}
+      />
       <Navbar />
       <main className="bg-white">
         <ListingsHero />

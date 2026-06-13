@@ -12,6 +12,7 @@ const quickLinks: { label: string; href: string; external?: boolean }[] = [
   { label: "Buy New Launch", href: "/buy-new-launch" },
   { label: "Listings", href: "/listings" },
   { label: "Playbook", href: "/playbook" },
+  { label: "About", href: "/about" },
   { label: "Our Team", href: "/agents" },
   { label: "Property Listing", href: "https://homeup.sg/property-listing/", external: true },
   { label: "Privacy Policy", href: "/privacy-policy" },

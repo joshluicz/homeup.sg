@@ -125,8 +125,8 @@ const Navbar1 = ({
   return (
     <section className={cn("py-4", className)}>
       <div className="container-page">
-        <nav className="hidden justify-between lg:flex" aria-label="Primary navigation">
-          <div className="flex items-center gap-6">
+        <nav className="hidden items-center justify-between lg:flex" aria-label="Primary navigation">
+          <div className="flex items-center">
             {logoSlot ?? (
               <NavLink href={logo.url} className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -134,31 +134,31 @@ const Navbar1 = ({
                 <span className="text-lg font-semibold">{logo.title}</span>
               </NavLink>
             )}
-            <div className="flex items-center">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  {menu.map((item) => renderMenuItem(item))}
-                </NavigationMenuList>
-              </NavigationMenu>
-            </div>
           </div>
-          {(showLogin || showSignup) && (
-            <div className="flex gap-2">
-              {showLogin && auth?.login && (
-                <Button asChild variant="outline" size="sm">
-                  <NavLink href={auth.login.url}>{auth.login.text}</NavLink>
-                </Button>
-              )}
-              {showSignup && auth?.signup && (
-                <Button asChild size="sm">
-                  <NavLink href={auth.signup.url} external={auth.signup.url.startsWith("http")} className="gap-2">
-                    {auth.signup.icon}
-                    {auth.signup.text}
-                  </NavLink>
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-6">
+            <NavigationMenu>
+              <NavigationMenuList>
+                {menu.map((item) => renderMenuItem(item))}
+              </NavigationMenuList>
+            </NavigationMenu>
+            {(showLogin || showSignup) && (
+              <div className="flex gap-2">
+                {showLogin && auth?.login && (
+                  <Button asChild variant="outline" size="sm">
+                    <NavLink href={auth.login.url}>{auth.login.text}</NavLink>
+                  </Button>
+                )}
+                {showSignup && auth?.signup && (
+                  <Button asChild size="sm">
+                    <NavLink href={auth.signup.url} external={auth.signup.url.startsWith("http")} className="gap-2">
+                      {auth.signup.icon}
+                      {auth.signup.text}
+                    </NavLink>
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="block lg:hidden">
@@ -267,13 +267,13 @@ function renderMenuItem(item: MenuItem) {
                 </NavigationMenuLink>
               </li>
             ))}
-            <li className="mt-1 border-t pt-2">
+            <li className="mt-2 border-t pt-3">
               <NavigationMenuLink asChild>
                 <NavLink
                   href={item.url}
-                  className={cn(navigationMenuTriggerStyle(), "w-full justify-start")}
+                  className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white no-underline outline-none transition-colors hover:bg-primary-700"
                 >
-                  View all {item.title.toLowerCase()} →
+                  View all {item.title}
                 </NavLink>
               </NavigationMenuLink>
             </li>
@@ -325,8 +325,11 @@ function renderMobileMenuItem(item: MenuItem) {
               </div>
             </NavLink>
           ))}
-          <NavLink href={item.url} className="mt-2 block px-3 text-sm font-semibold text-primary-600">
-            View all {item.title.toLowerCase()} →
+          <NavLink
+            href={item.url}
+            className="mt-3 flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+          >
+            View all {item.title}
           </NavLink>
         </AccordionContent>
       </AccordionItem>

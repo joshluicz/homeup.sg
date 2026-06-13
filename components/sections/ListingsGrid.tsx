@@ -47,7 +47,7 @@ function ListingCard({ listing }: { listing: Listing }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={listing.image}
-          alt={listing.name}
+          alt={`${listing.name} — ${listing.type} ${listing.status.toLowerCase()} in Singapore, ${listing.price}`}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Badges */}

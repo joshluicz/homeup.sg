@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Privacy Policy | HOMEUP",
   description:
     "How HOMEUP (Haus Plus Pte. Ltd.) collects, uses, discloses, and protects your personal data in accordance with Singapore's Personal Data Protection Act (PDPA).",
-};
+  path: "/privacy-policy",
+});
 
 function H2({ children }: { children: React.ReactNode }) {
   return (

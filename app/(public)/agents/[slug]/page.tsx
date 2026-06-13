@@ -2,8 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { AgentProfile } from "@/components/sections/AgentProfile";
 import { getAgentBySlug, getAllAgentSlugs } from "@/lib/data/agents";
+import { buildPageMetadata } from "@/lib/seo/metadata";
+import {
+  breadcrumbSchema,
+  personSchema,
+  realEstateAgentSchema,
+} from "@/lib/seo/schema";
 import { getAgentYoutubeVideos } from "@/lib/youtube";
 
 interface AgentPageProps {
@@ -18,17 +25,15 @@ export async function generateMetadata({ params }: AgentPageProps): Promise<Meta
   const agent = getAgentBySlug(params.slug);
   if (!agent) return { title: "Agent Not Found" };
 
-  return {
+  return buildPageMetadata({
     title: `${agent.name} — Property Advisor`,
     description: agent.bio,
-    alternates: { canonical: `https://lp.homeup.sg/agents/${agent.slug}` },
-    openGraph: {
-      url: `https://lp.homeup.sg/agents/${agent.slug}`,
-      title: `${agent.name} | HomeUP`,
-      description: agent.bio,
-      images: [{ url: `https://lp.homeup.sg${agent.photo}`, alt: agent.name }],
-    },
-  };
+    path: `/agents/${agent.slug}`,
+    ogImage: `https://lp.homeup.sg${agent.photo}`,
+    ogImageAlt: `${agent.name} — CEA ${agent.cea}, HomeUP property advisor`,
+    ogImageWidth: 400,
+    ogImageHeight: 400,
+  });
 }
 
 export default async function AgentPage({ params }: AgentPageProps) {
@@ -39,6 +44,17 @@ export default async function AgentPage({ params }: AgentPageProps) {
 
   return (
     <>
+      <JsonLd
+        data={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Our Agents", path: "/agents" },
+            { name: agent.name, path: `/agents/${agent.slug}` },
+          ]),
+          personSchema(agent),
+          realEstateAgentSchema(agent),
+        ]}
+      />
       <Navbar />
       <main>
         <AgentProfile agent={agent} videos={videos} />

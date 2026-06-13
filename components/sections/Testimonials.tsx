@@ -43,8 +43,8 @@ export function Testimonials() {
   return (
     <AnimatedTestimonials
       badgeText="Verified HOMEUP clients"
-      title="Real results, real people"
-      subtitle="Homeowners share their experience working with HOMEUP: transparent pricing, professional service, and real savings."
+      title="What do HomeUP clients say about fixed-fee agents?"
+      subtitle="Homeowners share their experience: transparent pricing, professional service, and real savings compared to percentage commission."
       testimonials={testimonials}
       autoRotateInterval={6000}
     />

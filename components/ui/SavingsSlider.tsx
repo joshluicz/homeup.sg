@@ -52,12 +52,18 @@ interface SavingsSliderProps {
   mode?: "sell" | "buy";
   className?: string;
   defaultType?: SellPropertyType | BuyPropertyType;
+  /** Hide property-type tabs — use on type-specific sub-pages */
+  lockType?: boolean;
+  /** Compact layout for embedding in sub-page heroes */
+  variant?: "default" | "embedded";
 }
 
 export function SavingsSlider({
   mode = "sell",
   className = "mt-12",
   defaultType,
+  lockType = false,
+  variant = "default",
 }: SavingsSliderProps) {
   const isBuy = mode === "buy";
   const initialType = defaultType ?? (isBuy ? "HDB" : "HDB");
@@ -95,67 +101,79 @@ export function SavingsSlider({
     typicalWithGst > 0 ? Math.round((Math.max(0, savings) / typicalWithGst) * 100) : 0;
 
   const types = isBuy ? BUY_TYPES : SELL_TYPES;
+  const isEmbedded = variant === "embedded";
 
   return (
     <div
       className={[
-        "overflow-hidden rounded-3xl ring-1 ring-black/[0.06] shadow-2xl shadow-black/[0.08]",
+        "overflow-hidden ring-1 ring-black/[0.06]",
+        isEmbedded ? "rounded-2xl shadow-md shadow-black/[0.06]" : "rounded-3xl shadow-2xl shadow-black/[0.08]",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <div className="relative overflow-hidden bg-neutral-900 px-6 py-8 sm:px-10 sm:py-10">
-        <div
-          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary-600/20 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-primary-600/12 blur-2xl"
-          aria-hidden="true"
-        />
+      {!isEmbedded && (
+        <div className="relative overflow-hidden bg-neutral-900 px-6 py-8 sm:px-10 sm:py-10">
+          <div
+            className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary-600/20 blur-3xl"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-primary-600/12 blur-2xl"
+            aria-hidden="true"
+          />
 
-        <div className="relative z-10">
-          <span className="inline-flex items-center rounded-full bg-primary-600/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary-400 ring-1 ring-primary-500/30">
-            {isBuy ? "Buying Fee Calculator" : "Savings Calculator"}
-          </span>
-          <h3 className="mt-4 font-display text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl">
-            {isBuy ? "What will it cost to buy?" : "How much will you save?"}
-          </h3>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-            {isBuy
-              ? "Select the property type you're buying to see your transparent HOMEUP fee."
-              : "Select your property type and enter its value to see your exact savings."}
-          </p>
-        </div>
-      </div>
-
-      <div className="bg-white px-6 py-8 sm:px-10 sm:py-9">
-        <div className="mb-7">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
-            {isBuy ? "I am buying a…" : "I am selling a…"}
-          </p>
-          <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">
-            {types.map((t) => (
-              <ParticleButton
-                key={t}
-                variant="ghost"
-                size="sm"
-                showIcon={false}
-                successDuration={600}
-                onClick={() => setPropertyType(t)}
-                className={cn(
-                  "h-auto min-h-0 flex-1 rounded-lg border-0 px-2 py-2.5 text-xs font-semibold shadow-none ring-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 sm:px-3 sm:text-sm",
-                  propertyType === t
-                    ? "bg-primary-600 text-white hover:bg-primary-700 hover:text-white"
-                    : "bg-transparent text-neutral-500 hover:bg-white/80 hover:text-neutral-800",
-                )}
-              >
-                {isBuy ? BUY_TYPE_LABELS[t as BuyPropertyType] : t}
-              </ParticleButton>
-            ))}
+          <div className="relative z-10">
+            <span className="inline-flex items-center rounded-full bg-primary-600/20 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-primary-400 ring-1 ring-primary-500/30">
+              {isBuy ? "Buying Fee Calculator" : "Savings Calculator"}
+            </span>
+            <h3 className="mt-4 font-display text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl">
+              {isBuy ? "What will it cost to buy?" : "How much will you save?"}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-400">
+              {isBuy
+                ? "Select the property type you're buying to see your transparent HOMEUP fee."
+                : "Select your property type and enter its value to see your exact savings."}
+            </p>
           </div>
         </div>
+      )}
+
+      <div className={cn("bg-white", isEmbedded ? "px-5 py-6 sm:px-6 sm:py-7" : "px-6 py-8 sm:px-10 sm:py-9")}>
+        {isEmbedded && (
+          <p className="mb-5 text-sm font-semibold text-neutral-900">
+            {isBuy ? "Estimate your buying fee" : "Estimate your savings"}
+          </p>
+        )}
+
+        {!lockType && (
+          <div className="mb-7">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {isBuy ? "I am buying a…" : "I am selling a…"}
+            </p>
+            <div className="flex gap-1 rounded-xl bg-neutral-100 p-1">
+              {types.map((t) => (
+                <ParticleButton
+                  key={t}
+                  variant="ghost"
+                  size="sm"
+                  showIcon={false}
+                  successDuration={600}
+                  onClick={() => setPropertyType(t)}
+                  className={cn(
+                    "h-auto min-h-0 flex-1 rounded-lg border-0 px-2 py-2.5 text-xs font-semibold shadow-none ring-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 sm:px-3 sm:text-sm",
+                    propertyType === t
+                      ? "bg-primary-600 text-white hover:bg-primary-700 hover:text-white"
+                      : "bg-transparent text-neutral-500 hover:bg-white/80 hover:text-neutral-800",
+                  )}
+                >
+                  {isBuy ? BUY_TYPE_LABELS[t as BuyPropertyType] : t}
+                </ParticleButton>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mb-4 flex items-center justify-between gap-4">
           <span className="text-sm font-medium text-neutral-500">Property value</span>

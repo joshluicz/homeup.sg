@@ -16,19 +16,19 @@ export const HOMEUP_NAV_MENU: MenuItem[] = [
     items: [
       {
         title: "Sell HDB",
-        description: "Fixed $1,999 + GST — full HDB resale service",
+        description: "Fixed $1,999 + GST",
         icon: <Home className="size-5 shrink-0 text-blue-600" />,
         url: "/sell-hdb",
       },
       {
         title: "Sell Condo",
-        description: "Fixed $4,999 + GST — condo and EC resale",
+        description: "Fixed $4,999 + GST",
         icon: <Building2 className="size-5 shrink-0 text-primary-600" />,
         url: "/sell-condo",
       },
       {
         title: "Sell Landed",
-        description: "Fixed $9,999 + GST — landed home sales",
+        description: "Fixed $9,999 + GST",
         icon: <Trees className="size-5 shrink-0 text-amber-600" />,
         url: "/sell-landed",
       },
@@ -40,19 +40,19 @@ export const HOMEUP_NAV_MENU: MenuItem[] = [
     items: [
       {
         title: "Buy HDB",
-        description: "Structured guidance from grants to OTP",
+        description: "Grants to OTP",
         icon: <Home className="size-5 shrink-0 text-blue-600" />,
         url: "/buy-hdb",
       },
       {
         title: "Buy Condo/Landed",
-        description: "Complimentary resale buyer representation",
+        description: "Complimentary representation",
         icon: <Building2 className="size-5 shrink-0 text-primary-600" />,
         url: "/buy-condo-landed",
       },
       {
         title: "Buy New Launch",
-        description: "Purchase from developers — no buyer commission",
+        description: "No buyer commission",
         icon: <Sparkles className="size-5 shrink-0 text-amber-600" />,
         url: "/buy-new-launch",
       },
@@ -60,6 +60,7 @@ export const HOMEUP_NAV_MENU: MenuItem[] = [
   },
   { title: "Listings", url: "/listings" },
   { title: "Playbook", url: "/playbook" },
+  { title: "About", url: "/about" },
   { title: "Our Team", url: "/agents" },
 ];
 

@@ -215,7 +215,7 @@ export function Hero() {
           <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
             <Image
               src="/images/team-group.png"
-              alt="The HomeUP team — 5 CEA-licensed property agents in Singapore"
+              alt="The HomeUP team — CEA-licensed property agents in Singapore"
               width={920}
               height={614}
               priority

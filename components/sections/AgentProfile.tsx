@@ -3,18 +3,8 @@ import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import type { Agent } from "@/lib/data/agents";
 import type { AgentVideo } from "@/lib/data/agents";
-import { Button } from "@/components/ui/Button";
-import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
 import { youtubeEmbedUrl, youtubeWatchUrl, youtubeThumbnail } from "@/lib/youtube";
-
-const WHATSAPP = "6580877015";
-
-function whatsappUrl(agentName: string) {
-  const text = encodeURIComponent(
-    `Hi HomeUP, I'd like to speak with ${agentName} about my property plans.`,
-  );
-  return `https://wa.me/${WHATSAPP}?text=${text}`;
-}
 
 interface AgentProfileProps {
   agent: Agent;
@@ -52,6 +42,13 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
               <p className="mt-4 text-center text-sm font-normal text-neutral-400 lg:text-left">
                 {agent.cea}
               </p>
+              {agent.social && (
+                <AgentSocialLinks
+                  links={agent.social}
+                  agentName={agent.name}
+                  className="mt-4"
+                />
+              )}
             </div>
 
             <div>
@@ -74,20 +71,6 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                     {s}
                   </span>
                 ))}
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button asChild>
-                  <a
-                    href={whatsappUrl(agent.name)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="gap-2"
-                  >
-                    <WhatsAppIcon className="h-4 w-4 shrink-0" />
-                    WhatsApp {agent.name.split(" ")[0]}
-                  </a>
-                </Button>
               </div>
             </div>
           </div>
@@ -172,29 +155,6 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
           </div>
         </section>
       )}
-
-      <section aria-label="Contact agent" className="bg-neutral-900 py-12 sm:py-16">
-        <div className="container-page text-center">
-          <h2 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Work with {agent.name.split(" ")[0]}
-          </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm font-normal leading-relaxed text-neutral-300">
-            Start with a no-obligation conversation — whether you&apos;re selling, buying,
-            or planning your next move.
-          </p>
-          <Button className="mt-6" size="lg" asChild>
-            <a
-              href={whatsappUrl(agent.name)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="gap-2"
-            >
-              <WhatsAppIcon className="h-5 w-5 shrink-0" />
-              Message on WhatsApp
-            </a>
-          </Button>
-        </div>
-      </section>
     </>
   );
 }
