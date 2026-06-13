@@ -38,9 +38,10 @@ jobs:
 
       - name: Remove server-only routes before static export
         run: |
-          # The admin CMS and API routes require a live Node.js server (Supabase, cookies).
-          # They are incompatible with output:export and are deployed separately.
+          # Admin CMS, API routes, and middleware require a live Node.js server (Supabase, cookies).
+          # They are incompatible with output:export and are deployed separately on the CMS branch.
           rm -rf app/api app/'(admin)'
+          rm -f middleware.ts
 
       - name: Build static export
         run: npm run build
