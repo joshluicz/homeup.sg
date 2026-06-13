@@ -8,8 +8,7 @@ import { LISTINGS, LISTINGS_URL } from "@/lib/data/listings";
 import type { Listing } from "@/lib/data/listings";
 
 const listings = LISTINGS;
-const TOTAL = LISTINGS.length;
-const MOBILE_PREVIEW = 6;
+const PREVIEW_COUNT = 6;
 
 type FilterType = "All" | "HDB" | "Condo" | "Landed";
 
@@ -95,8 +94,8 @@ export function PropertyListings() {
     [filter],
   );
 
-  const mobileVisible = filtered.slice(0, MOBILE_PREVIEW);
-  const hasMoreOnMobile = filtered.length > MOBILE_PREVIEW;
+  const preview = filtered.slice(0, PREVIEW_COUNT);
+  const hasMore = filtered.length > PREVIEW_COUNT;
 
   return (
     <section aria-label="Current property listings" className="bg-white section-padding">
@@ -108,9 +107,8 @@ export function PropertyListings() {
           </h2>
         </FadeInUp>
 
-        {/* Mobile filter */}
         <FadeInUp delay={0.08}>
-          <div className="mb-4 flex flex-wrap justify-center gap-2 lg:hidden">
+          <div className="mb-4 flex flex-wrap justify-center gap-2">
             {FILTERS.map((f) => (
               <button
                 key={f}
@@ -127,33 +125,25 @@ export function PropertyListings() {
           </div>
         </FadeInUp>
 
-        {/* Mobile: capped preview */}
-        <div className="grid grid-cols-2 gap-3 lg:hidden">
-          {mobileVisible.map((l) => (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          {preview.map((l) => (
             <ListingCard key={l.id} l={l} />
           ))}
         </div>
 
-        {hasMoreOnMobile && (
-          <p className="mt-3 text-center text-sm text-neutral-500 lg:hidden">
-            More listings available on HOMEUP.sg
+        {hasMore && (
+          <p className="mt-3 text-center text-sm text-neutral-500">
+            Showing {PREVIEW_COUNT} of {filtered.length} {filter === "All" ? "listings" : `${filter} listings`}.
           </p>
         )}
-
-        {/* Desktop: full grid */}
-        <div className="hidden grid-cols-3 gap-3 lg:grid">
-          {listings.map((l) => (
-            <ListingCard key={l.id} l={l} />
-          ))}
-        </div>
 
         <FadeInUp delay={0.15}>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link
               href="/listings"
-              className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-100"
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary-600 bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700"
             >
-              Browse all listings →
+              Browse all listings
             </Link>
             <a
               href={LISTINGS_URL}

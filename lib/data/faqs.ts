@@ -6,92 +6,92 @@ export interface FaqItem {
 export const HOMEPAGE_FAQ: FaqItem[] = [
   {
     q: "Why is HomeUP's fee so much lower if the service is full?",
-    a: "HomeUP is built to run lean. You host viewings at home, we list at scale across more than 120 active homes, and we do not carry a traditional agency floor plan. Pricing, negotiation, paperwork, and timeline planning still sit with your CEA-licensed advisor. The fee stays fixed because our model does not depend on pushing your sale price higher to earn more.",
+    a: "We keep costs down in two ways. You host viewings at your home, and we list more than 120 homes at once so marketing work is shared. Your CEA-licensed advisor still handles pricing, negotiation, paperwork, and timeline planning. The fee stays the same no matter how high your home sells for, so we are not paid more when your price goes up.",
   },
   {
     q: "Does a fixed fee mean my agent cares less about my sale price?",
-    a: "No. A percentage commission rises when your price rises, which can tempt an agent to chase a higher headline number even when it slows the sale. HomeUP advisors are not paid that way. They still have a professional stake in a clean transaction and in your outcome, but the fee does not scale with your sale price.",
+    a: "No. With a percentage commission, the agent earns more when your price goes up. That can push them to hold out for a higher number even when it slows the sale. HomeUP advisors earn the same fixed fee either way. They still want a smooth sale, but their pay does not rise with your price.",
   },
   {
     q: "What do I handle myself compared with a traditional listing?",
-    a: "You host viewings at your home. HomeUP screens enquiries first, briefs you on serious buyers, and handles listing creation, portal marketing, offer review, negotiation, and documentation. If you prefer not to host viewings, tell your advisor early so you can plan around it.",
+    a: "You host viewings at your home. HomeUP screens enquiries, sends you serious buyers, and handles the listing, portal marketing, offers, negotiation, and paperwork. If you cannot host viewings, tell your advisor early so you can work out another plan.",
   },
   {
     q: "Is HomeUP a discount broker or a full agency?",
-    a: "HomeUP is a full agency under C and H Properties (CEA licence L3007139C). The difference is the fee model, not the scope. You get portal listings, marketing support, negotiation, and completion paperwork. The flat fee replaces percentage commission, not the work that affects your result.",
+    a: "HomeUP is a full agency under C and H Properties (CEA licence L3007139C). The fee is different, not the service. You get portal listings, marketing, negotiation, and completion paperwork. You pay a flat fee instead of a percentage commission.",
   },
   {
     q: "Can HomeUP coordinate a sale and a purchase at the same time?",
-    a: "Yes. Sell-and-buy planning is one of the most common reasons families come to us. Your sale timeline, purchase budget, and loan position are mapped together from the first consultation so you are not forced into a rushed purchase or a weak offer because dates do not line up.",
+    a: "Yes. Many families sell and buy at the same time. We plan your sale timeline, purchase budget, and loan position from the first meeting so you are not stuck accepting a bad offer or rushing a purchase because the dates do not match.",
   },
   {
     q: "If my home sells for well above $500,000, do I still pay the same fixed fee?",
-    a: "Yes. HDB is $1,999, condo and EC is $4,999, and landed is $9,999, each plus GST. The fee does not rise with your sale price. That is the point of a fixed-fee model: you know the number before you sign, regardless of how strong the final offer is.",
+    a: "Yes. HDB is $1,999, condo and EC is $4,999, and landed is $9,999, each plus GST. The fee does not change with your sale price. You know the number before you sign.",
   },
   {
     q: "How is HomeUP different from a typical 2% commission agent in practice?",
-    a: "The day-to-day work is similar: list, market, negotiate, complete. The incentive structure is not. A 2% agent earns more when you sell for more. HomeUP earns the same fixed fee whether your flat sells at valuation or well above it, which keeps pricing advice and negotiation focused on your net proceeds and timeline.",
+    a: "The daily work is the same: list, market, negotiate, and complete the sale. A 2% agent earns more when you sell for more. HomeUP earns the same fixed fee whether you sell at valuation or above it. That keeps advice focused on your net proceeds and timeline, not a higher commission.",
   },
 ];
 
 export const SELL_FAQ_GENERAL: FaqItem[] = [
   {
     q: "What is included in HomeUP's fixed fee?",
-    a: "The fee is $1,999 for HDB, $4,999 for condo or EC, and $9,999 for landed, each plus GST. It covers listing on major portals, marketing support, buyer screening, viewing coordination, negotiation, and sales documentation through to completion. There is no success fee on top and no percentage of your sale price.",
+    a: "The fee is $1,999 for HDB, $4,999 for condo or EC, and $9,999 for landed, each plus GST. It covers listing on major portals, marketing, buyer screening, viewing coordination, negotiation, and sales paperwork through to completion. There is no success fee and no percentage of your sale price.",
   },
   {
     q: "Why is HomeUP's fee lower than a traditional agent?",
-    a: "HomeUP runs at scale across more than 120 active listings, so listing and marketing workflows are shared efficiently. Sellers host their own viewings, which removes the cost of an agent travelling to every showing. We also operate without a traditional high-overhead agency setup. Those savings are passed through as a fixed fee instead of a 2% commission.",
+    a: "We list more than 120 homes at once, so listing and marketing work is shared. Sellers host their own viewings, so your advisor does not travel to every showing. We also run without a large traditional office setup. Those savings show up as a fixed fee instead of a 2% commission.",
   },
   {
     q: "How many viewings should I expect to host?",
-    a: "It depends on price and demand. Many sellers host between 5 and 15 viewings before accepting an offer. HomeUP screens enquiries before confirming a slot, so the people who arrive are usually serious prospects, not casual browsers. Your advisor will brief you on what buyers are likely to ask before each session.",
+    a: "It depends on price and demand. Many sellers host 5 to 15 viewings before accepting an offer. HomeUP screens enquiries first, so most visitors are serious buyers. Your advisor will tell you what to expect before each session.",
   },
   {
     q: "Can I sell and buy at the same time with HomeUP?",
-    a: "Yes. Sell-and-buy coordination is built into how we work. Your sale timeline, purchase budget, and loan planning are mapped together from the first consultation so you are not accepting the wrong offer or rushing a purchase because dates were never aligned.",
+    a: "Yes. We plan your sale timeline, purchase budget, and loan from the first meeting. That helps you avoid accepting the wrong offer or rushing a purchase because the dates were never aligned.",
   },
   {
     q: "What if I cannot find my next home before my sale completes?",
-    a: "That is one of the most common concerns we hear. We plan for it upfront: realistic buying timelines beside your sale, and in some cases a longer completion window negotiated with the buyer. We will not push you to accept an offer before your next move is workable.",
+    a: "This comes up often. We plan for it early: realistic buying timelines alongside your sale, and sometimes a longer completion date with the buyer. We will not push you to accept an offer before your next move is sorted.",
   },
   {
     q: "How long does selling typically take after I accept an offer?",
-    a: "HDB resales often take 16 to 20 weeks from accepted offer to completion because of HDB Portal steps. Condos often take 20 to 24 weeks. Landed can take 24 to 32 weeks because the buyer pool is smaller and legal checks take longer. Time on market before an offer depends on pricing and demand.",
+    a: "HDB resales often take 16 to 20 weeks from accepted offer to completion because of HDB Portal steps. Condos often take 20 to 24 weeks. Landed can take 24 to 32 weeks because the buyer pool is smaller and legal checks take longer. Time on market before an offer depends on price and demand.",
   },
 ];
 
 export const SELL_FAQ_HDB: FaqItem[] = [
   {
     q: "How much CPF must I return when I sell my HDB flat?",
-    a: "CPF funds used to buy the flat, including accrued interest, must go back to your CPF Ordinary Account on sale. Accrued interest is calculated at 2.5% per year from the date of withdrawal. HomeUP prepares a net proceeds estimate in your first consultation so you know what cash you will actually receive.",
+    a: "CPF used to buy the flat, plus accrued interest, goes back to your CPF Ordinary Account when you sell. Accrued interest is 2.5% per year from the date you withdrew the funds. HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
   },
   {
     q: "How long does an HDB resale take from accepted offer to completion?",
-    a: "Most resales take 16 to 22 weeks after you accept an offer. That includes the 21-day option period, HDB Resale Portal submission, HDB approval (often 4 to 6 weeks), and completion at HDB Hub. Time to receive a suitable offer before that depends on pricing and demand in your town.",
+    a: "Most resales take 16 to 22 weeks after you accept an offer. That covers the 21-day option period, HDB Resale Portal submission, HDB approval (often 4 to 6 weeks), and completion at HDB Hub. How long you wait for a suitable offer before that depends on price and demand in your town.",
   },
   {
     q: "Does HomeUP handle the HDB Resale Portal submission?",
-    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the documentation and submits through the HDB Resale Portal. We coordinate with the buyer's agent, track HDB's review, and work through to the completion appointment.",
+    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and submits through the HDB Resale Portal. We work with the buyer's agent, track HDB's review, and follow through to completion.",
   },
   {
     q: "When is the HDB valuation done and why does it matter?",
-    a: "A licensed valuer's report is usually ordered after the buyer exercises the OTP. It affects the buyer's maximum loan and CPF usage, which can influence whether the deal proceeds at your agreed price. HomeUP explains the valuation timeline and what it means for your sale before you commit to a price.",
+    a: "A licensed valuer's report is usually ordered after the buyer exercises the OTP. It affects the buyer's loan and CPF usage, which can affect whether the deal goes through at your agreed price. HomeUP explains the valuation timeline before you commit to a price.",
   },
   {
     q: "What if I need to buy my next home before this sale completes?",
-    a: "We map sale and purchase dates together from the start. In some cases we negotiate a deferred completion with the buyer, or discuss a short rental bridge if that is safer for your family. We will not rush you into an offer that leaves you without a realistic plan for your next home.",
+    a: "We plan sale and purchase dates from the start. Sometimes we negotiate a later completion with the buyer, or discuss a short rental stay if that is safer for your family. We will not rush you into an offer that leaves you without a plan for your next home.",
   },
   {
     q: "Will pricing above recent block transactions slow my sale?",
-    a: "Usually, yes. Buyers compare your asking price to recent transactions in your block and town. A number set too high to win the listing often kills enquiry volume. HomeUP recommends a price backed by recent transacted data, not an inflated figure designed to secure your signature.",
+    a: "Usually, yes. Buyers compare your asking price to recent sales in your block and town. A price set too high often cuts enquiry volume. HomeUP recommends a price backed by recent transacted data, not an inflated figure to win your listing.",
   },
 ];
 
 export const SELL_FAQ_CONDO: FaqItem[] = [
   {
     q: "Does Seller's Stamp Duty apply to my condo sale?",
-    a: "SSD applies if you sell within three years of purchase. Rates are 12% within one year, 8% within two years, and 4% within three years, based on the higher of sale price or market value. HomeUP confirms whether SSD applies in your first consultation before any listing date is set.",
+    a: "SSD applies if you sell within three years of purchase. Rates are 12% within one year, 8% within two years, and 4% within three years, based on the higher of sale price or market value. HomeUP confirms whether SSD applies in your first meeting before any listing date is set.",
   },
   {
     q: "Can I sell an Executive Condominium on the open market?",
@@ -107,7 +107,7 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
   },
   {
     q: "What happens between OTP exercise and legal completion?",
-    a: "After the buyer exercises the OTP and pays the balance of the option fee, lawyers draft the Sale and Purchase Agreement. The buyer's loan is confirmed, insurance is arranged, and your outstanding loan is discharged. HomeUP tracks deadlines and keeps your lawyer and the buyer's team aligned.",
+    a: "After the buyer exercises the OTP and pays the balance of the option fee, lawyers draft the Sale and Purchase Agreement. The buyer's loan is confirmed, insurance is arranged, and your outstanding loan is discharged. HomeUP tracks deadlines and keeps both legal teams aligned.",
   },
   {
     q: "Do I need my own lawyer for a condo sale?",
@@ -122,15 +122,15 @@ export const SELL_FAQ_LANDED: FaqItem[] = [
   },
   {
     q: "Why do landed sales often take longer than HDB or condo?",
-    a: "The qualified buyer pool is smaller and each buyer's financing and eligibility checks take time. Marketing can run 4 to 16 weeks before a suitable offer. Legal completion after acceptance is often 24 to 32 weeks. HomeUP uses patient, targeted marketing rather than volume alone.",
+    a: "The qualified buyer pool is smaller and each buyer's financing and eligibility checks take time. Marketing can run 4 to 16 weeks before a suitable offer. Legal completion after acceptance is often 24 to 32 weeks. HomeUP uses targeted marketing rather than volume alone.",
   },
   {
     q: "Does freehold always sell faster than leasehold landed?",
-    a: "Not automatically. Freehold and 999-year leasehold homes are often more attractive to long-term buyers, but an overpriced freehold home will sit longer than a fairly priced leasehold one. Tenure is one input in pricing, not a substitute for recent transaction data in your area.",
+    a: "Not always. Freehold and 999-year leasehold homes often appeal to long-term buyers, but an overpriced freehold home will sit longer than a fairly priced leasehold one. Tenure is one factor in pricing, not a substitute for recent sales data in your area.",
   },
   {
     q: "How do you price a landed home accurately?",
-    a: "Landed value depends on plot size, shape, orientation, road frontage, tenure, and recent transacted prices nearby. HomeUP benchmarks against comparable sales and adjusts for those factors. We do not inflate the asking price to win the listing.",
+    a: "Landed value depends on plot size, shape, orientation, road frontage, tenure, and recent sales nearby. HomeUP benchmarks against comparable sales and adjusts for those factors. We do not inflate the asking price to win the listing.",
   },
   {
     q: "Will HomeUP vet buyers before a viewing?",
@@ -153,15 +153,15 @@ export const BUY_FAQ_GENERAL: FaqItem[] = [
   },
   {
     q: "What does buyer representation include end to end?",
-    a: "Affordability and financing guidance, shortlisting, viewing coordination, offer strategy, OTP and Sale and Purchase review, and documentation through to completion. For HDB, that also includes grant planning and resale checklist management.",
+    a: "Affordability and financing guidance, shortlisting, viewing coordination, offer strategy, OTP and Sale and Purchase review, and paperwork through to completion. For HDB, that also includes grant planning and resale checklist management.",
   },
   {
     q: "Can HomeUP help if I am selling and buying at the same time?",
-    a: "Yes. We map sale proceeds, purchase budget, and loan position together from day one. That reduces the risk of a forced sale, a rushed purchase, or a gap between homes.",
+    a: "Yes. We plan sale proceeds, purchase budget, and loan position from day one. That reduces the risk of a forced sale, a rushed purchase, or a gap between homes.",
   },
   {
     q: "How is HomeUP different from approaching a developer sales team directly?",
-    a: "A developer team is paid to move units in that project. HomeUP compares across projects and stacks, highlights trade-offs, and helps you decide before showroom pressure peaks. On new launch day, that preparation matters.",
+    a: "A developer team is paid to sell units in that project. HomeUP compares across projects and stacks, highlights trade-offs, and helps you decide before showroom pressure peaks. On new launch day, that preparation matters.",
   },
 ];
 
@@ -184,7 +184,7 @@ export const BUY_FAQ_HDB: FaqItem[] = [
   },
   {
     q: "How long does an HDB resale purchase take after OTP?",
-    a: "From exercised OTP to completion is often 16 to 20 weeks, including Resale Portal steps, grant processing, valuation, and the completion appointment. Time to find and secure an OTP depends on your budget discipline and competition in your preferred towns.",
+    a: "From exercised OTP to completion is often 16 to 20 weeks, including Resale Portal steps, grant processing, valuation, and the completion appointment. Time to find and secure an OTP depends on your budget and competition in your preferred towns.",
   },
   {
     q: "Can I buy before my current home sells?",
