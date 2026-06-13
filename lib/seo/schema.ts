@@ -258,6 +258,35 @@ export function websiteSchema() {
   };
 }
 
+/** CSS selectors for voice-friendly answer blocks (SpeakableSpecification). */
+export const SPEAKABLE_HOMEPAGE_SELECTORS = [
+  ".speakable-fixed-fee-definition",
+  ".speakable-faq-answer",
+] as const;
+
+export function speakableWebPageSchema({
+  path,
+  name,
+  cssSelectors,
+}: {
+  path: string;
+  name: string;
+  cssSelectors: readonly string[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${SITE_URL}${path}#webpage`,
+    url: `${SITE_URL}${path}`,
+    name,
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: [...cssSelectors],
+    },
+  };
+}
+
 function agentSameAs(agent: Agent): string[] {
   const links: string[] = [];
   if (agent.social?.instagram) links.push(agent.social.instagram);

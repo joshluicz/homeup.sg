@@ -15,6 +15,8 @@ interface FAQSectionProps {
   eyebrow?: string;
   title?: string;
   lead?: string;
+  /** First N answers receive `.speakable-faq-answer` for voice/AEO schema hooks. */
+  speakableAnswerCount?: number;
 }
 
 export function FAQSection({
@@ -22,6 +24,7 @@ export function FAQSection({
   eyebrow = "Common Questions",
   title = "Frequently Asked Questions",
   lead,
+  speakableAnswerCount = 0,
 }: FAQSectionProps) {
   return (
     <section aria-label="Frequently asked questions" className="section-padding bg-neutral-50">
@@ -39,7 +42,11 @@ export function FAQSection({
                 <AccordionTrigger className="py-5 text-left text-sm font-semibold text-neutral-900 hover:no-underline hover:text-primary-700 [&[data-state=open]]:text-primary-700 transition-colors duration-150">
                   {item.q}
                 </AccordionTrigger>
-                <AccordionContent className="pb-5 text-sm leading-relaxed text-neutral-600">
+                <AccordionContent
+                  className={`pb-5 text-sm leading-relaxed text-neutral-600${
+                    i < speakableAnswerCount ? " speakable-faq-answer" : ""
+                  }`}
+                >
                   {item.a}
                 </AccordionContent>
               </AccordionItem>

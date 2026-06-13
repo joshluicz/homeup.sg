@@ -20,6 +20,8 @@ import {
   howToSchema,
   organizationSchema,
   SELL_HOW_TO_STEPS,
+  speakableWebPageSchema,
+  SPEAKABLE_HOMEPAGE_SELECTORS,
 } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
@@ -51,6 +53,11 @@ export default function Home() {
             SELL_HOW_TO_STEPS,
           ),
           breadcrumbSchema([{ name: "Home", path: "/" }]),
+          speakableWebPageSchema({
+            path: "/",
+            name: "Fixed-Fee Property Agents Singapore | HomeUP",
+            cssSelectors: SPEAKABLE_HOMEPAGE_SELECTORS,
+          }),
         ]}
       />
       <Navbar />
@@ -72,6 +79,7 @@ export default function Home() {
           eyebrow="Common questions"
           title="What homeowners ask before they list with us"
           lead="Straight answers on fees, incentives, and what you handle yourself. No textbook HDB basics."
+          speakableAnswerCount={3}
         />
         <SocialPanel />
         <CtaBanner />

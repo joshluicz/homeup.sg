@@ -9,7 +9,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const BAK_SUFFIX = ".__lp_static_bak";
+const BAK_ROOT = path.join(root, ".lp-static-bak");
 
 const STRIP_PATHS = [
   path.join(root, "app", "api"),
@@ -20,10 +20,16 @@ const MIDDLEWARE = path.join(root, "middleware.ts");
 
 const stripped = [];
 
+function backupPath(target) {
+  return path.join(BAK_ROOT, path.relative(root, target));
+}
+
 function stripPath(target) {
   if (!fs.existsSync(target)) return;
 
-  const backup = `${target}${BAK_SUFFIX}`;
+  const backup = backupPath(target);
+  fs.mkdirSync(path.dirname(backup), { recursive: true });
+
   if (fs.existsSync(backup)) {
     fs.rmSync(backup, { recursive: true, force: true });
   }
@@ -50,12 +56,22 @@ function restoreAll() {
     if (fs.existsSync(target)) {
       fs.rmSync(target, { recursive: true, force: true });
     }
+    fs.mkdirSync(path.dirname(target), { recursive: true });
     fs.renameSync(backup, target);
   }
   stripped.length = 0;
+  if (fs.existsSync(BAK_ROOT)) {
+    fs.rmSync(BAK_ROOT, { recursive: true, force: true });
+  }
 }
 
+let exitCode = 0;
+
 try {
+  if (fs.existsSync(BAK_ROOT)) {
+    fs.rmSync(BAK_ROOT, { recursive: true, force: true });
+  }
+
   for (const p of STRIP_PATHS) stripPath(p);
   stripPath(MIDDLEWARE);
 
@@ -67,13 +83,15 @@ try {
   });
 
   if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+    exitCode = result.status ?? 1;
+  } else {
+    console.log("\n✓ Static export written to ./out");
   }
-
-  console.log("\n✓ Static export written to ./out");
 } catch (error) {
   console.error(error);
-  process.exit(1);
+  exitCode = 1;
 } finally {
   restoreAll();
 }
+
+process.exit(exitCode);

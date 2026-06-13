@@ -50,6 +50,58 @@ interface PricingSection4Props {
   showSlider?: boolean;
 }
 
+function SavingsSliderStaticFallback() {
+  return (
+    <noscript>
+      <div
+        className="mt-12 overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm"
+        aria-label="Savings calculator examples without JavaScript"
+      >
+        <div className="border-b border-neutral-200 bg-neutral-900 px-6 py-8 sm:px-10">
+          <h3 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+            How much will you save?
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-400">
+            Example savings at common sale prices. HomeUP fixed fees shown before GST.
+          </p>
+        </div>
+        <div className="divide-y divide-neutral-100 px-6 py-6 sm:px-10">
+          {COMPARISON_ROWS.map((row) => (
+            <article key={row.type} className="py-5 first:pt-0 last:pb-0">
+              <h4 className="text-sm font-bold text-neutral-900">{row.type}</h4>
+              <p className="mt-1 text-sm font-normal text-neutral-500">
+                Example sale: {formatSgd(row.salePrice)}
+              </p>
+              <dl className="mt-3 grid gap-2 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="font-normal text-neutral-600">Typical 2% (incl. GST)</dt>
+                  <dd className="font-semibold text-neutral-900">
+                    {formatSgd(row.typicalInclGst)}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="font-normal text-neutral-600">HomeUP fixed fee*</dt>
+                  <dd className="font-semibold text-neutral-900">
+                    {formatHomeupFee(row.homeupBase)}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-neutral-100 pt-2">
+                  <dt className="font-semibold text-primary-700">You save</dt>
+                  <dd className="font-bold text-primary-700">{formatSgd(row.savings)}</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+        </div>
+        <p className="border-t border-neutral-100 px-6 py-4 text-center text-xs font-normal text-neutral-400 sm:px-10">
+          * HomeUP fixed fees shown before 9% GST. Savings use GST-inclusive amounts on both
+          sides.
+        </p>
+      </div>
+    </noscript>
+  );
+}
+
 function ComparisonCards() {
   return (
     <div className="grid gap-4 md:hidden">
@@ -169,8 +221,8 @@ export default function PricingSection4({
           <Eyebrow>Transparent Fixed Fees</Eyebrow>
           <h2 className="section-title">How much does a property agent cost in Singapore?</h2>
           <p className="section-lead">
-            Most agents charge 1–2% commission on your sale price. HomeUP charges one flat fee
-            with the same full service — listing, marketing, viewings, negotiation, and
+            Most agents charge 1 to 2% commission on your sale price. HomeUP charges one flat fee
+            with the same full service: listing, marketing, viewings, negotiation, and
             documentation.
           </p>
         </FadeInUp>
@@ -197,7 +249,7 @@ export default function PricingSection4({
           <h3 className="text-center font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
             What is a fixed-fee property agent?
           </h3>
-          <p className="mt-4 text-center text-sm leading-relaxed text-neutral-600 sm:text-base">
+          <p className="mt-4 text-center text-sm leading-relaxed text-neutral-600 sm:text-base speakable-fixed-fee-definition">
             A fixed-fee property agent charges a set flat amount regardless of sale price,
             rather than a percentage commission. HomeUP charges $1,999 for HDB, $4,999 for
             condo/EC, and $9,999 for landed, compared to typical 1 to 2% commissions that can
@@ -238,9 +290,12 @@ export default function PricingSection4({
         </FadeInUp>
 
         {showSlider && (
-          <FadeInUp delay={0.25}>
-            <SavingsSlider mode="sell" defaultType={defaultSliderType} />
-          </FadeInUp>
+          <>
+            <SavingsSliderStaticFallback />
+            <FadeInUp delay={0.25}>
+              <SavingsSlider mode="sell" defaultType={defaultSliderType} />
+            </FadeInUp>
+          </>
         )}
       </div>
     </section>
