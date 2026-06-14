@@ -23,13 +23,13 @@ const HDB_STEPS: ProcessStep[] = [
   {
     step: "02",
     title: "List & Market",
-    body: "Your flat goes live on PropertyGuru, SRX, 99.co, and HomeUP.sg — plus targeted social media. HomeUP screens all buyer enquiries before confirming any viewing.",
+    body: "Your flat goes live on PropertyGuru, SRX, 99.co, and HomeUP.sg, plus targeted social media. HomeUP screens all buyer enquiries before confirming any viewing.",
     weeks: "Week 2",
   },
   {
     step: "03",
     title: "You Host Viewings",
-    body: "HomeUP briefs you on what buyers ask, screens interested parties, and coordinates the schedule. You host the tours — you know your home best. We handle all follow-up.",
+    body: "HomeUP briefs you on what buyers ask, screens interested parties, and coordinates the schedule. You host the tours. You know your home best. We handle all follow-up.",
     weeks: "Week 3–6",
     highlight: true,
   },
@@ -57,7 +57,7 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "02",
     title: "List & Market",
-    body: "Multi-platform listing across PropertyGuru, SRX, 99.co, and HomeUP.sg plus social channels. Buyer enquiries screened and responded to systematically — no opportunities lost.",
+    body: "Multi-platform listing across PropertyGuru, SRX, 99.co, and HomeUP.sg plus social channels. Buyer enquiries screened and responded to systematically. No opportunities lost.",
     weeks: "Week 2",
   },
   {
@@ -85,26 +85,26 @@ const LANDED_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "Consult & Plan",
-    body: "Tenure and land title checked. Valuation guidance prepared against recent comparable landed transactions. Buyer profile defined — including citizenship eligibility checks that apply to landed homes.",
+    body: "Tenure and land title checked. Valuation guidance prepared against recent comparable landed transactions. Buyer profile defined, including citizenship eligibility checks that apply to landed homes.",
     weeks: "Week 1–2",
   },
   {
     step: "02",
     title: "Targeted Marketing",
-    body: "Landed homes need a different marketing approach — targeted reach to serious buyers, not mass-listing volume. HomeUP runs targeted digital campaigns and reaches out to qualified buyer networks.",
+    body: "Landed homes need a different marketing approach: targeted reach to serious buyers, not mass-listing volume. HomeUP runs targeted digital campaigns and reaches out to qualified buyer networks.",
     weeks: "Week 2–4",
   },
   {
     step: "03",
     title: "You Host Viewings",
-    body: "HomeUP vets every buyer before a viewing is confirmed — financial qualification and eligibility checked. You host the tour of your home. We attend negotiations and handle all follow-through.",
+    body: "HomeUP vets every buyer before a viewing is confirmed. Financial qualification and eligibility checked. You host the tour of your home. We attend negotiations and handle all follow-through.",
     weeks: "Week 4–12",
     highlight: true,
   },
   {
     step: "04",
     title: "Negotiate & OTP",
-    body: "Patient, structured negotiation focused on your net proceeds — not a rushed close. OTP signed with terms reviewed carefully. HomeUP presents all offers with a full assessment.",
+    body: "Patient, structured negotiation focused on your net proceeds, not a rushed close. OTP signed with terms reviewed carefully. HomeUP presents all offers with a full assessment.",
     weeks: "Week 8–16",
   },
   {
@@ -122,13 +122,13 @@ const STEPS_BY_TYPE: Record<SellPropertyType, ProcessStep[]> = {
 };
 
 const TITLE_BY_TYPE: Record<SellPropertyType, string> = {
-  HDB: "From first call to HDB Hub — every step, mapped out.",
-  Condo: "From first call to legal completion — no guesswork.",
+  HDB: "From first call to HDB Hub. Every step, mapped out.",
+  Condo: "From first call to legal completion. No guesswork.",
   Landed: "A structured process for a considered sale.",
 };
 
 const LEAD_BY_TYPE: Record<SellPropertyType, string> = {
-  HDB: "The HDB resale process has fixed timelines and mandatory steps. HomeUP plans around all of them so you always know what happens next — and when.",
+  HDB: "The HDB resale process has fixed timelines and mandatory steps. HomeUP plans around all of them so you always know what happens next and when.",
   Condo: "Resale condo sales move through legal milestones. HomeUP coordinates every deadline from OTP to completion so nothing falls through the cracks.",
   Landed: "Landed sales take longer and require more careful buyer qualification. HomeUP manages the full process so you can make decisions calmly, not under pressure.",
 };
@@ -172,7 +172,7 @@ export function SellProcessFlow({ propertyType }: SellProcessFlowProps) {
                 <div
                   className={[
                     "font-display text-2xl font-extrabold",
-                    s.highlight ? "text-primary-200" : "text-primary-100",
+                    s.highlight ? "text-primary-200" : "text-primary-600",
                   ].join(" ")}
                 >
                   {s.step}
@@ -235,7 +235,7 @@ export function SellProcessFlow({ propertyType }: SellProcessFlowProps) {
                   <span
                     className={[
                       "font-display text-xl font-extrabold",
-                      s.highlight ? "text-primary-200" : "text-primary-100",
+                      s.highlight ? "text-primary-200" : "text-primary-600",
                     ].join(" ")}
                   >
                     {s.step}
@@ -274,7 +274,7 @@ export function SellProcessFlow({ propertyType }: SellProcessFlowProps) {
 
         <FadeInUp delay={0.2} className="mt-8 rounded-xl bg-neutral-900 px-6 py-5 text-center">
           <p className="text-sm font-medium text-neutral-200">
-            Every step is handled by the same dedicated HomeUP agent — not handed off to a junior coordinator.
+            Every step is handled by the same dedicated HomeUP agent, not handed off to a junior coordinator.
           </p>
         </FadeInUp>
       </div>

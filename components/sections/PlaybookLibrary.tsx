@@ -125,7 +125,7 @@ export function PlaybookLibrary({ videos }: PlaybookLibraryProps) {
 
           {filteredVideos.length === 0 && (
             <div className="py-20 text-center text-sm text-neutral-400">
-              No videos in this category yet — check back soon.
+              No videos in this category yet. Check back soon.
             </div>
           )}
         </div>

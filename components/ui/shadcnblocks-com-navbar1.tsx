@@ -18,7 +18,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
@@ -91,6 +90,10 @@ function NavLink({
     </Link>
   );
 }
+
+/** Ghost top-level nav: text only, no pill/rectangle backgrounds on desktop */
+const desktopNavItemClass =
+  "inline-flex h-9 w-max items-center justify-center rounded-md !bg-transparent px-3 py-2 text-sm font-medium text-neutral-600 transition-colors hover:!bg-transparent hover:text-neutral-900 focus:!bg-transparent focus:text-neutral-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 data-[active]:!bg-transparent data-[state=open]:!bg-transparent data-[state=open]:text-neutral-900";
 
 const Navbar1 = ({
   logo = {
@@ -242,7 +245,7 @@ function renderMenuItem(item: MenuItem) {
   if (item.items) {
     return (
       <NavigationMenuItem key={item.title}>
-        <NavigationMenuTrigger className="text-muted-foreground">
+        <NavigationMenuTrigger className={desktopNavItemClass}>
           {item.title}
         </NavigationMenuTrigger>
         <NavigationMenuContent>
@@ -286,13 +289,7 @@ function renderMenuItem(item: MenuItem) {
   return (
     <NavigationMenuItem key={item.title}>
       <NavigationMenuLink asChild>
-        <NavLink
-          href={item.url}
-          className={cn(
-            navigationMenuTriggerStyle(),
-            "text-muted-foreground hover:text-accent-foreground",
-          )}
-        >
+        <NavLink href={item.url} className={desktopNavItemClass}>
           {item.title}
         </NavLink>
       </NavigationMenuLink>

@@ -9,7 +9,7 @@ import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
-  title: "Property Playbook — Video Guides",
+  title: "Property Playbook | Video Guides",
   description:
     "The HomeUP Playbook: a curated library of video guides covering every stage of buying and selling property in Singapore. From HDB processes to condo upgrades, learn at your own pace.",
   path: "/playbook",

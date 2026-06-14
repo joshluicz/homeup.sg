@@ -16,7 +16,7 @@ export function AgentsDirectory() {
           <h1 className="section-title">Meet the HomeUP team</h1>
           <p className="section-lead">
             CEA-licensed advisors who combine real transaction experience with a
-            fixed-fee model — so guidance stays aligned with your interests, not
+            fixed-fee model, so guidance stays aligned with your interests, not
             commission targets.
           </p>
         </FadeInUp>
@@ -26,14 +26,14 @@ export function AgentsDirectory() {
             <StaggerItem key={agent.slug}>
               <Link
                 href={`/agents/${agent.slug}`}
-                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary-200 hover:shadow-md"
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-primary-600/40 hover:shadow-md"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
                   <Image
                     src={agent.photo}
-                    alt={`${agent.name} — CEA ${agent.cea}, HomeUP property advisor`}
+                    alt={`${agent.name}, CEA ${agent.cea}, HomeUP property advisor`}
                     fill
-                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover object-[center_5px] transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>

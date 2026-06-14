@@ -1,7 +1,8 @@
 "use client";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const WA = "https://wa.me/6580877015";
+const WA = whatsAppUrlFor("float");
 
 export function WhatsAppFloat() {
   return (

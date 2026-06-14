@@ -1,8 +1,9 @@
 "use client";
 import { Button } from "@/components/ui/Button";
 import { FadeInUp } from "@/components/ui/motion-primitives";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const whatsappUrl = "https://wa.me/6580877015";
+const whatsappUrl = whatsAppUrlFor("ctaBanner");
 
 export function CtaBanner() {
   return (

@@ -7,8 +7,7 @@ import {
   BUY_THEME_STYLES,
   type BuyPropertyType,
 } from "@/lib/data/buy-pricing";
-
-const WHATSAPP = "https://wa.me/6580877015";
+import { buildBuyPlanWhatsAppUrl } from "@/lib/whatsapp";
 
 interface BuyPlanCardProps {
   filterType: BuyPropertyType;
@@ -67,7 +66,7 @@ export function BuyPlanCard({
         </ul>
         <div className="mt-6 flex flex-col gap-2.5">
           <a
-            href={WHATSAPP}
+            href={buildBuyPlanWhatsAppUrl(plan.name)}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(

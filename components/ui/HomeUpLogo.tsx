@@ -47,7 +47,7 @@ export function HomeUpLogo({
     <span className={cn("inline-flex items-center gap-2", className)}>
       <Image
         src={asset.src}
-        alt="HomeUP — fixed-fee property agents in Singapore"
+        alt="HomeUP, fixed-fee property agents in Singapore"
         width={asset.width}
         height={asset.height}
         className={cn("object-contain", imageClassName ?? asset.defaultClassName)}

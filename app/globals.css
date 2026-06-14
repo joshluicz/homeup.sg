@@ -370,11 +370,12 @@ h2 {
       to right,
       var(--color-primary-600) 0%,
       var(--color-primary-600) var(--slider-pct, 30%),
-      var(--color-neutral-200) var(--slider-pct, 30%),
-      var(--color-neutral-200) 100%
+      var(--slider-track-inactive, var(--color-primary-100)) var(--slider-pct, 30%),
+      var(--slider-track-inactive, var(--color-primary-100)) 100%
     );
     outline: none;
     cursor: pointer;
+    transition: background 120ms ease-out;
   }
 
   .savings-slider::-webkit-slider-thumb {
@@ -386,7 +387,7 @@ h2 {
     cursor: pointer;
     border: 2.5px solid var(--color-primary-600);
     box-shadow: 0 2px 8px rgba(0, 154, 68, 0.3), 0 0 0 3px rgba(0, 154, 68, 0.08);
-    transition: box-shadow 160ms ease;
+    transition: box-shadow 160ms ease, transform 120ms ease-out;
   }
 
   .savings-slider:active::-webkit-slider-thumb {
@@ -402,6 +403,7 @@ h2 {
     border: 2.5px solid var(--color-primary-600);
     box-shadow: 0 2px 8px rgba(0, 154, 68, 0.3), 0 0 0 3px rgba(0, 154, 68, 0.08);
     border-inline: none;
+    transition: box-shadow 160ms ease, transform 120ms ease-out;
   }
 
   .comparison-table {

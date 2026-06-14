@@ -33,7 +33,7 @@ function ListingCard({ l }: { l: Listing }) {
       href={l.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:-translate-y-0.5 hover:border-primary-200 hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:-translate-y-0.5 hover:border-primary-600/40 hover:shadow-md"
     >
       {/* Property photo */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">

@@ -40,7 +40,7 @@ export function PlaybookHero() {
 
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
             A curated library of video guides covering every stage of buying and
-            selling in Singapore — from your first valuation call to final
+            selling in Singapore, from your first valuation call to final
             handover. Share any video with your clients in one click.
           </p>
         </div>

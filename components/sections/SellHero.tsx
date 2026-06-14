@@ -6,8 +6,9 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import type { SellPageHero } from "@/lib/data/sell-pages";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const WA = "https://wa.me/6580877015";
+const WA = whatsAppUrlFor("heroSell");
 const ease = [0.22, 1, 0.36, 1] as const;
 const COUNT_DURATION = 2.5;
 
@@ -176,7 +177,7 @@ export function SellHero({ content }: SellHeroProps) {
           <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
             <Image
               src="/images/team-group.png"
-              alt="The HomeUP team — CEA-licensed property agents in Singapore"
+              alt="The HomeUP team, CEA-licensed property agents in Singapore"
               width={920}
               height={614}
               priority

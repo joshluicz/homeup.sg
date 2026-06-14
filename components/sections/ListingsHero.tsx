@@ -32,7 +32,7 @@ export function ListingsHero() {
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
             Browse {LISTINGS.length} active listings across HDB, condo, and landed properties
             in Singapore. Every property is represented by a CEA-licensed HomeUP advisor at a
-            transparent fixed fee — not a percentage of the sale price. Whether you are
+            transparent fixed fee, not a percentage of the sale price. Whether you are
             upgrading from an HDB flat, buying your first condo, or exploring landed homes,
             you can enquire directly via WhatsApp and speak with the agent handling the
             listing. Listings are updated regularly and link to full details on PropertyGuru.

@@ -26,11 +26,11 @@ export async function generateMetadata({ params }: AgentPageProps): Promise<Meta
   if (!agent) return { title: "Agent Not Found" };
 
   return buildPageMetadata({
-    title: `${agent.name} — Property Advisor`,
+    title: `${agent.name} | Property Advisor`,
     description: agent.bio,
     path: `/agents/${agent.slug}`,
     ogImage: `https://lp.homeup.sg${agent.photo}`,
-    ogImageAlt: `${agent.name} — CEA ${agent.cea}, HomeUP property advisor`,
+    ogImageAlt: `${agent.name}, CEA ${agent.cea}, HomeUP property advisor`,
     ogImageWidth: 400,
     ogImageHeight: 400,
   });

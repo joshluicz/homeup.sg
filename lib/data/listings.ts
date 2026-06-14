@@ -24,7 +24,7 @@ export interface Listing {
 }
 
 export const LISTINGS_URL = "https://homeup.sg/property-listing/";
-export const WHATSAPP_NUMBER = "6580877015";
+export { WHATSAPP_NUMBER } from "@/lib/whatsapp";
 
 export const LISTINGS: Listing[] = [
   {

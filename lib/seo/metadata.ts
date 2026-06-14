@@ -16,7 +16,7 @@ export function buildPageMetadata({
   description,
   path,
   ogImage = OG_IMAGE,
-  ogImageAlt = "The HomeUP team — CEA-licensed property agents in Singapore",
+  ogImageAlt = "The HomeUP team, CEA-licensed property agents in Singapore",
   ogImageWidth = 920,
   ogImageHeight = 614,
 }: PageMetaOptions): Metadata {

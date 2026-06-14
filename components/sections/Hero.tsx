@@ -3,9 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { animate, motion, useInView } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
+import { Typewriter } from "@/components/ui/typewriter";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const WA = "https://wa.me/6580877015";
+const WA = whatsAppUrlFor("heroHome");
 const ease = [0.22, 1, 0.36, 1] as const;
 const COUNT_DURATION = 2.5;
 
@@ -163,11 +165,23 @@ export function Hero() {
         <div className="w-full shrink-0 lg:w-[44%]">
           <motion.h1
             custom={0} initial="hidden" animate="show" variants={fade}
-            className="whitespace-nowrap font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
+            className="font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
           >
             Sell Your Home for More.
             <br />
-            <span className="text-primary-600">Save on Commissions.</span>
+            <span className="inline-flex flex-nowrap items-baseline gap-x-[0.25em] whitespace-nowrap text-primary-600">
+              <span>Save on</span>
+              <Typewriter
+                text={["Time.", "Hassle.", "Commissions."]}
+                speed={55}
+                waitTime={1800}
+                deleteSpeed={35}
+                initialDelay={400}
+                cursorChar="|"
+                cursorClassName="ml-0.5 font-normal text-primary-600"
+                className="inline min-w-[11.5ch] text-left text-primary-600"
+              />
+            </span>
           </motion.h1>
 
           <motion.p
@@ -215,7 +229,7 @@ export function Hero() {
           <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
             <Image
               src="/images/team-group.png"
-              alt="The HomeUP team — CEA-licensed property agents in Singapore"
+              alt="The HomeUP team, CEA-licensed property agents in Singapore"
               width={920}
               height={614}
               priority

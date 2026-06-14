@@ -59,7 +59,7 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
     slug: "homeup-fixed-fee-advantage",
     title: "The Fixed-Fee Advantage: How We Save You Thousands",
     description:
-      "Understand exactly how HomeUP's transparent flat fee compares to a traditional 2% agent commission — and what that means for your pocket on a typical Singapore sale.",
+      "Understand exactly how HomeUP's transparent flat fee compares to a traditional 2% agent commission, and what that means for your pocket on a typical Singapore sale.",
     category: "selling",
     duration: "4:15",
     thumbnail:
@@ -72,7 +72,7 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
   {
     id: "2",
     slug: "hdb-selling-process-explained",
-    title: "HDB Selling Process Explained — Step by Step",
+    title: "HDB Selling Process Explained: Step by Step",
     description:
       "From the first valuation call to collecting the keys at HDB Hub, we walk you through every milestone so there are no surprises on your selling journey.",
     category: "process",
@@ -89,7 +89,7 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
     slug: "condo-selling-what-to-expect",
     title: "Selling Your Condo: What to Expect",
     description:
-      "Condo sales involve different timelines and documents compared to HDB. This video covers the unique steps — from OTP to legal completion — for private property sellers.",
+      "Condo sales involve different timelines and documents compared to HDB. This video covers the unique steps, from OTP to legal completion, for private property sellers.",
     category: "selling",
     duration: "5:30",
     thumbnail:
@@ -117,7 +117,7 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
     slug: "buying-hdb-resale-guide",
     title: "Buying a Resale HDB: Your Complete Guide",
     description:
-      "Eligibility checks, COV negotiations, the HFE letter, and what happens on completion day — everything a first-time HDB buyer needs to know before signing anything.",
+      "Eligibility checks, COV negotiations, the HFE letter, and what happens on completion day. Everything a first-time HDB buyer needs to know before signing anything.",
     category: "buying",
     duration: "7:20",
     thumbnail:
@@ -160,7 +160,7 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
     slug: "sell-and-buy-simultaneously",
     title: "How to Sell and Buy at the Same Time Without the Stress",
     description:
-      "Timing a sale and purchase together is Singapore's most common — and stressful — property move. We explain how to synchronise both transactions and protect your interests.",
+      "Timing a sale and purchase together is Singapore's most common, and often most stressful, property move. We explain how to synchronise both transactions and protect your interests.",
     category: "process",
     duration: "6:00",
     thumbnail:
@@ -174,7 +174,7 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
     slug: "common-seller-mistakes",
     title: "5 Mistakes Sellers Make (And How to Avoid Them)",
     description:
-      "Overpricing, under-preparing, picking the wrong agent — these are the five most common errors our agents see every week. Watch this before you list.",
+      "Overpricing, under-preparing, picking the wrong agent. These are the five most common errors our agents see every week. Watch this before you list.",
     category: "tips",
     duration: "4:45",
     thumbnail:

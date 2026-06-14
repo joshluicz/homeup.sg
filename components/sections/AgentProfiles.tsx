@@ -38,7 +38,7 @@ export function AgentProfiles({ showViewAll = true }: AgentProfilesProps) {
                     alt={`${agent.name}, HOMEUP property advisor`}
                     width={112}
                     height={112}
-                    className="h-full w-full rounded-full border-2 border-neutral-200 object-cover object-top shadow-sm transition group-hover:border-primary-300"
+                    className="h-full w-full rounded-full border-2 border-neutral-200 object-cover object-top shadow-sm transition group-hover:border-primary-600"
                   />
                 </div>
 

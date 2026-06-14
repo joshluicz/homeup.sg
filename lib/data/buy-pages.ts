@@ -73,7 +73,7 @@ export const BUY_PAGE_HDB: BuyPageConfig = {
   },
   typeGuide: {
     eyebrow: "Buying HDB",
-    title: "HDB resale has more moving parts than most buyers expect — we map them out first.",
+    title: "HDB resale has more moving parts than most buyers expect. We map them out first.",
     lead: "Grants, loan eligibility, and sale-purchase timing are planned upfront so you buy with clarity.",
     points: [
       "Grant eligibility and affordability review before shortlisting",
@@ -98,7 +98,7 @@ export const BUY_PAGE_CONDO_LANDED: BuyPageConfig = {
     title: "Buy Condo or Landed.",
     highlight: "Complimentary Representation.",
     subtitle: "Resale purchases at no cost to you.",
-    body: "Access market insights, project comparisons, and negotiation support for resale condo and landed homes — fully covered by HomeUP at no cost to the buyer.",
+    body: "Access market insights, project comparisons, and negotiation support for resale condo and landed homes, fully covered by HomeUP at no cost to the buyer.",
     points: [
       "Unbiased market and project comparisons",
       "Viewing coordination and offer negotiation",
@@ -108,8 +108,8 @@ export const BUY_PAGE_CONDO_LANDED: BuyPageConfig = {
   },
   typeGuide: {
     eyebrow: "Buying Condo / Landed",
-    title: "Resale private property needs unbiased guidance — not sales-driven pressure.",
-    lead: "We shortlist, compare, and negotiate with your interests first — because our fee isn't tied to the purchase price.",
+    title: "Resale private property needs unbiased guidance, not sales-driven pressure.",
+    lead: "We shortlist, compare, and negotiate with your interests first, because our fee isn't tied to the purchase price.",
     points: [
       "Market analysis and project comparisons tailored to your budget",
       "Tenure, location, and resale potential reviewed before you view",
@@ -143,7 +143,7 @@ export const BUY_PAGE_NEW_LAUNCH: BuyPageConfig = {
   },
   typeGuide: {
     eyebrow: "Buying New Launch",
-    title: "New launch purchases need clear analysis — not showroom pressure.",
+    title: "New launch purchases need clear analysis, not showroom pressure.",
     lead: "We help you compare projects, select the right unit, and navigate the purchase process with neutral advice.",
     points: [
       "Project comparison across location, pricing, and developer track record",
@@ -155,7 +155,7 @@ export const BUY_PAGE_NEW_LAUNCH: BuyPageConfig = {
   meta: {
     title: "Buy New Launch Property in Singapore",
     description:
-      "Purchase a new launch property with HomeUP. Buyer pays no commission. Unbiased project analysis, unit selection, and developer liaison — complimentary buyer representation.",
+      "Purchase a new launch property with HomeUP. Buyer pays no commission. Unbiased project analysis, unit selection, and developer liaison. Complimentary buyer representation.",
   },
 };
 

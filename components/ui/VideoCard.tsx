@@ -19,7 +19,7 @@ export function VideoCard({ video, onPlay, featured = false }: VideoCardProps) {
       className={cn(
         "group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300",
         hasVideo
-          ? "cursor-pointer hover:border-primary-300 hover:shadow-brand-sm"
+          ? "cursor-pointer hover:border-primary-600/40 hover:shadow-md"
           : "cursor-default",
         featured && "sm:flex-row"
       )}

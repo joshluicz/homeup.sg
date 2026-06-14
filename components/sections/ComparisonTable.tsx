@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeIn, FadeInUp } from "@/components/ui/motion-primitives";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const rows = [
   {
@@ -31,7 +32,7 @@ const rows = [
   },
 ];
 
-const whatsappUrl = "https://wa.me/6580877015";
+const whatsappUrl = whatsAppUrlFor("comparisonTable");
 
 export function ComparisonTable() {
   return (

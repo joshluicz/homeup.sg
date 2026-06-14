@@ -27,7 +27,7 @@ import {
 export const metadata = buildPageMetadata({
   title: "Fixed-Fee Property Agents Singapore | HomeUP",
   description:
-    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by CEA-licensed agents.",
+    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee: HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by CEA-licensed agents.",
   path: "/",
 });
 
@@ -49,7 +49,7 @@ export default function Home() {
           faqSchema(HOMEPAGE_FAQ),
           howToSchema(
             "How to sell your property with HomeUP",
-            "HomeUP's transparent 4-step process for selling your Singapore property at a fixed fee — no percentage commission, no hidden charges.",
+            "HomeUP's transparent 4-step process for selling your Singapore property at a fixed fee, with no percentage commission and no hidden charges.",
             SELL_HOW_TO_STEPS,
           ),
           breadcrumbSchema([{ name: "Home", path: "/" }]),
@@ -80,6 +80,7 @@ export default function Home() {
           title="What homeowners ask before they list with us"
           lead="Straight answers on fees, incentives, and what you handle yourself. No textbook HDB basics."
           speakableAnswerCount={3}
+          whatsappContext="faqHomepage"
         />
         <SocialPanel />
         <CtaBanner />

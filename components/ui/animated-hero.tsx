@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { MoveRight, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const WA = "https://wa.me/6580877015";
+const WA = whatsAppUrlFor("heroHome");
 
 function AnimatedHero() {
   const [titleNumber, setTitleNumber] = useState(0);

@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import { BedDouble, Bath, Maximize2, MapPin, Search, MessageCircle, ExternalLink, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Listing, PropertyType, ListingStatus } from "@/lib/data/listings";
-import { LISTINGS_URL, WHATSAPP_NUMBER } from "@/lib/data/listings";
+import { LISTINGS_URL } from "@/lib/data/listings";
+import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "size-desc";
@@ -33,21 +34,18 @@ const typeFilterActive: Record<"All" | PropertyType, string> = {
 };
 
 function buildWhatsAppUrl(listing: Listing) {
-  const msg = encodeURIComponent(
-    `Hi, I'm interested in ${listing.name} listed at ${listing.price}. Could you share more details?`
-  );
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
+  return buildListingWhatsAppUrl(listing.name, listing.price);
 }
 
 function ListingCard({ listing }: { listing: Listing }) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:border-primary-200 hover:shadow-brand-sm">
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:border-primary-600/40 hover:shadow-md">
       {/* Image */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={listing.image}
-          alt={`${listing.name} — ${listing.type} ${listing.status.toLowerCase()} in Singapore, ${listing.price}`}
+          alt={`${listing.name}, ${listing.type} ${listing.status.toLowerCase()} in Singapore, ${listing.price}`}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {/* Badges */}

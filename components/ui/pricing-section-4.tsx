@@ -102,6 +102,42 @@ function SavingsSliderStaticFallback() {
   );
 }
 
+function saleContextLabel(type: (typeof COMPARISON_ROWS)[number]["type"]) {
+  if (type === "HDB Flat") return "HDB flat";
+  if (type === "Condo / EC") return "condo";
+  return "landed home";
+}
+
+function SavingsCallout({ row }: { row: (typeof COMPARISON_ROWS)[number] }) {
+  return (
+    <div className="mt-8 rounded-2xl border border-[#c5ddd0] bg-[#eef5f0] px-5 py-5 sm:px-6">
+      <p className="text-xs font-semibold uppercase tracking-widest text-primary-800">
+        Typical agent vs HomeUP
+      </p>
+      <p className="mt-3 text-base font-semibold leading-snug text-neutral-900 sm:text-lg">
+        On a {formatSgd(row.salePrice)} {saleContextLabel(row.type)} sale, you keep
+      </p>
+      <p className="mt-1 font-display text-3xl font-extrabold leading-none tracking-tight text-primary-700 sm:text-4xl">
+        {formatSgd(row.savings)} more
+      </p>
+      <p className="mt-1.5 text-xs font-normal text-neutral-500">incl. GST</p>
+      <p className="mt-4 text-sm leading-relaxed text-neutral-600">
+        Most agents charge around{" "}
+        <span className="font-semibold text-neutral-800">{formatSgd(row.typicalInclGst)}</span> at
+        2% commission. HomeUP charges{" "}
+        <span className="font-semibold text-primary-800">{formatHomeupFee(row.homeupBase)}</span> +
+        GST for the same full service.
+      </p>
+    </div>
+  );
+}
+
+function rowForType(type: SellPropertyType) {
+  const label =
+    type === "HDB" ? "HDB Flat" : type === "Condo" ? "Condo / EC" : "Landed Home";
+  return COMPARISON_ROWS.find((row) => row.type === label) ?? COMPARISON_ROWS[0];
+}
+
 function ComparisonCards() {
   return (
     <div className="grid gap-4 md:hidden">
@@ -208,7 +244,9 @@ export default function PricingSection4({
     : SELL_PLANS;
 
   const gridClass =
-    plans.length === 1 ? "mt-10 max-w-md mx-auto" : "mt-10 grid gap-6 md:grid-cols-3";
+    plans.length === 1 ? "mt-6 max-w-md mx-auto" : "mt-6 grid gap-6 md:grid-cols-3";
+
+  const highlightRow = filterType ? rowForType(filterType) : COMPARISON_ROWS[0];
 
   return (
     <section
@@ -218,12 +256,26 @@ export default function PricingSection4({
     >
       <div className="container-page">
         <FadeInUp className="section-header">
-          <Eyebrow>Transparent Fixed Fees</Eyebrow>
-          <h2 className="section-title">How much does a property agent cost in Singapore?</h2>
+          <Eyebrow>Save on agent fees</Eyebrow>
+          <h2 className="section-title">
+            Most agents take 2%.
+            <br className="hidden sm:block" /> We charge a flat fee instead.
+          </h2>
           <p className="section-lead">
-            Most agents charge 1 to 2% commission on your sale price. HomeUP charges one flat fee
-            with the same full service: listing, marketing, viewings, negotiation, and
-            documentation.
+            Percentage commission grows with your sale price. HomeUP charges one fixed amount
+            for the same listing, marketing, negotiation, and paperwork. You keep the
+            difference.
+          </p>
+        </FadeInUp>
+
+        <FadeInUp delay={0.06}>
+          <SavingsCallout row={highlightRow} />
+        </FadeInUp>
+
+        <FadeInUp delay={0.08} className="mt-10 sm:mt-12">
+          <p className="text-sm font-bold text-neutral-900">Our fixed fees</p>
+          <p className="mt-1 text-sm font-normal text-neutral-500">
+            What you pay when you choose HomeUP
           </p>
         </FadeInUp>
 
@@ -247,13 +299,12 @@ export default function PricingSection4({
 
         <FadeInUp delay={0.12} className="mx-auto mt-14 max-w-3xl sm:mt-16">
           <h3 className="text-center font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
-            What is a fixed-fee property agent?
+            Same service. Different fee model.
           </h3>
           <p className="mt-4 text-center text-sm leading-relaxed text-neutral-600 sm:text-base speakable-fixed-fee-definition">
-            A fixed-fee property agent charges a set flat amount regardless of sale price,
-            rather than a percentage commission. HomeUP charges $1,999 for HDB, $4,999 for
-            condo/EC, and $9,999 for landed, compared to typical 1 to 2% commissions that can
-            cost tens of thousands more once GST is included.
+            A fixed-fee agent charges one set price no matter what your home sells for. You
+            still get listing, marketing, negotiation, and full documentation. The only change
+            is what you pay at the end.
           </p>
         </FadeInUp>
 

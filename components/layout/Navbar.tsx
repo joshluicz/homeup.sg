@@ -5,8 +5,9 @@ import { Building2, Home, Sparkles, Trees } from "lucide-react";
 import { Navbar1, type MenuItem } from "@/components/ui/shadcnblocks-com-navbar1";
 import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const WHATSAPP = "https://wa.me/6580877015";
+const WHATSAPP = whatsAppUrlFor("navbar");
 
 export const HOMEUP_NAV_MENU: MenuItem[] = [
   { title: "Home", url: "/" },

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s | HomeUP",
   },
   description:
-    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by CEA-licensed agents.",
+    "HomeUP helps Singapore homeowners sell for more with a transparent fixed fee: HDB from $1,999, Condo from $4,999. 1,000+ transactions closed by CEA-licensed agents.",
   keywords: [
     "fixed fee property agent Singapore",
     "sell HDB Singapore",
@@ -43,13 +43,13 @@ export const metadata: Metadata = {
     siteName: "HomeUP",
     title: "Fixed-Fee Property Agents Singapore | HomeUP",
     description:
-      "Sell your Singapore home for more. HomeUP charges a flat fixed fee — HDB from $1,999, Condo from $4,999. 1,000+ transactions closed. 5 CEA-licensed agents.",
+      "Sell your Singapore home for more. HomeUP charges a flat fixed fee: HDB from $1,999, Condo from $4,999. 1,000+ transactions closed. 5 CEA-licensed agents.",
     images: [
       {
         url: OG_IMAGE,
         width: 920,
         height: 614,
-        alt: "The HomeUP team — 5 CEA-licensed property agents in Singapore",
+        alt: "The HomeUP team, 5 CEA-licensed property agents in Singapore",
       },
     ],
   },

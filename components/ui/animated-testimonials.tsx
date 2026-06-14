@@ -220,7 +220,7 @@ export function AnimatedTestimonials({
                 type="button"
                 onClick={goPrev}
                 aria-label="Previous review"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-primary-600/40 hover:text-primary-600"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -248,7 +248,7 @@ export function AnimatedTestimonials({
                 type="button"
                 onClick={goNext}
                 aria-label="Next review"
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-primary-300 hover:text-primary-600"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-700 shadow-sm transition hover:border-primary-600/40 hover:text-primary-600"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>

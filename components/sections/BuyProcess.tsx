@@ -34,7 +34,7 @@ const HDB_STEPS: ProcessStep[] = [
   {
     step: "04",
     title: "Offer & Negotiate",
-    body: "Offer price assessed against recent transacted prices for the block. HomeUP structures the offer and negotiates on your behalf — not to close fast, but to close right.",
+    body: "Offer price assessed against recent transacted prices for the block. HomeUP structures the offer and negotiates on your behalf. The goal is to close right, not just close fast.",
     weeks: "Week 4–8",
   },
   {
@@ -61,13 +61,13 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "03",
     title: "Coordinated Viewings",
-    body: "Viewings arranged across shortlisted units. HomeUP attends with you — assessing layout efficiency, noise, orientation, and any red flags before you form an attachment.",
+    body: "Viewings arranged across shortlisted units. HomeUP attends with you and checks layout efficiency, noise, orientation, and any red flags before you form an attachment.",
     weeks: "Week 2–6",
   },
   {
     step: "04",
     title: "Negotiate & OTP",
-    body: "Offer structured based on comparable transacted prices, unit condition, and seller urgency. HomeUP negotiates with your interests as the only priority — not speed of close.",
+    body: "Offer structured based on comparable transacted prices, unit condition, and seller urgency. HomeUP negotiates with your interests as the only priority, not speed of close.",
     weeks: "Week 4–9",
   },
   {
@@ -82,7 +82,7 @@ const NEW_LAUNCH_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "Consult & Plan",
-    body: "ABSD and total debt servicing reviewed. Budget aligned to what the progressive payment schedule can sustainably support. Project shortlist built from your goals — not a developer's incentive.",
+    body: "ABSD and total debt servicing reviewed. Budget aligned to what the progressive payment schedule can sustainably support. Project shortlist built from your goals, not a developer's incentive.",
     weeks: "Week 1",
   },
   {
@@ -94,7 +94,7 @@ const NEW_LAUNCH_STEPS: ProcessStep[] = [
   {
     step: "03",
     title: "Preview & Launch",
-    body: "HomeUP secures preview access, advises on which stacks to prioritise, and attends launch day with you. We help you make a clear-headed decision under time pressure — not an emotional one.",
+    body: "HomeUP secures preview access, advises on which stacks to prioritise, and attends launch day with you. We help you make a clear-headed decision under time pressure, not an emotional one.",
     weeks: "Week 3–6",
   },
   {
@@ -121,19 +121,19 @@ const GENERAL_STEPS: ProcessStep[] = [
   {
     step: "02",
     title: "Shortlist & Compare",
-    body: "HomeUP shortlists properties against your budget, goals, and constraints — and compares them honestly. No pressure toward higher-priced options.",
+    body: "HomeUP shortlists properties against your budget, goals, and constraints, and compares them honestly. No pressure toward higher-priced options.",
     weeks: "Week 2–4",
   },
   {
     step: "03",
     title: "Viewings, coordinated",
-    body: "All viewings scheduled and attended. Unit condition, location trade-offs, and resale potential reviewed at each one — so you make decisions with context.",
+    body: "All viewings scheduled and attended. Unit condition, location trade-offs, and resale potential reviewed at each one, so you make decisions with context.",
     weeks: "Week 2–6",
   },
   {
     step: "04",
     title: "Negotiate & Offer",
-    body: "Offer price benchmarked to recent transactions. HomeUP negotiates on your behalf, with your net position — not the speed of close — as the priority.",
+    body: "Offer price benchmarked to recent transactions. HomeUP negotiates on your behalf, with your net position (not the speed of close) as the priority.",
     weeks: "Week 4–8",
   },
   {
@@ -152,17 +152,17 @@ const STEPS_BY_TYPE: Record<BuyPropertyType | "General", ProcessStep[]> = {
 };
 
 const TITLE_BY_TYPE: Record<BuyPropertyType | "General", string> = {
-  HDB: "Buying an HDB flat — here's how HomeUP handles it.",
-  CondoLanded: "Buying resale condo or landed — what we do for you.",
-  NewLaunch: "Buying a new launch — from analysis to keys.",
+  HDB: "Buying an HDB flat: here's how HomeUP handles it.",
+  CondoLanded: "Buying resale condo or landed: what we do for you.",
+  NewLaunch: "Buying a new launch: from analysis to keys.",
   General: "How HomeUP guides your purchase, start to finish.",
 };
 
 const LEAD_BY_TYPE: Record<BuyPropertyType | "General", string> = {
-  HDB: "HDB resale has more steps than most buyers expect — grants, loan eligibility, HDB Portal submission, and tight timelines. HomeUP plans it all upfront so there are no surprises.",
-  CondoLanded: "Resale private property requires objective analysis and disciplined negotiation. HomeUP's fee isn't tied to your purchase price — so our advice stays neutral throughout.",
+  HDB: "HDB resale has more steps than most buyers expect: grants, loan eligibility, HDB Portal submission, and tight timelines. HomeUP plans it all upfront so there are no surprises.",
+  CondoLanded: "Resale private property requires objective analysis and disciplined negotiation. HomeUP's fee isn't tied to your purchase price, so our advice stays neutral throughout.",
   NewLaunch: "New launch decisions are made under time pressure with incomplete information. HomeUP's independent analysis and launch day support means you choose with clarity, not pressure.",
-  General: "Whether you're buying HDB, resale private property, or a new launch — HomeUP coordinates the full purchase journey so you can focus on finding the right home.",
+  General: "Whether you're buying HDB, resale private property, or a new launch, HomeUP coordinates the full purchase journey so you can focus on finding the right home.",
 };
 
 interface BuyProcessProps {
@@ -190,7 +190,7 @@ export function BuyProcess({ propertyType = null }: BuyProcessProps) {
                 <div className="mb-1 text-xs font-medium uppercase tracking-widest text-neutral-400">
                   {s.weeks}
                 </div>
-                <div className="font-display text-2xl font-extrabold text-primary-100">
+                <div className="font-display text-2xl font-extrabold text-primary-600">
                   {s.step}
                 </div>
                 <h3 className="mt-2 text-sm font-bold text-neutral-900">{s.title}</h3>
@@ -214,7 +214,7 @@ export function BuyProcess({ propertyType = null }: BuyProcessProps) {
                   <span className="text-xs font-medium uppercase tracking-widest text-neutral-400">
                     {s.weeks}
                   </span>
-                  <span className="font-display text-xl font-extrabold text-primary-100">
+                  <span className="font-display text-xl font-extrabold text-primary-600">
                     {s.step}
                   </span>
                 </div>
@@ -232,7 +232,7 @@ export function BuyProcess({ propertyType = null }: BuyProcessProps) {
 
         <FadeInUp delay={0.2} className="mt-8 rounded-xl bg-neutral-900 px-6 py-5 text-center">
           <p className="text-sm font-medium text-neutral-200">
-            No commitment required to start. Your first consultation is free — and there&#39;s no obligation to proceed.
+            No commitment required to start. Your first consultation is free, and there&#39;s no obligation to proceed.
           </p>
         </FadeInUp>
       </div>

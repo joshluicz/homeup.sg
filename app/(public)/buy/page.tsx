@@ -15,7 +15,7 @@ export const metadata = buildPageMetadata({
   description: config.meta.description,
   path: "/buy",
   ogImage: "https://lp.homeup.sg/images/agent-tong-boon.png",
-  ogImageAlt: "Yeo Tong Boon — HomeUP Senior Property Advisor",
+  ogImageAlt: "Yeo Tong Boon, HomeUP Senior Property Advisor",
   ogImageWidth: 400,
   ogImageHeight: 400,
 });

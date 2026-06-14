@@ -1,52 +1,79 @@
-import { AnimatedTestimonials } from "@/components/ui/animated-testimonials";
+"use client";
 
-const testimonials = [
-  {
-    id: 1,
-    name: "Ernest Lim",
-    role: "HDB Seller",
-    company: "HOMEUP Client",
-    content:
-      "The team led by Dennis has done a wonderful job in selling my house. He and one of his teammates, Kenji, went beyond their scope of work, ensuring there was always a steady stream of potential buyers viewing my house. Their professionalism, friendliness, and efficiency made selling my house a wonderful experience.",
-    rating: 5,
-  },
-  {
-    id: 2,
-    name: "Terrence Koh",
-    role: "Condo Seller",
-    company: "HOMEUP Client",
-    content:
-      "If I can give more than 5 stars, I will unreservedly do so. I am very impressed with Tong Boon, who has provided top notch agency service for the sale of my condo recently. His commitment towards meeting the best interests of the seller is exceptional, and the whole process with him has been seamless and efficient.",
-    rating: 5,
-  },
-  {
-    id: 3,
-    name: "Mark Kwok Leong",
-    role: "HDB Seller",
-    company: "HOMEUP Client",
-    content:
-      "Highly recommend Kenji for his professional and honest service. He helped us secure a buyer for my dad's HDB flat quickly that was higher than the last transacted price. More importantly, he provided excellent guidance, which allowed my dad to successfully take over and purchase my HDB flat. It was a win-win situation for our family thanks to his effort. Great job, Kenji.",
-    rating: 5,
-  },
-  {
-    id: 4,
-    name: "Kwok Yung",
-    role: "Condo Seller",
-    company: "HOMEUP Client",
-    content:
-      "Second time engaging Dennis and Kenji to sell my property and it has been as smooth as the first time. Appreciate their help in negotiations and their flexibility in accommodating my schedule during OTP signing. Great work and excellent value for money.",
-    rating: 5,
-  },
-];
+import { useEffect, useState } from "react";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
+import {
+  HOMEUP_TESTIMONIALS,
+  splitTestimonialsIntoColumns,
+} from "@/lib/data/testimonials";
+import { motion } from "motion/react";
+
+const [firstColumn, secondColumn, thirdColumn] =
+  splitTestimonialsIntoColumns(HOMEUP_TESTIMONIALS);
+
+const DESKTOP_DURATIONS = [28, 34, 31] as const;
+const MOBILE_DURATIONS = [58, 68, 62] as const;
+
+function useIsMobileLayout() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isMobile;
+}
 
 export function Testimonials() {
+  const isMobile = useIsMobileLayout();
+  const durations = isMobile ? MOBILE_DURATIONS : DESKTOP_DURATIONS;
+
   return (
-    <AnimatedTestimonials
-      badgeText="Verified HOMEUP clients"
-      title="What do HomeUP clients say about fixed-fee agents?"
-      subtitle="Homeowners share their experience: transparent pricing, professional service, and real savings compared to percentage commission."
-      testimonials={testimonials}
-      autoRotateInterval={6000}
-    />
+    <section
+      id="testimonials"
+      aria-label="Client testimonials"
+      className="section-padding bg-neutral-50"
+    >
+      <div className="container-page">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true }}
+          className="section-header mx-auto max-w-2xl text-center"
+        >
+          <Eyebrow>Verified HOMEUP clients</Eyebrow>
+          <h2 className="section-title">
+            What do HomeUP clients say about fixed-fee agents?
+          </h2>
+          <p className="section-lead">
+            Homeowners share their experience: transparent pricing, professional
+            service, and real savings compared to percentage commission.
+          </p>
+        </motion.div>
+
+        <div className="relative mt-10 h-[min(520px,70vh)] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] sm:h-[740px]">
+          <div className="flex h-full gap-2 sm:gap-4 md:gap-6">
+            <TestimonialsColumn
+              testimonials={firstColumn}
+              duration={durations[0]}
+            />
+            <TestimonialsColumn
+              testimonials={secondColumn}
+              duration={durations[1]}
+            />
+            <TestimonialsColumn
+              testimonials={thirdColumn}
+              duration={durations[2]}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

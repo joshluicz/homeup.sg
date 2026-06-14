@@ -35,7 +35,7 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                   alt={agent.name}
                   fill
                   priority
-                  className="object-cover object-top"
+                  className="object-cover object-[center_5px]"
                   sizes="320px"
                 />
               </div>
@@ -136,7 +136,7 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                       href={youtubeWatchUrl(video.id)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 transition hover:border-primary-200 hover:bg-white"
+                      className="group flex gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 transition hover:border-primary-600/40 hover:bg-white"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img

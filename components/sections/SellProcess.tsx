@@ -13,7 +13,7 @@ const baseSteps = [
   {
     step: "02",
     title: "List and market",
-    body: "Your property is listed on PropertyGuru, SRX, 99.co, and HomeUP.sg — plus social channels for maximum buyer reach.",
+    body: "Your property is listed on PropertyGuru, SRX, 99.co, and HomeUP.sg, plus social channels for maximum buyer reach.",
   },
   {
     step: "03",
@@ -23,7 +23,7 @@ const baseSteps = [
 ];
 
 const completionByType: Record<SellPropertyType, string> = {
-  HDB: "HomeUP handles all sales documentation — OTP, contract, and HDB submission — through to a smooth handover.",
+  HDB: "HomeUP handles all sales documentation (OTP, contract, and HDB submission) through to a smooth handover.",
   Condo: "HomeUP handles contract drafting, negotiation, and all sales documentation through to completion.",
   Landed: "HomeUP handles contract drafting, negotiation, and all sales documentation through to completion.",
 };
@@ -36,7 +36,7 @@ export function SellProcess({ propertyType = null }: SellProcessProps) {
   const completionBody =
     propertyType != null
       ? completionByType[propertyType]
-      : "HomeUP handles all sales documentation — OTP, contracts, and HDB submission where applicable — through to a smooth handover.";
+      : "HomeUP handles all sales documentation (OTP, contracts, and HDB submission where applicable) through to a smooth handover.";
 
   const steps = [
     ...baseSteps,
@@ -54,7 +54,7 @@ export function SellProcess({ propertyType = null }: SellProcessProps) {
           <Eyebrow>How It Works</Eyebrow>
           <h2 className="section-title">From first call to keys handed over</h2>
           <p className="section-lead">
-            A clear, structured process — so you always know what happens next and when.
+            A clear, structured process, so you always know what happens next and when.
           </p>
         </FadeInUp>
 

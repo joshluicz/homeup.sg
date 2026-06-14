@@ -47,7 +47,7 @@ const SELL_CARDS: PropertyTypeCard[] = [
       "Lawyer coordination through to completion",
     ],
     href: "/sell-condo",
-    accentClass: "border-primary-200 hover:border-primary-500",
+    accentClass: "border-primary-200 hover:border-primary-600",
     iconBgClass: "bg-primary-50 text-primary-600",
     tagClass: "bg-primary-100 text-primary-800",
   },
@@ -98,7 +98,7 @@ const BUY_CARDS: PropertyTypeCard[] = [
       "Sell-and-buy timing coordinated",
     ],
     href: "/buy-condo-landed",
-    accentClass: "border-primary-200 hover:border-primary-500",
+    accentClass: "border-primary-200 hover:border-primary-600",
     iconBgClass: "bg-primary-50 text-primary-600",
     tagClass: "bg-primary-100 text-primary-800",
   },
@@ -111,7 +111,7 @@ const BUY_CARDS: PropertyTypeCard[] = [
     bullets: [
       "Independent project and floor plan analysis",
       "Priority access to launch previews",
-      "No showroom pressure — unbiased advice",
+      "No showroom pressure. Unbiased advice",
     ],
     href: "/buy-new-launch",
     accentClass: "border-amber-200 hover:border-amber-400",
@@ -124,13 +124,13 @@ const CONFIG = {
   sell: {
     eyebrow: "Choose Your Property Type",
     title: "What type of home are you selling?",
-    lead: "HomeUP offers the same full-service experience across all property types — at a transparent fixed fee, with the process tailored to what each sale actually requires.",
+    lead: "HomeUP offers the same full-service experience across all property types at a transparent fixed fee, with the process tailored to what each sale actually requires.",
     cards: SELL_CARDS,
   },
   buy: {
     eyebrow: "Choose Your Property Type",
     title: "What type of home are you buying?",
-    lead: "HomeUP provides buyer representation across all Singapore property types — from HDB resale at a fixed fee to condo, landed, and new launch at no cost to you.",
+    lead: "HomeUP provides buyer representation across all Singapore property types, from HDB resale at a fixed fee to condo, landed, and new launch at no cost to you.",
     cards: BUY_CARDS,
   },
 };

@@ -8,17 +8,17 @@ const blocks = [
   {
     icon: CircleDollarSign,
     title: "Clear before you commit",
-    body: "HDB purchases are supported at a fixed $1,999 + GST. Resale condo, landed, and new launch purchases are complimentary — buyer pays no commission.",
+    body: "HDB purchases are supported at a fixed $1,999 + GST. Resale condo, landed, and new launch purchases are complimentary. The buyer pays no commission.",
   },
   {
     icon: Handshake,
     title: "Neutral advice",
-    body: "Our team shortlists, compares, and negotiates with your interests first — because our fee isn't tied to how much you spend on the property.",
+    body: "Our team shortlists, compares, and negotiates with your interests first, because our fee isn't tied to how much you spend on the property.",
   },
   {
     icon: Scale,
     title: "Planned as one journey",
-    body: "If you're selling and buying, both transactions are coordinated — reducing rushed moves, financial risk, and unnecessary compromises.",
+    body: "If you're selling and buying, both transactions are coordinated, reducing rushed moves, financial risk, and unnecessary compromises.",
   },
 ];
 
@@ -30,7 +30,7 @@ export function BuyFeeExplainer() {
           <Eyebrow>Transparent Pricing</Eyebrow>
           <h2 className="section-title">You know the cost before you commit.</h2>
           <p className="section-lead">
-            Whether you&apos;re buying an HDB flat, a resale condo, or a new launch —
+            Whether you&apos;re buying an HDB flat, a resale condo, or a new launch,
             HomeUP&apos;s fees are clear upfront, with no hidden charges.
           </p>
         </FadeInUp>

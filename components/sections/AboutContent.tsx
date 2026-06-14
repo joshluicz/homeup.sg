@@ -19,17 +19,17 @@ const VALUES = [
   {
     icon: Building2,
     title: "Transparent fixed fees",
-    body: "HDB from $1,999, Condo/EC from $4,999, Landed from $9,999 — the same full service as a traditional agent, without percentage commission.",
+    body: "HDB from $1,999, Condo/EC from $4,999, Landed from $9,999. You get the same full service as a traditional agent, without percentage commission.",
   },
   {
     icon: Users,
     title: "Named advisors, not a call centre",
-    body: "Every client works with a CEA-licensed advisor who knows your transaction — with verifiable registration numbers and real transaction experience.",
+    body: "Every client works with a CEA-licensed advisor who knows your transaction. Registration numbers you can verify, plus real deal experience.",
   },
   {
     icon: Award,
     title: "Advice aligned with your interests",
-    body: "Our fee is fixed, not tied to your sale price. That means pricing guidance, negotiation, and planning stay focused on your outcome — not commission targets.",
+    body: "Our fee is fixed, not tied to your sale price. Pricing guidance, negotiation, and planning stay focused on your outcome, not commission targets.",
   },
 ];
 
@@ -55,7 +55,7 @@ export function AboutContent() {
           <FadeInUp delay={0.1} className="mt-12 overflow-hidden rounded-2xl border border-neutral-200 shadow-sm">
             <Image
               src="/images/team-group.png"
-              alt="The HomeUP team — six CEA-licensed property agents in Singapore"
+              alt="The HomeUP team, six CEA-licensed property agents in Singapore"
               width={920}
               height={614}
               className="h-auto w-full object-cover"
@@ -127,12 +127,12 @@ export function AboutContent() {
               <StaggerItem key={agent.slug}>
                 <Link
                   href={`/agents/${agent.slug}`}
-                  className="group flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-primary-200 hover:shadow-md"
+                  className="group flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-primary-600/40 hover:shadow-md"
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-neutral-100">
                     <Image
                       src={agent.photo}
-                      alt={`${agent.name} — CEA ${agent.cea}, HomeUP property advisor`}
+                      alt={`${agent.name}, CEA ${agent.cea}, HomeUP property advisor`}
                       fill
                       className="object-cover object-top"
                       sizes="56px"

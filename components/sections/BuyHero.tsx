@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
+import { whatsAppUrlFor } from "@/lib/whatsapp";
 
-const WA = "https://wa.me/6580877015";
+const WA = whatsAppUrlFor("heroBuy");
 const ease = [0.22, 1, 0.36, 1] as const;
 
 const fade = {
