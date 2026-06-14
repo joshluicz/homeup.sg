@@ -41,19 +41,19 @@ export const HOMEUP_NAV_MENU: MenuItem[] = [
     items: [
       {
         title: "Buy HDB",
-        description: "Grants to OTP",
+        description: "Agent fee from $1,999",
         icon: <Home className="size-5 shrink-0 text-blue-600" />,
         url: "/buy-hdb",
       },
       {
         title: "Buy Condo/Landed",
-        description: "Complimentary representation",
+        description: "Buyers pay no commission",
         icon: <Building2 className="size-5 shrink-0 text-primary-600" />,
         url: "/buy-condo-landed",
       },
       {
         title: "Buy New Launch",
-        description: "No buyer commission",
+        description: "Buyers pay no commission",
         icon: <Sparkles className="size-5 shrink-0 text-amber-600" />,
         url: "/buy-new-launch",
       },
