@@ -9,7 +9,7 @@ import { aboutPageSchema, breadcrumbSchema, organizationSchema } from "@/lib/seo
 export const metadata = buildPageMetadata({
   title: "About HomeUP | Fixed-Fee Property Agents Singapore",
   description:
-    "Learn about HomeUP, Singapore's fixed-fee property agency. CEA-licensed advisors, transparent pricing from $1,999, 1,000+ transactions closed, operated by C & H Properties Pte Ltd.",
+    "Learn about HomeUP, Singapore's fixed-fee property advisory. CEA-licensed advisors, transparent pricing from $1,999, 1,000+ transactions closed, operated by C & H Properties Pte Ltd.",
   path: "/about",
 });
 

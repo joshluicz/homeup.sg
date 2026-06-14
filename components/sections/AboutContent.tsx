@@ -45,7 +45,7 @@ export function AboutContent() {
               <span className="text-primary-600">Better decisions.</span>
             </h1>
             <p className="section-lead mx-auto">
-              HomeUP is a Singapore property agency built around transparent fixed fees,
+              HomeUP is a Singapore property advisory built around transparent fixed fees,
               named CEA-licensed advisors, and coordinated sell-and-buy planning. Property
               services are operated by C and H Properties Pte Ltd (CEA Licence L3007139C).
               The HomeUP brand is registered under Haus Plus Pte. Ltd. (UEN 202538756D).
