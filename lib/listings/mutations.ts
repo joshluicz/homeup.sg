@@ -1,0 +1,72 @@
+import { createClient } from "@/lib/supabase/client";
+import type { Listing, ListingFormData } from "./types";
+import { formDataToDbPayload, validateListingForm } from "./validation";
+
+function mapDbError(error: { code?: string; message: string }): Error {
+  if (error.code === "23505") {
+    return new Error("Slug already exists");
+  }
+  return new Error(error.message);
+}
+
+export async function createListing(
+  listingId: string,
+  data: ListingFormData,
+  action: "draft" | "publish",
+): Promise<Listing> {
+  const validationError = validateListingForm(data);
+  if (validationError) throw new Error(validationError);
+
+  const supabase = createClient();
+  const status = action === "publish" ? "active" : "draft";
+  const payload = formDataToDbPayload(data, status);
+
+  const { data: listing, error } = await supabase
+    .from("listings")
+    .insert({ ...payload, id: listingId })
+    .select()
+    .single();
+
+  if (error) throw mapDbError(error);
+  return listing;
+}
+
+export async function updateListing(
+  listingId: string,
+  data: ListingFormData,
+  action: "draft" | "publish",
+): Promise<Listing> {
+  const validationError = validateListingForm(data);
+  if (validationError) throw new Error(validationError);
+
+  const supabase = createClient();
+  const status = action === "publish" ? "active" : "draft";
+  const payload = formDataToDbPayload(data, status);
+
+  const { data: listing, error } = await supabase
+    .from("listings")
+    .update(payload)
+    .eq("id", listingId)
+    .is("deleted_at", null)
+    .select()
+    .single();
+
+  if (error) throw mapDbError(error);
+  if (!listing) throw new Error("Listing not found");
+  return listing;
+}
+
+export async function deleteListing(listingId: string): Promise<void> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("listings")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", listingId)
+    .is("deleted_at", null)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Listing not found");
+}

@@ -13,7 +13,6 @@ const BAK_ROOT = path.join(root, ".lp-static-bak");
 
 const STRIP_PATHS = [
   path.join(root, "app", "api"),
-  path.join(root, "app", "(admin)"),
 ];
 
 const MIDDLEWARE = path.join(root, "middleware.ts");

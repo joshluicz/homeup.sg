@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { uploadListingImage } from "@/lib/listings/storage";
 import type { ListingFormData } from "@/lib/listings/types";
+import { createListing, updateListing } from "@/lib/listings/mutations";
 import {
   computeAreaSqm,
   computePricePsf,
@@ -115,31 +116,15 @@ export function ListingForm({
     };
 
     try {
-      const url =
+      const listing =
         mode === "create"
-          ? "/api/admin/listings"
-          : `/api/admin/listings/${listingId}`;
-      const method = mode === "create" ? "POST" : "PUT";
-
-      const body =
-        mode === "create"
-          ? { data: payload, action, id: listingId }
-          : { data: payload, action };
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to save listing");
+          ? await createListing(listingId, payload, action)
+          : await updateListing(listingId, payload, action);
 
       if (mode === "create") {
-        router.push(`/admin/listings/${json.listing.id}/edit?saved=1`);
+        router.push(`/admin/listings/edit?id=${listing.id}&saved=1`);
       } else {
-        setSavedSlug(json.listing.slug);
-        router.refresh();
+        setSavedSlug(listing.slug);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save listing");

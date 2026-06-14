@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
@@ -16,6 +16,18 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace(redirect);
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, [redirect, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +48,14 @@ export function LoginForm() {
 
     router.push(redirect);
     router.refresh();
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+        <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+      </div>
+    );
   }
 
   return (

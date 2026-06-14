@@ -1,24 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { deleteListing } from "@/lib/listings/mutations";
 import { Button } from "@/components/ui/Button";
 import { Loader2, Trash2 } from "lucide-react";
 
-export function DeleteListingButton({ listingId }: { listingId: string }) {
-  const router = useRouter();
+export function DeleteListingButton({
+  listingId,
+  onDeleted,
+}: {
+  listingId: string;
+  onDeleted?: () => void;
+}) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function handleDelete() {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/admin/listings/${listingId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
-      router.refresh();
-    } catch {
-      setDeleting(false);
+      await deleteListing(listingId);
+      onDeleted?.();
       setConfirming(false);
+    } catch {
+      setConfirming(false);
+    } finally {
+      setDeleting(false);
     }
   }
 
