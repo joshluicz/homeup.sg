@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaybookHero } from "@/components/sections/PlaybookHero";
 import { PlaybookLibrary } from "@/components/sections/PlaybookLibrary";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { getPlaybookVideos } from "@/lib/playbook/queries";
 import { PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema } from "@/lib/seo/schema";
@@ -16,8 +17,9 @@ export const metadata = buildPageMetadata({
   path: "/playbook",
 });
 
-export default function PlaybookPage() {
-  const videos = PLAYBOOK_VIDEOS;
+export default async function PlaybookPage() {
+  const dbVideos = await getPlaybookVideos().catch(() => []);
+  const videos = dbVideos.length > 0 ? dbVideos : PLAYBOOK_VIDEOS;
 
   return (
     <>
