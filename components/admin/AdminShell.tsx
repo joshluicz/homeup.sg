@@ -1,27 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/admin/listings", label: "Listings" },
-  { href: "/admin/listings/pg-sources", label: "PG Sync" },
-  { href: "/admin/listings/playbook", label: "Playbook" },
+  { href: "/admin/listings", label: "Listings", exact: true },
+  { href: "/admin/listings/pg-sources", label: "PG Sync", exact: false },
+  { href: "/admin/listings?tab=playbook", label: "Playbook", exact: false },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
+  const tab = searchParams.get("tab");
 
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/admin/login");
     router.refresh();
+  }
+
+  function isActive(item: (typeof NAV_ITEMS)[number]) {
+    if (item.href === "/admin/listings?tab=playbook") {
+      return pathname === "/admin/listings" && tab === "playbook";
+    }
+    if (item.href === "/admin/listings") {
+      return (
+        (pathname === "/admin/listings" && !tab) ||
+        pathname.startsWith("/admin/listings/new") ||
+        pathname.startsWith("/admin/listings/edit")
+      );
+    }
+    return pathname.startsWith(item.href);
   }
 
   return (
@@ -34,29 +50,20 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <span className="text-sm font-medium text-neutral-500">Admin</span>
             </Link>
             <nav className="flex items-center gap-1">
-              {NAV_ITEMS.map((item) => {
-                const isActive =
-                  item.href === "/admin/listings"
-                    ? pathname === "/admin/listings" ||
-                      pathname.startsWith("/admin/listings/new") ||
-                      pathname.startsWith("/admin/listings/edit")
-                    : pathname.startsWith(item.href);
-
-                return (
+              {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
                     "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
+                    isActive(item)
                       ? "bg-primary-50 text-primary-700"
                       : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
                   )}
                 >
                   {item.label}
                 </Link>
-                );
-              })}
+              ))}
             </nav>
           </div>
           <Button variant="outline" size="sm" onClick={handleSignOut}>

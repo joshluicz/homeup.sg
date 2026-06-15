@@ -1,6 +1,17 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
 
+export async function GET() {
+  const { supabase, error } = await requireAuth();
+  if (error) return error;
+  const { data, error: dbError } = await supabase
+    .from("playbook_videos")
+    .select("*")
+    .order("published_at", { ascending: false });
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
+}
+
 function slugify(title: string): string {
   return title
     .toLowerCase()
