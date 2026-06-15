@@ -5,6 +5,26 @@ export type ParsedPgListingUrl = {
   pg_listing_id: string;
 };
 
+/** Property slug from a PG listing URL, e.g. for-sale-tembusu-grand-500044866 → tembusu-grand */
+export function propertySlugFromPgUrl(raw: string): string | null {
+  let pathname: string;
+  try {
+    pathname = new URL(raw.trim()).pathname;
+  } catch {
+    return null;
+  }
+  const m = pathname.match(/\/listing\/(.+)-(\d{6,})$/);
+  if (!m) return null;
+  let slug = m[1];
+  slug = slug.replace(/^hdb-for-(?:sale|rent)-/, "");
+  slug = slug.replace(/^for-(?:sale|rent)-/, "");
+  return slug;
+}
+
+export function listedAsFromPgUrl(raw: string): "rent" | "sell" {
+  return /for-rent/i.test(raw) ? "rent" : "sell";
+}
+
 export type InvalidPgLine = {
   line: string;
   reason: string;

@@ -154,27 +154,51 @@ export async function importOnePgListing(
 
   const { data: activeBySlug } = await supabase
     .from("listings")
-    .select("id, source_pg_listing_id")
+    .select("id, source_pg_listing_id, listed_as")
     .eq("slug", formData.slug)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (activeBySlug) {
-    const { error: updateError } = await supabase
-      .from("listings")
-      .update(payload)
-      .eq("id", activeBySlug.id);
+    if (activeBySlug.listed_as === formData.listed_as) {
+      const { error: updateError } = await supabase
+        .from("listings")
+        .update(payload)
+        .eq("id", activeBySlug.id);
 
-    if (updateError) {
-      return { ok: false, error: updateError.message };
+      if (updateError) {
+        return { ok: false, error: updateError.message };
+      }
+
+      return { ok: true, title: formData.title, slug: formData.slug };
     }
 
-    return { ok: true, title: formData.title, slug: formData.slug };
+    formData.slug = `${formData.slug}-${formData.listed_as}`;
+    const validationAfterSuffix = validateListingForm(formData);
+    if (validationAfterSuffix) {
+      return { ok: false, error: validationAfterSuffix };
+    }
   }
+
+  const { data: activeSuffixed } = await supabase
+    .from("listings")
+    .select("id")
+    .eq("slug", formData.slug)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (activeSuffixed) {
+    return { ok: false, error: "Already imported" };
+  }
+
+  const payloadFinal = formDataToDbPayload(formData, "draft", {
+    source_pg_url: pgUrl,
+    source_pg_listing_id: pgListingId,
+  });
 
   const { error: insertError } = await supabase.from("listings").insert({
     id: listingId,
-    ...payload,
+    ...payloadFinal,
   });
 
   if (insertError) {
