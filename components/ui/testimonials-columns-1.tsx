@@ -106,11 +106,7 @@ export function TestimonialsColumn({
                 )}
 
                 <div className={cn("p-3 sm:p-5", item.photo && "pt-2 sm:pt-3")}>
-                  <StarRating />
-                  <p className="text-xs font-normal leading-relaxed text-neutral-600 sm:text-sm">
-                    &ldquo;{item.text}&rdquo;
-                  </p>
-                  <div className="mt-3 flex items-center justify-between gap-2 sm:mt-4 sm:gap-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
                     <InitialsAvatar name={item.name} avatarIndex={item.avatarIndex} />
                     {item.source && (
                       <span
@@ -123,6 +119,10 @@ export function TestimonialsColumn({
                       </span>
                     )}
                   </div>
+                  <StarRating />
+                  <p className="text-xs font-normal leading-relaxed text-neutral-600 sm:text-sm">
+                    &ldquo;{item.text}&rdquo;
+                  </p>
                 </div>
               </article>
             ))}

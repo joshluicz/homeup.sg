@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Star } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TestimonialsColumn } from "@/components/ui/testimonials-columns-1";
@@ -21,6 +21,7 @@ const [firstColumn, secondColumn, thirdColumn] =
 
 const DESKTOP_DURATIONS = [28, 34, 31] as const;
 const MOBILE_DURATIONS = [58, 68, 62] as const;
+
 
 const SOURCE_STYLES: Record<string, string> = {
   Google: "text-blue-600",
@@ -47,59 +48,120 @@ function StarRating() {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className="h-3.5 w-3.5 fill-amber-400 text-amber-400 sm:h-4 sm:w-4"
+          className="h-3.5 w-3.5 fill-amber-400 text-amber-400"
         />
       ))}
     </div>
   );
 }
 
-function FeaturedTestimonialCard({ item }: { item: TestimonialColumnItem }) {
+function PhotoTestimonialCard({ item }: { item: TestimonialColumnItem }) {
   return (
-    <motion.article
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      viewport={{ once: true }}
-      className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
-    >
-      {/* Photo — fixed-height banner, full width */}
+    <article className="mr-4 w-64 shrink-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm sm:mr-6 sm:w-72">
+      {/* Fixed-height photo */}
       {item.photo && (
-        <div className="relative h-48 w-full overflow-hidden sm:h-56">
+        <div className="relative h-44 w-full overflow-hidden">
           <img
             src={item.photo}
             alt={`${item.name} with HomeUP agent`}
-            className="h-full w-full object-cover object-center"
+            className="h-full w-full object-cover"
+            style={{ objectPosition: item.photoPosition ?? "center" }}
           />
-          {/* fade into card body */}
           <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
         </div>
       )}
-
-      {/* Content */}
-      <div className="p-4 sm:p-6">
-        <StarRating />
-        <p className="text-sm leading-relaxed text-neutral-700 sm:text-base">
-          &ldquo;{item.text}&rdquo;
-        </p>
-        <div className="mt-4 flex items-center justify-between gap-2">
+      {/* Text */}
+      <div className="p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
           <div>
-            <p className="text-sm font-semibold text-neutral-900">{item.name}</p>
-            <p className="text-xs text-neutral-500">{item.role}</p>
+            <p className="text-xs font-semibold text-neutral-900">{item.name}</p>
+            <p className="text-[11px] text-neutral-500">{item.role}</p>
           </div>
           {item.source && (
-            <span
-              className={cn(
-                "text-xs font-medium",
-                SOURCE_STYLES[item.source] ?? "text-neutral-400",
-              )}
-            >
+            <span className={cn("text-[10px] font-medium", SOURCE_STYLES[item.source] ?? "text-neutral-400")}>
               via {item.source}
             </span>
           )}
         </div>
+        <StarRating />
+        <p className="line-clamp-4 text-xs leading-relaxed text-neutral-700 sm:text-sm">
+          &ldquo;{item.text}&rdquo;
+        </p>
       </div>
-    </motion.article>
+    </article>
+  );
+}
+
+// pixels per second
+const MARQUEE_SPEED = 25;
+
+function HorizontalMarquee({ items }: { items: TestimonialColumnItem[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef(0);
+  const rafRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
+  const touchingRef = useRef(false);
+  const touchStartXRef = useRef(0);
+  const touchStartPosRef = useRef(0);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const animate = (time: number) => {
+      if (lastTimeRef.current && !touchingRef.current) {
+        const delta = (time - lastTimeRef.current) / 1000;
+        const copyWidth = track.scrollWidth / 2;
+        posRef.current += MARQUEE_SPEED * delta;
+        if (posRef.current >= copyWidth) posRef.current -= copyWidth;
+        if (posRef.current < 0) posRef.current += copyWidth;
+        track.style.transform = `translateX(-${posRef.current}px)`;
+      }
+      lastTimeRef.current = time;
+      rafRef.current = requestAnimationFrame(animate);
+    };
+
+    rafRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchingRef.current = true;
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartPosRef.current = posRef.current;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!trackRef.current) return;
+    const delta = touchStartXRef.current - e.touches[0].clientX;
+    const copyWidth = trackRef.current.scrollWidth / 2;
+    let newPos = touchStartPosRef.current + delta;
+    if (newPos >= copyWidth) newPos -= copyWidth;
+    if (newPos < 0) newPos += copyWidth;
+    posRef.current = newPos;
+    trackRef.current.style.transform = `translateX(-${posRef.current}px)`;
+  };
+
+  const handleTouchEnd = () => {
+    touchingRef.current = false;
+    lastTimeRef.current = 0; // reset so RAF resumes smoothly
+  };
+
+  const doubled = [...items, ...items];
+
+  return (
+    <div
+      className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_2%,black_98%,transparent)]"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div ref={trackRef} className="flex will-change-transform">
+        {doubled.map((item, i) => (
+          <PhotoTestimonialCard key={`${i}-${item.name}`} item={item} />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -132,17 +194,21 @@ export function Testimonials() {
           </p>
         </motion.div>
 
-        {/* ── Featured photo testimonials ─────────────────────────────── */}
+        {/* ── Horizontal photo marquee ───────────────────────────────── */}
         {featuredTestimonials.length > 0 && (
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 sm:gap-6">
-            {featuredTestimonials.map((item) => (
-              <FeaturedTestimonialCard key={`${item.name}-${item.role}`} item={item} />
-            ))}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            viewport={{ once: true }}
+            className="mt-10"
+          >
+            <HorizontalMarquee items={featuredTestimonials} />
+          </motion.div>
         )}
 
-        {/* ── Scrolling text testimonials ────────────────────────────── */}
-        <div className="relative mt-6 h-[min(520px,70vh)] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_10%,black_90%,transparent)] sm:mt-8 sm:h-[600px]">
+        {/* ── Vertical scrolling text testimonials ──────────────────── */}
+        <div className="relative mt-6 h-[min(520px,70vh)] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_2%,black_98%,transparent)] sm:mt-8 sm:h-[600px]">
           <div className="flex h-full gap-2 sm:gap-4 md:gap-6">
             <TestimonialsColumn
               testimonials={firstColumn}
