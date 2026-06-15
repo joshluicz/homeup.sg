@@ -37,6 +37,7 @@ const emptyForm = {
 export function PlaybookTab() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  // loading handled above with skeleton
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +133,43 @@ export function PlaybookTab() {
     });
     setDeleting(null);
     await loadVideos();
+  }
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-6 w-40 rounded-lg bg-neutral-200" />
+            <div className="h-4 w-20 rounded bg-neutral-100" />
+          </div>
+          <div className="h-9 w-28 rounded-lg bg-neutral-200" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+          <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-3 flex gap-6">
+            {["Video", "Category", "Duration", "Published", "Actions"].map((h) => (
+              <div key={h} className="h-3 w-16 rounded bg-neutral-200" />
+            ))}
+          </div>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-4 border-b border-neutral-100 last:border-0">
+              <div className="h-10 w-16 rounded-lg bg-neutral-100 shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-4 w-48 rounded bg-neutral-100" />
+                <div className="h-3 w-24 rounded bg-neutral-100" />
+              </div>
+              <div className="h-4 w-20 rounded bg-neutral-100" />
+              <div className="h-4 w-12 rounded bg-neutral-100" />
+              <div className="h-4 w-20 rounded bg-neutral-100" />
+              <div className="flex gap-2 ml-auto">
+                <div className="h-8 w-8 rounded-lg bg-neutral-100" />
+                <div className="h-8 w-8 rounded-lg bg-neutral-100" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -295,11 +333,7 @@ export function PlaybookTab() {
       )}
 
       {/* Video list */}
-      {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-neutral-300" />
-        </div>
-      ) : videos.length === 0 ? (
+      {videos.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-200 py-20 text-center">
           <p className="text-sm text-neutral-500">No videos yet.</p>
           {!showForm && (
@@ -308,6 +342,7 @@ export function PlaybookTab() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
+
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 bg-neutral-50 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">

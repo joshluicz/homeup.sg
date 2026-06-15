@@ -5,7 +5,8 @@ import { ListingsPageClient } from "@/components/listings/ListingsPageClient";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbSchema } from "@/lib/seo/schema";
+import { breadcrumbSchema, listingsItemListSchema } from "@/lib/seo/schema";
+import { getActiveListingsStatic, getListingStatsStatic } from "@/lib/listings/static-queries";
 
 export const metadata = buildPageMetadata({
   title: "Property Listings Singapore",
@@ -14,7 +15,12 @@ export const metadata = buildPageMetadata({
   path: "/listings",
 });
 
-export default function ListingsPage() {
+export default async function ListingsPage() {
+  const listings = await getActiveListingsStatic().catch(() => []);
+  const stats = await getListingStatsStatic(listings).catch(() => ({
+    total: 0, hdb: 0, condo: 0, landed: 0, apartment: 0,
+  }));
+
   return (
     <>
       <JsonLd
@@ -23,11 +29,12 @@ export default function ListingsPage() {
             { name: "Home", path: "/" },
             { name: "Listings", path: "/listings" },
           ]),
+          ...(listings.length > 0 ? [listingsItemListSchema(listings)] : []),
         ]}
       />
       <Navbar />
       <main className="bg-white">
-        <ListingsPageClient />
+        <ListingsPageClient initialListings={listings} initialStats={stats} />
         <CtaBanner />
         <LastUpdated className="pb-8" />
       </main>
