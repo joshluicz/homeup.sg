@@ -329,9 +329,15 @@ export function PgSourcesPanel() {
               Step 2 — Fetch all enabled agents
             </h2>
             <p className="mt-1 text-sm text-neutral-600">
-              Uses <code className="text-xs">listedById</code> from saved links — sale + rent,
-              all pages.
+              Opens <strong>Chrome</strong> via patchright and paginates sale + rent for each saved
+              agent. Solve captcha in that window if shown — session cookies persist in{" "}
+              <code className="text-xs">.pg-profile</code>.
             </p>
+            {fetching && (
+              <p className="mt-2 text-sm font-medium text-primary-700">
+                Chrome should open now — do not close it until fetch finishes.
+              </p>
+            )}
             <div className="mt-4">
               <Button
                 type="button"

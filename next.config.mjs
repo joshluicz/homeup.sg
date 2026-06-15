@@ -3,6 +3,15 @@ const isStaticExport = process.env.STATIC_EXPORT === "true";
 
 const nextConfig = {
   ...(isStaticExport ? { output: "export", trailingSlash: true } : {}),
+  experimental: {
+    serverComponentsExternalPackages: ["patchright", "patchright-core"],
+  },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.externals = [...(config.externals ?? []), "patchright", "patchright-core"];
+    }
+    return config;
+  },
   images: {
     unoptimized: isStaticExport,
     remotePatterns: [

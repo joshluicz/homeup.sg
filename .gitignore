@@ -28,3 +28,9 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Playwright PG fetch browser profiles
+.playwright-pg-profile/
+.chrome-pg-manual/
+.pg-profile/
+.pg-profile-test/

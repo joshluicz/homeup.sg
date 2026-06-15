@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/input";
 import { DeleteListingButton } from "@/components/admin/DeleteListingButton";
 import { FilterTabs } from "@/components/admin/FilterTabs";
 import { Pagination } from "@/components/admin/Pagination";
@@ -19,14 +20,20 @@ import {
   countDraftListings,
   publishAllDraftListings,
 } from "@/lib/listings/publish-all-drafts";
-import { Loader2, Pencil, Plus } from "lucide-react";
+import { Loader2, Pencil, Plus, Search, X } from "lucide-react";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
+
+function escapeIlike(value: string): string {
+  return value.replace(/[%_\\]/g, "\\$&");
+}
 
 export function ListingsIndexClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const filter = (searchParams.get("filter") as ListingFilter) || "all";
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
+  const searchQuery = searchParams.get("q")?.trim() ?? "";
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -35,6 +42,11 @@ export function ListingsIndexClient() {
   const [draftCount, setDraftCount] = useState(0);
   const [publishingAll, setPublishingAll] = useState(false);
   const [publishMessage, setPublishMessage] = useState<string | null>(null);
+  const [searchDraft, setSearchDraft] = useState(searchQuery);
+
+  useEffect(() => {
+    setSearchDraft(searchQuery);
+  }, [searchQuery]);
 
   const loadListings = useCallback(async () => {
     setLoading(true);
@@ -50,6 +62,13 @@ export function ListingsIndexClient() {
     if (filter === "active") query = query.eq("status", "active");
     if (filter === "draft") query = query.eq("status", "draft");
     if (filter === "sold") query = query.eq("is_sold", true);
+
+    if (searchQuery) {
+      const pattern = `%${escapeIlike(searchQuery)}%`;
+      query = query.or(
+        `title.ilike.${pattern},slug.ilike.${pattern},address_line_1.ilike.${pattern}`,
+      );
+    }
 
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
@@ -67,7 +86,7 @@ export function ListingsIndexClient() {
     }
 
     setLoading(false);
-  }, [filter, page]);
+  }, [filter, page, searchQuery]);
 
   const loadDraftCount = useCallback(async () => {
     try {
@@ -104,7 +123,32 @@ export function ListingsIndexClient() {
     }
   }
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const rangeStart = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(page * PAGE_SIZE, totalCount);
+
+  function applySearch(nextQuery: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    const trimmed = nextQuery.trim();
+    if (trimmed) {
+      params.set("q", trimmed);
+    } else {
+      params.delete("q");
+    }
+    params.delete("page");
+    const qs = params.toString();
+    router.push(`/admin/listings${qs ? `?${qs}` : ""}`);
+  }
+
+  function handleSearchSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    applySearch(searchDraft);
+  }
+
+  function clearSearch() {
+    setSearchDraft("");
+    applySearch("");
+  }
 
   return (
     <div className="space-y-6">
@@ -138,6 +182,38 @@ export function ListingsIndexClient() {
       </div>
 
       <FilterTabs />
+
+      <form onSubmit={handleSearchSubmit} className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Input
+            type="search"
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            placeholder="Search by title, slug, or address…"
+            className="pl-9 pr-9"
+          />
+          {searchDraft && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button type="submit" variant="outline">
+          Search
+        </Button>
+      </form>
+
+      {searchQuery && (
+        <p className="text-sm text-neutral-600">
+          Results for &ldquo;{searchQuery}&rdquo;
+        </p>
+      )}
 
       {publishMessage && (
         <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
@@ -221,7 +297,13 @@ export function ListingsIndexClient() {
         )}
       </div>
 
-      <Pagination page={page} totalPages={totalPages} />
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        totalCount={totalCount}
+        rangeStart={rangeStart}
+        rangeEnd={rangeEnd}
+      />
     </div>
   );
 }

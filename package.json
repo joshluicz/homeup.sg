@@ -7,7 +7,8 @@
     "build": "next build",
     "build:lp": "node scripts/build-lp-static.mjs",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pg:install": "patchright install chrome"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -32,6 +33,7 @@
     "lucide-react": "latest",
     "motion": "^12.40.0",
     "next": "14",
+    "patchright": "^1.60.2",
     "react": "18",
     "react-dom": "18",
     "tailwind-merge": "^3.6.0",

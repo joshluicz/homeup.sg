@@ -2,17 +2,16 @@ import {
   FETCH_BLOCK_PATTERNS,
   PG_USER_AGENT,
 } from "@/lib/listings/import/types";
-import { parsePgListingUrl, type ParsedPgListingUrl } from "@/lib/listings/pg-url";
+import {
+  extractListingUrlsFromHtml,
+  isPgBlockedHtml,
+} from "@/lib/listings/extract-pg-listing-urls";
+import type { ParsedPgListingUrl } from "@/lib/listings/pg-url";
 
-const LISTING_PATH_RE = /listing\/([a-z0-9-]+-\d+)/gi;
 const MAX_PAGES = 50;
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function isBlockedBody(body: string): boolean {
-  return FETCH_BLOCK_PATTERNS.some((pattern) => pattern.test(body));
 }
 
 async function fetchText(url: string): Promise<string | null> {
@@ -26,43 +25,11 @@ async function fetchText(url: string): Promise<string | null> {
       redirect: "follow",
     });
     const body = await res.text();
-    if (!res.ok || isBlockedBody(body)) return null;
+    if (!res.ok || isPgBlockedHtml(body)) return null;
     return body;
   } catch {
     return null;
   }
-}
-
-function extractListingUrls(html: string): ParsedPgListingUrl[] {
-  const found: ParsedPgListingUrl[] = [];
-  const seen = new Set<string>();
-
-  for (const match of html.matchAll(LISTING_PATH_RE)) {
-    const parsed = parsePgListingUrl(
-      `https://www.propertyguru.com.sg/listing/${match[1]}`,
-    );
-    if (parsed && !seen.has(parsed.pg_listing_id)) {
-      seen.add(parsed.pg_listing_id);
-      found.push(parsed);
-    }
-  }
-
-  // Escaped URLs inside JSON payloads
-  const jsonMatches = html.matchAll(
-    /listing\\\/([a-z0-9-]+-\d+)/gi,
-  );
-  for (const match of jsonMatches) {
-    const slug = match[1].replace(/\\\//g, "/");
-    const parsed = parsePgListingUrl(
-      `https://www.propertyguru.com.sg/listing/${slug}`,
-    );
-    if (parsed && !seen.has(parsed.pg_listing_id)) {
-      seen.add(parsed.pg_listing_id);
-      found.push(parsed);
-    }
-  }
-
-  return found;
 }
 
 async function fetchSectionPages(
@@ -85,7 +52,7 @@ async function fetchSectionPages(
     if (!html) break;
 
     gotAnyPage = true;
-    const pageListings = extractListingUrls(html);
+    const pageListings = extractListingUrlsFromHtml(html);
 
     if (pageListings.length === 0) {
       emptyPages += 1;
@@ -108,7 +75,7 @@ async function fetchSectionPages(
   return gotAnyPage;
 }
 
-/** Fetch all sale + rent listings for an agent using PropertyGuru listedById. */
+/** HTTP fallback — often blocked by PropertyGuru. Prefer Playwright. */
 export async function fetchAgentPgListingsByListedById(
   listedById: string,
 ): Promise<{ listings: ParsedPgListingUrl[]; error?: "FETCH_BLOCKED" | string }> {
@@ -133,7 +100,7 @@ export async function fetchAgentPgListingsByListedById(
   return { listings };
 }
 
-/** Fallback when listedById is unavailable. */
+/** HTTP fallback when listedById is unavailable. */
 export async function fetchAgentPgListingsByCea(
   cea: string,
 ): Promise<{ listings: ParsedPgListingUrl[]; error?: "FETCH_BLOCKED" | string }> {
@@ -157,3 +124,6 @@ export async function fetchAgentPgListingsByCea(
 
   return { listings };
 }
+
+// Re-export for tests
+export { FETCH_BLOCK_PATTERNS };

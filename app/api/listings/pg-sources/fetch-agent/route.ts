@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth";
 import {
-  fetchAndSaveAgentPgListings,
   fetchAndSaveEnabledAgentPgListings,
 } from "@/lib/listings/fetch-agent-pg-sources";
 
-export const maxDuration = 120;
+export const maxDuration = 600;
 
 export async function POST(request: Request) {
   const { supabase, error: authError } = await requireAuth();
@@ -20,8 +19,15 @@ export async function POST(request: Request) {
 
   try {
     if (body.fetch_all) {
-      const { results, skipped_agents } = await fetchAndSaveEnabledAgentPgListings(supabase);
-      return NextResponse.json({ success: true, results, skipped_agents });
+      const { results, skipped_agents, perAgentMode, totalNew } =
+        await fetchAndSaveEnabledAgentPgListings(supabase);
+      return NextResponse.json({
+        success: true,
+        results,
+        skipped_agents,
+        perAgentMode,
+        totalNew,
+      });
     }
 
     const agentSlug = body.agent_slug?.trim();
@@ -29,9 +35,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "agent_slug or fetch_all is required" }, { status: 400 });
     }
 
-    const result = await fetchAndSaveAgentPgListings(supabase, agentSlug);
-    return NextResponse.json({ success: true, results: [result] });
+    const { results, perAgentMode, totalNew } = await fetchAndSaveEnabledAgentPgListings(
+      supabase,
+      agentSlug,
+    );
+    return NextResponse.json({
+      success: true,
+      results,
+      perAgentMode,
+      totalNew,
+    });
   } catch (err) {
+    console.error("[fetch-agent]", err);
     const message = err instanceof Error ? err.message : "Fetch failed";
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
