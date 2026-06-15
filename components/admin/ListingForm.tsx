@@ -227,6 +227,11 @@ export function ListingForm({
           ? await createListing(listingId, payload, action)
           : await updateListing(listingId, payload, action);
 
+      if (action === "publish") {
+        router.push("/admin/listings");
+        return;
+      }
+
       if (mode === "create") {
         router.push(`/admin/listings/edit?id=${listing.id}&saved=1`);
       } else {

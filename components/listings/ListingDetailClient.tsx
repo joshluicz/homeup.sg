@@ -30,6 +30,7 @@ import {
 import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
 import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
+import { resolveListingSlug } from "@/lib/listings/slug-from-path";
 import { cn } from "@/lib/utils";
 
 type ListingDetailClientProps = {
@@ -43,8 +44,16 @@ export function ListingDetailClient({ slug }: ListingDetailClientProps) {
   const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
+    const resolvedSlug = resolveListingSlug(slug);
+    if (!resolvedSlug) {
+      setListing(null);
+      setRelated([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    getListingBySlug(slug)
+    getListingBySlug(resolvedSlug)
       .then(async (data) => {
         setListing(data);
         if (data) {

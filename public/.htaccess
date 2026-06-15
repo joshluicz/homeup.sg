@@ -9,6 +9,15 @@ RewriteEngine On
 RewriteCond %{THE_REQUEST} ^[A-Z]+\ /\ HTTP
 RewriteRule ^$ /index.html [R=302,L]
 
+# ── Listing detail: dynamic shell for slugs not pre-rendered at build time ──
+# Serves listings/_/index.html while keeping the clean URL (e.g. /listings/ecopolitan/).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^/listings/([^/]+)/?$
+RewriteCond %1 !^_${NC}
+RewriteCond %{DOCUMENT_ROOT}/listings/%1/index.html !-f
+RewriteRule ^listings/([^/]+)/?$ listings/_/index.html [L]
+
 # ── Clean-URL rewrite (for any future subpages) ─────────────────────────
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

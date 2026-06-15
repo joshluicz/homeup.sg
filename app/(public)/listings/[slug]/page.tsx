@@ -5,6 +5,7 @@ import { ListingDetailClient } from "@/components/listings/ListingDetailClient";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { getAllListingSlugsServer, getListingBySlugServer } from "@/lib/listings/server-queries";
+import { LISTING_DETAIL_FALLBACK_SLUG } from "@/lib/listings/slug-from-path";
 import { formatListingPrice } from "@/lib/listings/public-utils";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, realEstateListingSchema } from "@/lib/seo/schema";
@@ -15,7 +16,9 @@ type ListingDetailPageProps = {
 
 export async function generateStaticParams() {
   const slugs = await getAllListingSlugsServer();
-  return slugs.map((slug) => ({ slug }));
+  const unique = new Set(slugs);
+  unique.add(LISTING_DETAIL_FALLBACK_SLUG);
+  return [...unique].map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: ListingDetailPageProps): Promise<Metadata> {
