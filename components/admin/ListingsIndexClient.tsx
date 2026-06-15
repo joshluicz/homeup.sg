@@ -15,6 +15,10 @@ import {
   formatSGD,
 } from "@/lib/listings/utils";
 import type { Listing, ListingFilter } from "@/lib/listings/types";
+import {
+  countDraftListings,
+  publishAllDraftListings,
+} from "@/lib/listings/publish-all-drafts";
 import { Loader2, Pencil, Plus } from "lucide-react";
 
 const PAGE_SIZE = 20;
@@ -28,6 +32,9 @@ export function ListingsIndexClient() {
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [draftCount, setDraftCount] = useState(0);
+  const [publishingAll, setPublishingAll] = useState(false);
+  const [publishMessage, setPublishMessage] = useState<string | null>(null);
 
   const loadListings = useCallback(async () => {
     setLoading(true);
@@ -62,9 +69,40 @@ export function ListingsIndexClient() {
     setLoading(false);
   }, [filter, page]);
 
+  const loadDraftCount = useCallback(async () => {
+    try {
+      setDraftCount(await countDraftListings());
+    } catch {
+      setDraftCount(0);
+    }
+  }, []);
+
   useEffect(() => {
     void loadListings();
-  }, [loadListings]);
+    void loadDraftCount();
+  }, [loadListings, loadDraftCount]);
+
+  async function handlePublishAllDrafts() {
+    if (draftCount === 0) return;
+    if (!window.confirm(`Publish all ${draftCount} draft listing(s) to the live site?`)) {
+      return;
+    }
+
+    setPublishingAll(true);
+    setPublishMessage(null);
+    setError(null);
+
+    try {
+      const published = await publishAllDraftListings();
+      setPublishMessage(`Published ${published} listing(s).`);
+      await loadListings();
+      await loadDraftCount();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to publish drafts");
+    } finally {
+      setPublishingAll(false);
+    }
+  }
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -77,15 +115,35 @@ export function ListingsIndexClient() {
             {totalCount} listing{totalCount !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/admin/listings/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add New Listing
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          {draftCount > 0 && (
+            <Button
+              variant="outline"
+              disabled={publishingAll}
+              onClick={handlePublishAllDrafts}
+            >
+              {publishingAll ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Publish all drafts ({draftCount})
+            </Button>
+          )}
+          <Button asChild>
+            <Link href="/admin/listings/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add New Listing
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <FilterTabs />
+
+      {publishMessage && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          {publishMessage}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

@@ -3,8 +3,6 @@ import { runListingImport } from "@/lib/listings/import/run-import";
 import type { ListingFormData } from "@/lib/listings/types";
 import { formDataToDbPayload, validateListingForm } from "@/lib/listings/validation";
 
-const IMPORT_DELAY_MS = 1500;
-
 const DEFAULT_FORM: ListingFormData = {
   title: "",
   slug: "",
@@ -33,14 +31,102 @@ export type PgSyncResult = {
   failed: Array<{ pg_url: string; error: string }>;
 };
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function toFormData(partial: Partial<ListingFormData>): ListingFormData {
   return { ...DEFAULT_FORM, ...partial, negotiable: "negotiable" };
 }
 
+export async function archiveRemovedPgListings(
+  supabase: SupabaseClient,
+): Promise<Array<{ title: string; slug: string }>> {
+  const archived: Array<{ title: string; slug: string }> = [];
+
+  const { data: sources, error: sourcesError } = await supabase
+    .from("pg_listing_sources")
+    .select("pg_listing_id");
+
+  if (sourcesError) throw new Error(sourcesError.message);
+
+  const sourceIds = new Set((sources ?? []).map((row) => row.pg_listing_id as string));
+
+  const { data: listings, error: listingsError } = await supabase
+    .from("listings")
+    .select("id, title, slug, source_pg_listing_id")
+    .not("source_pg_listing_id", "is", null)
+    .is("deleted_at", null);
+
+  if (listingsError) throw new Error(listingsError.message);
+
+  for (const listing of listings ?? []) {
+    const pgId = listing.source_pg_listing_id as string;
+    if (sourceIds.has(pgId)) continue;
+
+    const { error } = await supabase
+      .from("listings")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", listing.id);
+
+    if (error) throw new Error(error.message);
+
+    archived.push({
+      title: listing.title as string,
+      slug: listing.slug as string,
+    });
+  }
+
+  return archived;
+}
+
+export async function importOnePgListing(
+  supabase: SupabaseClient,
+  pgUrl: string,
+  pgListingId: string,
+): Promise<{ ok: true; title: string; slug: string } | { ok: false; error: string }> {
+  const { data: existing } = await supabase
+    .from("listings")
+    .select("id")
+    .eq("source_pg_listing_id", pgListingId)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (existing) {
+    return { ok: false, error: "Already imported" };
+  }
+
+  const listingId = crypto.randomUUID();
+
+  const importResult = await runListingImport(supabase, {
+    url: pgUrl,
+    listingId,
+  });
+
+  if (!importResult.success) {
+    return { ok: false, error: importResult.error };
+  }
+
+  const formData = toFormData(importResult.data);
+  const validationError = validateListingForm(formData);
+  if (validationError) {
+    return { ok: false, error: validationError };
+  }
+
+  const payload = formDataToDbPayload(formData, "draft", {
+    source_pg_url: pgUrl,
+    source_pg_listing_id: pgListingId,
+  });
+
+  const { error: insertError } = await supabase.from("listings").insert({
+    id: listingId,
+    ...payload,
+  });
+
+  if (insertError) {
+    return { ok: false, error: insertError.message };
+  }
+
+  return { ok: true, title: formData.title, slug: formData.slug };
+}
+
+/** @deprecated Prefer client-side loop via importOnePgListing */
 export async function runPgListingSync(supabase: SupabaseClient): Promise<PgSyncResult> {
   const result: PgSyncResult = {
     added: [],
@@ -49,114 +135,26 @@ export async function runPgListingSync(supabase: SupabaseClient): Promise<PgSync
     failed: [],
   };
 
+  result.archived = await archiveRemovedPgListings(supabase);
+
   const { data: sources, error: sourcesError } = await supabase
     .from("pg_listing_sources")
-    .select("pg_url, pg_listing_id")
-    .order("created_at", { ascending: true });
+    .select("pg_url, pg_listing_id");
 
-  if (sourcesError) {
-    throw new Error(sourcesError.message);
-  }
+  if (sourcesError) throw new Error(sourcesError.message);
 
-  const sourceIds = new Set((sources ?? []).map((row) => row.pg_listing_id as string));
-  const sourceById = new Map(
-    (sources ?? []).map((row) => [row.pg_listing_id as string, row.pg_url as string]),
-  );
+  for (const row of sources ?? []) {
+    const pgUrl = row.pg_url as string;
+    const pgListingId = row.pg_listing_id as string;
 
-  const { data: listings, error: listingsError } = await supabase
-    .from("listings")
-    .select("id, title, slug, source_pg_listing_id")
-    .not("source_pg_listing_id", "is", null)
-    .is("deleted_at", null);
-
-  if (listingsError) {
-    throw new Error(listingsError.message);
-  }
-
-  const existingPgIds = new Set<string>();
-
-  for (const listing of listings ?? []) {
-    const pgId = listing.source_pg_listing_id as string;
-    existingPgIds.add(pgId);
-
-    if (!sourceIds.has(pgId)) {
-      const { error } = await supabase
-        .from("listings")
-        .update({ deleted_at: new Date().toISOString() })
-        .eq("id", listing.id);
-
-      if (error) {
-        result.failed.push({ pg_url: pgId, error: error.message });
-        continue;
-      }
-
-      result.archived.push({
-        title: listing.title as string,
-        slug: listing.slug as string,
-      });
-    }
-  }
-
-  for (const pgListingId of sourceIds) {
-    if (existingPgIds.has(pgListingId)) {
+    const outcome = await importOnePgListing(supabase, pgUrl, pgListingId);
+    if (outcome.ok) {
+      result.added.push({ title: outcome.title, slug: outcome.slug, pg_url: pgUrl });
+    } else if (outcome.error === "Already imported") {
       result.skipped += 1;
-      continue;
+    } else {
+      result.failed.push({ pg_url: pgUrl, error: outcome.error });
     }
-
-    const pgUrl = sourceById.get(pgListingId);
-    if (!pgUrl) continue;
-
-    const listingId = crypto.randomUUID();
-
-    try {
-      const importResult = await runListingImport(supabase, {
-        url: pgUrl,
-        listingId,
-      });
-
-      if (!importResult.success) {
-        result.failed.push({ pg_url: pgUrl, error: importResult.error });
-        await sleep(IMPORT_DELAY_MS);
-        continue;
-      }
-
-      const formData = toFormData(importResult.data);
-      const validationError = validateListingForm(formData);
-      if (validationError) {
-        result.failed.push({ pg_url: pgUrl, error: validationError });
-        await sleep(IMPORT_DELAY_MS);
-        continue;
-      }
-
-      const payload = formDataToDbPayload(formData, "draft", {
-        source_pg_url: pgUrl,
-        source_pg_listing_id: pgListingId,
-      });
-
-      const { error: insertError } = await supabase.from("listings").insert({
-        id: listingId,
-        ...payload,
-      });
-
-      if (insertError) {
-        result.failed.push({ pg_url: pgUrl, error: insertError.message });
-        await sleep(IMPORT_DELAY_MS);
-        continue;
-      }
-
-      result.added.push({
-        title: formData.title,
-        slug: formData.slug,
-        pg_url: pgUrl,
-      });
-    } catch (err) {
-      result.failed.push({
-        pg_url: pgUrl,
-        error: err instanceof Error ? err.message : "Import failed",
-      });
-    }
-
-    await sleep(IMPORT_DELAY_MS);
   }
 
   return result;

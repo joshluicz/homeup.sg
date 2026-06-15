@@ -15,6 +15,10 @@ import type { FetchAgentPgResult } from "@/lib/listings/fetch-agent-pg-sources";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import {
+  countDraftListings,
+  publishAllDraftListings,
+} from "@/lib/listings/publish-all-drafts";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 type SyncResponse = {
@@ -45,6 +49,11 @@ export function PgSourcesPanel() {
   const [fetchResults, setFetchResults] = useState<FetchAgentPgResult[] | null>(null);
   const [preview, setPreview] = useState<PgSyncPreview | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResponse | null>(null);
+  const [syncProgress, setSyncProgress] = useState<{ current: number; total: number } | null>(
+    null,
+  );
+  const [draftCount, setDraftCount] = useState(0);
+  const [publishingAll, setPublishingAll] = useState(false);
 
   const canRunLocalActions = isLocalDevHost();
   const enabledCount = AGENTS.filter((a) => profileDrafts[a.slug]?.trim()).length;
@@ -77,6 +86,9 @@ export function PgSourcesPanel() {
 
   useEffect(() => {
     loadProfiles();
+    countDraftListings()
+      .then(setDraftCount)
+      .catch(() => setDraftCount(0));
   }, [loadProfiles]);
 
   async function handleSaveProfiles() {
@@ -146,31 +158,96 @@ export function PgSourcesPanel() {
   }
 
   async function handleSync() {
+    if (!preview) return;
+
+    const queue = preview.to_import;
     setSyncing(true);
     setError(null);
     setSyncResult(null);
+    setSyncProgress(queue.length > 0 ? { current: 0, total: queue.length } : null);
+
+    const added: NonNullable<SyncResponse["added"]> = [];
+    const failed: NonNullable<SyncResponse["failed"]> = [];
+    let skipped = preview.unchanged;
+    let archived: NonNullable<SyncResponse["archived"]> = [];
 
     try {
-      const res = await fetch("/api/listings/sync-pg", { method: "POST" });
-      const text = await res.text();
-      let json: SyncResponse;
-      try {
-        json = JSON.parse(text) as SyncResponse;
-      } catch {
-        throw new Error("Sync API unavailable. Run npm run dev on localhost.");
+      const archiveRes = await fetch("/api/listings/sync-pg/archive", { method: "POST" });
+      const archiveJson = (await archiveRes.json()) as {
+        success?: boolean;
+        archived?: SyncResponse["archived"];
+        error?: string;
+      };
+      if (!archiveRes.ok || !archiveJson.success) {
+        throw new Error(archiveJson.error ?? "Archive step failed");
       }
-      if (!res.ok || !json.success) {
-        throw new Error(json.error ?? "Sync failed");
+      archived = archiveJson.archived ?? [];
+
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        setSyncProgress({ current: i + 1, total: queue.length });
+
+        const res = await fetch("/api/listings/sync-pg/import-one", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pg_url: item.pg_url,
+            pg_listing_id: item.pg_listing_id,
+          }),
+        });
+
+        const json = (await res.json()) as {
+          success?: boolean;
+          skipped?: boolean;
+          error?: string;
+          title?: string;
+          slug?: string;
+        };
+
+        if (json.success && json.title && json.slug) {
+          added.push({ title: json.title, slug: json.slug, pg_url: item.pg_url });
+        } else if (json.skipped) {
+          skipped += 1;
+        } else {
+          failed.push({ pg_url: item.pg_url, error: json.error ?? "Import failed" });
+        }
       }
-      setSyncResult(json);
+
+      const result: SyncResponse = {
+        success: true,
+        added,
+        failed,
+        skipped,
+        archived,
+      };
+      setSyncResult(result);
       setStatusMessage(
-        `Sync complete — ${json.added?.length ?? 0} new draft(s) ready for review.`,
+        `Sync complete — ${added.length} new draft(s)${failed.length > 0 ? `, ${failed.length} failed (retry sync to retry failures)` : ""}.`,
       );
       await refreshPreview();
+      setDraftCount(await countDraftListings());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setSyncing(false);
+      setSyncProgress(null);
+    }
+  }
+
+  async function handlePublishAllDrafts() {
+    if (draftCount === 0) return;
+    if (!window.confirm(`Publish all ${draftCount} draft listing(s)?`)) return;
+
+    setPublishingAll(true);
+    setError(null);
+    try {
+      const n = await publishAllDraftListings();
+      setStatusMessage(`Published ${n} listing(s) to the live site.`);
+      setDraftCount(await countDraftListings());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to publish");
+    } finally {
+      setPublishingAll(false);
     }
   }
 
@@ -355,6 +432,12 @@ export function PgSourcesPanel() {
                   Sync to HomeUP
                 </Button>
               </div>
+              {syncing && syncProgress && (
+                <p className="mt-3 text-sm text-neutral-600">
+                  Importing {syncProgress.current} of {syncProgress.total}… (one at a time to avoid
+                  timeouts)
+                </p>
+              )}
             </section>
           )}
 
@@ -377,12 +460,26 @@ export function PgSourcesPanel() {
                   <strong>Failed:</strong> {syncResult.failed?.length ?? 0}
                 </p>
               </div>
-              <Link
-                href="/admin/listings"
-                className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
-              >
-                Review listings →
-              </Link>
+              <div className="mt-4 flex flex-wrap gap-3">
+                {draftCount > 0 && (
+                  <Button
+                    type="button"
+                    disabled={publishingAll}
+                    onClick={handlePublishAllDrafts}
+                  >
+                    {publishingAll ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Publish all drafts ({draftCount})
+                  </Button>
+                )}
+                <Link
+                  href="/admin/listings?filter=draft"
+                  className="inline-flex items-center rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+                >
+                  Review drafts →
+                </Link>
+              </div>
             </section>
           )}
         </>

@@ -56,13 +56,20 @@ export async function fetchAgentPgListingsByCea(
   const seen = new Set<string>();
   const listings: ParsedPgListingUrl[] = [];
   let gotAnyPage = false;
+  const MAX_PAGES = 40;
 
   for (const type of ["sell", "rent"] as const) {
     const section = type === "rent" ? "property-for-rent" : "property-for-sale";
+    let emptyPages = 0;
 
-    for (let page = 1; page <= 10; page++) {
+    for (let page = 1; page <= MAX_PAGES; page++) {
       const url = `https://www.propertyguru.com.sg/${section}?agentCea=${encodeURIComponent(cea)}&page=${page}`;
-      const html = await fetchText(url);
+      let html = await fetchText(url);
+
+      if (!html) {
+        await sleep(1200);
+        html = await fetchText(url);
+      }
 
       if (!html) {
         if (!gotAnyPage && page === 1 && listings.length === 0) {
@@ -73,18 +80,23 @@ export async function fetchAgentPgListingsByCea(
 
       gotAnyPage = true;
       const pageListings = extractListingUrls(html);
-      let newOnPage = 0;
 
+      if (pageListings.length === 0) {
+        emptyPages += 1;
+        if (emptyPages >= 2) break;
+        await sleep(600);
+        continue;
+      }
+
+      emptyPages = 0;
       for (const entry of pageListings) {
         if (!seen.has(entry.pg_listing_id)) {
           seen.add(entry.pg_listing_id);
           listings.push(entry);
-          newOnPage += 1;
         }
       }
 
-      if (newOnPage === 0) break;
-      await sleep(600);
+      await sleep(800);
     }
   }
 
