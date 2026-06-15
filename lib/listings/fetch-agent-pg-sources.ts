@@ -46,6 +46,7 @@ function aggregateResults(perAgentMode: PerAgentModeResult[]): FetchAgentPgResul
 
     current.fetched += row.found;
     current.saved += row.new;
+    // found is unique per mode; saved is rows actually inserted
     current.skipped_duplicates += Math.max(0, row.found - row.new);
 
     if (row.error && !current.error) {

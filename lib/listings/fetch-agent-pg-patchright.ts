@@ -1,7 +1,12 @@
 import path from "node:path";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AGENTS } from "@/lib/data/agents";
-import { parsePgAgentSourceInput, parsePgListingUrl } from "@/lib/listings/pg-url";
+import {
+  extractListingUrlsFromHtml,
+  mergeParsedListings,
+  parseListingHrefs,
+} from "@/lib/listings/extract-pg-listing-urls";
+import { parsePgAgentSourceInput, type ParsedPgListingUrl } from "@/lib/listings/pg-url";
 import type { Page } from "patchright";
 
 const LISTING_RE = /\/listing\/[a-z0-9-]+-(\d+)/gi;
@@ -65,19 +70,17 @@ function getListedById(profile: AgentProfileRow): string | null {
   return null;
 }
 
-function extractFromCombined(combined: string): Map<string, { pg_url: string; pg_listing_id: string }> {
-  const found = new Map<string, { pg_url: string; pg_listing_id: string }>();
-  LISTING_RE.lastIndex = 0;
-
-  for (const match of combined.matchAll(LISTING_RE)) {
-    const rawPath = match[0].split("?")[0].split("#")[0];
-    const listingId = match[1];
-    const parsed = parsePgListingUrl(`https://www.propertyguru.com.sg${rawPath}`);
-    if (!parsed) continue;
-    found.set(rawPath, parsed);
+function isSearchJsonResponse(url: string): boolean {
+  if (!url.includes("propertyguru.com.sg")) return false;
+  if (/google|facebook|analytics|sentry|hotjar|segment|optimizely|datadog/i.test(url)) {
+    return false;
   }
+  return /search|listing|property|srp|graphql|api|bff/i.test(url);
+}
 
-  return found;
+async function clearAgentSources(supabase: SupabaseClient, agentSlug: string): Promise<void> {
+  const { error } = await supabase.from("pg_listing_sources").delete().eq("agent_slug", agentSlug);
+  if (error) throw new Error(error.message);
 }
 
 async function isChallengeVisible(page: Page): Promise<boolean> {
@@ -183,20 +186,28 @@ async function waitForPageReady(
   return "timeout";
 }
 
-async function extractPageListings(page: Page, blobs: string[]): Promise<Map<string, { pg_url: string; pg_listing_id: string }>> {
-  const hrefs = await page
-    .$$eval('a[href*="/listing/"]', (anchors) =>
-      anchors.map((a) => (a as HTMLAnchorElement).getAttribute("href") ?? "").join("\n"),
+async function extractPageListings(page: Page, blobs: string[]): Promise<Map<string, ParsedPgListingUrl>> {
+  const hrefsFiltered = await page
+    .$$eval('main a[href*="/listing/"]', (anchors) =>
+      anchors
+        .map((a) => (a as HTMLAnchorElement).getAttribute("href") ?? "")
+        .filter((href) => href.includes("/listing/"))
+        .filter((_, i) => {
+          const a = anchors[i] as HTMLAnchorElement;
+          return !a.closest("nav, footer, header, aside");
+        }),
     )
-    .catch(() => "");
+    .catch(() => [] as string[]);
 
   const nextData = await page
     .evaluate(() => document.getElementById("__NEXT_DATA__")?.textContent ?? "")
     .catch(() => "");
 
-  const html = await page.content();
-  const combined = [hrefs, blobs.join(""), nextData, html].join("\n");
-  return extractFromCombined(combined);
+  const fromDom = parseListingHrefs(hrefsFiltered);
+  const fromNext = nextData ? extractListingUrlsFromHtml(nextData) : [];
+  const fromJson = blobs.flatMap((blob) => extractListingUrlsFromHtml(blob));
+
+  return mergeParsedListings(fromDom, fromNext, fromJson);
 }
 
 async function loadExistingKeys(supabase: SupabaseClient): Promise<Set<string>> {
@@ -292,7 +303,6 @@ export async function fetchPgListingsWithPatchright(
     return { perAgentMode, totalNew: 0 };
   }
 
-  const existingKeys = await loadExistingKeys(supabase);
   const { chromium } = await import("patchright");
 
   const ctx = await chromium.launchPersistentContext(profileDir(), {
@@ -305,6 +315,7 @@ export async function fetchPgListingsWithPatchright(
   const page = await ctx.newPage();
 
   page.on("response", async (response) => {
+    if (!isSearchJsonResponse(response.url())) return;
     const contentType = response.headers()["content-type"] ?? "";
     if (!contentType.includes("json")) return;
     try {
@@ -318,8 +329,11 @@ export async function fetchPgListingsWithPatchright(
 
   try {
     for (const agent of enabledAgents) {
+      await clearAgentSources(supabase, agent.slug);
+      const existingKeys = await loadExistingKeys(supabase);
+      const seenPerAgent = new Set<string>();
+
       for (const mode of MODES) {
-        const seenThisRun = new Set<string>();
         let found = 0;
         let newCount = 0;
         let modeError: string | undefined;
@@ -341,9 +355,9 @@ export async function fetchPgListingsWithPatchright(
           blobs.length = 0;
 
           let newOnPage = 0;
-          for (const [listingPath, listing] of extracted) {
-            if (seenThisRun.has(listingPath)) continue;
-            seenThisRun.add(listingPath);
+          for (const listing of extracted.values()) {
+            if (seenPerAgent.has(listing.pg_listing_id)) continue;
+            seenPerAgent.add(listing.pg_listing_id);
             found += 1;
             newOnPage += 1;
 

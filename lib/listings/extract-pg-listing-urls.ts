@@ -54,3 +54,35 @@ export function extractListingUrlsFromHtml(html: string): ParsedPgListingUrl[] {
 
   return found;
 }
+
+/** Dedupe by pg_listing_id — canonical key for fetch/sync. */
+export function mergeParsedListings(
+  ...groups: Array<Iterable<ParsedPgListingUrl>>
+): Map<string, ParsedPgListingUrl> {
+  const merged = new Map<string, ParsedPgListingUrl>();
+  for (const group of groups) {
+    for (const listing of group) {
+      merged.set(listing.pg_listing_id, listing);
+    }
+  }
+  return merged;
+}
+
+export function parseListingHrefs(hrefs: string[]): ParsedPgListingUrl[] {
+  const found: ParsedPgListingUrl[] = [];
+  const seen = new Set<string>();
+
+  for (const href of hrefs) {
+    if (!href.includes("/listing/")) continue;
+    const absolute = href.startsWith("http")
+      ? href
+      : `https://www.propertyguru.com.sg${href.startsWith("/") ? href : `/${href}`}`;
+    const parsed = parsePgListingUrl(absolute);
+    if (parsed && !seen.has(parsed.pg_listing_id)) {
+      seen.add(parsed.pg_listing_id);
+      found.push(parsed);
+    }
+  }
+
+  return found;
+}
