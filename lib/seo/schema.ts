@@ -409,6 +409,52 @@ export function realEstateListingSchema(listing: Listing) {
   };
 }
 
+function toEmbedUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes("youtube.com")) {
+      const id = u.searchParams.get("v");
+      return id ? `https://www.youtube.com/embed/${id}` : url;
+    }
+    if (u.hostname.includes("youtu.be")) {
+      return `https://www.youtube.com/embed${u.pathname}`;
+    }
+    if (u.hostname.includes("vimeo.com")) {
+      return `https://player.vimeo.com/video${u.pathname}`;
+    }
+  } catch {}
+  return url;
+}
+
+function durationToIso(duration: string): string {
+  const parts = duration.split(":").map(Number);
+  if (parts.length === 2) {
+    const [m, s] = parts;
+    return `PT${m}M${s}S`;
+  }
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return `PT${h}H${m}M${s}S`;
+  }
+  return "PT0S";
+}
+
+export function videoObjectsSchema(videos: { title: string; description: string; thumbnail: string; videoUrl: string; publishedAt: string; duration: string }[]) {
+  return videos
+    .filter((v) => v.videoUrl && v.thumbnail)
+    .map((v) => ({
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: v.title,
+      description: v.description || v.title,
+      thumbnailUrl: v.thumbnail,
+      embedUrl: toEmbedUrl(v.videoUrl),
+      uploadDate: v.publishedAt,
+      ...(v.duration ? { duration: durationToIso(v.duration) } : {}),
+      publisher: { "@id": ORG_ID },
+    }));
+}
+
 export function serviceSchema({
   name,
   description,

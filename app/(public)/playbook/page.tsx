@@ -8,7 +8,7 @@ import { CtaBanner } from "@/components/sections/CtaBanner";
 import { getPlaybookVideos } from "@/lib/playbook/queries";
 import { PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbSchema } from "@/lib/seo/schema";
+import { breadcrumbSchema, videoObjectsSchema } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
   title: "Property Playbook | Video Guides",
@@ -29,6 +29,9 @@ export default async function PlaybookPage() {
           { name: "Playbook", path: "/playbook" },
         ])}
       />
+      {videoObjectsSchema(videos).map((schema, i) => (
+        <JsonLd key={i} data={schema} />
+      ))}
       <Navbar />
       <main className="bg-white">
         <PlaybookHero />
