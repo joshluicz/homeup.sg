@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import { parsePgListingUrlLines } from "@/lib/listings/pg-url";
+import { parsePgListingUrlLines, type InvalidPgLine } from "@/lib/listings/pg-url";
 
 export type PgListingSource = {
   id: string;
@@ -24,7 +24,7 @@ export async function loadPgSources(): Promise<PgListingSource[]> {
 export async function savePgSourcesForAgent(
   agentSlug: string,
   urlsText: string,
-): Promise<{ saved: number; invalid: string[] }> {
+): Promise<{ saved: number; invalid: InvalidPgLine[] }> {
   const supabase = createClient();
   const { valid, invalid } = parsePgListingUrlLines(urlsText);
 

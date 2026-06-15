@@ -7,6 +7,7 @@ import {
   savePgSourcesForAgent,
   type PgListingSource,
 } from "@/lib/listings/pg-sources-client";
+import type { InvalidPgLine } from "@/lib/listings/pg-url";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Loader2 } from "lucide-react";
@@ -38,7 +39,7 @@ export function PgSourcesPanel() {
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResponse | null>(null);
-  const [invalidLines, setInvalidLines] = useState<string[]>([]);
+  const [invalidLines, setInvalidLines] = useState<InvalidPgLine[]>([]);
 
   const canSync = isLocalDevHost();
 
@@ -155,9 +156,17 @@ export function PgSourcesPanel() {
       <div>
         <h1 className="text-xl font-bold text-neutral-900">PropertyGuru sources</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Paste each agent&apos;s PropertyGuru listing links here. Sync imports new listings as
-          drafts and archives any listing whose link you removed.
+          Pick an agent, then paste that agent&apos;s <strong>property listing links</strong> (one
+          per line). Sync imports those listings as drafts.
         </p>
+        <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <p className="font-medium">Not the agent profile link</p>
+          <p className="mt-1 text-blue-800">
+            Don&apos;t paste <code className="text-xs">…/agent/dennis-lim-…</code>. Open each
+            property on PropertyGuru → copy the URL from your browser. It should look like{" "}
+            <code className="text-xs">…/listing/for-sale-ecopolitan-500167641</code>
+          </p>
+        </div>
       </div>
 
       {loading ? (
@@ -225,11 +234,12 @@ export function PgSourcesPanel() {
 
             {invalidLines.length > 0 && (
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                <p className="font-medium">Skipped invalid lines:</p>
-                <ul className="mt-1 list-inside list-disc">
-                  {invalidLines.map((line) => (
-                    <li key={line} className="truncate">
-                      {line}
+                <p className="font-medium">Could not save these lines:</p>
+                <ul className="mt-2 space-y-2">
+                  {invalidLines.map((item) => (
+                    <li key={item.line}>
+                      <p className="truncate font-mono text-xs text-amber-900">{item.line}</p>
+                      <p className="text-amber-800">{item.reason}</p>
                     </li>
                   ))}
                 </ul>
