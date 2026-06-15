@@ -2,6 +2,7 @@
 
 import { Building2, Home, Workflow } from "lucide-react";
 import { motion } from "framer-motion";
+import { ListingCount } from "@/components/listings/ListingCount";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
 
@@ -9,7 +10,13 @@ const pillars = [
   {
     icon: Building2,
     title: "Economies of scale",
-    body: "HomeUP carries 120+ active listings at once. Marketing, buyer follow-up, and documentation run on shared systems, so each sale does not need the same overhead as a solo agent juggling a handful of homes.",
+    body: (
+      <>
+        HomeUP carries <ListingCount suffix=" active listings" className="font-semibold text-neutral-800" /> at once.
+        Marketing, buyer follow-up, and documentation run on shared systems, so each sale does not need the same
+        overhead as a solo agent juggling a handful of homes.
+      </>
+    ),
     accent: "from-primary-600 to-primary-700",
     surface: "bg-[#eef5f0]/60",
   },

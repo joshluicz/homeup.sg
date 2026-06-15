@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { ListingImportPanel } from "@/components/admin/ListingImportPanel";
 import { uploadListingImage } from "@/lib/listings/storage";
 import type { ListingFormData } from "@/lib/listings/types";
 import { createListing, updateListing } from "@/lib/listings/mutations";
@@ -19,12 +20,26 @@ import {
   NEGOTIABLE_LABELS,
 } from "@/lib/listings/utils";
 import { cn } from "@/lib/utils";
-import { Check, Copy, Loader2 } from "lucide-react";
+import { Check, Copy, Loader2, Undo2 } from "lucide-react";
+
+type MediaSnapshot = {
+  featured_image_url: string | null;
+  image_urls: string[];
+};
+
+const MAX_MEDIA_UNDO = 20;
+
+type EntryMode = "manual" | "import";
+
+const ENTRY_TABS: { value: EntryMode; label: string }[] = [
+  { value: "manual", label: "Manual Entry" },
+  { value: "import", label: "Import from PropertyGuru" },
+];
 
 const DEFAULT_FORM: ListingFormData = {
   title: "",
   slug: "",
-  status: "draft",
+  status: "active",
   listed_as: "sell",
   is_sold: false,
   is_featured: false,
@@ -91,12 +106,103 @@ export function ListingForm({
     initialSaved && initialData?.slug ? initialData.slug : null,
   );
   const [copied, setCopied] = useState(false);
+  const [entryMode, setEntryMode] = useState<EntryMode>("manual");
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [canUndoMedia, setCanUndoMedia] = useState(false);
+  const mediaUndoStack = useRef<MediaSnapshot[]>([]);
+  const showImportTab = mode === "create";
 
   useEffect(() => {
     if (!slugEdited && form.title) {
       setForm((prev) => ({ ...prev, slug: generateSlug(form.title) }));
     }
   }, [form.title, slugEdited]);
+
+  function snapshotMedia(): MediaSnapshot {
+    return {
+      featured_image_url: form.featured_image_url,
+      image_urls: [...form.image_urls],
+    };
+  }
+
+  function pushMediaUndo() {
+    mediaUndoStack.current.push(snapshotMedia());
+    if (mediaUndoStack.current.length > MAX_MEDIA_UNDO) {
+      mediaUndoStack.current.shift();
+    }
+    setCanUndoMedia(true);
+  }
+
+  function undoMedia() {
+    const prev = mediaUndoStack.current.pop();
+    if (!prev) return;
+    setForm((f) => ({
+      ...f,
+      featured_image_url: prev.featured_image_url,
+      image_urls: prev.image_urls,
+    }));
+    setCanUndoMedia(mediaUndoStack.current.length > 0);
+  }
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "z" || e.shiftKey) {
+        return;
+      }
+      const target = e.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+      if (mediaUndoStack.current.length === 0) return;
+      e.preventDefault();
+      undoMedia();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  function handleFeaturedImagesChange(urls: string[]) {
+    const next = urls[0] ?? null;
+    if (next !== form.featured_image_url) {
+      pushMediaUndo();
+      update("featured_image_url", next);
+    }
+  }
+
+  function handleAdditionalImagesChange(urls: string[]) {
+    if (
+      urls.length !== form.image_urls.length ||
+      urls.some((url, i) => url !== form.image_urls[i])
+    ) {
+      pushMediaUndo();
+      update("image_urls", urls);
+    }
+  }
+
+  function handlePromoteToFeatured(url: string) {
+    pushMediaUndo();
+    setForm((prev) => {
+      const additional = prev.image_urls.filter((u) => u !== url);
+      if (
+        prev.featured_image_url &&
+        prev.featured_image_url !== url &&
+        !additional.includes(prev.featured_image_url)
+      ) {
+        additional.unshift(prev.featured_image_url);
+      }
+      return {
+        ...prev,
+        featured_image_url: url,
+        image_urls: additional,
+      };
+    });
+  }
 
   function update<K extends keyof ListingFormData>(key: K, value: ListingFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -142,8 +248,53 @@ export function ListingForm({
 
   const uploadImage = (file: File) => uploadListingImage(listingId, file);
 
+  function handleImportSuccess(result: {
+    data: Partial<ListingFormData>;
+    warnings: string[];
+  }) {
+    setForm((prev) => ({
+      ...prev,
+      ...result.data,
+      slug: result.data.title
+        ? generateSlug(result.data.title)
+        : (result.data.slug ?? prev.slug),
+    }));
+    setSlugEdited(false);
+    setImportWarnings(result.warnings);
+    setEntryMode("manual");
+  }
+
+  const needsReview =
+    !form.price || form.price <= 0 || !form.area_sqft || form.area_sqft <= 0;
+
   return (
     <div className="space-y-6">
+      {showImportTab && (
+        <div className="flex gap-1 rounded-lg border border-neutral-200 bg-neutral-100 p-1">
+          {ENTRY_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              onClick={() => setEntryMode(tab.value)}
+              className={cn(
+                "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                entryMode === tab.value
+                  ? "bg-white text-neutral-900 shadow-sm"
+                  : "text-neutral-600 hover:text-neutral-900",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showImportTab && entryMode === "import" && (
+        <ListingImportPanel listingId={listingId} onSuccess={handleImportSuccess} />
+      )}
+
+      {(!showImportTab || entryMode === "manual") && (
+        <>
       {savedSlug && (
         <div className="flex items-center justify-between rounded-xl border border-primary-200 bg-primary-50 px-4 py-3">
           <div>
@@ -160,6 +311,23 @@ export function ListingForm({
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
+        </div>
+      )}
+
+      {importWarnings.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <p className="font-medium">Import completed with notes:</p>
+          <ul className="mt-2 list-inside list-disc space-y-1">
+            {importWarnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {needsReview && importWarnings.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Review required fields marked below (price and area) before saving.
         </div>
       )}
 
@@ -186,65 +354,23 @@ export function ListingForm({
               placeholder="auto-generated-from-title"
             />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <FieldLabel required>Status</FieldLabel>
-              <div className="flex gap-4">
-                {(["active", "draft"] as const).map((s) => (
-                  <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      name="status"
-                      checked={form.status === s}
-                      onChange={() => update("status", s)}
-                      className="accent-primary-600"
-                    />
-                    <span className="capitalize">{s}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div>
-              <FieldLabel required>Listed As</FieldLabel>
-              <div className="flex gap-4">
-                {(["rent", "sell"] as const).map((s) => (
-                  <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
-                    <input
-                      type="radio"
-                      name="listed_as"
-                      checked={form.listed_as === s}
-                      onChange={() => update("listed_as", s)}
-                      className="accent-primary-600"
-                    />
-                    <span className="capitalize">{s}</span>
-                  </label>
-                ))}
-              </div>
+          <div>
+            <FieldLabel required>Listed As</FieldLabel>
+            <div className="flex gap-4">
+              {(["rent", "sell"] as const).map((s) => (
+                <label key={s} className="flex cursor-pointer items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="listed_as"
+                    checked={form.listed_as === s}
+                    onChange={() => update("listed_as", s)}
+                    className="accent-primary-600"
+                  />
+                  <span className="capitalize">{s}</span>
+                </label>
+              ))}
             </div>
           </div>
-        </div>
-      </FormSection>
-
-      <FormSection title="Flags">
-        <div className="flex flex-wrap gap-6">
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.is_featured}
-              onChange={(e) => update("is_featured", e.target.checked)}
-              className="accent-primary-600"
-            />
-            Feature on Homepage
-          </label>
-          <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.is_sold}
-              onChange={(e) => update("is_sold", e.target.checked)}
-              className="accent-primary-600"
-            />
-            Sold
-          </label>
         </div>
       </FormSection>
 
@@ -255,7 +381,10 @@ export function ListingForm({
             <input
               type="number"
               min={0}
-              className={inputClass}
+              className={cn(
+                inputClass,
+                needsReview && (!form.price || form.price <= 0) && "border-amber-400",
+              )}
               value={form.price || ""}
               onChange={(e) => update("price", parseFloat(e.target.value) || 0)}
             />
@@ -279,7 +408,10 @@ export function ListingForm({
             <input
               type="number"
               min={0}
-              className={inputClass}
+              className={cn(
+                inputClass,
+                needsReview && (!form.area_sqft || form.area_sqft <= 0) && "border-amber-400",
+              )}
               value={form.area_sqft || ""}
               onChange={(e) => update("area_sqft", parseFloat(e.target.value) || 0)}
             />
@@ -391,20 +523,39 @@ export function ListingForm({
       </FormSection>
 
       <FormSection title="Media">
+        {canUndoMedia && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+            <p className="text-sm text-neutral-600">Image change made</p>
+            <button
+              type="button"
+              onClick={undoMedia}
+              className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-primary-600 hover:bg-primary-50"
+            >
+              <Undo2 className="h-4 w-4" />
+              Undo
+              <kbd className="ml-1 rounded border border-neutral-200 bg-white px-1.5 py-0.5 font-mono text-xs text-neutral-500">
+                Ctrl+Z
+              </kbd>
+            </button>
+          </div>
+        )}
         <div className="space-y-6">
           <ImageUploader
             label="Featured Image"
             images={form.featured_image_url ? [form.featured_image_url] : []}
-            onImagesChange={(urls) => update("featured_image_url", urls[0] ?? null)}
+            onImagesChange={handleFeaturedImagesChange}
             onUpload={uploadImage}
             multiple={false}
+            acceptImageUrlDrop
+            onImageUrlDrop={handlePromoteToFeatured}
           />
           <ImageUploader
             label="Additional Images"
             images={form.image_urls}
-            onImagesChange={(urls) => update("image_urls", urls)}
+            onImagesChange={handleAdditionalImagesChange}
             onUpload={uploadImage}
             multiple
+            draggableImages
           />
         </div>
       </FormSection>
@@ -423,6 +574,8 @@ export function ListingForm({
           Publish
         </Button>
       </div>
+        </>
+      )}
     </div>
   );
 }

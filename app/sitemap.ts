@@ -1,15 +1,24 @@
 import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
+import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
 
 const BASE = "https://lp.homeup.sg";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const agentPages = getAllAgentSlugs().map((slug) => ({
     url: `${BASE}/agents/${slug}`,
     lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.7,
+  }));
+
+  const listingSlugs = await getAllListingSlugsServer();
+  const listingPages = listingSlugs.map((slug) => ({
+    url: `${BASE}/listings/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
   }));
 
   return [
@@ -23,6 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/buy-condo-landed`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/buy-new-launch`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE}/listings`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    ...listingPages,
     { url: `${BASE}/agents`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
     ...agentPages,
     { url: `${BASE}/playbook`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },

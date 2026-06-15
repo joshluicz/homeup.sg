@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { X, ExternalLink, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoCard } from "@/components/ui/VideoCard";
@@ -15,8 +16,16 @@ interface PlaybookLibraryProps {
 const CATEGORIES: VideoCategory[] = ["all", "selling", "buying", "process", "market", "tips"];
 
 export function PlaybookLibrary({ videos }: PlaybookLibraryProps) {
+  const searchParams = useSearchParams();
   const [activeCategory, setActiveCategory] = useState<VideoCategory>("all");
   const [activeVideo, setActiveVideo] = useState<PlaybookVideo | null>(null);
+
+  useEffect(() => {
+    const videoSlug = searchParams.get("video");
+    if (!videoSlug) return;
+    const match = videos.find((v) => v.slug === videoSlug);
+    if (match) setActiveVideo(match);
+  }, [searchParams, videos]);
 
   const featuredVideos = videos.filter((v) => v.featured);
   const filteredVideos =

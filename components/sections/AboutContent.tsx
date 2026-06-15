@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Award, Building2, Users } from "lucide-react";
 import { AGENTS } from "@/lib/data/agents";
+import { ListingCount } from "@/components/listings/ListingCount";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
@@ -12,7 +13,7 @@ const STATS = [
   { value: "1,000+", label: "Transactions closed" },
   { value: "$200M+", label: "Real estate transacted" },
   { value: "6", label: "CEA-licensed advisors" },
-  { value: "120+", label: "Active listings" },
+  { value: null as string | null, label: "Active listings", dynamic: true },
 ];
 
 const VALUES = [
@@ -72,7 +73,11 @@ export function AboutContent() {
               <StaggerItem key={stat.label}>
                 <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
                   <p className="font-display text-3xl font-extrabold text-primary-600">
-                    {stat.value}
+                    {"dynamic" in stat && stat.dynamic ? (
+                      <ListingCount suffix="+" />
+                    ) : (
+                      stat.value
+                    )}
                   </p>
                   <p className="mt-2 text-sm font-normal text-neutral-600">{stat.label}</p>
                 </div>

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -29,7 +30,9 @@ export default function PlaybookPage() {
       <Navbar />
       <main className="bg-white">
         <PlaybookHero />
-        <PlaybookLibrary videos={videos} />
+        <Suspense fallback={null}>
+          <PlaybookLibrary videos={videos} />
+        </Suspense>
         <CtaBanner />
       </main>
       <Footer />

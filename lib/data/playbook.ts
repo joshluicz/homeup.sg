@@ -18,6 +18,8 @@
 //   server component in app/playbook/page.tsx.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { FlatType, ListedAs } from "@/lib/listings/types";
+
 export type VideoCategory =
   | "all"
   | "selling"
@@ -227,3 +229,39 @@ export const PLAYBOOK_VIDEOS: PlaybookVideo[] = [
     tags: ["team", "about", "agents", "HomeUP"],
   },
 ];
+
+const FLAT_TYPE_TAG_HINTS: Record<FlatType, string[]> = {
+  hdb: ["hdb"],
+  condominium: ["condo", "private property"],
+  apartment: ["condo", "private property", "apartment"],
+  landed: ["landed"],
+};
+
+export function getRelatedPlaybookVideos(opts: {
+  flat_type: FlatType;
+  listed_as: ListedAs;
+  limit?: number;
+}): PlaybookVideo[] {
+  const { flat_type, listed_as, limit = 3 } = opts;
+  const tagHints = FLAT_TYPE_TAG_HINTS[flat_type];
+  const preferredCategories =
+    listed_as === "sell"
+      ? new Set(["selling", "process", "tips"])
+      : new Set(["buying", "tips", "process"]);
+
+  const scored = PLAYBOOK_VIDEOS.map((video) => {
+    let score = 0;
+    if (preferredCategories.has(video.category)) score += 2;
+    const tagsLower = video.tags.map((t) => t.toLowerCase());
+    for (const hint of tagHints) {
+      if (tagsLower.some((t) => t.includes(hint))) score += 3;
+    }
+    if (listed_as === "sell" && tagsLower.some((t) => t.includes("sell"))) score += 1;
+    if (listed_as === "rent" && tagsLower.some((t) => t.includes("buy"))) score += 1;
+    return { video, score };
+  })
+    .filter(({ score }) => score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return scored.slice(0, limit).map(({ video }) => video);
+}

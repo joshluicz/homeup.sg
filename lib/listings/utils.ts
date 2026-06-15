@@ -39,8 +39,14 @@ export function formatDate(date: string): string {
   }).format(new Date(date));
 }
 
+import { SITE_URL } from "@/lib/seo/constants";
+
 export function getPublicListingUrl(slug: string): string {
-  return `https://homeup.sg/listings/${slug}`;
+  return `${SITE_URL}/listings/${slug}`;
+}
+
+export function getPublicListingPath(slug: string): string {
+  return `/listings/${slug}`;
 }
 
 export function listingToFormData(listing: Listing): ListingFormData {

@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp } from "@/components/ui/motion-primitives";
+import { ListingCount } from "@/components/listings/ListingCount";
 
 export function WhyCheaperTeaser() {
   return (
@@ -20,7 +21,7 @@ export function WhyCheaperTeaser() {
               Why are we cheaper than typical agents?
             </h2>
             <p className="mt-3 text-sm font-normal leading-relaxed text-neutral-600">
-              HomeUP runs at scale with 120+ active listings. You host viewings at home
+              HomeUP runs at scale with <ListingCount suffix=" active listings" />. You host viewings at home
               while we handle buyer screening, marketing, and paperwork. Less overhead
               means a fixed fee instead of 2% commission.
             </p>

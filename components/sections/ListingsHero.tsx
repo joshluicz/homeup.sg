@@ -1,18 +1,18 @@
 import { Home, TrendingUp, MapPin } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { LISTINGS } from "@/lib/data/listings";
+import type { ListingStats } from "@/lib/listings/queries";
 
-const hdbCount    = LISTINGS.filter((l) => l.type === "HDB").length;
-const condoCount  = LISTINGS.filter((l) => l.type === "Condo").length;
-const landedCount = LISTINGS.filter((l) => l.type === "Landed").length;
+type ListingsHeroProps = {
+  stats: ListingStats;
+};
 
-const stats = [
-  { icon: Home,       value: `${hdbCount}`,    label: "HDB Listings" },
-  { icon: TrendingUp, value: `${condoCount}`,   label: "Condo Listings" },
-  { icon: MapPin,     value: `${landedCount}+`, label: "Landed Listings" },
-];
+export function ListingsHero({ stats }: ListingsHeroProps) {
+  const statItems = [
+    { icon: Home, value: `${stats.hdb}`, label: "HDB Listings" },
+    { icon: TrendingUp, value: `${stats.condo}`, label: "Condo Listings" },
+    { icon: MapPin, value: `${stats.landed}`, label: "Landed Listings" },
+  ];
 
-export function ListingsHero() {
   return (
     <section className="relative overflow-hidden bg-neutral-50 pb-16 pt-16 sm:pb-20 sm:pt-20">
       <div
@@ -30,18 +30,15 @@ export function ListingsHero() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
-            Browse {LISTINGS.length} active listings across HDB, condo, and landed properties
+            Browse {stats.total} active listing{stats.total === 1 ? "" : "s"} across HDB, condo, and landed properties
             in Singapore. Every property is represented by a CEA-licensed HomeUP advisor at a
-            transparent fixed fee, not a percentage of the sale price. Whether you are
-            upgrading from an HDB flat, buying your first condo, or exploring landed homes,
-            you can enquire directly via WhatsApp and speak with the agent handling the
-            listing. Listings are updated regularly and link to full details on PropertyGuru.
+            transparent fixed fee, not a percentage of the sale price. Enquire directly via WhatsApp
+            and speak with the agent handling the listing.
           </p>
         </div>
 
-        {/* Stats bar */}
         <div className="mx-auto mt-12 grid max-w-xl grid-cols-3 gap-4">
-          {stats.map(({ icon: Icon, value, label }) => (
+          {statItems.map(({ icon: Icon, value, label }) => (
             <div
               key={label}
               className="flex flex-col items-center gap-1.5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
@@ -49,8 +46,8 @@ export function ListingsHero() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50">
                 <Icon className="h-4 w-4 text-primary-600" />
               </div>
-              <p className="font-display text-xl font-bold text-neutral-900">{value}</p>
-              <p className="text-xs font-medium text-neutral-500">{label}</p>
+              <p className="font-display text-xl font-extrabold text-neutral-900">{value}</p>
+              <p className="text-xs text-neutral-500">{label}</p>
             </div>
           ))}
         </div>

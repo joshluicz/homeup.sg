@@ -1,6 +1,7 @@
 import type { Agent } from "@/lib/data/agents";
 import type { FaqItem } from "@/lib/data/faqs";
-import type { Listing } from "@/lib/data/listings";
+import type { Listing } from "@/lib/listings/types";
+import { getPublicListingUrl } from "@/lib/listings/utils";
 import {
   CEA_LICENSE,
   LEGAL_NAME,
@@ -366,19 +367,45 @@ export function listingsItemListSchema(listings: Listing[]) {
       position: index + 1,
       item: {
         "@type": "RealEstateListing",
-        name: listing.name,
-        url: listing.url,
+        name: listing.title,
+        url: getPublicListingUrl(listing.slug),
         offers: {
           "@type": "Offer",
-          price: listing.priceValue,
+          price: Number(listing.price),
           priceCurrency: "SGD",
           availability:
-            listing.status === "For Sale"
+            listing.listed_as === "sell"
               ? "https://schema.org/InStock"
               : "https://schema.org/ForRent",
         },
       },
     })),
+  };
+}
+
+export function realEstateListingSchema(listing: Listing) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: listing.title,
+    url: getPublicListingUrl(listing.slug),
+    ...(listing.featured_image_url && { image: listing.featured_image_url }),
+    ...(listing.address_line_1 && {
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: listing.address_line_1,
+        addressCountry: "SG",
+      },
+    }),
+    offers: {
+      "@type": "Offer",
+      price: Number(listing.price),
+      priceCurrency: "SGD",
+      availability:
+        listing.listed_as === "sell"
+          ? "https://schema.org/InStock"
+          : "https://schema.org/ForRent",
+    },
   };
 }
 
