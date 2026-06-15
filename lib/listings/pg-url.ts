@@ -42,6 +42,15 @@ export function describeInvalidPgUrl(raw: string): string {
 }
 
 export function parsePgAgentProfileUrl(raw: string): string | null {
+  const source = parsePgAgentSourceInput(raw);
+  return source?.pg_profile_url ?? null;
+}
+
+/** Agent profile URL or property-for-sale?listedById=… search URL. */
+export function parsePgAgentSourceInput(raw: string): {
+  pg_listed_by_id: string;
+  pg_profile_url: string | null;
+} | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
 
@@ -53,11 +62,33 @@ export function parsePgAgentProfileUrl(raw: string): string | null {
   }
 
   if (!parsed.hostname.endsWith("propertyguru.com.sg")) return null;
-  if (!parsed.pathname.includes("/agent/")) return null;
 
-  parsed.hash = "";
-  parsed.search = "";
-  return parsed.href.replace(/\/$/, "");
+  const listedByFromQuery = parsed.searchParams.get("listedById");
+  if (listedByFromQuery && /^\d+$/.test(listedByFromQuery)) {
+    let profileUrl: string | null = null;
+    if (parsed.pathname.includes("/agent/")) {
+      parsed.hash = "";
+      parsed.search = "";
+      profileUrl = parsed.href.replace(/\/$/, "");
+    }
+    return {
+      pg_listed_by_id: listedByFromQuery,
+      pg_profile_url: profileUrl,
+    };
+  }
+
+  if (parsed.pathname.includes("/agent/")) {
+    const idMatch = parsed.pathname.match(/-(\d+)\/?$/);
+    if (!idMatch) return null;
+    parsed.hash = "";
+    parsed.search = "";
+    return {
+      pg_listed_by_id: idMatch[1],
+      pg_profile_url: parsed.href.replace(/\/$/, ""),
+    };
+  }
+
+  return null;
 }
 
 export function parsePgListingUrl(raw: string): ParsedPgListingUrl | null {

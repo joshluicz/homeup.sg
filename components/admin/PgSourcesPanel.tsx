@@ -285,8 +285,9 @@ export function PgSourcesPanel() {
               Step 1 — Agent PropertyGuru profiles
             </h2>
             <p className="mt-1 text-sm text-neutral-600">
-              Paste each agent&apos;s profile URL. <strong>Empty = skipped</strong> on fetch. Only
-              Dennis and Tong Boon need URLs if they&apos;re the only ones on PG.
+              Paste the agent&apos;s <strong>all-listings search URL</strong> (best) or their
+              profile URL. Empty = skipped on fetch. We read the{" "}
+              <code className="text-xs">listedById</code> from the link.
             </p>
 
             <div className="mt-4 space-y-4">
@@ -306,7 +307,7 @@ export function PgSourcesPanel() {
                         [agent.slug]: e.target.value,
                       }))
                     }
-                    placeholder="https://www.propertyguru.com.sg/agent/dennis-lim-356119 (leave empty to skip)"
+                    placeholder="https://www.propertyguru.com.sg/property-for-sale?listedById=356119 (or /agent/dennis-lim-356119)"
                   />
                 </div>
               ))}
@@ -328,7 +329,8 @@ export function PgSourcesPanel() {
               Step 2 — Fetch all enabled agents
             </h2>
             <p className="mt-1 text-sm text-neutral-600">
-              Pulls active sale + rent listings via CEA for every agent with a profile URL saved.
+              Uses <code className="text-xs">listedById</code> from saved links — sale + rent,
+              all pages.
             </p>
             <div className="mt-4">
               <Button
@@ -350,7 +352,7 @@ export function PgSourcesPanel() {
                     ) : r.error ? (
                       <span className="text-red-700">{r.error}</span>
                     ) : (
-                      `${r.fetched} found, ${r.saved} saved`
+                      `${r.fetched} found, ${r.saved} saved${r.fetch_method ? ` via ${r.fetch_method}` : ""}`
                     )}
                   </li>
                 ))}

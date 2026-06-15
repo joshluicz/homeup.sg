@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AGENTS } from "@/lib/data/agents";
-import { fetchAgentPgListingsByCea } from "@/lib/listings/fetch-agent-pg-listings";
+import {
+  fetchAgentPgListingsByCea,
+  fetchAgentPgListingsByListedById,
+} from "@/lib/listings/fetch-agent-pg-listings";
 import type { ParsedPgListingUrl } from "@/lib/listings/pg-url";
 
 export type FetchAgentPgResult = {
@@ -11,12 +14,19 @@ export type FetchAgentPgResult = {
   skipped_duplicates: number;
   skipped?: boolean;
   skip_reason?: string;
+  fetch_method?: "listedById" | "cea";
   error?: string;
 };
 
 export type FetchAllPgResult = {
   results: FetchAgentPgResult[];
   skipped_agents: Array<{ agent_slug: string; agent_name: string }>;
+};
+
+type AgentProfileRow = {
+  agent_slug: string;
+  pg_profile_url: string | null;
+  pg_listed_by_id: string | null;
 };
 
 async function saveFetchedListings(
@@ -54,9 +64,26 @@ async function saveFetchedListings(
   return { saved, skipped_duplicates };
 }
 
+async function fetchListingsForAgent(
+  listedById: string | null | undefined,
+  cea: string,
+): Promise<{
+  listings: ParsedPgListingUrl[];
+  error?: "FETCH_BLOCKED" | string;
+  fetch_method: "listedById" | "cea";
+}> {
+  if (listedById) {
+    const result = await fetchAgentPgListingsByListedById(listedById);
+    return { ...result, fetch_method: "listedById" };
+  }
+  const result = await fetchAgentPgListingsByCea(cea);
+  return { ...result, fetch_method: "cea" };
+}
+
 export async function fetchAndSaveAgentPgListings(
   supabase: SupabaseClient,
   agentSlug: string,
+  profileRow?: AgentProfileRow | null,
 ): Promise<FetchAgentPgResult> {
   const agent = AGENTS.find((a) => a.slug === agentSlug);
   if (!agent) {
@@ -70,7 +97,13 @@ export async function fetchAndSaveAgentPgListings(
     };
   }
 
-  const { listings, error } = await fetchAgentPgListingsByCea(agent.cea);
+  const listedById = profileRow?.pg_listed_by_id ?? null;
+
+  const { listings, error, fetch_method } = await fetchListingsForAgent(
+    listedById,
+    agent.cea,
+  );
+
   if (error) {
     return {
       agent_slug: agent.slug,
@@ -78,6 +111,7 @@ export async function fetchAndSaveAgentPgListings(
       fetched: 0,
       saved: 0,
       skipped_duplicates: 0,
+      fetch_method,
       error: error === "FETCH_BLOCKED" ? "PropertyGuru blocked the fetch" : error,
     };
   }
@@ -94,6 +128,7 @@ export async function fetchAndSaveAgentPgListings(
     fetched: listings.length,
     saved,
     skipped_duplicates,
+    fetch_method,
   };
 }
 
@@ -102,13 +137,17 @@ export async function fetchAndSaveEnabledAgentPgListings(
 ): Promise<FetchAllPgResult> {
   const { data: profiles, error: profilesError } = await supabase
     .from("pg_agent_profiles")
-    .select("agent_slug, pg_profile_url");
+    .select("agent_slug, pg_profile_url, pg_listed_by_id");
 
   if (profilesError) throw new Error(profilesError.message);
 
+  const profileBySlug = new Map(
+    (profiles ?? []).map((row) => [row.agent_slug as string, row as AgentProfileRow]),
+  );
+
   const enabledSlugs = new Set(
     (profiles ?? [])
-      .filter((row) => row.pg_profile_url?.trim())
+      .filter((row) => row.pg_listed_by_id || row.pg_profile_url?.trim())
       .map((row) => row.agent_slug as string),
   );
 
@@ -125,12 +164,18 @@ export async function fetchAndSaveEnabledAgentPgListings(
         saved: 0,
         skipped_duplicates: 0,
         skipped: true,
-        skip_reason: "No PropertyGuru profile URL saved",
+        skip_reason: "No PropertyGuru URL saved",
       });
       continue;
     }
 
-    results.push(await fetchAndSaveAgentPgListings(supabase, agent.slug));
+    results.push(
+      await fetchAndSaveAgentPgListings(
+        supabase,
+        agent.slug,
+        profileBySlug.get(agent.slug),
+      ),
+    );
   }
 
   return { results, skipped_agents };

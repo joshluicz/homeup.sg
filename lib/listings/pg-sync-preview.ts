@@ -22,13 +22,13 @@ export async function getPgSyncPreview(
 ): Promise<PgSyncPreview> {
   const { data: profiles, error: profilesError } = await supabase
     .from("pg_agent_profiles")
-    .select("agent_slug, pg_profile_url");
+    .select("agent_slug, pg_profile_url, pg_listed_by_id");
 
   if (profilesError) throw new Error(profilesError.message);
 
   const enabledSlugs = new Set(
     (profiles ?? [])
-      .filter((row) => row.pg_profile_url?.trim())
+      .filter((row) => row.pg_listed_by_id || row.pg_profile_url?.trim())
       .map((row) => row.agent_slug as string),
   );
 
