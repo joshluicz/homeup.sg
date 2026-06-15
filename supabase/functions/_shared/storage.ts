@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 function buildListingImagePath(listingId: string, ext: string): string {
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
@@ -9,7 +8,7 @@ function buildListingImagePath(listingId: string, ext: string): string {
 export async function uploadListingImageFromBuffer(
   supabase: SupabaseClient,
   listingId: string,
-  buffer: Buffer | Uint8Array | ArrayBuffer,
+  buffer: Uint8Array | ArrayBuffer,
   ext: string,
 ): Promise<string> {
   const path = buildListingImagePath(listingId, ext);
@@ -29,14 +28,4 @@ export async function uploadListingImageFromBuffer(
   } = supabase.storage.from("listing-images").getPublicUrl(path);
 
   return publicUrl;
-}
-
-export async function uploadListingImage(
-  listingId: string,
-  file: File,
-): Promise<string> {
-  const supabase = createClient();
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const buffer = Buffer.from(await file.arrayBuffer());
-  return uploadListingImageFromBuffer(supabase, listingId, buffer, ext);
 }

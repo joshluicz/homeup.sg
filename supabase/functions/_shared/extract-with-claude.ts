@@ -1,7 +1,7 @@
 import type {
   PropertyGuruExtraction,
   PropertyGuruExtractionRaw,
-} from "@/lib/listings/import/types";
+} from "./types.ts";
 import {
   coerceInteger,
   coerceNumber,
@@ -9,7 +9,7 @@ import {
   normalizeFlatType,
   normalizeListedAs,
   normalizeNegotiable,
-} from "@/lib/listings/import/types";
+} from "./types.ts";
 
 const MODEL = "claude-haiku-4-5-20251001";
 
@@ -88,7 +88,7 @@ export async function extractWithClaude(
   cleanedHtml: string,
   urlHint?: string,
 ): Promise<PropertyGuruExtraction> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) {
     throw new Error("ANTHROPIC_API_KEY is not configured");
   }

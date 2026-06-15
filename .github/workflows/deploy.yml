@@ -13,6 +13,7 @@ on:
       - "app/sitemap.ts"
       - "components/**"
       - "lib/data/**"
+      - "lib/listings/**"
       - "lib/seo/**"
       - "lib/youtube.ts"
       - "public/**"

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { ListingFormData } from "@/lib/listings/types";
+import { postListingImport } from "@/lib/listings/import/client";
 import { Loader2 } from "lucide-react";
 
 type ImportResult = {
@@ -44,37 +45,26 @@ export function ListingImportPanel({ listingId, onSuccess }: ListingImportPanelP
       const extractTimer = setTimeout(() => setStep("extracting"), 1500);
       const uploadTimer = setTimeout(() => setStep("uploading"), 4000);
 
-      const res = await fetch("/api/listings/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, listingId }),
-      });
-
       clearTimeout(extractTimer);
       clearTimeout(uploadTimer);
 
-      const json = (await res.json()) as {
-        success: boolean;
-        data?: Partial<ListingFormData>;
-        warnings?: string[];
-        error?: string;
-      };
+      const result = await postListingImport({ ...payload, listingId });
 
-      if (!json.success) {
-        if (json.error === "FETCH_BLOCKED") {
+      if (result.error) {
+        if (result.error === "FETCH_BLOCKED") {
           setShowFallback(true);
           setError(
             "PropertyGuru blocked the server fetch. Paste the page HTML or listing content below instead.",
           );
           return;
         }
-        setError(json.error ?? "Import failed");
+        setError(result.error);
         return;
       }
 
       onSuccess({
-        data: json.data ?? {},
-        warnings: json.warnings ?? [],
+        data: result.data ?? {},
+        warnings: result.warnings ?? [],
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");

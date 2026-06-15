@@ -1,6 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { uploadListingImageFromBuffer } from "@/lib/listings/storage";
-import { MAX_IMAGES, PG_USER_AGENT } from "@/lib/listings/import/types";
+import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { uploadListingImageFromBuffer } from "./storage.ts";
+import { MAX_IMAGES, PG_USER_AGENT } from "./types.ts";
 
 type UploadResult = {
   featured_image_url: string | null;
