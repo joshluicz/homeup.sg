@@ -38,20 +38,21 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
   const [activeCategory, setActiveCategory] = useState<VideoCategory>("all");
   const [activeVideo, setActiveVideo] = useState<PlaybookVideo | null>(null);
 
-  // Fetch live from Supabase so newly added videos appear without a redeploy
+  // Always fetch live from Supabase — static build can't use server cookies,
+  // so DB videos only appear via this client-side fetch.
   useEffect(() => {
     const supabase = createClient();
     supabase
       .from("playbook_videos")
       .select("*")
       .order("published_at", { ascending: false })
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          const dbVideos = data.map(rowToVideo);
-          const dbSlugs = new Set(dbVideos.map((v) => v.slug));
-          const placeholders = PLAYBOOK_VIDEOS.filter((v) => !dbSlugs.has(v.slug));
-          setVideos([...dbVideos, ...placeholders]);
-        }
+      .then(({ data, error }) => {
+        if (error || !data) return;
+        const dbVideos = data.map(rowToVideo);
+        const dbSlugs = new Set(dbVideos.map((v) => v.slug));
+        const placeholders = PLAYBOOK_VIDEOS.filter((v) => !dbSlugs.has(v.slug));
+        // DB videos first, then any placeholders not yet replaced
+        setVideos([...dbVideos, ...placeholders]);
       });
   }, []);
 
