@@ -9,7 +9,14 @@ export type FetchAgentPgResult = {
   fetched: number;
   saved: number;
   skipped_duplicates: number;
+  skipped?: boolean;
+  skip_reason?: string;
   error?: string;
+};
+
+export type FetchAllPgResult = {
+  results: FetchAgentPgResult[];
+  skipped_agents: Array<{ agent_slug: string; agent_name: string }>;
 };
 
 async function saveFetchedListings(
@@ -90,12 +97,41 @@ export async function fetchAndSaveAgentPgListings(
   };
 }
 
-export async function fetchAndSaveAllAgentPgListings(
+export async function fetchAndSaveEnabledAgentPgListings(
   supabase: SupabaseClient,
-): Promise<FetchAgentPgResult[]> {
+): Promise<FetchAllPgResult> {
+  const { data: profiles, error: profilesError } = await supabase
+    .from("pg_agent_profiles")
+    .select("agent_slug, pg_profile_url");
+
+  if (profilesError) throw new Error(profilesError.message);
+
+  const enabledSlugs = new Set(
+    (profiles ?? [])
+      .filter((row) => row.pg_profile_url?.trim())
+      .map((row) => row.agent_slug as string),
+  );
+
   const results: FetchAgentPgResult[] = [];
+  const skipped_agents: Array<{ agent_slug: string; agent_name: string }> = [];
+
   for (const agent of AGENTS) {
+    if (!enabledSlugs.has(agent.slug)) {
+      skipped_agents.push({ agent_slug: agent.slug, agent_name: agent.name });
+      results.push({
+        agent_slug: agent.slug,
+        agent_name: agent.name,
+        fetched: 0,
+        saved: 0,
+        skipped_duplicates: 0,
+        skipped: true,
+        skip_reason: "No PropertyGuru profile URL saved",
+      });
+      continue;
+    }
+
     results.push(await fetchAndSaveAgentPgListings(supabase, agent.slug));
   }
-  return results;
+
+  return { results, skipped_agents };
 }

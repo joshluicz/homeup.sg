@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth";
 import {
   fetchAndSaveAgentPgListings,
-  fetchAndSaveAllAgentPgListings,
+  fetchAndSaveEnabledAgentPgListings,
 } from "@/lib/listings/fetch-agent-pg-sources";
 
 export const maxDuration = 120;
@@ -20,8 +20,8 @@ export async function POST(request: Request) {
 
   try {
     if (body.fetch_all) {
-      const results = await fetchAndSaveAllAgentPgListings(supabase);
-      return NextResponse.json({ success: true, results });
+      const { results, skipped_agents } = await fetchAndSaveEnabledAgentPgListings(supabase);
+      return NextResponse.json({ success: true, results, skipped_agents });
     }
 
     const agentSlug = body.agent_slug?.trim();

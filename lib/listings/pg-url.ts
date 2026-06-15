@@ -41,6 +41,25 @@ export function describeInvalidPgUrl(raw: string): string {
   return "Could not read the listing ID from this URL. Check the link is complete.";
 }
 
+export function parsePgAgentProfileUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+
+  if (!parsed.hostname.endsWith("propertyguru.com.sg")) return null;
+  if (!parsed.pathname.includes("/agent/")) return null;
+
+  parsed.hash = "";
+  parsed.search = "";
+  return parsed.href.replace(/\/$/, "");
+}
+
 export function parsePgListingUrl(raw: string): ParsedPgListingUrl | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;

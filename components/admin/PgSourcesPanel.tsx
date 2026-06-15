@@ -1,16 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { AGENTS } from "@/lib/data/agents";
 import {
-  loadPgSources,
-  savePgSourcesForAgent,
-  type PgListingSource,
-} from "@/lib/listings/pg-sources-client";
-import type { InvalidPgLine } from "@/lib/listings/pg-url";
+  loadPgAgentProfiles,
+  savePgAgentProfiles,
+} from "@/lib/listings/pg-agent-profiles-client";
+import {
+  loadPgSyncPreview,
+  type PgSyncPreview,
+} from "@/lib/listings/pg-sync-preview-client";
 import type { FetchAgentPgResult } from "@/lib/listings/fetch-agent-pg-sources";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 type SyncResponse = {
@@ -31,76 +35,92 @@ function isLocalDevHost(): boolean {
 }
 
 export function PgSourcesPanel() {
-  const [sources, setSources] = useState<PgListingSource[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [activeAgent, setActiveAgent] = useState(AGENTS[0]?.slug ?? "");
+  const [profileDrafts, setProfileDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [savingProfiles, setSavingProfiles] = useState(false);
   const [fetching, setFetching] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fetchResults, setFetchResults] = useState<FetchAgentPgResult[] | null>(null);
+  const [preview, setPreview] = useState<PgSyncPreview | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResponse | null>(null);
-  const [invalidLines, setInvalidLines] = useState<InvalidPgLine[]>([]);
-  const [showManual, setShowManual] = useState(false);
 
   const canRunLocalActions = isLocalDevHost();
+  const enabledCount = AGENTS.filter((a) => profileDrafts[a.slug]?.trim()).length;
 
-  const sourcesByAgent = useMemo(() => {
-    const map = new Map<string, PgListingSource[]>();
-    for (const source of sources) {
-      const list = map.get(source.agent_slug) ?? [];
-      list.push(source);
-      map.set(source.agent_slug, list);
-    }
-    return map;
-  }, [sources]);
-
-  const totalSources = sources.length;
-
-  const loadSources = useCallback(async () => {
+  const loadProfiles = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      setSources(await loadPgSources());
+      const saved = await loadPgAgentProfiles();
+      const drafts: Record<string, string> = {};
+      for (const agent of AGENTS) {
+        drafts[agent.slug] = saved[agent.slug] ?? "";
+      }
+      setProfileDrafts(drafts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load sources");
+      setError(err instanceof Error ? err.message : "Failed to load agent profiles");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    loadSources();
-  }, [loadSources]);
+  const refreshPreview = useCallback(async () => {
+    try {
+      const supabase = createClient();
+      setPreview(await loadPgSyncPreview(supabase));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load preview");
+    }
+  }, []);
 
   useEffect(() => {
-    if (!activeAgent) return;
-    const existing = sourcesByAgent.get(activeAgent) ?? [];
-    if (drafts[activeAgent] !== undefined) return;
-    setDrafts((prev) => ({
-      ...prev,
-      [activeAgent]: existing.map((s) => s.pg_url).join("\n"),
-    }));
-  }, [activeAgent, sourcesByAgent, drafts]);
+    loadProfiles();
+  }, [loadProfiles]);
 
-  async function handleFetch(agentSlug?: string) {
+  async function handleSaveProfiles() {
+    setSavingProfiles(true);
+    setError(null);
+    setStatusMessage(null);
+    try {
+      const { saved, errors } = await savePgAgentProfiles(profileDrafts);
+      if (errors.length > 0) {
+        setError(errors.join(" "));
+        return;
+      }
+      setStatusMessage(
+        `Saved PropertyGuru profiles for ${saved} agent(s). ${AGENTS.length - saved} agent(s) will be skipped on fetch.`,
+      );
+      await loadProfiles();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save profiles");
+    } finally {
+      setSavingProfiles(false);
+    }
+  }
+
+  async function handleFetchAll() {
     setFetching(true);
     setError(null);
     setStatusMessage(null);
     setFetchResults(null);
+    setPreview(null);
+    setSyncResult(null);
 
     try {
       const res = await fetch("/api/listings/pg-sources/fetch-agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          agentSlug ? { agent_slug: agentSlug } : { fetch_all: true },
-        ),
+        body: JSON.stringify({ fetch_all: true }),
       });
       const text = await res.text();
-      let json: { success?: boolean; results?: FetchAgentPgResult[]; error?: string };
+      let json: {
+        success?: boolean;
+        results?: FetchAgentPgResult[];
+        skipped_agents?: Array<{ agent_slug: string; agent_name: string }>;
+        error?: string;
+      };
       try {
         json = JSON.parse(text) as typeof json;
       } catch {
@@ -110,23 +130,14 @@ export function PgSourcesPanel() {
         throw new Error(json.error ?? "Fetch failed");
       }
 
-      const results = json.results ?? [];
-      setFetchResults(results);
+      setFetchResults(json.results ?? []);
+      const active = (json.results ?? []).filter((r) => !r.skipped && !r.error);
+      const totalFetched = active.reduce((n, r) => n + r.fetched, 0);
 
-      const totalFetched = results.reduce((n, r) => n + r.fetched, 0);
-      const totalSaved = results.reduce((n, r) => n + r.saved, 0);
-      const blocked = results.filter((r) => r.error?.includes("blocked"));
-
-      if (blocked.length > 0 && totalFetched === 0) {
-        setError("PropertyGuru blocked the fetch. Try again on localhost or paste links manually.");
-      } else {
-        setStatusMessage(
-          `Found ${totalFetched} active listing(s) on PropertyGuru. Saved ${totalSaved} link(s).`,
-        );
-      }
-
-      setDrafts({});
-      await loadSources();
+      setStatusMessage(
+        `Fetched ${totalFetched} active listing(s) from ${active.length} agent(s). Review changes below before syncing.`,
+      );
+      await refreshPreview();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fetch failed");
     } finally {
@@ -134,48 +145,9 @@ export function PgSourcesPanel() {
     }
   }
 
-  async function handleManualSave() {
-    if (!activeAgent) return;
-    setSaving(true);
-    setError(null);
-    setStatusMessage(null);
-    setInvalidLines([]);
-
-    const agentName = AGENTS.find((a) => a.slug === activeAgent)?.name ?? activeAgent;
-
-    try {
-      const { saved, invalid } = await savePgSourcesForAgent(
-        activeAgent,
-        drafts[activeAgent] ?? "",
-      );
-
-      setInvalidLines(invalid);
-
-      if (saved === 0 && invalid.length === 0) {
-        setStatusMessage(`Cleared all saved links for ${agentName}.`);
-      } else if (saved === 0 && invalid.length > 0) {
-        setStatusMessage(`Nothing saved — check the invalid lines below.`);
-      } else {
-        setStatusMessage(`Manually saved ${saved} link(s) for ${agentName}.`);
-      }
-
-      setDrafts((prev) => {
-        const next = { ...prev };
-        delete next[activeAgent];
-        return next;
-      });
-      await loadSources();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   async function handleSync() {
     setSyncing(true);
     setError(null);
-    setStatusMessage(null);
     setSyncResult(null);
 
     try {
@@ -192,8 +164,9 @@ export function PgSourcesPanel() {
       }
       setSyncResult(json);
       setStatusMessage(
-        `Sync done — ${json.added?.length ?? 0} new draft(s), ${json.archived?.length ?? 0} archived.`,
+        `Sync complete — ${json.added?.length ?? 0} new draft(s) ready for review.`,
       );
+      await refreshPreview();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
@@ -204,27 +177,21 @@ export function PgSourcesPanel() {
   const inputClass =
     "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20";
 
-  const activeAgentName = AGENTS.find((a) => a.slug === activeAgent)?.name ?? activeAgent;
-  const activeAgentCea = AGENTS.find((a) => a.slug === activeAgent)?.cea ?? "";
-  const agentSourceCount = sourcesByAgent.get(activeAgent)?.length ?? 0;
-
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-neutral-900">PropertyGuru sync</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Pull each agent&apos;s <strong>active listings</strong> from PropertyGuru, then import
-          them to HomeUP as drafts.
+          Set up agents → fetch all active listings → review changes → sync → publish drafts.
         </p>
       </div>
 
       {!canRunLocalActions && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-medium">Run this on your laptop</p>
+          <p className="font-medium">Steps 2–3 need localhost</p>
           <p className="mt-1 text-amber-800">
-            Fetch and sync only work on localhost. Run{" "}
-            <code className="text-xs">npm run dev</code>, then open{" "}
-            <code className="text-xs">http://localhost:3000/admin/listings/pg-sources</code>
+            You can save agent profile URLs here on the live site. Run{" "}
+            <code className="text-xs">npm run dev</code> for fetch and sync.
           </p>
         </div>
       )}
@@ -237,138 +204,187 @@ export function PgSourcesPanel() {
       ) : (
         <>
           <section className="rounded-xl border border-neutral-200 bg-white p-6">
-            <h2 className="text-sm font-semibold text-neutral-900">Step 1 — Fetch from PropertyGuru</h2>
+            <h2 className="text-sm font-semibold text-neutral-900">
+              Step 1 — Agent PropertyGuru profiles
+            </h2>
             <p className="mt-1 text-sm text-neutral-600">
-              Uses each agent&apos;s CEA number to find their active sale and rent listings. No
-              need to paste individual links.
-            </p>
-            <p className="mt-2 text-sm text-neutral-500">
-              {totalSources} listing link(s) saved across all agents.
+              Paste each agent&apos;s profile URL. <strong>Empty = skipped</strong> on fetch. Only
+              Dennis and Tong Boon need URLs if they&apos;re the only ones on PG.
             </p>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 space-y-4">
               {AGENTS.map((agent) => (
-                <button
-                  key={agent.slug}
-                  type="button"
-                  onClick={() => setActiveAgent(agent.slug)}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                    activeAgent === agent.slug
-                      ? "bg-primary-600 text-white"
-                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200",
-                  )}
-                >
-                  {agent.name}
-                  {(sourcesByAgent.get(agent.slug)?.length ?? 0) > 0 && (
-                    <span className="ml-1.5 opacity-80">
-                      ({sourcesByAgent.get(agent.slug)?.length})
-                    </span>
-                  )}
-                </button>
+                <div key={agent.slug}>
+                  <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                    {agent.name}
+                    <span className="ml-2 font-normal text-neutral-400">({agent.cea})</span>
+                  </label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={profileDrafts[agent.slug] ?? ""}
+                    onChange={(e) =>
+                      setProfileDrafts((prev) => ({
+                        ...prev,
+                        [agent.slug]: e.target.value,
+                      }))
+                    }
+                    placeholder="https://www.propertyguru.com.sg/agent/dennis-lim-356119 (leave empty to skip)"
+                  />
+                </div>
               ))}
             </div>
 
-            <p className="mt-4 text-sm text-neutral-600">
-              Selected: <strong>{activeAgentName}</strong> ({activeAgentCea}) — {agentSourceCount}{" "}
-              saved link(s)
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button
-                type="button"
-                onClick={() => handleFetch(activeAgent)}
-                disabled={fetching || !canRunLocalActions}
-              >
-                {fetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Fetch {activeAgentName}&apos;s listings
+            <div className="mt-4">
+              <Button type="button" onClick={handleSaveProfiles} disabled={savingProfiles}>
+                {savingProfiles ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Save agent profiles
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => handleFetch()}
-                disabled={fetching || !canRunLocalActions}
-              >
-                Fetch all agents
-              </Button>
+              <p className="mt-2 text-xs text-neutral-500">
+                {enabledCount} agent(s) will be included in fetch.
+              </p>
             </div>
           </section>
 
           <section className="rounded-xl border border-neutral-200 bg-white p-6">
-            <h2 className="text-sm font-semibold text-neutral-900">Step 2 — Import to HomeUP</h2>
+            <h2 className="text-sm font-semibold text-neutral-900">
+              Step 2 — Fetch all enabled agents
+            </h2>
             <p className="mt-1 text-sm text-neutral-600">
-              Imports new listings as <strong>drafts</strong>. Skips ones already imported.
-              Archives listings removed from PropertyGuru.
+              Pulls active sale + rent listings via CEA for every agent with a profile URL saved.
             </p>
-
             <div className="mt-4">
               <Button
                 type="button"
-                onClick={handleSync}
-                disabled={syncing || !canRunLocalActions || totalSources === 0}
+                onClick={handleFetchAll}
+                disabled={fetching || !canRunLocalActions || enabledCount === 0}
               >
-                {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Sync to HomeUP
+                {fetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Fetch all agents
               </Button>
             </div>
+            {fetchResults && (
+              <ul className="mt-4 space-y-1 text-sm text-neutral-700">
+                {fetchResults.map((r) => (
+                  <li key={r.agent_slug}>
+                    <strong>{r.agent_name}:</strong>{" "}
+                    {r.skipped ? (
+                      <span className="text-neutral-500">{r.skip_reason}</span>
+                    ) : r.error ? (
+                      <span className="text-red-700">{r.error}</span>
+                    ) : (
+                      `${r.fetched} found, ${r.saved} saved`
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-            {syncing && (
-              <p className="mt-3 text-sm text-neutral-600">
-                Importing… only new listings use Claude (tokens).
+          {preview && (
+            <section className="rounded-xl border border-neutral-200 bg-white p-6">
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Step 3 — Review changes (before sync)
+              </h2>
+              <p className="mt-1 text-sm text-neutral-600">
+                This is what sync will do. No listings change until you click sync.
               </p>
-            )}
-          </section>
 
-          <section className="rounded-xl border border-neutral-200 bg-white p-6">
-            <button
-              type="button"
-              onClick={() => setShowManual((v) => !v)}
-              className="text-sm font-semibold text-neutral-900 hover:text-primary-700"
-            >
-              {showManual ? "▼" : "▶"} Manual link override (optional)
-            </button>
-            {showManual && (
-              <div className="mt-4">
-                <p className="mb-3 text-sm text-neutral-600">
-                  Only use this if auto-fetch missed a listing. Paste full listing URLs (with{" "}
-                  <code className="text-xs">/listing/</code> in the path).
-                </p>
-                <textarea
-                  className={cn(inputClass, "min-h-[160px] font-mono text-xs")}
-                  value={drafts[activeAgent] ?? ""}
-                  onChange={(e) => {
-                    setStatusMessage(null);
-                    setDrafts((prev) => ({ ...prev, [activeAgent]: e.target.value }));
-                  }}
-                  placeholder="https://www.propertyguru.com.sg/listing/for-sale-example-500167641"
-                />
-                <div className="mt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleManualSave}
-                    disabled={saving}
-                  >
-                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Save manual links for {activeAgentName}
-                  </Button>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg bg-green-50 px-4 py-3">
+                  <p className="text-2xl font-bold text-green-800">{preview.to_import.length}</p>
+                  <p className="text-sm text-green-700">New → import as drafts</p>
                 </div>
-                {invalidLines.length > 0 && (
-                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    <p className="font-medium">Could not save these lines:</p>
-                    <ul className="mt-2 space-y-2">
-                      {invalidLines.map((item) => (
-                        <li key={item.line}>
-                          <p className="truncate font-mono text-xs text-amber-900">{item.line}</p>
-                          <p>{item.reason}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <div className="rounded-lg bg-neutral-100 px-4 py-3">
+                  <p className="text-2xl font-bold text-neutral-800">{preview.unchanged}</p>
+                  <p className="text-sm text-neutral-600">Already on HomeUP</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 px-4 py-3">
+                  <p className="text-2xl font-bold text-amber-800">{preview.to_archive.length}</p>
+                  <p className="text-sm text-amber-700">Removed from PG → archive</p>
+                </div>
               </div>
-            )}
-          </section>
+
+              {preview.to_import.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-neutral-800">Will import:</p>
+                  <ul className="mt-1 max-h-40 overflow-y-auto text-sm text-neutral-600">
+                    {preview.to_import.map((item) => (
+                      <li key={item.pg_listing_id} className="truncate font-mono text-xs">
+                        {item.agent_name}: {item.pg_url}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    ~{preview.to_import.length * 4000} tokens estimated (Claude, new only).
+                  </p>
+                </div>
+              )}
+
+              {preview.to_archive.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium text-neutral-800">Will archive:</p>
+                  <ul className="mt-1 text-sm text-neutral-600">
+                    {preview.to_archive.map((item) => (
+                      <li key={item.slug}>
+                        {item.title} ({item.slug})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {preview.skipped_agents.length > 0 && (
+                <p className="mt-4 text-xs text-neutral-500">
+                  Skipped (no profile URL):{" "}
+                  {preview.skipped_agents.map((a) => a.agent_name).join(", ")}
+                </p>
+              )}
+
+              <div className="mt-6">
+                <Button
+                  type="button"
+                  onClick={handleSync}
+                  disabled={
+                    syncing ||
+                    !canRunLocalActions ||
+                    (preview.to_import.length === 0 && preview.to_archive.length === 0)
+                  }
+                >
+                  {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Sync to HomeUP
+                </Button>
+              </div>
+            </section>
+          )}
+
+          {syncResult && (
+            <section className="rounded-xl border border-neutral-200 bg-white p-6">
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Step 4 — Approve &amp; publish
+              </h2>
+              <p className="mt-1 text-sm text-neutral-600">
+                Sync created drafts. Open each listing, check details, then Publish.
+              </p>
+              <div className="mt-4 rounded-lg bg-neutral-50 px-4 py-3 text-sm text-neutral-800">
+                <p>
+                  <strong>Imported:</strong> {syncResult.added?.length ?? 0} draft(s)
+                </p>
+                <p>
+                  <strong>Archived:</strong> {syncResult.archived?.length ?? 0}
+                </p>
+                <p>
+                  <strong>Failed:</strong> {syncResult.failed?.length ?? 0}
+                </p>
+              </div>
+              <Link
+                href="/admin/listings"
+                className="mt-4 inline-flex rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700"
+              >
+                Review listings →
+              </Link>
+            </section>
+          )}
         </>
       )}
 
@@ -382,67 +398,6 @@ export function PgSourcesPanel() {
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
-        </div>
-      )}
-
-      {fetchResults && fetchResults.length > 0 && (
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-800">
-          <p className="font-medium">Fetch results</p>
-          <ul className="mt-2 space-y-1">
-            {fetchResults.map((r) => (
-              <li key={r.agent_slug}>
-                <strong>{r.agent_name}:</strong>{" "}
-                {r.error ? (
-                  <span className="text-red-700">{r.error}</span>
-                ) : (
-                  <>
-                    {r.fetched} found, {r.saved} saved
-                    {r.skipped_duplicates > 0
-                      ? ` (${r.skipped_duplicates} duplicate elsewhere)`
-                      : ""}
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {syncResult && (
-        <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-800">
-          <p className="font-medium">Sync results</p>
-          <p className="mt-2">
-            <strong>Added:</strong> {syncResult.added?.length ?? 0} draft(s)
-          </p>
-          <p>
-            <strong>Skipped:</strong> {syncResult.skipped ?? 0} (already on HomeUP)
-          </p>
-          <p>
-            <strong>Archived:</strong> {syncResult.archived?.length ?? 0}
-          </p>
-          <p>
-            <strong>Failed:</strong> {syncResult.failed?.length ?? 0}
-          </p>
-
-          {(syncResult.added?.length ?? 0) > 0 && (
-            <ul className="mt-3 list-inside list-disc text-neutral-600">
-              {syncResult.added?.map((item) => (
-                <li key={item.pg_url}>
-                  {item.title} ({item.slug})
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {(syncResult.failed?.length ?? 0) > 0 && (
-            <ul className="mt-3 list-inside list-disc text-red-700">
-              {syncResult.failed?.map((item) => (
-                <li key={item.pg_url}>
-                  {item.pg_url}: {item.error}
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       )}
     </div>
