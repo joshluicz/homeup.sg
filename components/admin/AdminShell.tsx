@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/listings/pg-sources", label: "PG Sync" },
-  { href: "/admin/playbook", label: "Playbook" },
+  { href: "/admin/listings/playbook", label: "Playbook" },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

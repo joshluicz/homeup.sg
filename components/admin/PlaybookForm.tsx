@@ -120,7 +120,7 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
       return;
     }
 
-    router.push("/admin/playbook");
+    router.push("/admin/listings/playbook");
     router.refresh();
   }
 

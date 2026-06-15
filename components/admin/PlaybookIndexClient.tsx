@@ -32,7 +32,7 @@ export function PlaybookIndexClient({ videos }: { videos: PlaybookVideo[] }) {
           <p className="mt-0.5 text-sm text-neutral-500">{videos.length} video{videos.length !== 1 ? "s" : ""}</p>
         </div>
         <Button asChild>
-          <Link href="/admin/playbook/new" className="flex items-center gap-2">
+          <Link href="/admin/listings/playbook/new" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
             Add video
           </Link>
@@ -43,7 +43,7 @@ export function PlaybookIndexClient({ videos }: { videos: PlaybookVideo[] }) {
         <div className="rounded-xl border border-dashed border-neutral-200 py-20 text-center">
           <p className="text-sm text-neutral-500">No videos yet.</p>
           <Button asChild className="mt-4">
-            <Link href="/admin/playbook/new">Add your first video</Link>
+            <Link href="/admin/listings/playbook/new">Add your first video</Link>
           </Button>
         </div>
       ) : (
@@ -91,7 +91,7 @@ export function PlaybookIndexClient({ videos }: { videos: PlaybookVideo[] }) {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/playbook/edit?id=${v.id}`}>
+                        <Link href={`/admin/listings/playbook/edit?id=${v.id}`}>
                           <Pencil className="h-3.5 w-3.5" />
                         </Link>
                       </Button>
