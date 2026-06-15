@@ -19,7 +19,9 @@ export const metadata = buildPageMetadata({
 
 export default async function PlaybookPage() {
   const dbVideos = await getPlaybookVideos().catch(() => []);
-  const videos = dbVideos.length > 0 ? dbVideos : PLAYBOOK_VIDEOS;
+  const dbSlugs = new Set(dbVideos.map((v) => v.slug));
+  const placeholders = PLAYBOOK_VIDEOS.filter((v) => !dbSlugs.has(v.slug));
+  const videos = [...dbVideos, ...placeholders];
 
   return (
     <>
