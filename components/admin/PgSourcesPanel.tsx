@@ -2,16 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AGENTS } from "@/lib/data/agents";
+import {
+  loadPgSources,
+  savePgSourcesForAgent,
+  type PgListingSource,
+} from "@/lib/listings/pg-sources-client";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { Loader2 } from "lucide-react";
-
-type PgSource = {
-  id: string;
-  agent_slug: string;
-  pg_url: string;
-  pg_listing_id: string;
-};
+import { CheckCircle2, Loader2 } from "lucide-react";
 
 type SyncResponse = {
   success: boolean;
@@ -31,13 +29,13 @@ function isLocalDevHost(): boolean {
 }
 
 export function PgSourcesPanel() {
-  const [sources, setSources] = useState<PgSource[]>([]);
+  const [sources, setSources] = useState<PgListingSource[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeAgent, setActiveAgent] = useState(AGENTS[0]?.slug ?? "");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<SyncResponse | null>(null);
   const [invalidLines, setInvalidLines] = useState<string[]>([]);
@@ -45,7 +43,7 @@ export function PgSourcesPanel() {
   const canSync = isLocalDevHost();
 
   const sourcesByAgent = useMemo(() => {
-    const map = new Map<string, PgSource[]>();
+    const map = new Map<string, PgListingSource[]>();
     for (const source of sources) {
       const list = map.get(source.agent_slug) ?? [];
       list.push(source);
@@ -58,10 +56,7 @@ export function PgSourcesPanel() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/listings/pg-sources");
-      const json = (await res.json()) as { sources?: PgSource[]; error?: string };
-      if (!res.ok) throw new Error(json.error ?? "Failed to load sources");
-      setSources(json.sources ?? []);
+      setSources(await loadPgSources());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load sources");
     } finally {
@@ -87,27 +82,27 @@ export function PgSourcesPanel() {
     if (!activeAgent) return;
     setSaving(true);
     setError(null);
-    setMessage(null);
+    setSaveSuccess(null);
     setInvalidLines([]);
 
-    try {
-      const res = await fetch("/api/listings/pg-sources", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          agent_slug: activeAgent,
-          urls_text: drafts[activeAgent] ?? "",
-        }),
-      });
-      const json = (await res.json()) as {
-        saved?: number;
-        invalid?: string[];
-        error?: string;
-      };
-      if (!res.ok) throw new Error(json.error ?? "Failed to save");
+    const agentName = AGENTS.find((a) => a.slug === activeAgent)?.name ?? activeAgent;
 
-      setInvalidLines(json.invalid ?? []);
-      setMessage(`Saved ${json.saved ?? 0} link(s) for this agent.`);
+    try {
+      const { saved, invalid } = await savePgSourcesForAgent(
+        activeAgent,
+        drafts[activeAgent] ?? "",
+      );
+
+      setInvalidLines(invalid);
+
+      if (saved === 0 && invalid.length === 0) {
+        setSaveSuccess(`Cleared all saved links for ${agentName}.`);
+      } else if (saved === 0 && invalid.length > 0) {
+        setSaveSuccess(`Nothing saved — all lines were invalid URLs. Check the warnings below.`);
+      } else {
+        setSaveSuccess(`Saved ${saved} link${saved === 1 ? "" : "s"} for ${agentName}.`);
+      }
+
       setDrafts((prev) => {
         const next = { ...prev };
         delete next[activeAgent];
@@ -124,17 +119,24 @@ export function PgSourcesPanel() {
   async function handleSync() {
     setSyncing(true);
     setError(null);
-    setMessage(null);
+    setSaveSuccess(null);
     setSyncResult(null);
 
     try {
       const res = await fetch("/api/listings/sync-pg", { method: "POST" });
-      const json = (await res.json()) as SyncResponse;
+      const text = await res.text();
+      let json: SyncResponse;
+      try {
+        json = JSON.parse(text) as SyncResponse;
+      } catch {
+        throw new Error(
+          "Sync API unavailable. Run npm run dev on localhost and try again.",
+        );
+      }
       if (!res.ok || !json.success) {
         throw new Error(json.error ?? "Sync failed");
       }
       setSyncResult(json);
-      setMessage("Sync finished.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
@@ -171,7 +173,11 @@ export function PgSourcesPanel() {
                 <button
                   key={agent.slug}
                   type="button"
-                  onClick={() => setActiveAgent(agent.slug)}
+                  onClick={() => {
+                    setActiveAgent(agent.slug);
+                    setSaveSuccess(null);
+                    setError(null);
+                  }}
                   className={cn(
                     "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                     activeAgent === agent.slug
@@ -196,18 +202,26 @@ export function PgSourcesPanel() {
             <textarea
               className={cn(inputClass, "min-h-[220px] font-mono text-xs")}
               value={drafts[activeAgent] ?? ""}
-              onChange={(e) =>
-                setDrafts((prev) => ({ ...prev, [activeAgent]: e.target.value }))
-              }
+              onChange={(e) => {
+                setSaveSuccess(null);
+                setDrafts((prev) => ({ ...prev, [activeAgent]: e.target.value }));
+              }}
               placeholder={"https://www.propertyguru.com.sg/listing/for-sale-example-500167641\n..."}
             />
 
             <div className="mt-4 flex flex-wrap gap-3">
-              <Button onClick={handleSave} disabled={saving}>
+              <Button type="button" onClick={handleSave} disabled={saving}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Save links
               </Button>
             </div>
+
+            {saveSuccess && (
+              <div className="mt-4 flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{saveSuccess}</span>
+              </div>
+            )}
 
             {invalidLines.length > 0 && (
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -233,12 +247,12 @@ export function PgSourcesPanel() {
             {!canSync && (
               <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 Sync only works on localhost — run <code className="text-xs">npm run dev</code>{" "}
-                and open this page there. You can still save links on the live site.
+                and open this page there.
               </p>
             )}
 
             <div className="mt-4">
-              <Button onClick={handleSync} disabled={syncing || !canSync}>
+              <Button type="button" onClick={handleSync} disabled={syncing || !canSync}>
                 {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Sync from saved links
               </Button>
@@ -253,12 +267,6 @@ export function PgSourcesPanel() {
         </>
       )}
 
-      {message && (
-        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          {message}
-        </div>
-      )}
-
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -267,7 +275,8 @@ export function PgSourcesPanel() {
 
       {syncResult && (
         <div className="rounded-xl border border-neutral-200 bg-white p-6 text-sm text-neutral-800">
-          <p>
+          <p className="font-medium text-green-700">Sync finished.</p>
+          <p className="mt-2">
             <strong>Added:</strong> {syncResult.added?.length ?? 0} draft(s)
           </p>
           <p>
