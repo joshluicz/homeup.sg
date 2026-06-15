@@ -81,18 +81,17 @@ export async function importOnePgListing(
   pgUrl: string,
   pgListingId: string,
 ): Promise<{ ok: true; title: string; slug: string } | { ok: false; error: string }> {
-  const { data: existing } = await supabase
+  const { data: existingByPgId } = await supabase
     .from("listings")
-    .select("id")
+    .select("id, deleted_at")
     .eq("source_pg_listing_id", pgListingId)
-    .is("deleted_at", null)
     .maybeSingle();
 
-  if (existing) {
+  if (existingByPgId && !existingByPgId.deleted_at) {
     return { ok: false, error: "Already imported" };
   }
 
-  const listingId = crypto.randomUUID();
+  const listingId = existingByPgId?.id ?? crypto.randomUUID();
 
   const importResult = await runListingImport(supabase, {
     url: pgUrl,
@@ -113,6 +112,65 @@ export async function importOnePgListing(
     source_pg_url: pgUrl,
     source_pg_listing_id: pgListingId,
   });
+
+  if (existingByPgId?.deleted_at) {
+    const { error: updateError } = await supabase
+      .from("listings")
+      .update({
+        ...payload,
+        deleted_at: null,
+      })
+      .eq("id", listingId);
+
+    if (updateError) {
+      return { ok: false, error: updateError.message };
+    }
+
+    return { ok: true, title: formData.title, slug: formData.slug };
+  }
+
+  const { data: archivedBySlug } = await supabase
+    .from("listings")
+    .select("id")
+    .eq("slug", formData.slug)
+    .not("deleted_at", "is", null)
+    .maybeSingle();
+
+  if (archivedBySlug) {
+    const { error: updateError } = await supabase
+      .from("listings")
+      .update({
+        ...payload,
+        deleted_at: null,
+      })
+      .eq("id", archivedBySlug.id);
+
+    if (updateError) {
+      return { ok: false, error: updateError.message };
+    }
+
+    return { ok: true, title: formData.title, slug: formData.slug };
+  }
+
+  const { data: activeBySlug } = await supabase
+    .from("listings")
+    .select("id, source_pg_listing_id")
+    .eq("slug", formData.slug)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (activeBySlug) {
+    const { error: updateError } = await supabase
+      .from("listings")
+      .update(payload)
+      .eq("id", activeBySlug.id);
+
+    if (updateError) {
+      return { ok: false, error: updateError.message };
+    }
+
+    return { ok: true, title: formData.title, slug: formData.slug };
+  }
 
   const { error: insertError } = await supabase.from("listings").insert({
     id: listingId,

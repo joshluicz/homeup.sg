@@ -17,7 +17,12 @@ function loadEnv() {
   const env: Record<string, string> = {};
   for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
     const m = line.match(/^([^#=]+)=(.*)$/);
-    if (m) env[m[1].trim()] = m[2].trim();
+    if (m) {
+      const key = m[1].trim();
+      const value = m[2].trim();
+      env[key] = value;
+      if (!process.env[key]) process.env[key] = value;
+    }
   }
   return env;
 }
