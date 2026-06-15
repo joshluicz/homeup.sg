@@ -6,7 +6,8 @@ import { X, ExternalLink, Star } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoCard } from "@/components/ui/VideoCard";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
-import { CATEGORY_LABELS } from "@/lib/data/playbook";
+import { CATEGORY_LABELS, PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface PlaybookLibraryProps {
@@ -15,10 +16,44 @@ interface PlaybookLibraryProps {
 
 const CATEGORIES: VideoCategory[] = ["all", "selling", "buying", "process", "market", "tips"];
 
-export function PlaybookLibrary({ videos }: PlaybookLibraryProps) {
+function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    description: row.description as string,
+    category: row.category as PlaybookVideo["category"],
+    duration: row.duration as string,
+    thumbnail: row.thumbnail as string,
+    videoUrl: row.video_url as string,
+    featured: row.featured as boolean,
+    publishedAt: row.published_at as string,
+    tags: row.tags as string[],
+  };
+}
+
+export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps) {
   const searchParams = useSearchParams();
+  const [videos, setVideos] = useState<PlaybookVideo[]>(initialVideos);
   const [activeCategory, setActiveCategory] = useState<VideoCategory>("all");
   const [activeVideo, setActiveVideo] = useState<PlaybookVideo | null>(null);
+
+  // Fetch live from Supabase so newly added videos appear without a redeploy
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("playbook_videos")
+      .select("*")
+      .order("published_at", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          const dbVideos = data.map(rowToVideo);
+          const dbSlugs = new Set(dbVideos.map((v) => v.slug));
+          const placeholders = PLAYBOOK_VIDEOS.filter((v) => !dbSlugs.has(v.slug));
+          setVideos([...dbVideos, ...placeholders]);
+        }
+      });
+  }, []);
 
   useEffect(() => {
     const videoSlug = searchParams.get("video");
