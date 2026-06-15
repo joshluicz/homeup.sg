@@ -48,7 +48,7 @@ export function mapToFormData(input: MapInput): {
     is_sold: false,
     is_featured: false,
     price,
-    negotiable: extraction.negotiable ?? "negotiable",
+    negotiable: "negotiable",
     area_sqft,
     flat_type: extraction.flat_type ?? "condominium",
     condition: extraction.condition ?? "no_furnishing",

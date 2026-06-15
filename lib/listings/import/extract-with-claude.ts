@@ -8,7 +8,6 @@ import {
   normalizeCondition,
   normalizeFlatType,
   normalizeListedAs,
-  normalizeNegotiable,
 } from "@/lib/listings/import/types";
 
 const MODEL = "claude-haiku-4-5-20251001";
@@ -21,7 +20,6 @@ Use this exact schema (all fields optional; use null if unknown):
   "title": string | null,
   "listed_as": "rent" | "sell" | null,
   "price": number | null,
-  "negotiable": "negotiable" | "starting_from" | null,
   "area_sqft": number | null,
   "flat_type": "condominium" | "hdb" | "landed" | "apartment" | null,
   "condition": "no_furnishing" | "partial" | "fully_furnished" | null,
@@ -72,7 +70,7 @@ export function normalizeExtraction(
     title: raw.title?.trim() || null,
     listed_as: normalizeListedAs(raw.listed_as ?? undefined, urlHint),
     price: coerceInteger(raw.price),
-    negotiable: normalizeNegotiable(raw.negotiable ?? undefined),
+    negotiable: "negotiable",
     area_sqft: coerceNumber(raw.area_sqft),
     flat_type: normalizeFlatType(raw.flat_type ?? undefined),
     condition: normalizeCondition(raw.condition ?? undefined),

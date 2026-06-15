@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
+  { href: "/admin/listings/pg-sources", label: "PG Sources" },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
@@ -32,20 +33,29 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               <span className="text-sm font-medium text-neutral-500">Admin</span>
             </Link>
             <nav className="flex items-center gap-1">
-              {NAV_ITEMS.map((item) => (
+              {NAV_ITEMS.map((item) => {
+                const isActive =
+                  item.href === "/admin/listings"
+                    ? pathname === "/admin/listings" ||
+                      pathname.startsWith("/admin/listings/new") ||
+                      pathname.startsWith("/admin/listings/edit")
+                    : pathname.startsWith(item.href);
+
+                return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
                     "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    pathname.startsWith(item.href)
+                    isActive
                       ? "bg-primary-50 text-primary-700"
                       : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
                   )}
                 >
                   {item.label}
                 </Link>
-              ))}
+                );
+              })}
             </nav>
           </div>
           <Button variant="outline" size="sm" onClick={handleSignOut}>

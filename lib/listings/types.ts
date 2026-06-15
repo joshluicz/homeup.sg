@@ -27,6 +27,8 @@ export interface Listing {
   featured_image_url: string | null;
   image_urls: string[];
   deleted_at: string | null;
+  source_pg_url: string | null;
+  source_pg_listing_id: string | null;
 }
 
 export type ListingInsert = Omit<

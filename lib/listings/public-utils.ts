@@ -3,7 +3,6 @@ import {
   computeAreaSqm,
   computePricePsf,
   formatSGD,
-  NEGOTIABLE_LABELS,
 } from "@/lib/listings/utils";
 
 export type FlatTypeFilter = "All" | "HDB" | "Condo" | "Landed";
@@ -29,11 +28,7 @@ export function flatTypeFilterMatches(listing: Listing, filter: FlatTypeFilter):
 }
 
 export function formatListingPrice(listing: Listing): string {
-  const price = formatSGD(Number(listing.price));
-  if (listing.negotiable === "starting_from") {
-    return `From ${price}`;
-  }
-  return price;
+  return formatSGD(Number(listing.price));
 }
 
 export function formatListingSize(areaSqft: number): string {
@@ -74,5 +69,3 @@ export function formatTenure(listing: Listing): string {
 export function listedAsLabel(listedAs: Listing["listed_as"]): string {
   return listedAs === "rent" ? "For Rent" : "For Sale";
 }
-
-export { NEGOTIABLE_LABELS };

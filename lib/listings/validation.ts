@@ -13,7 +13,11 @@ export function validateListingForm(data: Partial<ListingFormData>): string | nu
   return null;
 }
 
-export function formDataToDbPayload(data: ListingFormData, status: "active" | "draft") {
+export function formDataToDbPayload(
+  data: ListingFormData,
+  status: "active" | "draft",
+  extras?: { source_pg_url?: string; source_pg_listing_id?: string },
+) {
   return {
     title: data.title.trim(),
     slug: data.slug.trim(),
@@ -22,7 +26,7 @@ export function formDataToDbPayload(data: ListingFormData, status: "active" | "d
     is_sold: data.is_sold,
     is_featured: data.is_featured,
     price: data.price,
-    negotiable: data.negotiable,
+    negotiable: "negotiable" as const,
     area_sqft: data.area_sqft,
     flat_type: data.flat_type,
     condition: data.condition,
@@ -33,5 +37,7 @@ export function formDataToDbPayload(data: ListingFormData, status: "active" | "d
     address_line_1: data.address_line_1?.trim() || null,
     featured_image_url: data.featured_image_url,
     image_urls: data.image_urls,
+    source_pg_url: extras?.source_pg_url ?? null,
+    source_pg_listing_id: extras?.source_pg_listing_id ?? null,
   };
 }

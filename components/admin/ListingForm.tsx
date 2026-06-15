@@ -17,7 +17,6 @@ import {
 import {
   CONDITION_LABELS,
   FLAT_TYPE_LABELS,
-  NEGOTIABLE_LABELS,
 } from "@/lib/listings/utils";
 import { cn } from "@/lib/utils";
 import { Check, Copy, Loader2, Undo2 } from "lucide-react";
@@ -393,20 +392,6 @@ export function ListingForm({
               value={form.price || ""}
               onChange={(e) => update("price", parseFloat(e.target.value) || 0)}
             />
-          </div>
-          <div>
-            <FieldLabel>Negotiable</FieldLabel>
-            <select
-              className={inputClass}
-              value={form.negotiable}
-              onChange={(e) => update("negotiable", e.target.value as ListingFormData["negotiable"])}
-            >
-              {Object.entries(NEGOTIABLE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
           </div>
           <div>
             <FieldLabel required>Area (sqft)</FieldLabel>
