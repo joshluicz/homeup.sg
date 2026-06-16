@@ -13,6 +13,7 @@ import {
 import { getPublicListingPath } from "@/lib/listings/utils";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
+import { trackButtonClick } from "@/lib/analytics";
 
 const typeBadge: Record<string, string> = {
   HDB: "bg-blue-50 text-blue-700 border-blue-200",
@@ -97,7 +98,7 @@ export function ListingCard({ listing, compact = false }: ListingCardProps) {
               href={buildListingWhatsAppUrl(listing.title, priceLabel)}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); trackButtonClick("Enquire - Listing Card"); }}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-700"
             >
               <MessageCircle className="h-3.5 w-3.5 shrink-0" />

@@ -25,3 +25,7 @@ export function trackListingView(slug: string, listingType: string, price?: numb
 export function trackLead(sourcePage: string, listingSlug?: string) {
   trackEvent("generate_lead", { source_page: sourcePage, listing_slug: listingSlug });
 }
+
+export function trackButtonClick(label: string) {
+  trackEvent("button_click", { button_label: label });
+}

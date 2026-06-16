@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
   const token = await getAccessToken(sa);
   const dateRange = [{ startDate: `${days}daysAgo`, endDate: "today" }];
 
-  const [overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries] =
+  const [overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries, buttonClicks] =
     await Promise.all([
       runReport(token, propertyId, {
         dateRanges: dateRange,
@@ -188,9 +188,22 @@ Deno.serve(async (req) => {
         metrics: [{ name: "sessions" }],
         orderBys: [{ dimension: { dimensionName: "date" } }],
       }),
+      runReport(token, propertyId, {
+        dateRanges: dateRange,
+        dimensions: [{ name: "customEvent:button_label" }],
+        metrics: [{ name: "eventCount" }],
+        dimensionFilter: {
+          filter: {
+            fieldName: "eventName",
+            stringFilter: { matchType: "EXACT", value: "button_click" },
+          },
+        },
+        orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+        limit: 10,
+      }),
     ]);
 
-  return jsonResponse({ overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries, days });
+  return jsonResponse({ overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries, buttonClicks, days });
 });
 
 function jsonResponse(body: unknown, status = 200) {

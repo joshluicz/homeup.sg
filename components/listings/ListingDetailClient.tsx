@@ -32,6 +32,7 @@ import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { resolveListingSlug } from "@/lib/listings/slug-from-path";
 import { cn } from "@/lib/utils";
+import { trackButtonClick } from "@/lib/analytics";
 
 type ListingDetailClientProps = {
   slug: string;
@@ -177,6 +178,7 @@ export function ListingDetailClient({ slug }: ListingDetailClientProps) {
                 href={buildListingWhatsAppUrl(listing.title, priceLabel)}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackButtonClick("Enquire on WhatsApp - Listing Detail")}
                 className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
               >
                 <MessageCircle className="h-4 w-4" />

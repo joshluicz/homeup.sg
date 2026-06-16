@@ -38,13 +38,13 @@ function AdminNav() {
   }
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex items-center gap-0.5 pb-2">
       {NAV_ITEMS.map((item) => (
         <Link
           key={item.href}
           href={item.href}
           className={cn(
-            "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            "whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors sm:px-3 sm:py-2 sm:text-sm",
             isActive(item)
               ? "bg-primary-50 text-primary-700"
               : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
@@ -70,22 +70,24 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center gap-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex h-14 items-center justify-between">
             <Link href="/admin/listings" className="flex items-center gap-2">
-              <HomeUpLogo variant="wordmark" className="h-7 w-auto" />
+              <HomeUpLogo variant="wordmark" className="h-6 w-auto sm:h-7" />
               <span className="text-sm font-medium text-neutral-500">Admin</span>
             </Link>
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              Sign out
+            </Button>
+          </div>
+          <div className="overflow-x-auto pb-1">
             <Suspense fallback={<nav className="flex items-center gap-1" />}>
               <AdminNav />
             </Suspense>
           </div>
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
-            Sign out
-          </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }

@@ -164,6 +164,7 @@ interface AnalyticsData {
   scrollDepth: GA4Report;
   conversions: GA4Report;
   timeSeries: GA4Report;
+  buttonClicks: GA4Report;
   days: number;
 }
 
@@ -257,6 +258,10 @@ export function AnalyticsTab() {
 
   // Parse time series for sparkline
   const timeValues = rows(data.timeSeries).map((r) => metricVal(r, 0));
+
+  // Parse button clicks
+  const buttonClickRows = rows(data.buttonClicks);
+  const maxButtonClicks = Math.max(...buttonClickRows.map((r) => metricVal(r, 0)), 1);
 
   return (
     <div className="space-y-8">
@@ -367,6 +372,27 @@ export function AnalyticsTab() {
                 value={metricVal(r, 0)}
                 max={maxPageViews}
                 sub={fmtDuration(metricVal(r, 1))}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Button Clicks */}
+      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          Button Clicks
+        </p>
+        {buttonClickRows.length === 0 ? (
+          <p className="text-sm text-neutral-400">No button click data yet</p>
+        ) : (
+          <div className="space-y-3">
+            {buttonClickRows.map((r, i) => (
+              <BarRow
+                key={i}
+                label={dimVal(r, 0) || "Unknown"}
+                value={metricVal(r, 0)}
+                max={maxButtonClicks}
               />
             ))}
           </div>
