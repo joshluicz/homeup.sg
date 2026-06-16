@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/listings/pg-sources", label: "PG Sync" },
   { href: "/admin/listings?tab=playbook", label: "Playbook" },
+  { href: "/admin/listings?tab=analytics", label: "Analytics" },
 ];
 
 function AdminNav() {
@@ -22,6 +23,9 @@ function AdminNav() {
   function isActive(item: (typeof NAV_ITEMS)[number]) {
     if (item.href === "/admin/listings?tab=playbook") {
       return pathname === "/admin/listings" && tab === "playbook";
+    }
+    if (item.href === "/admin/listings?tab=analytics") {
+      return pathname === "/admin/listings" && tab === "analytics";
     }
     if (item.href === "/admin/listings") {
       return (

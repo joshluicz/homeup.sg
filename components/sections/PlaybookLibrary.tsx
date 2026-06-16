@@ -8,6 +8,7 @@ import { VideoCard } from "@/components/ui/VideoCard";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS, PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
+import { trackVideoPlay } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 interface PlaybookLibraryProps {
@@ -70,7 +71,10 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
       : videos.filter((v) => v.category === activeCategory);
 
   const handlePlay = useCallback((video: PlaybookVideo) => {
-    if (video.videoUrl) setActiveVideo(video);
+    if (video.videoUrl) {
+      setActiveVideo(video);
+      trackVideoPlay(video.title, video.slug, video.category);
+    }
   }, []);
 
   const closeModal = useCallback(() => setActiveVideo(null), []);
