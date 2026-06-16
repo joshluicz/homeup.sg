@@ -2,9 +2,10 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { X, ExternalLink, Star } from "lucide-react";
+import { X, ExternalLink, Star, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoCard } from "@/components/ui/VideoCard";
+import { ArticleBody } from "@/components/sections/ArticleBody";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS, PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
@@ -31,6 +32,7 @@ function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
     publishedAt: row.published_at as string,
     tags: row.tags as string[],
     article: (row.article as string) ?? "",
+    faq: ((row.faq as { q: string; a: string }[]) ?? []).filter((f) => f?.q && f?.a),
     metaDescription: (row.meta_description as string) ?? "",
   };
 }
@@ -40,6 +42,7 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
   const [videos, setVideos] = useState<PlaybookVideo[]>(initialVideos);
   const [activeCategory, setActiveCategory] = useState<VideoCategory>("all");
   const [activeVideo, setActiveVideo] = useState<PlaybookVideo | null>(null);
+  const [activeArticle, setActiveArticle] = useState<PlaybookVideo | null>(null);
 
   // Always fetch live from Supabase — static build can't use server cookies,
   // so DB videos only appear via this client-side fetch.
@@ -81,6 +84,11 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
 
   const closeModal = useCallback(() => setActiveVideo(null), []);
 
+  const handleReadGuide = useCallback((video: PlaybookVideo) => {
+    setActiveArticle(video);
+  }, []);
+  const closeArticle = useCallback(() => setActiveArticle(null), []);
+
   // Convert a YouTube watch URL to an embeddable URL
   const toEmbedUrl = (url: string) => {
     try {
@@ -121,6 +129,7 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
                     key={video.id}
                     video={video}
                     onPlay={handlePlay}
+                    onReadGuide={handleReadGuide}
                     featured
                   />
                 ))}
@@ -169,7 +178,12 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
               className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
             >
               {filteredVideos.map((video) => (
-                <VideoCard key={video.id} video={video} onPlay={handlePlay} />
+                <VideoCard
+                  key={video.id}
+                  video={video}
+                  onPlay={handlePlay}
+                  onReadGuide={handleReadGuide}
+                />
               ))}
             </motion.div>
           </AnimatePresence>
@@ -243,6 +257,94 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
                   <ExternalLink className="h-3.5 w-3.5" />
                   Open in YouTube
                 </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Article Modal ───────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {activeArticle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-neutral-950/85 px-4 py-8 backdrop-blur-sm"
+            onClick={closeArticle}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.97, y: 12 }}
+              transition={{ duration: 0.2 }}
+              className="relative my-auto w-full max-w-2xl rounded-2xl bg-white shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={closeArticle}
+                aria-label="Close article"
+                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-600 transition-colors hover:bg-neutral-200"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="max-h-[85vh] overflow-y-auto px-6 py-8 sm:px-10">
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">
+                  {CATEGORY_LABELS[activeArticle.category]}
+                </p>
+                <h2 className="mt-2 font-display text-2xl font-bold leading-tight text-neutral-900 sm:text-3xl">
+                  {activeArticle.title}
+                </h2>
+                {activeArticle.description && (
+                  <p className="mt-3 leading-relaxed text-neutral-600">
+                    {activeArticle.description}
+                  </p>
+                )}
+
+                {/* Watch the video */}
+                {activeArticle.videoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const v = activeArticle;
+                      closeArticle();
+                      handlePlay(v);
+                    }}
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:underline"
+                  >
+                    <Play className="h-3.5 w-3.5 fill-primary-600" />
+                    Watch the video
+                  </button>
+                )}
+
+                {/* Article body */}
+                {activeArticle.article && (
+                  <div className="mt-6">
+                    <ArticleBody markdown={activeArticle.article} />
+                  </div>
+                )}
+
+                {/* FAQ */}
+                {(activeArticle.faq?.length ?? 0) > 0 && (
+                  <section className="mt-8 border-t border-neutral-200 pt-6">
+                    <h3 className="font-display text-xl font-bold text-neutral-900">
+                      Frequently asked questions
+                    </h3>
+                    <div className="mt-4 divide-y divide-neutral-200">
+                      {activeArticle.faq!.map((item, i) => (
+                        <details key={i} className="group py-3">
+                          <summary className="cursor-pointer list-none font-semibold text-neutral-900">
+                            {item.q}
+                          </summary>
+                          <p className="mt-2 leading-relaxed text-neutral-600">{item.a}</p>
+                        </details>
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             </motion.div>
           </motion.div>
