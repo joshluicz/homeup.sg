@@ -1,5 +1,6 @@
 import type { Agent } from "@/lib/data/agents";
 import type { FaqItem } from "@/lib/data/faqs";
+import type { PlaybookVideo } from "@/lib/data/playbook";
 import type { Listing } from "@/lib/listings/types";
 import { getPublicListingUrl } from "@/lib/listings/utils";
 import {
@@ -453,6 +454,30 @@ export function videoObjectsSchema(videos: { title: string; description: string;
       ...(v.duration ? { duration: durationToIso(v.duration) } : {}),
       publisher: { "@id": ORG_ID },
     }));
+}
+
+/** Article/guide schema for a Playbook entry. Pairs with faqSchema + videoObjectsSchema
+ *  on the /playbook/[slug] page so the guide is eligible for rich results and AI answers. */
+export function articleSchema(video: PlaybookVideo) {
+  const url = `${SITE_URL}/playbook/${video.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: video.title,
+    description: video.metaDescription || video.description || video.title,
+    ...(video.thumbnail && { image: video.thumbnail }),
+    datePublished: video.publishedAt,
+    dateModified: video.publishedAt,
+    inLanguage: "en-SG",
+    author: { "@id": ORG_ID },
+    publisher: { "@id": ORG_ID },
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    ...(video.tags?.length ? { keywords: video.tags.join(", ") } : {}),
+    ...(video.videoUrl && video.thumbnail
+      ? { video: videoObjectsSchema([video])[0] }
+      : {}),
+  };
 }
 
 export function serviceSchema({

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Loader2, X, Sparkles, Link, Upload } from "lucide-react";
-import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
+import type { FaqEntry, PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
 
 const CATEGORIES: Exclude<VideoCategory, "all">[] = ["selling", "buying", "process", "market", "tips"];
@@ -19,6 +19,9 @@ type FormState = {
   featured: boolean;
   publishedAt: string;
   tags: string;
+  article: string;
+  metaDescription: string;
+  faq: FaqEntry[];
 };
 
 function toFormState(v?: PlaybookVideo): FormState {
@@ -32,6 +35,9 @@ function toFormState(v?: PlaybookVideo): FormState {
     featured: v?.featured ?? false,
     publishedAt: v?.publishedAt ?? new Date().toISOString().slice(0, 10),
     tags: v?.tags?.join(", ") ?? "",
+    article: v?.article ?? "",
+    metaDescription: v?.metaDescription ?? "",
+    faq: v?.faq ?? [],
   };
 }
 
@@ -51,6 +57,21 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
   function set(field: keyof FormState, value: string | boolean) {
     setForm((f) => ({ ...f, [field]: value }));
     if (field === "videoUrl") setAiSuccess(false);
+  }
+
+  function setFaqItem(index: number, key: keyof FaqEntry, value: string) {
+    setForm((f) => ({
+      ...f,
+      faq: f.faq.map((item, i) => (i === index ? { ...item, [key]: value } : item)),
+    }));
+  }
+
+  function addFaqItem() {
+    setForm((f) => ({ ...f, faq: [...f.faq, { q: "", a: "" }] }));
+  }
+
+  function removeFaqItem(index: number) {
+    setForm((f) => ({ ...f, faq: f.faq.filter((_, i) => i !== index) }));
   }
 
   async function handleAiFill() {
@@ -80,6 +101,9 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
       title: json.title ?? f.title,
       description: json.description ?? f.description,
       thumbnail: json.thumbnail || f.thumbnail,
+      metaDescription: json.metaDescription ?? f.metaDescription,
+      article: json.article ?? f.article,
+      faq: Array.isArray(json.faq) && json.faq.length > 0 ? json.faq : f.faq,
     }));
     setAiSuccess(true);
     setAiLoading(false);
@@ -105,6 +129,11 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
       featured: form.featured,
       publishedAt: form.publishedAt,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      article: form.article,
+      metaDescription: form.metaDescription.trim(),
+      faq: form.faq
+        .map((item) => ({ q: item.q.trim(), a: item.a.trim() }))
+        .filter((item) => item.q && item.a),
     };
 
     const res = await fetch("/api/admin/playbook", {
@@ -192,11 +221,11 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
               {aiSuccess && (
                 <p className="flex items-center gap-1.5 text-xs text-primary-600">
                   <Sparkles className="h-3 w-3" />
-                  Title, description and thumbnail auto-filled — edit freely below.
+                  Title, description, article, FAQ and meta description auto-filled — review and edit everything below before saving.
                 </p>
               )}
               <p className="text-xs text-neutral-400">
-                Paste a YouTube or Vimeo link, then click <strong>AI fill</strong> to auto-generate a title and description.
+                Paste a YouTube or Vimeo link, then click <strong>AI fill</strong> to auto-generate the title, description, full SEO article, FAQ and meta description.
               </p>
             </div>
           ) : (
@@ -298,6 +327,92 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
           placeholder="hdb, selling, commission (comma-separated)"
           className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
         />
+      </div>
+
+      {/* Article & SEO section */}
+      <div className="space-y-6 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4 sm:p-5">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-primary-600" />
+          <p className="text-sm font-semibold text-neutral-900">Article &amp; SEO</p>
+          <span className="text-xs text-neutral-400">Published at /playbook/{"{slug}"} for search &amp; AI discovery</span>
+        </div>
+
+        {/* Meta description */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-neutral-900">Meta description</label>
+          <textarea
+            value={form.metaDescription}
+            onChange={(e) => set("metaDescription", e.target.value)}
+            rows={2}
+            maxLength={170}
+            placeholder="155-character summary shown in Google search results."
+            className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+          />
+          <p className="mt-1 text-xs text-neutral-400">{form.metaDescription.length}/155 characters recommended</p>
+        </div>
+
+        {/* Article (Markdown) */}
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-neutral-900">Article (Markdown)</label>
+          <textarea
+            value={form.article}
+            onChange={(e) => set("article", e.target.value)}
+            rows={14}
+            placeholder="## Heading&#10;&#10;Write the full guide here. Supports Markdown: ## headings, **bold**, lists, links."
+            className="w-full rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+          />
+          <p className="mt-1 text-xs text-neutral-400">
+            Markdown supported. Review AI drafts for factual accuracy (prices, CPF, legal details) before publishing.
+          </p>
+        </div>
+
+        {/* FAQ */}
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className="block text-sm font-medium text-neutral-900">FAQ</label>
+            <button
+              type="button"
+              onClick={addFaqItem}
+              className="text-xs font-semibold text-primary-600 hover:underline"
+            >
+              + Add question
+            </button>
+          </div>
+          {form.faq.length === 0 && (
+            <p className="text-xs text-neutral-400">No FAQ items yet. Add a few common questions to boost SEO and AI answers.</p>
+          )}
+          <div className="space-y-3">
+            {form.faq.map((item, i) => (
+              <div key={i} className="rounded-lg border border-neutral-200 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-500">Question {i + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeFaqItem(i)}
+                    aria-label="Remove question"
+                    className="text-neutral-400 hover:text-red-500"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={item.q}
+                  onChange={(e) => setFaqItem(i, "q", e.target.value)}
+                  placeholder="Question"
+                  className="mb-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+                <textarea
+                  value={item.a}
+                  onChange={(e) => setFaqItem(i, "a", e.target.value)}
+                  rows={2}
+                  placeholder="Answer"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Publish date + Featured */}

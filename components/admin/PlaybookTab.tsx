@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
 const CATEGORIES: VideoCategory[] = ["selling", "buying", "process", "market", "tips"];
 
+type FaqEntry = { q: string; a: string };
+
 type Video = {
   id: string;
   slug: string;
@@ -21,6 +23,9 @@ type Video = {
   featured: boolean;
   published_at: string;
   tags: string[];
+  article?: string;
+  faq?: FaqEntry[];
+  meta_description?: string;
 };
 
 const emptyForm = {
@@ -33,6 +38,8 @@ const emptyForm = {
   featured: false,
   published_at: new Date().toISOString().slice(0, 10),
   tags: "",
+  article: "",
+  meta_description: "",
 };
 
 function slugify(title: string): string {
@@ -83,6 +90,7 @@ export function PlaybookTab() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [uploadTab, setUploadTab] = useState<"link" | "file">("link");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -103,9 +111,20 @@ export function PlaybookTab() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
+  function setFaqItem(index: number, key: keyof FaqEntry, value: string) {
+    setFaq((items) => items.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
+  }
+  function addFaqItem() {
+    setFaq((items) => [...items, { q: "", a: "" }]);
+  }
+  function removeFaqItem(index: number) {
+    setFaq((items) => items.filter((_, i) => i !== index));
+  }
+
   function openAdd() {
     setEditId(null);
     setForm(emptyForm);
+    setFaq([]);
     setError(null);
     setUploadTab("link");
     setUploadProgress(null);
@@ -124,7 +143,10 @@ export function PlaybookTab() {
       featured: v.featured,
       published_at: v.published_at,
       tags: v.tags?.join(", ") ?? "",
+      article: v.article ?? "",
+      meta_description: v.meta_description ?? "",
     });
+    setFaq(v.faq ?? []);
     setError(null);
     setUploadTab(v.video_url?.startsWith("http") ? "link" : "file");
     setUploadProgress(null);
@@ -181,6 +203,11 @@ export function PlaybookTab() {
       featured: form.featured,
       published_at: form.published_at,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      article: form.article,
+      meta_description: form.meta_description.trim(),
+      faq: faq
+        .map((item) => ({ q: item.q.trim(), a: item.a.trim() }))
+        .filter((item) => item.q && item.a),
       updated_at: new Date().toISOString(),
     };
 
@@ -423,6 +450,81 @@ export function PlaybookTab() {
               />
               <span className="text-sm font-medium text-neutral-900">Featured video</span>
             </label>
+
+            {/* Article & SEO */}
+            <div className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">Article &amp; SEO</p>
+                <p className="text-xs text-neutral-400">
+                  Optional. Publishes a readable guide at /playbook/{"{slug}"} so this video can be found in search and AI answers.
+                </p>
+              </div>
+
+              {/* Meta description */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-900">Meta description</label>
+                <textarea
+                  value={form.meta_description}
+                  onChange={(e) => set("meta_description", e.target.value)}
+                  rows={2}
+                  maxLength={170}
+                  placeholder="~155-character summary shown in Google search results."
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+                <p className="mt-1 text-xs text-neutral-400">{form.meta_description.length}/155 recommended</p>
+              </div>
+
+              {/* Article (Markdown) */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-900">Article (Markdown)</label>
+                <textarea
+                  value={form.article}
+                  onChange={(e) => set("article", e.target.value)}
+                  rows={12}
+                  placeholder={"## Heading\n\nWrite the full guide here. Supports Markdown: ## headings, **bold**, - lists, [links](url)."}
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+
+              {/* FAQ */}
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-neutral-900">FAQ</label>
+                  <button type="button" onClick={addFaqItem} className="text-xs font-semibold text-primary-600 hover:underline">
+                    + Add question
+                  </button>
+                </div>
+                {faq.length === 0 && (
+                  <p className="text-xs text-neutral-400">Add common questions to boost search and AI-answer reach.</p>
+                )}
+                <div className="space-y-3">
+                  {faq.map((item, i) => (
+                    <div key={i} className="rounded-lg border border-neutral-200 bg-white p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-neutral-500">Question {i + 1}</span>
+                        <button type="button" onClick={() => removeFaqItem(i)} aria-label="Remove question" className="text-neutral-400 hover:text-red-500">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={item.q}
+                        onChange={(e) => setFaqItem(i, "q", e.target.value)}
+                        placeholder="Question"
+                        className="mb-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                      />
+                      <textarea
+                        value={item.a}
+                        onChange={(e) => setFaqItem(i, "a", e.target.value)}
+                        rows={2}
+                        placeholder="Answer"
+                        className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
             <div className="flex items-center gap-3 pt-1">
               <Button type="submit" disabled={saving || uploading} className="min-w-[100px]">

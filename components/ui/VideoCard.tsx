@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Play, Clock, Tag } from "lucide-react";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
@@ -13,6 +14,7 @@ interface VideoCardProps {
 
 export function VideoCard({ video, onPlay, featured = false }: VideoCardProps) {
   const hasVideo = Boolean(video.videoUrl);
+  const hasArticle = Boolean(video.article?.trim());
 
   return (
     <article
@@ -114,11 +116,22 @@ export function VideoCard({ video, onPlay, featured = false }: VideoCardProps) {
               </span>
             ))}
           </div>
-          {hasVideo && (
-            <span className="text-xs font-semibold text-primary-600 group-hover:underline">
-              Watch →
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {hasArticle && (
+              <Link
+                href={`/playbook/${video.slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs font-semibold text-neutral-500 hover:text-primary-600 hover:underline"
+              >
+                Read the guide →
+              </Link>
+            )}
+            {hasVideo && (
+              <span className="text-xs font-semibold text-primary-600 group-hover:underline">
+                Watch →
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </article>

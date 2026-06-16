@@ -39,6 +39,11 @@ export async function POST(request: Request) {
     featured: fields.featured ?? false,
     published_at: fields.publishedAt ?? new Date().toISOString().slice(0, 10),
     tags: fields.tags ?? [],
+    article: fields.article ?? "",
+    faq: Array.isArray(fields.faq)
+      ? fields.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
+      : [],
+    meta_description: fields.metaDescription ?? "",
     updated_at: new Date().toISOString(),
   };
 
