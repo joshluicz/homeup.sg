@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import type { PlaybookVideo } from "@/lib/data/playbook";
+import type { FaqEntry, PlaybookVideo } from "@/lib/data/playbook";
 
-function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
+export function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
   return {
     id: row.id as string,
     slug: row.slug as string,
@@ -14,6 +14,9 @@ function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
     featured: row.featured as boolean,
     publishedAt: row.published_at as string,
     tags: row.tags as string[],
+    article: (row.article as string) ?? "",
+    faq: ((row.faq as FaqEntry[]) ?? []).filter((f) => f?.q && f?.a),
+    metaDescription: (row.meta_description as string) ?? "",
   };
 }
 

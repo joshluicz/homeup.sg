@@ -28,6 +28,11 @@ export type VideoCategory =
   | "market"
   | "tips";
 
+export interface FaqEntry {
+  q: string;
+  a: string;
+}
+
 export interface PlaybookVideo {
   id: string;
   slug: string;
@@ -40,6 +45,9 @@ export interface PlaybookVideo {
   featured?: boolean;
   publishedAt: string;  // ISO date string "YYYY-MM-DD"
   tags: string[];
+  article?: string;          // Markdown article body shown on /playbook/[slug]
+  faq?: FaqEntry[];          // Q&A pairs rendered as FAQ + FAQPage schema
+  metaDescription?: string;  // SEO meta description for the article page
 }
 
 export const CATEGORY_LABELS: Record<VideoCategory, string> = {
