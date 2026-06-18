@@ -220,9 +220,10 @@ export function PgSourcesPanel() {
           Step 1 — Refresh from Google Sheet
         </h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Reads the team&apos;s listings tracker (PropertyGuru links, agent, status). Rows marked{" "}
-          <strong>SOLD</strong> or <strong>DELISTED</strong> are skipped. Remove sold listings from
-          the sheet to keep it accurate.
+          Reads the team&apos;s listings tracker (PropertyGuru links, agent, status). Rows with{" "}
+          <strong>Remarks</strong> exactly <strong>SOLD</strong> or <strong>DELISTED</strong> are
+          skipped (e.g. &quot;DELISTED, RELIST LATER&quot; still counts as active). Remove sold
+          listings from the sheet when they should leave the site.
         </p>
         <a
           href={SHEET_URL}

@@ -25,15 +25,10 @@ export type FetchSheetListingsResult = {
   sheet_total_rows: number;
 };
 
-const INACTIVE_STATUSES = new Set(["SOLD", "DELISTED"]);
-
+/** Inactive only when Remarks / Unit Status is exactly SOLD or DELISTED (matches sheet COUNT). */
 function isInactiveStatus(raw: string): boolean {
   const status = raw.trim().toUpperCase();
-  if (!status) return false;
-  if (INACTIVE_STATUSES.has(status)) return true;
-  if (/\bSOLD\b/.test(status)) return true;
-  if (/\bDELISTED\b/.test(status)) return true;
-  return false;
+  return status === "SOLD" || status === "DELISTED";
 }
 
 /** Map sheet agent label → HomeUP agent slug. */
@@ -147,10 +142,11 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
 
     result.sheet_total_rows++;
 
-    const status = cell(row, col, "remarks", "unit status");
-    if (isInactiveStatus(status)) {
-      const upper = status.trim().toUpperCase();
-      if (upper === "SOLD" || /\bSOLD\b/.test(upper)) result.skipped.sold++;
+    const remarksStatus = cell(row, col, "remarks");
+    const unitStatus = cell(row, col, "unit status");
+    if (isInactiveStatus(remarksStatus) || isInactiveStatus(unitStatus)) {
+      const upper = `${remarksStatus} ${unitStatus}`.toUpperCase();
+      if (upper.includes("SOLD")) result.skipped.sold++;
       else result.skipped.delisted++;
       continue;
     }
@@ -193,7 +189,7 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
       agent_slug: agentSlug,
       agent_name: agent?.name ?? agentSlug,
       client_name: cell(row, col, "client name"),
-      status,
+      status: remarksStatus || unitStatus,
     });
   }
 
