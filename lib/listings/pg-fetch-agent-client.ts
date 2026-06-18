@@ -24,6 +24,35 @@ export async function probePgFetchAgent(): Promise<boolean> {
   }
 }
 
+export async function fetchPgListingHtmlViaAgent(
+  pgUrl: string,
+  accessToken: string,
+): Promise<string> {
+  const res = await fetch(`${getPgFetchAgentUrl()}/fetch-listing`, {
+    method: "POST",
+    mode: "cors",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ url: pgUrl }),
+  });
+
+  const text = await res.text();
+  let json: { success?: boolean; html?: string; error?: string };
+  try {
+    json = JSON.parse(text) as typeof json;
+  } catch {
+    throw new Error("Local agent returned an invalid response.");
+  }
+
+  if (!res.ok || !json.success || !json.html) {
+    throw new Error(json.error ?? "Local agent could not fetch this listing");
+  }
+
+  return json.html;
+}
+
 export async function fetchPgListingsViaAgent(
   accessToken: string,
 ): Promise<PgFetchAgentResponse> {

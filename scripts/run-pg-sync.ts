@@ -3,6 +3,8 @@ import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getPgSyncPreview } from "../lib/listings/pg-sync-preview";
+import { fetchListingPage } from "../lib/listings/import/fetch-listing-page";
+import { purgeExpiredArchivedListings } from "../lib/listings/purge-archived-listings";
 import {
   archiveRemovedPgListings,
   importOnePgListing,
@@ -39,7 +41,9 @@ async function main() {
 
   console.log("\n[pg-sync] Archiving removed listings…");
   const archived = await archiveRemovedPgListings(supabase);
+  const { purged } = await purgeExpiredArchivedListings(supabase);
   console.log(`  archived: ${archived.length}`);
+  if (purged > 0) console.log(`  purged (7d+): ${purged}`);
 
   const added: Array<{ title: string; slug: string; pg_url: string }> = [];
   const failed: Array<{ pg_url: string; error: string }> = [];
@@ -49,7 +53,10 @@ async function main() {
     const item = preview.to_import[i];
     console.log(`\n[pg-sync] Import ${i + 1}/${preview.to_import.length}: ${item.pg_url}`);
 
-    const outcome = await importOnePgListing(supabase, item.pg_url, item.pg_listing_id);
+    const fetched = await fetchListingPage(item.pg_url);
+    const outcome = await importOnePgListing(supabase, item.pg_url, item.pg_listing_id, {
+      html: fetched.ok ? fetched.html : undefined,
+    });
     if (outcome.ok) {
       added.push({ title: outcome.title, slug: outcome.slug, pg_url: item.pg_url });
       console.log(`  OK: ${outcome.title}`);

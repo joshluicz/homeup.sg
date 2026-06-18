@@ -1,7 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AGENTS } from "@/lib/data/agents";
-import { listedAsFromPgUrl, propertySlugFromPgUrl } from "@/lib/listings/pg-url";
-import type { ListedAs } from "@/lib/listings/types";
 
 export type PgSyncPreview = {
   to_import: Array<{
@@ -15,41 +13,14 @@ export type PgSyncPreview = {
     slug: string;
     source_pg_url: string | null;
   }>;
+  /** Sheet sources with matching source_pg_listing_id in DB. */
   unchanged: number;
   source_count: number;
+  /** Published on the public site (status = active). */
+  on_site_active: number;
+  /** Imported but not yet published (status = draft). */
+  on_site_drafts: number;
 };
-
-type ActiveListing = {
-  slug: string;
-  listed_as: ListedAs;
-  source_pg_listing_id: string;
-};
-
-function listingCoversPgSource(
-  listing: ActiveListing,
-  propertySlug: string,
-  listedAs: ListedAs,
-): boolean {
-  const baseSlug = listing.slug.replace(/-(rent|sell)$/, "");
-  if (baseSlug !== propertySlug) return false;
-  return listing.listed_as === listedAs;
-}
-
-function isAlternatePgSource(
-  source: { pg_url: string; pg_listing_id: string },
-  homeupPgIds: Set<string>,
-  activeListings: ActiveListing[],
-): boolean {
-  if (homeupPgIds.has(source.pg_listing_id)) return true;
-
-  const propertySlug = propertySlugFromPgUrl(source.pg_url);
-  if (!propertySlug) return false;
-
-  const listedAs = listedAsFromPgUrl(source.pg_url);
-  return activeListings.some((listing) =>
-    listingCoversPgSource(listing, propertySlug, listedAs),
-  );
-}
 
 export async function getPgSyncPreview(
   supabase: SupabaseClient,
@@ -67,24 +38,21 @@ export async function getPgSyncPreview(
 
   const { data: listings, error: listingsError } = await supabase
     .from("listings")
-    .select("title, slug, source_pg_listing_id, source_pg_url, listed_as")
+    .select("title, slug, source_pg_listing_id, source_pg_url, status")
     .not("source_pg_listing_id", "is", null)
     .is("deleted_at", null);
 
   if (listingsError) throw new Error(listingsError.message);
 
-  const activeListings = (listings ?? []) as ActiveListing[];
-  const homeupPgIds = new Set(activeListings.map((row) => row.source_pg_listing_id));
+  const homeupPgIds = new Set(
+    (listings ?? []).map((row) => row.source_pg_listing_id as string),
+  );
+
+  const on_site_active = (listings ?? []).filter((row) => row.status === "active").length;
+  const on_site_drafts = (listings ?? []).filter((row) => row.status === "draft").length;
 
   const to_import = sourceRows
-    .filter(
-      (row) =>
-        !isAlternatePgSource(
-          { pg_url: row.pg_url as string, pg_listing_id: row.pg_listing_id as string },
-          homeupPgIds,
-          activeListings,
-        ),
-    )
+    .filter((row) => !homeupPgIds.has(row.pg_listing_id as string))
     .map((row) => ({
       pg_url: row.pg_url as string,
       pg_listing_id: row.pg_listing_id as string,
@@ -101,12 +69,15 @@ export async function getPgSyncPreview(
     }));
 
   const unchanged = sourceRows.filter((row) =>
-    isAlternatePgSource(
-      { pg_url: row.pg_url as string, pg_listing_id: row.pg_listing_id as string },
-      homeupPgIds,
-      activeListings,
-    ),
+    homeupPgIds.has(row.pg_listing_id as string),
   ).length;
 
-  return { to_import, to_archive, unchanged, source_count: sourceRows.length };
+  return {
+    to_import,
+    to_archive,
+    unchanged,
+    source_count: sourceRows.length,
+    on_site_active,
+    on_site_drafts,
+  };
 }

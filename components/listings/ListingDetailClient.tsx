@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { ListingCard } from "@/components/listings/ListingCard";
+import { ListingImageGallery } from "@/components/listings/ListingImageGallery";
 import type { Listing } from "@/lib/listings/types";
 import {
   getListingBySlug,
@@ -31,7 +32,6 @@ import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
 import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { resolveListingSlug } from "@/lib/listings/slug-from-path";
-import { cn } from "@/lib/utils";
 import { trackButtonClick } from "@/lib/analytics";
 
 type ListingDetailClientProps = {
@@ -42,8 +42,6 @@ export function ListingDetailClient({ slug }: ListingDetailClientProps) {
   const [listing, setListing] = useState<Listing | null>(null);
   const [related, setRelated] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeImage, setActiveImage] = useState(0);
-
   useEffect(() => {
     const resolvedSlug = resolveListingSlug(slug);
     if (!resolvedSlug) {
@@ -107,32 +105,7 @@ export function ListingDetailClient({ slug }: ListingDetailClientProps) {
 
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <div>
-            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={gallery[activeImage]}
-                alt={listing.title}
-                className="aspect-[4/3] w-full object-cover"
-              />
-            </div>
-            {gallery.length > 1 && (
-              <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-5">
-                {gallery.map((url, index) => (
-                  <button
-                    key={url}
-                    type="button"
-                    onClick={() => setActiveImage(index)}
-                    className={cn(
-                      "overflow-hidden rounded-lg border-2",
-                      activeImage === index ? "border-primary-600" : "border-transparent",
-                    )}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" className="aspect-video w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ListingImageGallery images={gallery} alt={listing.title} />
           </div>
 
           <div>

@@ -34,6 +34,21 @@ export function ListingsGrid({ listings }: ListingsGridProps) {
   return (
     <section className="section-padding bg-white">
       <div className="container-page">
+        <div className="mb-8 flex flex-col gap-2 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
+              All properties
+            </p>
+            <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
+              <span className="tabular-nums text-primary-600">{listings.length.toLocaleString()}</span>{" "}
+              active listing{listings.length === 1 ? "" : "s"}
+            </h2>
+          </div>
+          <p className="text-sm text-neutral-500">
+            Updated live from our current portfolio
+          </p>
+        </div>
+
         <div className="mb-10">
           <ListingsFilterBar
             filters={filters}

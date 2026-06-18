@@ -15,6 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 import { fetchAndSaveEnabledAgentPgListings } from "../../lib/listings/fetch-agent-pg-sources";
+import { fetchListingPage } from "../../lib/listings/import/fetch-listing-page";
 import {
   PG_FETCH_AGENT_ORIGINS,
   PG_FETCH_AGENT_PORT,
@@ -100,6 +101,38 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     return;
   }
 
+  if (req.method === "POST" && url === "/fetch-listing") {
+    const supabase = await verifyAdmin(req);
+    if (!supabase) {
+      json(res, 401, { success: false, error: "Not signed in — refresh admin and try again" });
+      return;
+    }
+
+    let body: { url?: string };
+    try {
+      body = JSON.parse(await readBody(req)) as { url?: string };
+    } catch {
+      json(res, 400, { success: false, error: "Invalid JSON body" });
+      return;
+    }
+
+    const listingUrl = body.url?.trim();
+    if (!listingUrl) {
+      json(res, 400, { success: false, error: "url is required" });
+      return;
+    }
+
+    console.log("[pg-agent] Fetch listing HTML:", listingUrl);
+    const result = await fetchListingPage(listingUrl);
+    if (!result.ok) {
+      json(res, 422, { success: false, error: result.error });
+      return;
+    }
+
+    json(res, 200, { success: true, html: result.html });
+    return;
+  }
+
   if (req.method === "POST" && url === "/fetch") {
     const supabase = await verifyAdmin(req);
     if (!supabase) {
@@ -128,9 +161,8 @@ const port = Number(process.env.PG_FETCH_AGENT_PORT) || PG_FETCH_AGENT_PORT;
 
 createServer(handleRequest).listen(port, "127.0.0.1", () => {
   console.log("");
-  console.log("  HomeUP PG Fetch Agent");
+  console.log("  HomeUP Local Agent (sheet sync imports + legacy PG fetch)");
   console.log(`  Listening on http://127.0.0.1:${port}`);
-  console.log("  Keep this window open. Use Fetch on the live admin site.");
-  console.log("  Chrome will open HERE when you click Fetch.");
+  console.log("  Keep this window open while importing on the live admin site.");
   console.log("");
 });

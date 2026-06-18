@@ -17,6 +17,7 @@ export type FetchSheetListingsResult = {
   skipped: {
     sold: number;
     delisted: number;
+    held_off_website: number;
     no_url: number;
     invalid_url: number;
     unknown_agent: number;
@@ -25,10 +26,19 @@ export type FetchSheetListingsResult = {
   sheet_total_rows: number;
 };
 
-/** Inactive only when Remarks / Unit Status is exactly SOLD or DELISTED (matches sheet COUNT). */
+/** Exact SOLD / DELISTED — off the sheet's active set. */
 function isInactiveStatus(raw: string): boolean {
   const status = raw.trim().toUpperCase();
   return status === "SOLD" || status === "DELISTED";
+}
+
+/** On sheet for ops but not on HomeUP (temporarily off PG / relisting later). */
+function isHeldOffWebsite(raw: string): boolean {
+  const status = raw.trim().toUpperCase();
+  if (!status) return false;
+  if (status.includes("DELISTED") && status !== "DELISTED") return true;
+  if (status === "WILL RELIST AGAIN") return true;
+  return false;
 }
 
 /** Map sheet agent label → HomeUP agent slug. */
@@ -125,6 +135,7 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
     skipped: {
       sold: 0,
       delisted: 0,
+      held_off_website: 0,
       no_url: 0,
       invalid_url: 0,
       unknown_agent: 0,
@@ -148,6 +159,10 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
       const upper = `${remarksStatus} ${unitStatus}`.toUpperCase();
       if (upper.includes("SOLD")) result.skipped.sold++;
       else result.skipped.delisted++;
+      continue;
+    }
+    if (isHeldOffWebsite(remarksStatus) || isHeldOffWebsite(unitStatus)) {
+      result.skipped.held_off_website++;
       continue;
     }
 

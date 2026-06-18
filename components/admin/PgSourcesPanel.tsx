@@ -7,6 +7,10 @@ import {
   type PgSyncPreview,
 } from "@/lib/listings/pg-sync-preview-client";
 import { LISTINGS_SHEET_ID } from "@/lib/listings/google-sheet-constants";
+import {
+  fetchPgListingHtmlViaAgent,
+  probePgFetchAgent,
+} from "@/lib/listings/pg-fetch-agent-client";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -21,6 +25,7 @@ type SyncResponse = {
   added?: Array<{ title: string; slug: string; pg_url: string }>;
   skipped?: number;
   archived?: Array<{ title: string; slug: string }>;
+  purged?: number;
   failed?: Array<{ pg_url: string; error: string }>;
 };
 
@@ -31,6 +36,7 @@ type SheetRefreshResponse = {
   skipped?: {
     sold: number;
     delisted: number;
+    held_off_website: number;
     no_url: number;
     invalid_url: number;
     unknown_agent: number;
@@ -60,6 +66,8 @@ export function PgSourcesPanel() {
   );
   const [draftCount, setDraftCount] = useState(0);
   const [publishingAll, setPublishingAll] = useState(false);
+  const [agentOnline, setAgentOnline] = useState(false);
+  const [agentChecking, setAgentChecking] = useState(true);
 
   const canRunSync = !isStaticLpHost();
 
@@ -78,6 +86,24 @@ export function PgSourcesPanel() {
       .then(setDraftCount)
       .catch(() => setDraftCount(0));
   }, [refreshPreview]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkAgent() {
+      setAgentChecking(true);
+      const online = await probePgFetchAgent();
+      if (!cancelled) {
+        setAgentOnline(online);
+        setAgentChecking(false);
+      }
+    }
+    void checkAgent();
+    const interval = setInterval(() => void checkAgent(), 15_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   async function handleRefreshFromSheet() {
     setRefreshing(true);
@@ -118,22 +144,38 @@ export function PgSourcesPanel() {
     const failed: NonNullable<SyncResponse["failed"]> = [];
     let skipped = preview.unchanged;
     let archived: NonNullable<SyncResponse["archived"]> = [];
+    let purged = 0;
 
     try {
+      const supabase = createClient();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+
       const archiveRes = await fetch("/api/listings/sync-pg/archive", { method: "POST" });
       const archiveJson = (await archiveRes.json()) as {
         success?: boolean;
         archived?: SyncResponse["archived"];
+        purged?: number;
         error?: string;
       };
       if (!archiveRes.ok || !archiveJson.success) {
         throw new Error(archiveJson.error ?? "Archive step failed");
       }
       archived = archiveJson.archived ?? [];
+      purged = archiveJson.purged ?? 0;
 
       for (let i = 0; i < queue.length; i++) {
         const item = queue[i];
         setSyncProgress({ current: i + 1, total: queue.length });
+
+        let html: string | undefined;
+        if (agentOnline && accessToken) {
+          try {
+            html = await fetchPgListingHtmlViaAgent(item.pg_url, accessToken);
+          } catch {
+            // Fall back to server-side PG fetch
+          }
+        }
 
         const res = await fetch("/api/listings/sync-pg/import-one", {
           method: "POST",
@@ -141,10 +183,11 @@ export function PgSourcesPanel() {
           body: JSON.stringify({
             pg_url: item.pg_url,
             pg_listing_id: item.pg_listing_id,
+            html,
           }),
         });
 
-        const json = (await res.json()) as {
+        let json = (await res.json()) as {
           success?: boolean;
           skipped?: boolean;
           error?: string;
@@ -152,18 +195,46 @@ export function PgSourcesPanel() {
           slug?: string;
         };
 
+        if (
+          !json.success &&
+          json.error === "FETCH_BLOCKED" &&
+          agentOnline &&
+          accessToken &&
+          !html
+        ) {
+          try {
+            html = await fetchPgListingHtmlViaAgent(item.pg_url, accessToken);
+            const retryRes = await fetch("/api/listings/sync-pg/import-one", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                pg_url: item.pg_url,
+                pg_listing_id: item.pg_listing_id,
+                html,
+              }),
+            });
+            json = (await retryRes.json()) as typeof json;
+          } catch {
+            // keep original error
+          }
+        }
+
         if (json.success && json.title && json.slug) {
           added.push({ title: json.title, slug: json.slug, pg_url: item.pg_url });
         } else if (json.skipped) {
           skipped += 1;
         } else {
-          failed.push({ pg_url: item.pg_url, error: json.error ?? "Import failed" });
+          const err =
+            json.error === "FETCH_BLOCKED"
+              ? "PropertyGuru blocked server fetch — run npm run pg:agent on this PC and sync again"
+              : (json.error ?? "Import failed");
+          failed.push({ pg_url: item.pg_url, error: err });
         }
       }
 
-      setSyncResult({ success: true, added, failed, skipped, archived });
+      setSyncResult({ success: true, added, failed, skipped, archived, purged });
       setStatusMessage(
-        `Sync complete — ${added.length} new draft(s)${failed.length > 0 ? `, ${failed.length} failed` : ""}, ${archived.length} archived.`,
+        `Sync complete — ${added.length} new draft(s)${failed.length > 0 ? `, ${failed.length} failed` : ""}, ${archived.length} archived${purged > 0 ? `, ${purged} old archive(s) deleted` : ""}.`,
       );
       await refreshPreview();
       setDraftCount(await countDraftListings());
@@ -215,6 +286,22 @@ export function PgSourcesPanel() {
         </div>
       )}
 
+      {canRunSync && !agentChecking && !agentOnline && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-medium">Imports need the local agent on this PC</p>
+          <p className="mt-1 text-amber-800">
+            PropertyGuru blocks Vercel from fetching listing pages. Before syncing new imports, run{" "}
+            <code className="text-xs">npm run pg:agent</code> on this computer and keep it open.
+          </p>
+        </div>
+      )}
+
+      {agentOnline && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          Local agent is running — imports will fetch PropertyGuru pages from this PC.
+        </div>
+      )}
+
       <section className="rounded-xl border border-neutral-200 bg-white p-6">
         <h2 className="text-sm font-semibold text-neutral-900">
           Step 1 — Refresh from Google Sheet
@@ -255,6 +342,9 @@ export function PgSourcesPanel() {
           <p className="mt-2 text-xs text-neutral-500">
             Skipped from sheet: {sheetResult.skipped.sold} sold, {sheetResult.skipped.delisted}{" "}
             delisted
+            {(sheetResult.skipped.held_off_website ?? 0) > 0
+              ? `, ${sheetResult.skipped.held_off_website} held off website (relist later)`
+              : ""}
             {sheetResult.skipped.unknown_agent > 0
               ? `, ${sheetResult.skipped.unknown_agent} unknown agent`
               : ""}
@@ -274,17 +364,33 @@ export function PgSourcesPanel() {
             Step 2 — Review changes (before sync)
           </h2>
           <p className="mt-1 text-sm text-neutral-600">
-            Compares sheet sources to live HomeUP listings. Nothing changes until you click sync.
+            Sheet has <strong>{preview.source_count}</strong> listings for HomeUP.{" "}
+            <strong>{preview.on_site_active}</strong> are live;{" "}
+            <strong>{preview.to_import.length}</strong> still need importing.
+            {preview.unchanged !== preview.on_site_active + preview.on_site_drafts && (
+              <span className="block mt-1 text-xs text-neutral-500">
+                PG ID in database ({preview.unchanged}) counts rows linked by PropertyGuru ID —
+                not the same as live count until all are published.
+              </span>
+            )}
           </p>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg bg-green-50 px-4 py-3">
               <p className="text-2xl font-bold text-green-800">{preview.to_import.length}</p>
               <p className="text-sm text-green-700">New → import as drafts</p>
             </div>
+            <div className="rounded-lg bg-primary-50 px-4 py-3">
+              <p className="text-2xl font-bold text-primary-800">{preview.on_site_active}</p>
+              <p className="text-sm text-primary-700">Live on public site</p>
+            </div>
             <div className="rounded-lg bg-neutral-100 px-4 py-3">
               <p className="text-2xl font-bold text-neutral-800">{preview.unchanged}</p>
-              <p className="text-sm text-neutral-600">Already on HomeUP</p>
+              <p className="text-sm text-neutral-600">PG ID in database</p>
+              <p className="mt-1 text-xs text-neutral-500">
+                {preview.on_site_drafts} draft
+                {preview.on_site_drafts === 1 ? "" : "s"} waiting to publish
+              </p>
             </div>
             <div className="rounded-lg bg-amber-50 px-4 py-3">
               <p className="text-2xl font-bold text-amber-800">{preview.to_archive.length}</p>
@@ -346,10 +452,24 @@ export function PgSourcesPanel() {
             <p>
               <strong>Archived:</strong> {syncResult.archived?.length ?? 0}
             </p>
+            {(syncResult.purged ?? 0) > 0 && (
+              <p>
+                <strong>Deleted (archived 7+ days):</strong> {syncResult.purged}
+              </p>
+            )}
             <p>
               <strong>Failed:</strong> {syncResult.failed?.length ?? 0}
             </p>
           </div>
+          {(syncResult.failed?.length ?? 0) > 0 && (
+            <ul className="mt-3 max-h-32 overflow-y-auto text-xs text-red-700">
+              {syncResult.failed?.map((item) => (
+                <li key={item.pg_url} className="mt-1 truncate">
+                  {item.error} — {item.pg_url}
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="mt-4 flex flex-wrap gap-3">
             {draftCount > 0 && (
               <Button type="button" disabled={publishingAll} onClick={handlePublishAllDrafts}>

@@ -1,4 +1,4 @@
-# Start the local PG fetch agent (Chrome opens on THIS computer).
+# Start the local agent (optional — only needed for browser-based PG fetch from Vercel admin).
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
 if (-not (Test-Path ".env.local")) {
@@ -6,6 +6,6 @@ if (-not (Test-Path ".env.local")) {
   exit 1
 }
 
-Write-Host "Starting HomeUP PG Fetch Agent..."
-Write-Host "Leave this window open. Then use Fetch on https://homeup-sg.vercel.app/admin"
+Write-Host "Starting HomeUP Local Agent..."
+Write-Host "For automated sync on this PC, use: npm run pg:automation"
 npx tsx scripts/pg-fetch-agent/server.ts

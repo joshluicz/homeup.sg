@@ -80,6 +80,7 @@ export async function importOnePgListing(
   supabase: SupabaseClient,
   pgUrl: string,
   pgListingId: string,
+  options?: { html?: string; publish?: boolean },
 ): Promise<{ ok: true; title: string; slug: string } | { ok: false; error: string }> {
   const { data: existingByPgId } = await supabase
     .from("listings")
@@ -93,8 +94,10 @@ export async function importOnePgListing(
 
   const listingId = existingByPgId?.id ?? crypto.randomUUID();
 
+  const html = options?.html?.trim();
   const importResult = await runListingImport(supabase, {
-    url: pgUrl,
+    url: html ? undefined : pgUrl,
+    html,
     listingId,
   });
 
@@ -108,7 +111,9 @@ export async function importOnePgListing(
     return { ok: false, error: validationError };
   }
 
-  const payload = formDataToDbPayload(formData, "draft", {
+  const listingStatus = options?.publish ? "active" : "draft";
+
+  const payload = formDataToDbPayload(formData, listingStatus, {
     source_pg_url: pgUrl,
     source_pg_listing_id: pgListingId,
   });
@@ -154,26 +159,18 @@ export async function importOnePgListing(
 
   const { data: activeBySlug } = await supabase
     .from("listings")
-    .select("id, source_pg_listing_id, listed_as")
+    .select("id, source_pg_listing_id, listed_as, slug")
     .eq("slug", formData.slug)
     .is("deleted_at", null)
     .maybeSingle();
 
   if (activeBySlug) {
-    if (activeBySlug.listed_as === formData.listed_as) {
-      const { error: updateError } = await supabase
-        .from("listings")
-        .update(payload)
-        .eq("id", activeBySlug.id);
-
-      if (updateError) {
-        return { ok: false, error: updateError.message };
-      }
-
-      return { ok: true, title: formData.title, slug: formData.slug };
+    if (activeBySlug.source_pg_listing_id === pgListingId) {
+      return { ok: false, error: "Already imported" };
     }
 
-    formData.slug = `${formData.slug}-${formData.listed_as}`;
+    // Same development slug, different PG listing (e.g. another unit) — never overwrite.
+    formData.slug = `${formData.slug}-${pgListingId}`;
     const validationAfterSuffix = validateListingForm(formData);
     if (validationAfterSuffix) {
       return { ok: false, error: validationAfterSuffix };
@@ -191,7 +188,7 @@ export async function importOnePgListing(
     return { ok: false, error: "Already imported" };
   }
 
-  const payloadFinal = formDataToDbPayload(formData, "draft", {
+  const payloadFinal = formDataToDbPayload(formData, listingStatus, {
     source_pg_url: pgUrl,
     source_pg_listing_id: pgListingId,
   });

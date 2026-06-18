@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const { supabase, error: authError } = await requireAuth();
   if (authError) return authError;
 
-  let body: { pg_url?: string; pg_listing_id?: string };
+  let body: { pg_url?: string; pg_listing_id?: string; html?: string };
   try {
     body = await request.json();
   } catch {
@@ -26,7 +26,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const outcome = await importOnePgListing(supabase, pgUrl, pgListingId);
+    const outcome = await importOnePgListing(supabase, pgUrl, pgListingId, {
+      html: body.html,
+    });
     if (!outcome.ok) {
       return NextResponse.json({
         success: false,
