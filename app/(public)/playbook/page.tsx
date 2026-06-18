@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaybookHero } from "@/components/sections/PlaybookHero";
+import { PlaybookJourney } from "@/components/sections/PlaybookJourney";
 import { PlaybookLibrary } from "@/components/sections/PlaybookLibrary";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
@@ -28,6 +29,10 @@ export default function PlaybookPage() {
       <Navbar />
       <main className="bg-white">
         <PlaybookHero />
+
+        {/* ── PLAYBOOK JOURNEY: stage nav + content sections + sticky WA CTA ── */}
+        <PlaybookJourney />
+
         <Suspense fallback={null}>
           {/* PlaybookLibrary fetches live from Supabase on mount,
               falls back to PLAYBOOK_VIDEOS placeholders until loaded */}

@@ -111,7 +111,7 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
 
   return (
     <>
-      <section className="section-padding bg-white">
+      <section id="playbook-library" className="section-padding bg-white">
         <div className="container-page">
 
           {/* ── Featured Videos ─────────────────────────────────────────── */}
