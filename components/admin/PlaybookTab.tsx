@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link, Upload } from "lucide-react";
-import { CATEGORY_LABELS } from "@/lib/data/playbook";
+import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
+import type { PlaybookTopic } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
 
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
 const CATEGORIES: VideoCategory[] = ["selling", "buying", "process", "market", "tips"];
+
+const TOPICS: PlaybookTopic[] = ["upgraders", "buying_first", "condo_tips"];
 
 type FaqEntry = { q: string; a: string };
 
@@ -26,12 +29,14 @@ type Video = {
   article?: string;
   faq?: FaqEntry[];
   meta_description?: string;
+  topic?: PlaybookTopic | null;
 };
 
 const emptyForm = {
   title: "",
   description: "",
   category: "selling" as VideoCategory,
+  topic: "" as PlaybookTopic | "",
   duration: "",
   thumbnail: "",
   video_url: "",
@@ -137,6 +142,7 @@ export function PlaybookTab() {
       title: v.title,
       description: v.description,
       category: v.category,
+      topic: (v.topic ?? "") as PlaybookTopic | "",
       duration: v.duration,
       thumbnail: v.thumbnail,
       video_url: v.video_url,
@@ -197,6 +203,7 @@ export function PlaybookTab() {
       title: form.title.trim(),
       description: form.description.trim(),
       category: form.category,
+      topic: form.topic || null,
       duration: form.duration.trim(),
       thumbnail: form.thumbnail.trim(),
       video_url: form.video_url.trim(),
@@ -414,6 +421,35 @@ export function PlaybookTab() {
                   placeholder="e.g. 4:32"
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 />
+              </div>
+            </div>
+
+            {/* Journey topic */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-900">Journey topic</label>
+              <p className="mb-2 text-xs text-neutral-400">Slot this into one of the three Playbook Journey stages shown on the public page.</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => set("topic", "")}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    !form.topic ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                  }`}
+                >
+                  No topic
+                </button>
+                {TOPICS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => set("topic", t)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      form.topic === t ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                    }`}
+                  >
+                    {TOPIC_LABELS[t]}
+                  </button>
+                ))}
               </div>
             </div>
 

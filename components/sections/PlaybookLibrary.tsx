@@ -34,6 +34,7 @@ function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
     article: (row.article as string) ?? "",
     faq: ((row.faq as { q: string; a: string }[]) ?? []).filter((f) => f?.q && f?.a),
     metaDescription: (row.meta_description as string) ?? "",
+    topic: (row.topic as PlaybookVideo["topic"]) ?? null,
   };
 }
 

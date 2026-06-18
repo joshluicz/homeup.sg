@@ -28,6 +28,14 @@ export type VideoCategory =
   | "market"
   | "tips";
 
+export type PlaybookTopic = "upgraders" | "buying_first" | "condo_tips";
+
+export const TOPIC_LABELS: Record<PlaybookTopic, string> = {
+  upgraders:    "Upgraders",
+  buying_first: "Buying Your 1st Property",
+  condo_tips:   "Condo Tips",
+};
+
 export interface FaqEntry {
   q: string;
   a: string;
@@ -48,6 +56,7 @@ export interface PlaybookVideo {
   article?: string;          // Markdown article body shown on /playbook/[slug]
   faq?: FaqEntry[];          // Q&A pairs rendered as FAQ + FAQPage schema
   metaDescription?: string;  // SEO meta description for the article page
+  topic?: PlaybookTopic | null; // Which journey stage this article/video belongs to
 }
 
 export const CATEGORY_LABELS: Record<VideoCategory, string> = {

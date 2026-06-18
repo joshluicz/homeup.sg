@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       ? fields.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
       : [],
     meta_description: fields.metaDescription ?? "",
+    topic: fields.topic ?? null,
     updated_at: new Date().toISOString(),
   };
 
