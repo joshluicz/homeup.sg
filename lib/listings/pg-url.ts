@@ -125,6 +125,16 @@ export function parsePgListingUrl(raw: string): ParsedPgListingUrl | null {
   if (!parsed.hostname.endsWith("propertyguru.com.sg")) return null;
   if (!parsed.pathname.includes("/listing/")) return null;
 
+  const idOnly = parsed.pathname.match(/\/listing\/(\d{6,})$/);
+  if (idOnly) {
+    parsed.hash = "";
+    parsed.search = "";
+    return {
+      pg_url: parsed.href.replace(/\/$/, ""),
+      pg_listing_id: idOnly[1],
+    };
+  }
+
   const idMatch = parsed.pathname.match(PG_LISTING_ID_RE);
   if (!idMatch) return null;
 

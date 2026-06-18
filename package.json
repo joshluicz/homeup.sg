@@ -14,7 +14,8 @@
     "pg:sync": "npx tsx scripts/run-pg-sync.ts",
     "pg:resolve": "npx tsx scripts/run-pg-resolve-eight.ts",
     "pg:agent": "npx tsx scripts/pg-fetch-agent/server.ts",
-    "pg:cross-check": "node scripts/pg-cross-agent-check.mjs"
+    "pg:cross-check": "node scripts/pg-cross-agent-check.mjs",
+    "pg:sheet": "npx tsx scripts/run-pg-sheet-sync.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

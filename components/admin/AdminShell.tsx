@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
-  { href: "/admin/listings/pg-sources", label: "PG Sync" },
+  { href: "/admin/listings/pg-sources", label: "Listings Sync" },
   { href: "/admin/listings?tab=playbook", label: "Playbook" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
 ];

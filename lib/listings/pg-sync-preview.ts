@@ -16,7 +16,7 @@ export type PgSyncPreview = {
     source_pg_url: string | null;
   }>;
   unchanged: number;
-  skipped_agents: Array<{ agent_slug: string; agent_name: string }>;
+  source_count: number;
 };
 
 type ActiveListing = {
@@ -54,22 +54,6 @@ function isAlternatePgSource(
 export async function getPgSyncPreview(
   supabase: SupabaseClient,
 ): Promise<PgSyncPreview> {
-  const { data: profiles, error: profilesError } = await supabase
-    .from("pg_agent_profiles")
-    .select("agent_slug, pg_profile_url, pg_listed_by_id");
-
-  if (profilesError) throw new Error(profilesError.message);
-
-  const enabledSlugs = new Set(
-    (profiles ?? [])
-      .filter((row) => row.pg_listed_by_id || row.pg_profile_url?.trim())
-      .map((row) => row.agent_slug as string),
-  );
-
-  const skipped_agents = AGENTS.filter((a) => !enabledSlugs.has(a.slug)).map(
-    (a) => ({ agent_slug: a.slug, agent_name: a.name }),
-  );
-
   const { data: sources, error: sourcesError } = await supabase
     .from("pg_listing_sources")
     .select("agent_slug, pg_url, pg_listing_id");
@@ -124,5 +108,5 @@ export async function getPgSyncPreview(
     ),
   ).length;
 
-  return { to_import, to_archive, unchanged, skipped_agents };
+  return { to_import, to_archive, unchanged, source_count: sourceRows.length };
 }
