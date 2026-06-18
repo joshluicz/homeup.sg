@@ -13,6 +13,7 @@
     "pg:fetch": "npx tsx scripts/run-pg-fetch.ts",
     "pg:sync": "npx tsx scripts/run-pg-sync.ts",
     "pg:resolve": "npx tsx scripts/run-pg-resolve-eight.ts",
+    "pg:agent": "npx tsx scripts/pg-fetch-agent/server.ts",
     "pg:cross-check": "node scripts/pg-cross-agent-check.mjs"
   },
   "dependencies": {

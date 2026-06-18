@@ -12,6 +12,10 @@ import {
   type PgSyncPreview,
 } from "@/lib/listings/pg-sync-preview-client";
 import type { FetchAgentPgResult } from "@/lib/listings/fetch-agent-pg-sources";
+import {
+  fetchPgListingsViaAgent,
+  probePgFetchAgent,
+} from "@/lib/listings/pg-fetch-agent-client";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -44,8 +48,8 @@ function isStaticLpHost(): boolean {
   return window.location.hostname === "lp.homeup.sg";
 }
 
-function canRunPgFetch(): boolean {
-  return isLocalDevHost();
+function canRunPgFetch(agentOnline: boolean): boolean {
+  return isLocalDevHost() || agentOnline;
 }
 
 /** Sync uses Next.js API routes — Vercel and localhost, not static lp. */
@@ -70,8 +74,10 @@ export function PgSourcesPanel() {
   );
   const [draftCount, setDraftCount] = useState(0);
   const [publishingAll, setPublishingAll] = useState(false);
+  const [agentOnline, setAgentOnline] = useState(false);
+  const [agentChecking, setAgentChecking] = useState(true);
 
-  const canRunFetch = canRunPgFetch();
+  const canRunFetch = canRunPgFetch(agentOnline);
   const canRunSync = canRunPgSync();
   const enabledCount = AGENTS.filter((a) => profileDrafts[a.slug]?.trim()).length;
 
@@ -108,6 +114,24 @@ export function PgSourcesPanel() {
       .catch(() => setDraftCount(0));
   }, [loadProfiles]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function checkAgent() {
+      setAgentChecking(true);
+      const online = await probePgFetchAgent();
+      if (!cancelled) {
+        setAgentOnline(online);
+        setAgentChecking(false);
+      }
+    }
+    void checkAgent();
+    const interval = setInterval(() => void checkAgent(), 15_000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
   async function handleSaveProfiles() {
     setSavingProfiles(true);
     setError(null);
@@ -138,24 +162,41 @@ export function PgSourcesPanel() {
     setSyncResult(null);
 
     try {
-      const res = await fetch("/api/listings/pg-sources/fetch-agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fetch_all: true }),
-      });
-      const text = await res.text();
       let json: {
         success?: boolean;
         results?: FetchAgentPgResult[];
         skipped_agents?: Array<{ agent_slug: string; agent_name: string }>;
         error?: string;
       };
-      try {
-        json = JSON.parse(text) as typeof json;
-      } catch {
-        throw new Error("Fetch API unavailable. Run npm run dev on localhost.");
+
+      if (agentOnline) {
+        const supabase = createClient();
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) throw new Error("Not signed in — refresh and try again");
+        json = await fetchPgListingsViaAgent(token);
+      } else if (isLocalDevHost()) {
+        const res = await fetch("/api/listings/pg-sources/fetch-agent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fetch_all: true }),
+        });
+        const text = await res.text();
+        try {
+          json = JSON.parse(text) as typeof json;
+        } catch {
+          throw new Error("Fetch API unavailable. Run npm run dev on localhost.");
+        }
+        if (!res.ok || !json.success) {
+          throw new Error(json.error ?? "Fetch failed");
+        }
+      } else {
+        throw new Error(
+          "Start the PG Fetch Agent on this computer (see instructions below), then try again.",
+        );
       }
-      if (!res.ok || !json.success) {
+
+      if (!json.success) {
         throw new Error(json.error ?? "Fetch failed");
       }
 
@@ -280,20 +321,30 @@ export function PgSourcesPanel() {
         </p>
       </div>
 
-      {!canRunFetch && (
+      {!canRunFetch && !agentChecking && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-medium">Step 2 (fetch) needs localhost</p>
+          <p className="font-medium">Step 2 (fetch) needs the PG Fetch Agent on this computer</p>
           <p className="mt-1 text-amber-800">
-            PropertyGuru fetch opens Chrome on your computer via patchright. Run{" "}
-            <code className="text-xs">npm run dev</code> locally, or{" "}
-            <code className="text-xs">npm run pg:fetch</code>.
-            {canRunSync ? (
-              <>
-                {" "}
-                Step 3 (sync) works on this server after sources are fetched.
-              </>
-            ) : null}
+            The live admin site cannot open Chrome by itself. On <strong>this PC</strong>, run once
+            per session:
           </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-5 text-amber-800">
+            <li>
+              <code className="text-xs">.\scripts\start-pg-fetch-agent.ps1</code> (or{" "}
+              <code className="text-xs">npm run pg:agent</code>)
+            </li>
+            <li>Keep that window open</li>
+            <li>Click <strong>Fetch all agents</strong> here — Chrome opens on this machine</li>
+          </ol>
+          {canRunSync ? (
+            <p className="mt-2 text-amber-800">Step 3 (sync) works in the browser without the agent.</p>
+          ) : null}
+        </div>
+      )}
+
+      {agentOnline && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          PG Fetch Agent is running on this computer — Fetch will open Chrome locally.
         </div>
       )}
 
@@ -363,9 +414,8 @@ export function PgSourcesPanel() {
               Step 2 — Fetch all enabled agents
             </h2>
             <p className="mt-1 text-sm text-neutral-600">
-              Opens <strong>Chrome</strong> via patchright and paginates sale + rent for each saved
-              agent. Solve captcha in that window if shown — session cookies persist in{" "}
-              <code className="text-xs">.pg-profile</code>.
+              Opens <strong>Chrome on this computer</strong> via the PG Fetch Agent (live admin) or
+              localhost dev server. Solve captcha in that window if shown.
             </p>
             {fetching && (
               <p className="mt-2 text-sm font-medium text-primary-700">
