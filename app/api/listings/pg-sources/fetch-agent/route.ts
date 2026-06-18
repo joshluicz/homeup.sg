@@ -4,7 +4,7 @@ import {
   fetchAndSaveEnabledAgentPgListings,
 } from "@/lib/listings/fetch-agent-pg-sources";
 
-export const maxDuration = 600;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const { supabase, error: authError } = await requireAuth();

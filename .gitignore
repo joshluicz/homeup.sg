@@ -34,3 +34,4 @@ Thumbs.db
 .chrome-pg-manual/
 .pg-profile/
 .pg-profile-test/
+.vercel
