@@ -1,0 +1,8 @@
+# Separate Next.js app — not part of homeup-sg deployment
+apps/
+
+# Local / tooling artifacts
+.claude/
+**/__pycache__/
+supabase/.temp/
+seo-audit*.docx
