@@ -188,6 +188,19 @@ export function AnalyticsTab() {
         setNotConfigured(true);
         return;
       }
+      // Surface GA read-back failures (bad property ID, no service-account access, invalid key)
+      // instead of rendering them as empty/zeroed reports.
+      if (result?.error) {
+        const detail = result.detail ? ` — ${result.detail}` : "";
+        const hint =
+          result.error === "GA_API_ERROR"
+            ? " Check that GA_PROPERTY_ID is the numeric Property ID (not the G-XXXX Measurement ID) and that the service account has Viewer access on the GA4 property."
+            : result.error === "GA_AUTH_FAILED"
+              ? " The GA service-account key could not authenticate — re-check GA_SERVICE_ACCOUNT_JSON."
+              : "";
+        setError(`${result.error}${detail}.${hint}`);
+        return;
+      }
       setData(result as AnalyticsData);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load analytics");

@@ -21,9 +21,16 @@ import {
   videoObjectsSchema,
 } from "@/lib/seo/schema";
 
-// Static export requires generateStaticParams to return at least one entry, so we
-// fall back to a sentinel slug (matching the listings page's "_" pattern) that
-// renders notFound() when no real videos resolve at build time.
+// Vercel (dynamic) hosting: serve new/edited articles WITHOUT a redeploy.
+//  - dynamicParams: slugs added after build render on demand (instead of 404).
+//  - revalidate: existing pages refresh on a schedule; the admin save route also
+//    triggers on-demand revalidation (revalidatePath) so edits go live immediately.
+// NOTE: incompatible with a STATIC_EXPORT=true build — keep STATIC_EXPORT unset on Vercel.
+export const dynamicParams = true;
+export const revalidate = 3600;
+
+// generateStaticParams still pre-renders the articles that exist at build time (good for SEO);
+// the sentinel slug keeps it valid when none exist yet and renders notFound().
 const FALLBACK_SLUG = "_";
 
 type ArticlePageProps = { params: { slug: string } };

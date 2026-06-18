@@ -1,5 +1,13 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+
+// Push article + metadata changes live without a redeploy: revalidate the affected
+// pages so the ISR-cached /playbook/[slug] (and the listing) regenerate on next request.
+function revalidatePlaybook(slug?: string) {
+  revalidatePath("/playbook");
+  if (slug) revalidatePath(`/playbook/${slug}`);
+}
 
 export async function GET() {
   const { supabase, error } = await requireAuth();
@@ -55,6 +63,7 @@ export async function POST(request: Request) {
       .select()
       .single();
     if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+    revalidatePlaybook(payload.slug);
     return NextResponse.json({ video: data });
   }
 
@@ -70,6 +79,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
+  revalidatePlaybook(payload.slug);
   return NextResponse.json({ video: data }, { status: 201 });
 }
 
@@ -80,8 +90,15 @@ export async function DELETE(request: Request) {
   const { id } = await request.json();
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
+  const { data: row } = await supabase
+    .from("playbook_videos")
+    .select("slug")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error: dbError } = await supabase.from("playbook_videos").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
+  revalidatePlaybook(row?.slug as string | undefined);
   return NextResponse.json({ ok: true });
 }

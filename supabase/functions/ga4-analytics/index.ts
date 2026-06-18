@@ -118,8 +118,21 @@ Deno.serve(async (req) => {
     if (body.days) days = Number(body.days);
   } catch { /* no body */ }
 
-  const sa: ServiceAccount = JSON.parse(saJson);
-  const token = await getAccessToken(sa);
+  let sa: ServiceAccount;
+  try {
+    sa = JSON.parse(saJson);
+  } catch (_e) {
+    return jsonResponse({ error: "GA_CONFIG_INVALID", detail: "GA_SERVICE_ACCOUNT_JSON is not valid JSON." });
+  }
+
+  // Surface auth failures (bad/expired key, wrong service account) instead of silently returning zeros.
+  let token: string;
+  try {
+    token = await getAccessToken(sa);
+  } catch (e) {
+    return jsonResponse({ error: "GA_AUTH_FAILED", detail: e instanceof Error ? e.message : String(e) });
+  }
+
   const dateRange = [{ startDate: `${days}daysAgo`, endDate: "today" }];
 
   const [overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries, buttonClicks] =
@@ -202,6 +215,18 @@ Deno.serve(async (req) => {
         limit: 10,
       }),
     ]);
+
+  // The GA Data API returns 200 with an { error: {...} } body on failure (e.g. wrong
+  // property ID, or the service account lacks Viewer access). Surface it instead of
+  // returning empty reports that render as silent zeros.
+  const apiError = (overview as { error?: { message?: string; status?: string } }).error;
+  if (apiError) {
+    return jsonResponse({
+      error: "GA_API_ERROR",
+      detail: apiError.message ?? "Google Analytics Data API request failed.",
+      status: apiError.status,
+    });
+  }
 
   return jsonResponse({ overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries, buttonClicks, days });
 });
