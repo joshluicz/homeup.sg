@@ -5,7 +5,6 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaybookHero } from "@/components/sections/PlaybookHero";
 import { PlaybookLibrary } from "@/components/sections/PlaybookLibrary";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 
@@ -29,9 +28,9 @@ export default function PlaybookPage() {
       <main className="bg-white">
         <PlaybookHero />
         <Suspense fallback={null}>
-          {/* PlaybookLibrary fetches live from Supabase on mount,
-              falls back to PLAYBOOK_VIDEOS placeholders until loaded */}
-          <PlaybookLibrary videos={PLAYBOOK_VIDEOS} />
+          {/* PlaybookLibrary fetches live from Supabase on mount.
+              Starts empty so no placeholder cards show before the real videos load. */}
+          <PlaybookLibrary videos={[]} />
         </Suspense>
         <CtaBanner />
       </main>

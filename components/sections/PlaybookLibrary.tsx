@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { ArticleBody } from "@/components/sections/ArticleBody";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
-import { CATEGORY_LABELS, PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
+import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
 import { trackVideoPlay } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -54,11 +54,8 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
         if (error || !data) return;
-        const dbVideos = data.map(rowToVideo);
-        const dbSlugs = new Set(dbVideos.map((v) => v.slug));
-        const placeholders = PLAYBOOK_VIDEOS.filter((v) => !dbSlugs.has(v.slug));
-        // DB videos first, then any placeholders not yet replaced
-        setVideos([...dbVideos, ...placeholders]);
+        // Show only real videos from the database — no static placeholder cards.
+        setVideos(data.map(rowToVideo));
       });
   }, []);
 

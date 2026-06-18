@@ -27,18 +27,12 @@ const HDB_STEPS: ProcessStep[] = [
   },
   {
     step: "03",
-    title: "Arrange Viewings",
-    body: "Viewings coordinated with sellers' agents. HomeUP attends with you, reviews the unit condition, checks the block history, and gives an objective assessment before you form a view.",
-    weeks: "Week 2–6",
-  },
-  {
-    step: "04",
     title: "Offer & Negotiate",
     body: "Offer price assessed against recent transacted prices for the block. HomeUP structures the offer and negotiates on your behalf. The goal is to close right, not just close fast.",
     weeks: "Week 4–8",
   },
   {
-    step: "05",
+    step: "04",
     title: "OTP & Documentation",
     body: "OTP signed and grant applications submitted. HDB Resale Portal application filed. Checklist tracked through to the HDB completion appointment.",
     weeks: "Week 6–16",
@@ -60,18 +54,12 @@ const CONDO_STEPS: ProcessStep[] = [
   },
   {
     step: "03",
-    title: "Coordinated Viewings",
-    body: "Viewings arranged across shortlisted units. HomeUP attends with you and checks layout efficiency, noise, orientation, and any red flags before you form an attachment.",
-    weeks: "Week 2–6",
-  },
-  {
-    step: "04",
     title: "Negotiate & OTP",
     body: "Offer structured based on comparable transacted prices, unit condition, and seller urgency. HomeUP negotiates with your interests as the only priority, not speed of close.",
     weeks: "Week 4–9",
   },
   {
-    step: "05",
+    step: "04",
     title: "S&P & Completion",
     body: "Sale & Purchase Agreement coordinated with your solicitor. Loan approved, insurance arranged, and completion timeline tracked. HomeUP monitors every milestone through to keys.",
     weeks: "Week 7–24",
@@ -93,18 +81,12 @@ const NEW_LAUNCH_STEPS: ProcessStep[] = [
   },
   {
     step: "03",
-    title: "Preview & Launch",
-    body: "HomeUP secures preview access, advises on which stacks to prioritise, and attends launch day with you. We help you make a clear-headed decision under time pressure, not an emotional one.",
-    weeks: "Week 3–6",
-  },
-  {
-    step: "04",
     title: "Unit Selection & Option",
     body: "Unit selected based on your priorities, not the developer's preferred stack. Option fee (typically 5%) paid. OTP terms reviewed before you commit.",
     weeks: "Week 5–8",
   },
   {
-    step: "05",
+    step: "04",
     title: "S&P & Progressive Payments",
     body: "Sale & Purchase Agreement signed. HomeUP walks you through the progressive payment schedule tied to construction milestones. Snagging and handover coordinated at TOP.",
     weeks: "Week 7 onwards",
@@ -126,18 +108,12 @@ const GENERAL_STEPS: ProcessStep[] = [
   },
   {
     step: "03",
-    title: "Viewings, coordinated",
-    body: "All viewings scheduled and attended. Unit condition, location trade-offs, and resale potential reviewed at each one, so you make decisions with context.",
-    weeks: "Week 2–6",
-  },
-  {
-    step: "04",
     title: "Negotiate & Offer",
     body: "Offer price benchmarked to recent transactions. HomeUP negotiates on your behalf, with your net position (not the speed of close) as the priority.",
     weeks: "Week 4–8",
   },
   {
-    step: "05",
+    step: "04",
     title: "Documentation & Completion",
     body: "OTP, S&P, grant applications, and legal coordination handled through to completion. If you're selling and buying, both transactions are tracked as one.",
     weeks: "Week 6 onwards",
