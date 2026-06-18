@@ -16,11 +16,16 @@ function isLocalDevHost(): boolean {
   );
 }
 
+function isVercelHost(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.hostname.endsWith(".vercel.app");
+}
+
 function getImportEndpoints(): string[] {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
   const endpoints: string[] = [];
 
-  if (isLocalDevHost()) {
+  if (isLocalDevHost() || isVercelHost()) {
     endpoints.push("/api/listings/import");
   }
 

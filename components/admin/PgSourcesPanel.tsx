@@ -38,6 +38,22 @@ function isLocalDevHost(): boolean {
   );
 }
 
+/** Static FTP deploy — no API routes for sync. */
+function isStaticLpHost(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.hostname === "lp.homeup.sg";
+}
+
+function canRunPgFetch(): boolean {
+  return isLocalDevHost();
+}
+
+/** Sync uses Next.js API routes — Vercel and localhost, not static lp. */
+function canRunPgSync(): boolean {
+  if (typeof window === "undefined") return false;
+  return !isStaticLpHost();
+}
+
 export function PgSourcesPanel() {
   const [profileDrafts, setProfileDrafts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -55,7 +71,8 @@ export function PgSourcesPanel() {
   const [draftCount, setDraftCount] = useState(0);
   const [publishingAll, setPublishingAll] = useState(false);
 
-  const canRunLocalActions = isLocalDevHost();
+  const canRunFetch = canRunPgFetch();
+  const canRunSync = canRunPgSync();
   const enabledCount = AGENTS.filter((a) => profileDrafts[a.slug]?.trim()).length;
 
   const loadProfiles = useCallback(async () => {
@@ -263,12 +280,29 @@ export function PgSourcesPanel() {
         </p>
       </div>
 
-      {!canRunLocalActions && (
+      {!canRunFetch && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-medium">Steps 2–3 need localhost</p>
+          <p className="font-medium">Step 2 (fetch) needs localhost</p>
           <p className="mt-1 text-amber-800">
-            You can save agent profile URLs here on the live site. Run{" "}
-            <code className="text-xs">npm run dev</code> for fetch and sync.
+            PropertyGuru fetch opens Chrome on your computer via patchright. Run{" "}
+            <code className="text-xs">npm run dev</code> locally, or{" "}
+            <code className="text-xs">npm run pg:fetch</code>.
+            {canRunSync ? (
+              <>
+                {" "}
+                Step 3 (sync) works on this server after sources are fetched.
+              </>
+            ) : null}
+          </p>
+        </div>
+      )}
+
+      {!canRunSync && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-medium">Sync needs Vercel or localhost</p>
+          <p className="mt-1 text-amber-800">
+            The static <code className="text-xs">lp.homeup.sg</code> host has no API routes. Use{" "}
+            <code className="text-xs">homeup-sg.vercel.app</code> or localhost for sync.
           </p>
         </div>
       )}
@@ -342,7 +376,7 @@ export function PgSourcesPanel() {
               <Button
                 type="button"
                 onClick={handleFetchAll}
-                disabled={fetching || !canRunLocalActions || enabledCount === 0}
+                disabled={fetching || !canRunFetch || enabledCount === 0}
               >
                 {fetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Fetch all agents
@@ -432,7 +466,7 @@ export function PgSourcesPanel() {
                   onClick={handleSync}
                   disabled={
                     syncing ||
-                    !canRunLocalActions ||
+                    !canRunSync ||
                     (preview.to_import.length === 0 && preview.to_archive.length === 0)
                   }
                 >
