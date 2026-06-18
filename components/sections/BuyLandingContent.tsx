@@ -74,6 +74,7 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
         <BuyHero content={config.hero} />
         {showAwardsStrip && <BuyTeamAwards strip />}
         <PropertyTypeNav mode="buy" />
+        <BuyProcess propertyType={null} />
         <BuyPricing
           filterType={null}
           showLearnMore
@@ -81,7 +82,6 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
           showServices
         />
         <BuyFeeExplainer />
-        <BuyProcess propertyType={null} />
         <FAQSection
           items={faqConfig.items}
           eyebrow={faqConfig.eyebrow}
