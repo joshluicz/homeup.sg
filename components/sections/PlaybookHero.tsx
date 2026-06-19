@@ -1,26 +1,31 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { BookOpen, Video, RefreshCcw } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { PLAYBOOK_VIDEOS } from "@/lib/data/playbook";
-
-const stats = [
-  {
-    icon: Video,
-    value: `${PLAYBOOK_VIDEOS.length}`,
-    label: "Video Guides",
-  },
-  {
-    icon: BookOpen,
-    value: "5",
-    label: "Topics Covered",
-  },
-  {
-    icon: RefreshCcw,
-    value: "Monthly",
-    label: "New Content",
-  },
-];
+import { TOPIC_LABELS } from "@/lib/data/playbook";
+import { createClient } from "@/lib/supabase/client";
 
 export function PlaybookHero() {
+  // Live count of real published videos — updates automatically as videos are added.
+  const [videoCount, setVideoCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("playbook_videos")
+      .select("id", { count: "exact", head: true })
+      .not("video_url", "is", null)
+      .neq("video_url", "")
+      .then(({ count }) => setVideoCount(count ?? 0));
+  }, []);
+
+  const stats = [
+    { icon: Video, value: videoCount === null ? "—" : `${videoCount}`, label: "Video Guides" },
+    { icon: BookOpen, value: `${Object.keys(TOPIC_LABELS).length}`, label: "Topics Covered" },
+    { icon: RefreshCcw, value: "Monthly", label: "New Content" },
+  ];
+
   return (
     <section className="relative overflow-hidden bg-neutral-50 pb-16 pt-16 sm:pb-20 sm:pt-20">
       {/* Subtle green gradient glow */}

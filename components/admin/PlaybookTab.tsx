@@ -97,6 +97,8 @@ export function PlaybookTab() {
   const [form, setForm] = useState(emptyForm);
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [uploadTab, setUploadTab] = useState<"link" | "file">("link");
+  // Each item is EITHER a video OR an article — chosen up front.
+  const [kind, setKind] = useState<"video" | "article">("video");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -131,6 +133,7 @@ export function PlaybookTab() {
     setForm(emptyForm);
     setFaq([]);
     setError(null);
+    setKind("video");
     setUploadTab("link");
     setUploadProgress(null);
     setShowForm(true);
@@ -154,6 +157,7 @@ export function PlaybookTab() {
     });
     setFaq(v.faq ?? []);
     setError(null);
+    setKind(v.video_url ? "video" : "article");
     setUploadTab(v.video_url?.startsWith("http") ? "link" : "file");
     setUploadProgress(null);
     setShowForm(true);
@@ -206,11 +210,11 @@ export function PlaybookTab() {
       topic: form.topic || null,
       duration: form.duration.trim(),
       thumbnail: form.thumbnail.trim(),
-      video_url: form.video_url.trim(),
+      video_url: kind === "article" ? "" : form.video_url.trim(),
       featured: form.featured,
       published_at: form.published_at,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      article: form.article,
+      article: kind === "video" ? "" : form.article,
       meta_description: form.meta_description.trim(),
       faq: faq
         .map((item) => ({ q: item.q.trim(), a: item.a.trim() }))
@@ -283,6 +287,25 @@ export function PlaybookTab() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Content type — video OR article */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-900">What are you adding?</label>
+              <div className="flex gap-2">
+                {(["video", "article"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    className={`flex-1 rounded-lg border px-3 py-2 text-sm font-semibold capitalize transition-colors ${
+                      kind === k ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                    }`}
+                  >
+                    Upload {k}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Title */}
             <div>
               <label className="mb-1 block text-sm font-medium text-neutral-900">
@@ -311,7 +334,7 @@ export function PlaybookTab() {
             </div>
 
             {/* Video source */}
-            <div>
+            <div className={kind === "article" ? "hidden" : undefined}>
               <label className="mb-2 block text-sm font-medium text-neutral-900">Video</label>
               <div className="flex rounded-lg border border-neutral-200 bg-neutral-50 p-1 w-fit gap-1 mb-3">
                 <button
@@ -384,7 +407,7 @@ export function PlaybookTab() {
             </div>
 
             {/* Thumbnail */}
-            <div>
+            <div className={kind === "article" ? "hidden" : undefined}>
               <label className="mb-1 block text-sm font-medium text-neutral-900">Thumbnail URL</label>
               <input
                 type="url"
@@ -488,7 +511,7 @@ export function PlaybookTab() {
             </label>
 
             {/* Article & SEO */}
-            <div className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
+            <div className={`space-y-4 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4 ${kind === "video" ? "hidden" : ""}`}>
               <div>
                 <p className="text-sm font-semibold text-neutral-900">Article &amp; SEO</p>
                 <p className="text-xs text-neutral-400">

@@ -161,10 +161,12 @@ function StageSection({
 }) {
   const [playingVideo, setPlayingVideo] = useState<PlaybookVideo | null>(null);
 
-  // Primary video: first article in this topic with a video_url
-  const primaryVideo = articles.find((a) => a.videoUrl);
-  // Article cards: all articles with enough content to be a guide
-  const articleCards = articles.filter((a) => a.slug && (a.article || a.description));
+  // Main video for this topic = the MOST POPULAR one (featured); fall back to the latest.
+  // Any other videos in the topic surface in the Library grid below, not here.
+  const topicVideos = articles.filter((a) => a.videoUrl);
+  const primaryVideo = topicVideos.find((a) => a.featured) ?? topicVideos[0] ?? null;
+  // Article cards = real written guides only (have article content, no video).
+  const articleCards = articles.filter((a) => a.slug && a.article?.trim() && !a.videoUrl);
 
   return (
     <section
