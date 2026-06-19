@@ -4,7 +4,8 @@ import { ArrowLeft, Check } from "lucide-react";
 import type { Agent } from "@/lib/data/agents";
 import type { AgentVideo } from "@/lib/data/agents";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
-import { youtubeEmbedUrl, youtubeWatchUrl, youtubeThumbnail } from "@/lib/youtube";
+import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { youtubeWatchUrl, youtubeThumbnail } from "@/lib/youtube";
 
 interface AgentProfileProps {
   agent: Agent;
@@ -106,12 +107,10 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
             <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
               <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-sm">
                 <div className="relative aspect-video">
-                  <iframe
-                    src={youtubeEmbedUrl(featured.id)}
+                  <YoutubeEmbed
+                    videoId={featured.id}
                     title={featured.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="absolute inset-0 h-full w-full border-0"
+                    className="absolute inset-0 h-full w-full"
                   />
                 </div>
                 <div className="bg-white px-5 py-4">

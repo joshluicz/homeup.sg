@@ -73,7 +73,14 @@ export async function getAgentYoutubeVideos(agent: Agent): Promise<AgentVideo[]>
 }
 
 export function youtubeEmbedUrl(videoId: string): string {
-  return `https://www.youtube.com/embed/${videoId}?rel=0`;
+  const params = new URLSearchParams({
+    rel: "0",
+    modestbranding: "1",
+    iv_load_policy: "3",
+    playsinline: "1",
+    enablejsapi: "1",
+  });
+  return `https://www.youtube.com/embed/${videoId}?${params}`;
 }
 
 export function youtubeWatchUrl(videoId: string): string {

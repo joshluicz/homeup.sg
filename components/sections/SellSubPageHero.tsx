@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { SavingsSlider } from "@/components/ui/SavingsSlider";
 import { SellPlanCard } from "@/components/ui/SellPlanCard";
 import type { SellPageHero } from "@/lib/data/sell-pages";
@@ -23,7 +23,10 @@ export function SellSubPageHero({ content, filterType }: SellSubPageHeroProps) {
   const plan = SELL_PLANS.find((p) => p.type === filterType);
 
   return (
-    <section aria-label={`Selling ${TYPE_BREADCRUMB[filterType]}`} className="border-b border-neutral-100 bg-neutral-50">
+    <section
+      aria-label={`Selling ${TYPE_BREADCRUMB[filterType]}`}
+      className="border-b border-neutral-100 bg-neutral-50"
+    >
       <div className="container-page py-8 sm:py-10 lg:py-12">
         <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-sm font-normal text-neutral-500">
           <Link href="/sell" className="transition-colors hover:text-primary-600">

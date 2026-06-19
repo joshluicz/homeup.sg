@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
+import { BUY_HERO_ALT, BUY_HERO_IMAGE, BUY_HERO_IMAGE_CLASS } from "@/lib/constants/images";
 import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const WA = whatsAppUrlFor("heroBuy");
@@ -20,9 +21,6 @@ const fade = {
     transition: { duration: 0.6, delay: d, ease },
   }),
 };
-
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80";
 
 interface BuyHeroProps {
   content?: BuyPageHero;
@@ -101,11 +99,11 @@ export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
           >
             <div className="relative overflow-hidden rounded-xl sm:rounded-2xl" style={{ aspectRatio: "4/3" }}>
               <Image
-                src={HERO_IMAGE}
-                alt="Modern Singapore home"
+                src={BUY_HERO_IMAGE}
+                alt={BUY_HERO_ALT}
                 fill
                 priority
-                className="object-cover object-center"
+                className={BUY_HERO_IMAGE_CLASS}
                 sizes="(max-width: 1024px) 100vw, 56vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />

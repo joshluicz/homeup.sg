@@ -317,19 +317,13 @@ export default function PricingSection4({
           <ComparisonCards />
           <ComparisonTable />
 
-          <p className="mt-4 text-center text-xs font-normal leading-relaxed text-neutral-400">
+          <p className="mt-4 text-center text-[10px] font-normal leading-relaxed text-neutral-400">
             * HomeUP fixed fees shown before 9% GST. Savings = typical 2% commission (incl.
             GST) minus HomeUP fixed fee (incl. GST), based on the example sale prices shown.
           </p>
-          <p className="mt-2 text-center text-xs font-normal leading-relaxed text-neutral-400">
+          <p className="mt-2 text-center text-[10px] font-normal leading-relaxed text-neutral-400">
             Typical 2% commission reflects common market practice among CEA-registered
             salespersons in Singapore. It is not a statutory or regulated rate.
-          </p>
-        </FadeInUp>
-
-        <FadeInUp delay={0.2}>
-          <p className="mt-6 text-center text-xs text-neutral-400">
-            All packages include the same dedicated team.
           </p>
         </FadeInUp>
 
