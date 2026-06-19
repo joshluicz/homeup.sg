@@ -3,10 +3,11 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ListingsPageClient } from "@/components/listings/ListingsPageClient";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { ListingsHero } from "@/components/sections/ListingsHero";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, listingsItemListSchema } from "@/lib/seo/schema";
-import { getActiveListingsStatic, getListingStatsStatic } from "@/lib/listings/static-queries";
+import { getActiveListingsServer, getListingStatsServer } from "@/lib/listings/server-queries";
 
 export const metadata = buildPageMetadata({
   title: "Property Listings Singapore",
@@ -15,11 +16,19 @@ export const metadata = buildPageMetadata({
   path: "/listings",
 });
 
+export const revalidate = 3600;
+
 export default async function ListingsPage() {
-  const listings = await getActiveListingsStatic().catch(() => []);
-  const stats = await getListingStatsStatic(listings).catch(() => ({
-    total: 0, hdb: 0, condo: 0, landed: 0, apartment: 0,
-  }));
+  const [listings, stats] = await Promise.all([
+    getActiveListingsServer().catch(() => []),
+    getListingStatsServer().catch(() => ({
+      total: 0,
+      hdb: 0,
+      condo: 0,
+      landed: 0,
+      apartment: 0,
+    })),
+  ]);
 
   return (
     <>
@@ -34,6 +43,7 @@ export default async function ListingsPage() {
       />
       <Navbar />
       <main className="bg-white">
+        <ListingsHero stats={stats} />
         <ListingsPageClient initialListings={listings} initialStats={stats} />
         <CtaBanner />
         <LastUpdated className="pb-8" />

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { ListingsGrid } from "@/components/sections/ListingsGrid";
-import { ListingsHero } from "@/components/sections/ListingsHero";
+import { ListingsGridStatic } from "@/components/listings/ListingsGridStatic";
 import type { Listing } from "@/lib/listings/types";
-import { getActiveListings, getListingStats, type ListingStats } from "@/lib/listings/queries";
+import { getActiveListings, type ListingStats } from "@/lib/listings/queries";
 
 function ListingCardSkeleton() {
   return (
@@ -22,39 +22,23 @@ function ListingCardSkeleton() {
           <div className="h-4 w-12 rounded bg-neutral-100" />
           <div className="h-4 w-16 rounded bg-neutral-100" />
         </div>
-        <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
-          <div className="h-6 w-24 rounded-md bg-neutral-100" />
-          <div className="h-8 w-28 rounded-lg bg-neutral-100" />
-        </div>
       </div>
     </div>
   );
 }
 
-function ListingsSkeleton() {
+function ListingsGridSkeleton() {
   return (
-    <div>
-      {/* Hero skeleton */}
-      <div className="bg-neutral-50 border-b border-neutral-100 px-6 py-10 animate-pulse">
-        <div className="mx-auto max-w-6xl space-y-4">
-          <div className="h-8 w-64 rounded-lg bg-neutral-200" />
-          <div className="h-4 w-96 rounded bg-neutral-100" />
-          <div className="flex gap-3 pt-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-8 w-24 rounded-full bg-neutral-200" />
-            ))}
-          </div>
-        </div>
-      </div>
-      {/* Grid skeleton */}
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="section-padding bg-white">
+      <div className="container-page">
+        <div className="mb-10 h-10 w-64 animate-pulse rounded-lg bg-neutral-100" />
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <ListingCardSkeleton key={i} />
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -65,26 +49,28 @@ type Props = {
 
 export function ListingsPageClient({ initialListings, initialStats }: Props) {
   const [listings, setListings] = useState<Listing[]>(initialListings);
-  const [stats, setStats] = useState<ListingStats>(initialStats);
-  const [loading, setLoading] = useState(initialListings.length === 0);
+  const hasInitialData = initialListings.length > 0 || initialStats.total > 0;
+  const [loading, setLoading] = useState(!hasInitialData);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    // Refresh in background to pick up changes since the last build
-    Promise.all([getActiveListings(), getListingStats()])
-      .then(([listingsData, statsData]) => {
+    setHydrated(true);
+
+    getActiveListings()
+      .then((listingsData) => {
         setListings(listingsData);
-        setStats(statsData);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <ListingsSkeleton />;
+  if (loading) {
+    return <ListingsGridSkeleton />;
+  }
 
-  return (
-    <>
-      <ListingsHero stats={stats} />
-      <ListingsGrid listings={listings} />
-    </>
-  );
+  if (!hydrated && hasInitialData) {
+    return <ListingsGridStatic listings={listings} />;
+  }
+
+  return <ListingsGrid listings={listings} />;
 }
