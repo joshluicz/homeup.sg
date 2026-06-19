@@ -5,6 +5,16 @@ const nextConfig = {
   ...(isStaticExport ? { output: "export", trailingSlash: true } : {}),
   experimental: {
     serverComponentsExternalPackages: ["patchright", "patchright-core"],
+    optimizeCss: true,
+    optimizePackageImports: [
+      "lucide-react",
+      "framer-motion",
+      "motion",
+      "@radix-ui/react-accordion",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-navigation-menu",
+    ],
   },
   webpack: (config, { isServer }) => {
     if (isServer) {

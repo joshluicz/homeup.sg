@@ -59,7 +59,7 @@ function StatsCard() {
         {/* Primary stat */}
         <div className="shrink-0">
           <p className="font-display text-4xl font-extrabold leading-none tabular-nums text-primary-600 sm:text-5xl">
-            {total.toLocaleString()}
+            {total.toLocaleString("en-SG")}
             {showPlus && "+"}
           </p>
           <p className="mt-1.5 leading-tight text-neutral-700">
@@ -78,7 +78,7 @@ function StatsCard() {
           {breakdown.map((b) => (
             <div key={b.key} className="flex items-center gap-2">
               <span className="font-display text-xl font-bold tabular-nums text-neutral-800 sm:text-2xl md:text-3xl">
-                {breakdownValues[b.key].toLocaleString()}
+                {breakdownValues[b.key].toLocaleString("en-SG")}
                 {showPlus && "+"}
               </span>
               <span className="rounded-full bg-primary-50 px-2.5 py-0.5 text-xs font-semibold text-primary-700">

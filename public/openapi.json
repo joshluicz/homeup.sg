@@ -1,0 +1,99 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Homeup Public Listings API",
+    "description": "Public read-only API for active HDB and resale property listings in Singapore.",
+    "version": "1.0.0",
+    "contact": { "url": "https://homeup.sg" }
+  },
+  "servers": [
+    { "url": "https://homeup.sg/api/public", "description": "Production" }
+  ],
+  "paths": {
+    "/listings": {
+      "get": {
+        "operationId": "listListings",
+        "summary": "List active property listings",
+        "parameters": [
+          { "name": "listed_as", "in": "query", "description": "Filter by listing type (buy or rent)", "schema": { "type": "string", "enum": ["buy", "rent"] } },
+          { "name": "flat_type", "in": "query", "description": "Filter by HDB flat type (e.g. 4-room)", "schema": { "type": "string" } },
+          { "name": "min_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "max_price", "in": "query", "schema": { "type": "number" } },
+          { "name": "is_featured", "in": "query", "schema": { "type": "boolean" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1, "minimum": 1 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of active listings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "listings": { "type": "array", "items": { "$ref": "#/components/schemas/Listing" } },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/listings/{slug}": {
+      "get": {
+        "operationId": "getListing",
+        "summary": "Get a single active listing by slug",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Listing detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "listing": { "$ref": "#/components/schemas/Listing" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Listing not found" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Listing": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "slug": { "type": "string" },
+          "title": { "type": "string" },
+          "price": { "type": "number" },
+          "status": { "type": "string" },
+          "listed_as": { "type": "string", "enum": ["buy", "rent"] },
+          "flat_type": { "type": "string" },
+          "area_sqft": { "type": "number" },
+          "area_sqm": { "type": "number", "description": "Computed from area_sqft" },
+          "price_psf": { "type": "number", "description": "Price per square foot, computed" },
+          "is_featured": { "type": "boolean" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer" },
+          "page_size": { "type": "integer" },
+          "total": { "type": "integer" },
+          "total_pages": { "type": "integer" }
+        }
+      }
+    }
+  }
+}

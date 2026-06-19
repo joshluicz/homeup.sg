@@ -3,7 +3,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AgentsDirectory } from "@/components/sections/AgentsDirectory";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { LastUpdated } from "@/components/ui/LastUpdated";
 import { AGENTS } from "@/lib/data/agents";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, personSchema } from "@/lib/seo/schema";
@@ -31,7 +30,6 @@ export default function AgentsPage() {
       <main>
         <AgentsDirectory />
         <CtaBanner />
-        <LastUpdated className="pb-8" />
       </main>
       <Footer />
     </>

@@ -33,7 +33,7 @@ export function ListingsHero({ stats }: ListingsHeroProps) {
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
             Browse{" "}
             <span className="font-semibold tabular-nums text-neutral-900">
-              {stats.total.toLocaleString()} active listing{stats.total === 1 ? "" : "s"}
+              {stats.total.toLocaleString("en-SG")} active listing{stats.total === 1 ? "" : "s"}
             </span>{" "}
             across HDB, condo, and landed properties in Singapore. Every property is represented by
             a CEA-licensed HomeUP advisor at a transparent fixed fee, not a percentage of the sale

@@ -9,6 +9,12 @@
 - `Buy -> https://homeup.sg/buy`: Buyer representation packages and complimentary private-property service.
 - `Listings -> https://homeup.sg/listings`: Active HDB, condo, and landed listings across Singapore.
 
+## APIs and authentication
+- `API catalog -> https://homeup.sg/.well-known/api-catalog`: Machine-readable index of public JSON APIs.
+- `Public listings API -> https://homeup.sg/api/public/listings`: Active listings (no auth required).
+- `OAuth discovery -> https://homeup.sg/.well-known/oauth-authorization-server`: OAuth 2.0 metadata for protected admin APIs.
+- `OpenID Connect -> https://homeup.sg/.well-known/openid-configuration`: OIDC discovery for Supabase-backed sign-in.
+
 ## Facts for citation
 - Operating agency: C & H Properties Pte Ltd, CEA licence L3007139C
 - Office: 125A Lor 2 Toa Payoh #02-138, Singapore 311125

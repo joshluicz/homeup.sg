@@ -18,8 +18,8 @@ function LaurelSide({ flip, uid, fluid }: { flip?: boolean; uid: string; fluid?:
       viewBox={`0 0 ${HALF_W} ${WREATH_H}`}
       className={
         fluid
-          ? "h-[clamp(2rem,7vw,3.5rem)] w-auto shrink-0"
-          : "h-[2.35rem] w-auto shrink-0 sm:h-[3rem] lg:h-[3.5rem]"
+          ? "h-[clamp(2rem,7vw,3.5rem)] w-auto shrink-0 -mx-0.5 sm:-mx-1"
+          : "h-[2.35rem] w-auto shrink-0 sm:h-[3rem] lg:h-[3.5rem] -mx-0.5 sm:-mx-1"
       }
       style={{ aspectRatio: HALF_ASPECT }}
       aria-hidden="true"
@@ -65,12 +65,14 @@ export function LaurelFrame({
     <div
       className={
         fluid
-          ? "flex w-full min-w-0 items-center justify-center gap-[clamp(0.0625rem,0.4vw,0.375rem)]"
-          : "mx-auto flex w-full max-w-[9.5rem] items-center justify-center gap-0.5 sm:max-w-none sm:gap-1 lg:min-w-0 lg:flex-1 lg:gap-1.5"
+          ? "mx-auto flex w-fit max-w-full min-w-0 items-center justify-center gap-0 sm:gap-0.5"
+          : "mx-auto flex w-fit max-w-full items-center justify-center gap-0 sm:gap-0.5"
       }
     >
       <LaurelSide uid={uid} fluid={fluid} />
-      <div className="flex min-w-0 flex-1 flex-col items-center px-0 text-center sm:px-1">{children}</div>
+      <div className="flex min-w-0 shrink-0 flex-col items-center px-0.5 text-center sm:px-1">
+        {children}
+      </div>
       <LaurelSide uid={uid} flip fluid={fluid} />
     </div>
   );

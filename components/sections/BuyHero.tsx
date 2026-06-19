@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
-import { BUY_HERO_ALT, BUY_HERO_IMAGE, BUY_HERO_IMAGE_CLASS } from "@/lib/constants/images";
+import { BUY_HERO_ALT, BUY_HERO_IMAGE } from "@/lib/constants/images";
 import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const WA = whatsAppUrlFor("heroBuy");
@@ -98,14 +98,16 @@ export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
             className="w-full lg:flex-1"
           >
             <div className="relative overflow-hidden rounded-xl sm:rounded-2xl" style={{ aspectRatio: "4/3" }}>
-              <Image
-                src={BUY_HERO_IMAGE}
-                alt={BUY_HERO_ALT}
-                fill
-                priority
-                className={BUY_HERO_IMAGE_CLASS}
-                sizes="(max-width: 1024px) 100vw, 56vw"
-              />
+              <div className="absolute -left-[4%] -top-[6%] -right-[16%] -bottom-[18%]">
+                <Image
+                  src={BUY_HERO_IMAGE}
+                  alt={BUY_HERO_ALT}
+                  fill
+                  priority
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 56vw"
+                />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
 
               <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2.5 rounded-xl border border-white/20 bg-white/95 px-3 py-2.5 shadow-md backdrop-blur-sm sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm sm:gap-3 sm:px-4 sm:py-3">

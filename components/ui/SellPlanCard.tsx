@@ -1,6 +1,6 @@
 "use client";
 
-import NumberFlow from "@number-flow/react";
+import { HydrationSafeNumberFlow } from "@/components/ui/HydrationSafeNumberFlow";
 import { Check } from "lucide-react";
 import { ListingPlatformIcons } from "@/components/ui/ListingPlatformIcons";
 import { cn } from "@/lib/utils";import {
@@ -52,7 +52,7 @@ export function SellPlanCard({
         <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
           <span className={cn("font-display text-4xl font-bold tracking-tight", t.price)}>
             $
-            <NumberFlow format={{ style: "decimal" }} value={plan.price} />
+            <HydrationSafeNumberFlow format={{ style: "decimal" }} value={plan.price} />
           </span>
           <span className="text-sm font-medium text-neutral-500">+ GST</span>
           <span className="text-sm text-neutral-500">/ fixed fee</span>

@@ -11,7 +11,6 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { WhyCheaperTeaser } from "@/components/sections/WhyCheaperTeaser";
 import PricingSection4 from "@/components/ui/pricing-section-4";
-import { LastUpdated } from "@/components/ui/LastUpdated";
 import { HOMEPAGE_FAQ } from "@/lib/data/faqs";
 import { getActiveListingsServer, getListingStatsServer } from "@/lib/listings/server-queries";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -90,7 +89,6 @@ export default async function Home() {
         />
         <SocialPanel />
         <CtaBanner />
-        <LastUpdated className="pb-8" />
       </main>
       <Footer />
     </>

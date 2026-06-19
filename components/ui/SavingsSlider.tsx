@@ -1,7 +1,7 @@
 "use client";
 
-import NumberFlow from "@number-flow/react";
 import { useEffect, useState } from "react";
+import { HydrationSafeNumberFlow } from "@/components/ui/HydrationSafeNumberFlow";
 import { ParticleButton } from "@/components/ui/particle-button";
 import { cn } from "@/lib/utils";
 import {
@@ -126,7 +126,7 @@ function AnimatedAmount({
   if (isDragging) {
     return <>{formatAmount(value)}</>;
   }
-  return <NumberFlow value={value} format={{ style: "decimal" }} />;
+  return <HydrationSafeNumberFlow value={value} format={{ style: "decimal" }} />;
 }
 
 interface SavingsSliderProps {

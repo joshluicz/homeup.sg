@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
+import { SITE_LAST_UPDATED } from "@/lib/seo/content-freshness";
 
 const quickLinks: { label: string; href: string; external?: boolean }[] = [
   { label: "Sell", href: "/sell" },
@@ -14,7 +15,7 @@ const quickLinks: { label: string; href: string; external?: boolean }[] = [
   { label: "Playbook", href: "/playbook" },
   { label: "About", href: "/about" },
   { label: "Our Team", href: "/agents" },
-  { label: "Property Listing", href: "https://homeup.sg/property-listing/", external: true },
+  { label: "Property Listing", href: "/listings" },
   { label: "Privacy Policy", href: "/privacy-policy" },
 ];
 
@@ -70,8 +71,11 @@ export function Footer() {
       </div>
       <div className="border-t border-neutral-800">
         <div className="container-page py-6 text-xs leading-relaxed text-neutral-400">
-          © 2026 HOMEUP. All Rights Reserved. C &amp; H Properties Pte Ltd (CEA:
-          L3007139C). Haus Plus Pte. Ltd. (UEN 202538756D).
+          <p className="text-neutral-500">Last updated: {SITE_LAST_UPDATED}</p>
+          <p className="mt-1">
+            © 2026 HOMEUP. All Rights Reserved. C &amp; H Properties Pte Ltd (CEA:
+            L3007139C). Haus Plus Pte. Ltd. (UEN 202538756D).
+          </p>
         </div>
       </div>
     </footer>

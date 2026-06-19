@@ -1,26 +1,26 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
-import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
+import { ScrollToTopButton } from "@/components/ui/ScrollToTopButton";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
+import { CRITICAL_CSS } from "@/lib/critical-css";
 import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
 import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
 
+const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-jakarta",
   display: "swap",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-jetbrains",
-  display: "swap",
+  adjustFontFallback: true,
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -74,34 +74,38 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={jakarta.variable}>
+      <head>
+        <style id="critical-css" dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
+      </head>
       <body>
-        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
-          <>
-            {/* Runs before gtag config: if this browser was flagged internal (an admin
-                signed in), disable GA4 so admin/internal traffic never reaches Analytics. */}
-            <Script id="ga4-internal-guard" strategy="beforeInteractive">{`
-              try {
-                if (localStorage.getItem('homeup-internal') === '1') {
-                  window['ga-disable-${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}'] = true;
-                }
-              } catch (e) {}
-            `}</Script>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
-              strategy="afterInteractive"
-            />
-            <Script id="ga4-init" strategy="afterInteractive">{`
-              window.dataLayer=window.dataLayer||[];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js',new Date());
-              gtag('config','${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
-            `}</Script>
-          </>
+        {GA_ID && (
+          <Script id="ga4-loader" strategy="afterInteractive">{`
+            try {
+              if (localStorage.getItem('homeup-internal') === '1') {
+                window['ga-disable-${GA_ID}'] = true;
+              }
+            } catch (e) {}
+            (function () {
+              var script = document.createElement('script');
+              script.src = 'https://www.googletagmanager.com/gtag/js?id=${GA_ID}';
+              script.async = true;
+              document.head.appendChild(script);
+              script.onload = function () {
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                window.gtag = gtag;
+                gtag('js', new Date());
+                gtag('config', '${GA_ID}');
+              };
+            })();
+          `}</Script>
         )}
         <JsonLd data={websiteSchema()} />
         <AnalyticsProvider />
+        <WebMCPProvider />
         {children}
+        <ScrollToTopButton />
         <WhatsAppFloat />
         <Analytics />
       </body>

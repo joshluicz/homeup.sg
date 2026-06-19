@@ -4,7 +4,6 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { ListingsPageClient } from "@/components/listings/ListingsPageClient";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { ListingsHero } from "@/components/sections/ListingsHero";
-import { LastUpdated } from "@/components/ui/LastUpdated";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, listingsItemListSchema } from "@/lib/seo/schema";
 import { getActiveListingsServer, getListingStatsServer } from "@/lib/listings/server-queries";
@@ -46,7 +45,6 @@ export default async function ListingsPage() {
         <ListingsHero stats={stats} />
         <ListingsPageClient initialListings={listings} initialStats={stats} />
         <CtaBanner />
-        <LastUpdated className="pb-8" />
       </main>
       <Footer />
     </>

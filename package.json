@@ -17,7 +17,8 @@
     "pg:cross-check": "node scripts/pg-cross-agent-check.mjs",
     "pg:sheet": "npx tsx scripts/run-pg-sheet-sync.ts",
     "pg:automation": "npx tsx scripts/run-pg-automation.ts",
-    "pg:watch": "npx tsx scripts/run-pg-watch.ts"
+    "pg:watch": "npx tsx scripts/run-pg-watch.ts",
+    "dns-aid:publish": "node scripts/publish-dns-aid.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -60,6 +61,7 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "autoprefixer": "latest",
+    "critters": "^0.0.23",
     "eslint": "^8",
     "eslint-config-next": "14",
     "postcss": "latest",
