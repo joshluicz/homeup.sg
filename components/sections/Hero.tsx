@@ -1,7 +1,6 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { animate, motion, useInView } from "framer-motion";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Typewriter } from "@/components/ui/typewriter";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
@@ -9,7 +8,6 @@ import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const WA = whatsAppUrlFor("heroHome");
 const ease = [0.22, 1, 0.36, 1] as const;
-const COUNT_DURATION = 2.5;
 
 const fade = {
   hidden: { opacity: 0, y: 20 },
@@ -37,42 +35,15 @@ const agents = [
 ];
 
 function StatsCard() {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
-  const [total, setTotal] = useState(0);
-  const [hdb, setHdb] = useState(0);
-  const [condo, setCondo] = useState(0);
-  const [showPlus, setShowPlus] = useState(false);
-
-  useEffect(() => {
-    if (!inView) return;
-    setShowPlus(false);
-    const controls = [
-      animate(0, 1000, {
-        duration: COUNT_DURATION,
-        ease: "linear",
-        onUpdate: (v) => setTotal(Math.round(v)),
-        onComplete: () => setShowPlus(true),
-      }),
-      animate(0, 860, {
-        duration: COUNT_DURATION,
-        ease: "linear",
-        onUpdate: (v) => setHdb(Math.round(v)),
-      }),
-      animate(0, 260, {
-        duration: COUNT_DURATION,
-        ease: "linear",
-        onUpdate: (v) => setCondo(Math.round(v)),
-      }),
-    ];
-    return () => controls.forEach((c) => c.stop());
-  }, [inView]);
+  const total = 1000;
+  const hdb = 860;
+  const condo = 260;
+  const showPlus = true;
 
   const breakdownValues = { hdb, condo };
 
   return (
     <div
-      ref={ref}
       className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-[0_2px_20px_rgba(0,0,0,0.07)] sm:px-6 sm:py-5"
     >
       <noscript>
@@ -203,7 +174,7 @@ export function Hero() {
             custom={0.14} initial="hidden" animate="show" variants={fade}
             className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
           >
-            Most Singapore homeowners give away $10,000–$70,000 in commission.
+            Most Singapore homeowners give away $10,000 to $70,000 in commission.
             HomeUP charges a fixed fee for the same full service.
           </motion.p>
 

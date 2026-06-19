@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
   return buildPageMetadata({
     title: listing.title,
-    description: `${formatListingPrice(listing)} — ${listing.address_line_1 ?? "Singapore property listing"}. Enquire with a HomeUP CEA-licensed advisor.`,
+    description: `${formatListingPrice(listing)}. ${listing.address_line_1 ?? "Singapore property listing"}. Enquire with a HomeUP CEA-licensed advisor.`,
     path: `/listings/${listing.slug}`,
     ogImage: listing.featured_image_url ?? undefined,
     ogImageAlt: listing.title,

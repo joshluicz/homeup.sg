@@ -189,7 +189,7 @@ export function Testimonials() {
             <span className="text-primary-600">Real savings.</span>
           </h2>
           <p className="section-lead">
-            Homeowners share their experience with HomeUP — transparent pricing,
+            Homeowners share their experience with HomeUP: transparent pricing,
             professional service, and thousands saved versus percentage commission.
           </p>
         </motion.div>

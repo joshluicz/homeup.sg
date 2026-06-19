@@ -93,7 +93,7 @@ export function AboutContent({ listingCount }: { listingCount?: number }) {
             <Eyebrow>Our Approach</Eyebrow>
             <h2 className="section-title">A different model for Singapore property</h2>
             <p className="section-lead">
-              Most homeowners give away $10,000–$70,000 in agent commission on a single
+              Most homeowners give away $10,000 to $70,000 in agent commission on a single
               transaction. HomeUP was built to offer the same end-to-end service at a fee
               you know before you sign.
             </p>
@@ -180,7 +180,17 @@ export function AboutContent({ listingCount }: { listingCount?: number }) {
               </div>
               <div>
                 <dt className="font-semibold text-neutral-900">CEA licence</dt>
-                <dd className="mt-1 font-normal">L3007139C</dd>
+                <dd className="mt-1 font-normal">
+                  <a
+                    href="https://www.cea.gov.sg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 underline-offset-2 hover:underline"
+                  >
+                    L3007139C
+                  </a>{" "}
+                  (Council for Estate Agencies)
+                </dd>
               </div>
               <div>
                 <dt className="font-semibold text-neutral-900">Office</dt>
