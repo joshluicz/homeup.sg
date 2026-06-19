@@ -75,6 +75,14 @@ function StatsCard() {
       ref={ref}
       className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-[0_2px_20px_rgba(0,0,0,0.07)] sm:px-6 sm:py-5"
     >
+      <noscript>
+        <p className="font-display text-4xl font-extrabold text-primary-600 sm:text-5xl">1,000+</p>
+        <p className="mt-1.5 text-neutral-700">
+          <span className="font-display text-xl font-bold sm:text-2xl">Transactions</span>
+          <span className="text-sm font-medium"> closed</span>
+        </p>
+        <p className="mt-3 text-sm text-neutral-600">860+ HDB · 260+ Condo &amp; Landed</p>
+      </noscript>
       {/* Mobile: stacked; sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
         {/* Primary stat */}

@@ -13,6 +13,7 @@ import { WhyCheaperTeaser } from "@/components/sections/WhyCheaperTeaser";
 import PricingSection4 from "@/components/ui/pricing-section-4";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { HOMEPAGE_FAQ } from "@/lib/data/faqs";
+import { getActiveListingsServer, getListingStatsServer } from "@/lib/listings/server-queries";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   breadcrumbSchema,
@@ -40,7 +41,12 @@ function GreenDivider() {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const [stats, previewListings] = await Promise.all([
+    getListingStatsServer(),
+    getActiveListingsServer(6),
+  ]);
+
   return (
     <>
       <JsonLd
@@ -63,12 +69,12 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <WhyCheaperTeaser />
+        <WhyCheaperTeaser listingCount={stats.total} />
         <PricingSection4 />
         <GreenDivider />
         <Testimonials />
         <GreenDivider />
-        <PropertyListings />
+        <PropertyListings listingCount={stats.total} initialListings={previewListings} />
         <GreenDivider />
         <BuyCta />
         <GreenDivider />

@@ -4,7 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { ListingDetailClient } from "@/components/listings/ListingDetailClient";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { getAllListingSlugsServer, getListingBySlugServer } from "@/lib/listings/server-queries";
+import { getAllListingSlugsServer, getListingBySlugServer, getRelatedListingsServer } from "@/lib/listings/server-queries";
 import { LISTING_DETAIL_FALLBACK_SLUG } from "@/lib/listings/slug-from-path";
 import { formatListingPrice } from "@/lib/listings/public-utils";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -36,6 +36,9 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
   const listing = await getListingBySlugServer(params.slug);
+  const related = listing
+    ? await getRelatedListingsServer(listing.flat_type, listing.slug)
+    : [];
 
   return (
     <>
@@ -53,7 +56,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       )}
       <Navbar />
       <main>
-        <ListingDetailClient slug={params.slug} />
+        <ListingDetailClient
+          slug={params.slug}
+          initialListing={listing}
+          initialRelated={related}
+        />
         <CtaBanner />
       </main>
       <Footer />

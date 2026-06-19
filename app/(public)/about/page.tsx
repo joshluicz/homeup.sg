@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { AboutContent } from "@/components/sections/AboutContent";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { getListingStatsServer } from "@/lib/listings/server-queries";
 import { aboutPageSchema, breadcrumbSchema, organizationSchema } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
@@ -13,7 +14,9 @@ export const metadata = buildPageMetadata({
   path: "/about",
 });
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const stats = await getListingStatsServer();
+
   return (
     <>
       <JsonLd
@@ -28,7 +31,7 @@ export default function AboutPage() {
       />
       <Navbar />
       <main className="bg-white">
-        <AboutContent />
+        <AboutContent listingCount={stats.total} />
         <CtaBanner />
       </main>
       <Footer />

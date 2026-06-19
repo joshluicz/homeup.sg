@@ -24,16 +24,23 @@ const filterActive: Record<FilterType, string> = {
   Landed: "bg-amber-600 text-white border-amber-600",
 };
 
-export function PropertyListings() {
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+export function PropertyListings({
+  listingCount,
+  initialListings,
+}: {
+  listingCount?: number;
+  initialListings?: Listing[];
+}) {
+  const [listings, setListings] = useState<Listing[]>(initialListings ?? []);
+  const [loading, setLoading] = useState(!initialListings?.length);
   const [filter, setFilter] = useState<FilterType>("All");
 
   useEffect(() => {
+    if (initialListings?.length) return;
     getActiveListings()
       .then(setListings)
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialListings?.length]);
 
   const filtered = useMemo(
     () => (filter === "All" ? listings : listings.filter((l) => flatTypeFilterMatches(l, filter))),
@@ -49,7 +56,7 @@ export function PropertyListings() {
         <FadeInUp className="section-header">
           <Eyebrow>Current Listings</Eyebrow>
           <h2 className="section-title">
-            <ListingCount className="text-primary-600" suffix=" active listings" /> across Singapore
+            <ListingCount initialCount={listingCount} className="text-primary-600" suffix=" active listings" /> across Singapore
           </h2>
         </FadeInUp>
 

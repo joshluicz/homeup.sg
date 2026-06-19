@@ -34,7 +34,7 @@ const VALUES = [
   },
 ];
 
-export function AboutContent() {
+export function AboutContent({ listingCount }: { listingCount?: number }) {
   return (
     <>
       <section aria-label="About HomeUP" className="section-padding bg-white">
@@ -74,7 +74,7 @@ export function AboutContent() {
                 <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
                   <p className="font-display text-3xl font-extrabold text-primary-600">
                     {"dynamic" in stat && stat.dynamic ? (
-                      <ListingCount suffix="+" />
+                      <ListingCount initialCount={listingCount} suffix="+" />
                     ) : (
                       stat.value
                     )}

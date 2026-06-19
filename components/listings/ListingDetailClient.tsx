@@ -36,17 +36,29 @@ import { trackButtonClick } from "@/lib/analytics";
 
 type ListingDetailClientProps = {
   slug: string;
+  initialListing?: Listing | null;
+  initialRelated?: Listing[];
 };
 
-export function ListingDetailClient({ slug }: ListingDetailClientProps) {
-  const [listing, setListing] = useState<Listing | null>(null);
-  const [related, setRelated] = useState<Listing[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ListingDetailClient({
+  slug,
+  initialListing = null,
+  initialRelated = [],
+}: ListingDetailClientProps) {
+  const [listing, setListing] = useState<Listing | null>(initialListing);
+  const [related, setRelated] = useState<Listing[]>(initialRelated);
+  const [loading, setLoading] = useState(!initialListing);
+
   useEffect(() => {
     const resolvedSlug = resolveListingSlug(slug);
     if (!resolvedSlug) {
       setListing(null);
       setRelated([]);
+      setLoading(false);
+      return;
+    }
+
+    if (initialListing) {
       setLoading(false);
       return;
     }
@@ -61,7 +73,7 @@ export function ListingDetailClient({ slug }: ListingDetailClientProps) {
         }
       })
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, initialListing]);
 
   if (loading) {
     return (
