@@ -1,7 +1,7 @@
 import type { Agent, AgentVideo } from "@/lib/data/agents";
 
 const USER_AGENT =
-  "Mozilla/5.0 (compatible; HomeUPBot/1.0; +https://lp.homeup.sg)";
+  "Mozilla/5.0 (compatible; HomeUPBot/1.0; +https://homeup.sg)";
 
 function parseLatestFromRss(xml: string): AgentVideo | null {
   const videoIdMatch = xml.match(/<yt:videoId>([^<]+)<\/yt:videoId>/);

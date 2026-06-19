@@ -5,6 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AgentProfile } from "@/components/sections/AgentProfile";
 import { getAgentBySlug, getAllAgentSlugs } from "@/lib/data/agents";
+import { SITE_URL } from "@/lib/seo/constants";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   breadcrumbSchema,
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: AgentPageProps): Promise<Meta
     title: `${agent.name} | Property Advisor`,
     description: agent.bio,
     path: `/agents/${agent.slug}`,
-    ogImage: `https://lp.homeup.sg${agent.photo}`,
+    ogImage: `${SITE_URL}${agent.photo}`,
     ogImageAlt: `${agent.name}, CEA ${agent.cea}, HomeUP property advisor`,
     ogImageWidth: 400,
     ogImageHeight: 400,

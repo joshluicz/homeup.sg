@@ -5,6 +5,7 @@ import { BuyLandingContent } from "@/components/sections/BuyLandingContent";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
 import { BUY_FAQ_GENERAL } from "@/lib/data/faqs";
+import { SITE_URL } from "@/lib/seo/constants";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { BUY_HOW_TO_STEPS } from "@/lib/seo/schema";
 
@@ -14,7 +15,7 @@ export const metadata = buildPageMetadata({
   title: config.meta.title,
   description: config.meta.description,
   path: "/buy",
-  ogImage: "https://lp.homeup.sg/images/agent-tong-boon.png",
+  ogImage: `${SITE_URL}/images/agent-tong-boon.png`,
   ogImageAlt: "Yeo Tong Boon, HomeUP Senior Property Advisor",
   ogImageWidth: 400,
   ogImageHeight: 400,

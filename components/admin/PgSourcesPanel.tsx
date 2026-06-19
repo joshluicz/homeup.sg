@@ -48,11 +48,6 @@ type SheetRefreshResponse = {
 
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${LISTINGS_SHEET_ID}/edit`;
 
-function isStaticLpHost(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.location.hostname === "lp.homeup.sg";
-}
-
 export function PgSourcesPanel() {
   const [refreshing, setRefreshing] = useState(false);
   const [syncing, setSyncing] = useState(false);
@@ -68,8 +63,6 @@ export function PgSourcesPanel() {
   const [publishingAll, setPublishingAll] = useState(false);
   const [agentOnline, setAgentOnline] = useState(false);
   const [agentChecking, setAgentChecking] = useState(true);
-
-  const canRunSync = !isStaticLpHost();
 
   const refreshPreview = useCallback(async () => {
     try {
@@ -276,17 +269,7 @@ export function PgSourcesPanel() {
         </p>
       </div>
 
-      {!canRunSync && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <p className="font-medium">Sync needs Vercel or localhost</p>
-          <p className="mt-1 text-amber-800">
-            The static <code className="text-xs">lp.homeup.sg</code> host has no API routes. Use{" "}
-            <code className="text-xs">homeup-sg.vercel.app</code> or localhost.
-          </p>
-        </div>
-      )}
-
-      {canRunSync && !agentChecking && !agentOnline && (
+      {!agentChecking && !agentOnline && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="font-medium">Imports need the local agent on this PC</p>
           <p className="mt-1 text-amber-800">
@@ -322,7 +305,7 @@ export function PgSourcesPanel() {
           <ExternalLink className="h-3.5 w-3.5" />
         </a>
         <div className="mt-4">
-          <Button type="button" onClick={handleRefreshFromSheet} disabled={refreshing || !canRunSync}>
+          <Button type="button" onClick={handleRefreshFromSheet} disabled={refreshing}>
             {refreshing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Refresh from Google Sheet
           </Button>
@@ -428,7 +411,7 @@ export function PgSourcesPanel() {
             <Button
               type="button"
               onClick={handleSync}
-              disabled={syncing || !canRunSync || !canSyncNow}
+              disabled={syncing || !canSyncNow}
             >
               {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Sync to HomeUP

@@ -1,13 +1,12 @@
 import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
-
-const BASE = "https://lp.homeup.sg";
+import { SITE_URL } from "@/lib/seo/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const agentPages = getAllAgentSlugs().map((slug) => ({
-    url: `${BASE}/agents/${slug}`,
+    url: `${SITE_URL}/agents/${slug}`,
     lastModified: now,
     changeFrequency: "monthly" as const,
     priority: 0.7,
@@ -15,28 +14,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const listingSlugs = await getAllListingSlugsServer();
   const listingPages = listingSlugs.map((slug) => ({
-    url: `${BASE}/listings/${slug}`,
+    url: `${SITE_URL}/listings/${slug}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.75,
   }));
 
   return [
-    { url: BASE, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
-    { url: `${BASE}/sell`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/sell-hdb`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
-    { url: `${BASE}/sell-condo`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
-    { url: `${BASE}/sell-landed`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
-    { url: `${BASE}/buy`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
-    { url: `${BASE}/buy-hdb`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE}/buy-condo-landed`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE}/buy-new-launch`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE}/listings`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: SITE_URL, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
+    { url: `${SITE_URL}/sell`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/sell-hdb`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE_URL}/sell-condo`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE_URL}/sell-landed`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE_URL}/buy`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${SITE_URL}/buy-hdb`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/buy-condo-landed`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/buy-new-launch`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/listings`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
     ...listingPages,
-    { url: `${BASE}/agents`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${SITE_URL}/agents`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
     ...agentPages,
-    { url: `${BASE}/playbook`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
-    { url: `${BASE}/privacy-policy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE_URL}/playbook`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${SITE_URL}/privacy-policy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

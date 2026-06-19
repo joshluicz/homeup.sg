@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
 import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
 
@@ -21,11 +23,8 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-const BASE_URL = "https://lp.homeup.sg";
-const OG_IMAGE = `${BASE_URL}/images/team-group.png`;
-
 export const metadata: Metadata = {
-  metadataBase: new URL(BASE_URL),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Fixed-Fee Property Agents Singapore | HomeUP",
     template: "%s | HomeUP",
@@ -104,6 +103,7 @@ export default function RootLayout({
         <AnalyticsProvider />
         {children}
         <WhatsAppFloat />
+        <Analytics />
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-export const SITE_URL = "https://lp.homeup.sg";
+export const SITE_URL = "https://homeup.sg";
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const OG_IMAGE = `${SITE_URL}/images/team-group.png`;
 export const LEGAL_NAME = "C & H Properties Pte Ltd";
