@@ -262,9 +262,7 @@ export default function PricingSection4({
             <br className="hidden sm:block" /> We charge a flat fee instead.
           </h2>
           <p className="section-lead">
-            Percentage commission grows with your sale price. HomeUP charges one fixed amount
-            for the same listing, marketing, negotiation, and paperwork. You keep the
-            difference.
+            HomeUP charges one fixed fee with full agent services. You keep the difference!
           </p>
         </FadeInUp>
 
@@ -314,11 +312,6 @@ export default function PricingSection4({
             <h3 className="section-title text-2xl sm:text-3xl">
               Fixed fee vs typical 2% commission
             </h3>
-            <p className="section-lead">
-              Typical 2% commission is shown with GST included. HomeUP fixed fees are shown
-              at $1,999 / $4,999 / $9,999 before GST*. Savings reflect the full
-              GST-inclusive difference.
-            </p>
           </div>
 
           <ComparisonCards />
