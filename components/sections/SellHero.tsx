@@ -120,7 +120,7 @@ export function SellHero({ content }: SellHeroProps) {
   return (
     <section aria-label="Sell with HomeUP" className="bg-white">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
-        <div className="w-full shrink-0 lg:w-[44%]">
+        <div className="min-w-0 shrink-0 max-lg:w-full lg:w-[44%]">
           <motion.h1
             custom={0}
             initial="hidden"
@@ -168,7 +168,7 @@ export function SellHero({ content }: SellHeroProps) {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.25, ease }}
-          className="flex w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
+          className="flex min-w-0 max-lg:w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
         >
           <div className="order-2 w-full lg:order-1">
             <StatsCard />

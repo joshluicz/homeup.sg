@@ -1,6 +1,7 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useInView } from "framer-motion";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Typewriter } from "@/components/ui/typewriter";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
@@ -8,6 +9,7 @@ import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const WA = whatsAppUrlFor("heroHome");
 const ease = [0.22, 1, 0.36, 1] as const;
+const COUNT_DURATION = 2.5;
 
 const fade = {
   hidden: { opacity: 0, y: 20 },
@@ -35,15 +37,42 @@ const agents = [
 ];
 
 function StatsCard() {
-  const total = 1000;
-  const hdb = 860;
-  const condo = 260;
-  const showPlus = true;
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const [total, setTotal] = useState(0);
+  const [hdb, setHdb] = useState(0);
+  const [condo, setCondo] = useState(0);
+  const [showPlus, setShowPlus] = useState(false);
+
+  useEffect(() => {
+    if (!inView) return;
+    setShowPlus(false);
+    const controls = [
+      animate(0, 1000, {
+        duration: COUNT_DURATION,
+        ease: "linear",
+        onUpdate: (v) => setTotal(Math.round(v)),
+        onComplete: () => setShowPlus(true),
+      }),
+      animate(0, 860, {
+        duration: COUNT_DURATION,
+        ease: "linear",
+        onUpdate: (v) => setHdb(Math.round(v)),
+      }),
+      animate(0, 260, {
+        duration: COUNT_DURATION,
+        ease: "linear",
+        onUpdate: (v) => setCondo(Math.round(v)),
+      }),
+    ];
+    return () => controls.forEach((c) => c.stop());
+  }, [inView]);
 
   const breakdownValues = { hdb, condo };
 
   return (
     <div
+      ref={ref}
       className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-[0_2px_20px_rgba(0,0,0,0.07)] sm:px-6 sm:py-5"
     >
       <noscript>
@@ -141,7 +170,7 @@ export function Hero() {
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
 
         {/* Left: copy */}
-        <div className="w-full shrink-0 lg:w-[44%]">
+        <div className="min-w-0 shrink-0 max-lg:w-full lg:w-[44%]">
           <motion.h1
             custom={0} initial="hidden" animate="show" variants={fade}
             className="font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
@@ -199,7 +228,7 @@ export function Hero() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.25, ease }}
-          className="flex w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
+          className="flex min-w-0 max-lg:w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
         >
           <div className="order-2 w-full lg:order-1">
             <StatsCard />

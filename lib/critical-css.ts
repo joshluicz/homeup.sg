@@ -48,5 +48,6 @@ h1,h2{font-family:var(--font-jakarta,system-ui,sans-serif);font-weight:800;lette
 .relative{position:relative}
 .sticky{position:sticky;top:0;z-index:50}
 @media(min-width:640px){.sm\\:text-lg{font-size:1.125rem;line-height:1.75rem}.sm\\:text-2xl{font-size:1.5rem;line-height:2rem}.sm\\:text-5xl{font-size:3rem;line-height:1}.sm\\:flex-row{flex-direction:row}.sm\\:w-auto{width:auto}}
-@media(min-width:1024px){.lg\\:flex-row{flex-direction:row}.lg\\:flex-1{flex:1 1 0%}.lg\\:justify-start{justify-content:flex-start}}
+.min-w-0{min-width:0}
+@media(min-width:1024px){.lg\\:flex-row{flex-direction:row}.lg\\:flex-1{flex:1 1 0%}.lg\\:w-\\[44\\%\\]{width:44%}.lg\\:justify-start{justify-content:flex-start}}
 `.replace(/\s+/g, " ").trim();
