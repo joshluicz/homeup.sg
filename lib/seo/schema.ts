@@ -136,7 +136,9 @@ export function organizationSchema() {
     url: SITE_URL,
     logo: {
       "@type": "ImageObject",
-      url: `${SITE_URL}/images/homeup-logo-wordmark.png`,
+      url: `${SITE_URL}/images/homeup-logo-square-512.png`,
+      width: 512,
+      height: 512,
     },
     image: `${SITE_URL}/images/team-group.png`,
     description:
