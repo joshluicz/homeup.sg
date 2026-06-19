@@ -145,8 +145,17 @@ function ArticleCard({ video }: { video: PlaybookVideo }) {
       className="group flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-primary-200 hover:shadow-md"
     >
       <div className="mb-3 flex items-center gap-1.5">
-        <Clock className="h-3 w-3 text-primary-600" />
-        <span className="text-[11px] font-semibold text-primary-600">{readTime}</span>
+        {video.videoUrl ? (
+          <>
+            <Play className="h-3 w-3 fill-primary-600 text-primary-600" />
+            <span className="text-[11px] font-semibold text-primary-600">Watch + {readTime}</span>
+          </>
+        ) : (
+          <>
+            <Clock className="h-3 w-3 text-primary-600" />
+            <span className="text-[11px] font-semibold text-primary-600">{readTime}</span>
+          </>
+        )}
       </div>
       <p className="font-display text-sm font-bold leading-snug text-neutral-900 group-hover:text-primary-700 sm:text-base">
         {video.title}
@@ -176,8 +185,13 @@ function StageSection({
   // Any other videos in the topic surface in the Library grid below, not here.
   const topicVideos = articles.filter((a) => a.videoUrl);
   const primaryVideo = topicVideos.find((a) => a.featured) ?? topicVideos[0] ?? null;
-  // Article cards = real written guides only (have article content, no video).
-  const articleCards = articles.filter((a) => a.slug && a.article?.trim() && !a.videoUrl);
+  // Article cards = any item with a readable written guide (and a slug), EXCEPT the one
+  // already shown as this topic's main video (it gets a "Read the full guide" link instead).
+  // Items that have BOTH a video and an article still appear here so the guide is reachable —
+  // their /playbook/[slug] page renders the video AND the article together.
+  const articleCards = articles.filter(
+    (a) => a.slug && a.article?.trim() && a.id !== primaryVideo?.id,
+  );
 
   return (
     <section
@@ -208,7 +222,18 @@ function StageSection({
               <VideoThumbnail video={primaryVideo} onPlay={() => setPlayingVideo(primaryVideo)} />
             )}
             {!playingVideo && (
-              <p className="mt-3 text-sm font-semibold text-neutral-700">{primaryVideo.title}</p>
+              <div className="mt-3">
+                <p className="text-sm font-semibold text-neutral-700">{primaryVideo.title}</p>
+                {primaryVideo.slug && primaryVideo.article?.trim() && (
+                  <Link
+                    href={`/playbook/${primaryVideo.slug}`}
+                    className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700"
+                  >
+                    Read the full guide
+                    <span aria-hidden>→</span>
+                  </Link>
+                )}
+              </div>
             )}
           </div>
         )}
