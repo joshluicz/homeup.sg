@@ -11,7 +11,7 @@ import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
-import { toEmbedUrl } from "@/lib/playbook/embed";
+import { toEmbedUrl, isDirectVideoFile } from "@/lib/playbook/embed";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   articleSchema,
@@ -111,13 +111,17 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
           {/* Video */}
           {video.videoUrl && (
             <div className="mt-8 aspect-video w-full overflow-hidden rounded-2xl bg-neutral-900">
-              <iframe
-                src={toEmbedUrl(video.videoUrl)}
-                title={video.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="h-full w-full"
-              />
+              {isDirectVideoFile(video.videoUrl) ? (
+                <video src={video.videoUrl} title={video.title} controls playsInline className="h-full w-full" />
+              ) : (
+                <iframe
+                  src={toEmbedUrl(video.videoUrl)}
+                  title={video.title}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="h-full w-full"
+                />
+              )}
             </div>
           )}
 

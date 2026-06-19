@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link, Upload } from "lucide-react";
 import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
+import { videoThumbnail } from "@/lib/playbook/embed";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
 
@@ -46,6 +47,29 @@ const emptyForm = {
   article: "",
   meta_description: "",
 };
+
+// Grab a poster frame from an uploaded video file, entirely in the browser (no server/ffmpeg).
+function capturePoster(file: File): Promise<Blob | null> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.muted = true;
+    const done = (blob: Blob | null) => { URL.revokeObjectURL(url); resolve(blob); };
+    video.onloadedmetadata = () => { video.currentTime = Math.min(1, (video.duration || 2) / 2); };
+    video.onseeked = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth || 1280;
+      canvas.height = video.videoHeight || 720;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return done(null);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => done(blob), "image/jpeg", 0.8);
+    };
+    video.onerror = () => done(null);
+    video.src = url;
+  });
+}
 
 function slugify(title: string): string {
   return (
@@ -192,6 +216,20 @@ export function PlaybookTab() {
 
     const { data: urlData } = supabase.storage.from("playbook-videos").getPublicUrl(data.path);
     setForm((f) => ({ ...f, video_url: urlData.publicUrl }));
+
+    // Auto-generate a thumbnail from the video's first frame.
+    setUploadProgress("Generating thumbnail…");
+    const poster = await capturePoster(file);
+    if (poster) {
+      const tpath = `thumbnails/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      const { data: tdata, error: terr } = await supabase.storage
+        .from("playbook-videos")
+        .upload(tpath, poster, { contentType: "image/jpeg", upsert: false });
+      if (!terr && tdata) {
+        const { data: turl } = supabase.storage.from("playbook-videos").getPublicUrl(tdata.path);
+        setForm((f) => ({ ...f, thumbnail: f.thumbnail || turl.publicUrl }));
+      }
+    }
     setUploadProgress("✓ Uploaded");
     setUploading(false);
   }
@@ -363,7 +401,11 @@ export function PlaybookTab() {
                 <input
                   type="url"
                   value={form.video_url}
-                  onChange={(e) => set("video_url", e.target.value)}
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    const thumb = videoThumbnail(url); // auto-fill thumbnail for YouTube links
+                    setForm((f) => ({ ...f, video_url: url, thumbnail: f.thumbnail || thumb }));
+                  }}
                   placeholder="https://www.youtube.com/watch?v=... or Vimeo URL"
                   className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
                 />

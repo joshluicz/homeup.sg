@@ -3,6 +3,7 @@
 import { Play, Clock, Tag } from "lucide-react";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
+import { resolveThumbnail } from "@/lib/playbook/embed";
 import { cn } from "@/lib/utils";
 
 interface VideoCardProps {
@@ -44,7 +45,7 @@ export function VideoCard({ video, onPlay, onReadGuide, featured = false }: Vide
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={video.thumbnail}
+          src={resolveThumbnail(video.thumbnail, video.videoUrl)}
           alt={video.title}
           className={cn(
             "absolute inset-0 h-full w-full object-cover transition-transform duration-500",

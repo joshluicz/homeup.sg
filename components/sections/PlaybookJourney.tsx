@@ -13,7 +13,7 @@ import Link from "next/link";
 import { Clock, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { toEmbedUrl } from "@/lib/playbook/embed";
+import { toEmbedUrl, resolveThumbnail, isDirectVideoFile } from "@/lib/playbook/embed";
 import type { PlaybookVideo, PlaybookTopic } from "@/lib/data/playbook";
 import { TOPIC_LABELS } from "@/lib/data/playbook";
 
@@ -70,13 +70,24 @@ function InlineVideo({
       >
         <X className="h-4 w-4" />
       </button>
-      <iframe
-        src={`${toEmbedUrl(video.videoUrl)}?autoplay=1&rel=0`}
-        title={video.title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        className="h-full w-full"
-      />
+      {isDirectVideoFile(video.videoUrl) ? (
+        <video
+          src={video.videoUrl}
+          title={video.title}
+          controls
+          autoPlay
+          playsInline
+          className="h-full w-full"
+        />
+      ) : (
+        <iframe
+          src={`${toEmbedUrl(video.videoUrl)}?autoplay=1&rel=0`}
+          title={video.title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="h-full w-full"
+        />
+      )}
     </div>
   );
 }
@@ -96,9 +107,9 @@ function VideoThumbnail({
       style={{ aspectRatio: "16/9" }}
       aria-label={`Play: ${video.title}`}
     >
-      {video.thumbnail ? (
+      {resolveThumbnail(video.thumbnail, video.videoUrl) ? (
         <img
-          src={video.thumbnail}
+          src={resolveThumbnail(video.thumbnail, video.videoUrl)}
           alt={video.title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />

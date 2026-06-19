@@ -9,6 +9,7 @@ import { ArticleBody } from "@/components/sections/ArticleBody";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
+import { isDirectVideoFile } from "@/lib/playbook/embed";
 import { trackVideoPlay } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -224,13 +225,24 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
 
               {/* Video player */}
               <div className="aspect-video w-full bg-neutral-900">
-                <iframe
-                  src={toEmbedUrl(activeVideo.videoUrl)}
-                  title={activeVideo.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="h-full w-full"
-                />
+                {isDirectVideoFile(activeVideo.videoUrl) ? (
+                  <video
+                    src={activeVideo.videoUrl}
+                    title={activeVideo.title}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="h-full w-full"
+                  />
+                ) : (
+                  <iframe
+                    src={toEmbedUrl(activeVideo.videoUrl)}
+                    title={activeVideo.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="h-full w-full"
+                  />
+                )}
               </div>
 
               {/* Video info */}
