@@ -48,6 +48,7 @@ const Typewriter = ({
     },
   },
 }: TypewriterProps) => {
+  const [mounted, setMounted] = useState(false);
   const [displayText, setDisplayText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,6 +57,12 @@ const Typewriter = ({
   const texts = Array.isArray(text) ? text : [text];
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     let timeout: ReturnType<typeof setTimeout>;
 
     const currentText = texts[currentTextIndex];
@@ -95,6 +102,7 @@ const Typewriter = ({
 
     return () => clearTimeout(timeout);
   }, [
+    mounted,
     currentIndex,
     displayText,
     isDeleting,
@@ -107,25 +115,28 @@ const Typewriter = ({
     initialDelay,
   ]);
 
+  const hideCursor =
+    hideCursorOnType &&
+    (currentIndex < texts[currentTextIndex].length || isDeleting);
+
   return (
     <span className={cn("inline whitespace-pre-wrap tracking-tight", className)}>
-      <span>{displayText}</span>
-      {showCursor && (
-        <motion.span
-          variants={cursorAnimationVariants}
-          className={cn(
-            cursorClassName,
-            hideCursorOnType &&
-              (currentIndex < texts[currentTextIndex].length || isDeleting)
-              ? "hidden"
-              : "",
-          )}
-          initial="initial"
-          animate="animate"
-        >
-          {cursorChar}
-        </motion.span>
-      )}
+      <span suppressHydrationWarning>{displayText}</span>
+      {showCursor &&
+        (mounted ? (
+          <motion.span
+            variants={cursorAnimationVariants}
+            className={cn(cursorClassName, hideCursor ? "hidden" : "")}
+            initial="initial"
+            animate="animate"
+          >
+            {cursorChar}
+          </motion.span>
+        ) : (
+          <span className={cn(cursorClassName, "opacity-0")} aria-hidden="true">
+            {cursorChar}
+          </span>
+        ))}
     </span>
   );
 };

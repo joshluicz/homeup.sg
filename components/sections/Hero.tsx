@@ -1,11 +1,21 @@
 "use client";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { animate, motion, useInView } from "framer-motion";
+import { animate, motion } from "framer-motion";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
-import { Typewriter } from "@/components/ui/typewriter";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { whatsAppUrlFor } from "@/lib/whatsapp";
+
+const Typewriter = dynamic(
+  () => import("@/components/ui/typewriter").then((m) => ({ default: m.Typewriter })),
+  {
+    ssr: false,
+    loading: () => (
+      <span className="inline min-w-[11.5ch] text-left text-primary-600" aria-hidden="true" />
+    ),
+  },
+);
 
 const WA = whatsAppUrlFor("heroHome");
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -38,14 +48,12 @@ const agents = [
 
 function StatsCard() {
   const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
   const [total, setTotal] = useState(0);
   const [hdb, setHdb] = useState(0);
   const [condo, setCondo] = useState(0);
   const [showPlus, setShowPlus] = useState(false);
 
   useEffect(() => {
-    if (!inView) return;
     setShowPlus(false);
     const controls = [
       animate(0, 1000, {
@@ -66,7 +74,7 @@ function StatsCard() {
       }),
     ];
     return () => controls.forEach((c) => c.stop());
-  }, [inView]);
+  }, []);
 
   const breakdownValues = { hdb, condo };
 
@@ -75,17 +83,7 @@ function StatsCard() {
       ref={ref}
       className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-[0_2px_20px_rgba(0,0,0,0.07)] sm:px-6 sm:py-5"
     >
-      <noscript>
-        <p className="font-display text-4xl font-extrabold text-primary-600 sm:text-5xl">1,000+</p>
-        <p className="mt-1.5 text-neutral-700">
-          <span className="font-display text-xl font-bold sm:text-2xl">Transactions</span>
-          <span className="text-sm font-medium"> closed</span>
-        </p>
-        <p className="mt-3 text-sm text-neutral-600">860+ HDB · 260+ Condo &amp; Landed</p>
-      </noscript>
-      {/* Mobile: stacked; sm+: side-by-side */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-        {/* Primary stat */}
         <div className="shrink-0">
           <p className="font-display text-4xl font-extrabold leading-none tabular-nums text-primary-600 sm:text-5xl">
             {total.toLocaleString("en-SG")}
@@ -102,7 +100,6 @@ function StatsCard() {
 
         <div className="hidden h-14 w-px shrink-0 bg-neutral-200 sm:block sm:h-16" aria-hidden="true" />
 
-        {/* Breakdown */}
         <div className="flex flex-row gap-4 sm:flex-col sm:gap-2.5">
           {breakdown.map((b) => (
             <div key={b.key} className="flex items-center gap-2">

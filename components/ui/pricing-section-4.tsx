@@ -50,58 +50,6 @@ interface PricingSection4Props {
   showSlider?: boolean;
 }
 
-function SavingsSliderStaticFallback() {
-  return (
-    <noscript>
-      <div
-        className="mt-12 overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm"
-        aria-label="Savings calculator examples without JavaScript"
-      >
-        <div className="border-b border-neutral-200 bg-neutral-900 px-6 py-8 sm:px-10">
-          <h3 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-            How much will you save?
-          </h3>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-400">
-            Example savings at common sale prices. HomeUP fixed fees shown before GST.
-          </p>
-        </div>
-        <div className="divide-y divide-neutral-100 px-6 py-6 sm:px-10">
-          {COMPARISON_ROWS.map((row) => (
-            <article key={row.type} className="py-5 first:pt-0 last:pb-0">
-              <h4 className="text-sm font-bold text-neutral-900">{row.type}</h4>
-              <p className="mt-1 text-sm font-normal text-neutral-500">
-                Example sale: {formatSgd(row.salePrice)}
-              </p>
-              <dl className="mt-3 grid gap-2 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <dt className="font-normal text-neutral-600">Typical 2% (incl. GST)</dt>
-                  <dd className="font-semibold text-neutral-900">
-                    {formatSgd(row.typicalInclGst)}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <dt className="font-normal text-neutral-600">HomeUP fixed fee*</dt>
-                  <dd className="font-semibold text-neutral-900">
-                    {formatHomeupFee(row.homeupBase)}
-                  </dd>
-                </div>
-                <div className="flex items-center justify-between gap-4 border-t border-neutral-100 pt-2">
-                  <dt className="font-semibold text-primary-700">You save</dt>
-                  <dd className="font-bold text-primary-700">{formatSgd(row.savings)}</dd>
-                </div>
-              </dl>
-            </article>
-          ))}
-        </div>
-        <p className="border-t border-neutral-100 px-6 py-4 text-center text-xs font-normal text-neutral-400 sm:px-10">
-          * HomeUP fixed fees shown before 9% GST. Savings use GST-inclusive amounts on both
-          sides.
-        </p>
-      </div>
-    </noscript>
-  );
-}
-
 function saleContextLabel(type: (typeof COMPARISON_ROWS)[number]["type"]) {
   if (type === "HDB Flat") return "HDB flat";
   if (type === "Condo / EC") return "condo";
@@ -328,12 +276,9 @@ export default function PricingSection4({
         </FadeInUp>
 
         {showSlider && (
-          <>
-            <SavingsSliderStaticFallback />
-            <FadeInUp delay={0.25}>
-              <SavingsSlider mode="sell" defaultType={defaultSliderType} />
-            </FadeInUp>
-          </>
+          <FadeInUp delay={0.25}>
+            <SavingsSlider mode="sell" defaultType={defaultSliderType} />
+          </FadeInUp>
         )}
       </div>
     </section>
