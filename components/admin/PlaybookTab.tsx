@@ -477,7 +477,7 @@ export function PlaybookTab() {
                   ))}
                 </select>
               </div>
-              <div>
+              <div className={kind === "article" ? "hidden" : undefined}>
                 <label className="mb-1 block text-sm font-medium text-neutral-900">Duration</label>
                 <input
                   type="text"
@@ -549,7 +549,7 @@ export function PlaybookTab() {
                 onChange={(e) => set("featured", e.target.checked)}
                 className="h-4 w-4 rounded border-neutral-300 accent-primary-600"
               />
-              <span className="text-sm font-medium text-neutral-900">Featured video</span>
+              <span className="text-sm font-medium text-neutral-900">{kind === "article" ? "Featured article" : "Featured video"}</span>
             </label>
 
             {/* Article & SEO */}

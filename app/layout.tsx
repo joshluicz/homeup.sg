@@ -79,6 +79,15 @@ export default function RootLayout({
       <body>
         {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
           <>
+            {/* Runs before gtag config: if this browser was flagged internal (an admin
+                signed in), disable GA4 so admin/internal traffic never reaches Analytics. */}
+            <Script id="ga4-internal-guard" strategy="beforeInteractive">{`
+              try {
+                if (localStorage.getItem('homeup-internal') === '1') {
+                  window['ga-disable-${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}'] = true;
+                }
+              } catch (e) {}
+            `}</Script>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
               strategy="afterInteractive"
