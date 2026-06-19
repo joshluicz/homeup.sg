@@ -269,16 +269,27 @@ export function PlaybookTab() {
       if (dbError) { setError(dbError.message); setSaving(false); return; }
     }
 
+    await revalidatePlaybook();
     setSaving(false);
     setShowForm(false);
     setEditId(null);
     await loadVideos();
   }
 
+  // Push the direct-Supabase save/delete live on the ISR-cached public pages immediately.
+  async function revalidatePlaybook() {
+    try {
+      await fetch("/api/admin/playbook/revalidate", { method: "POST" });
+    } catch {
+      /* non-fatal: pages still refresh on the next ISR window */
+    }
+  }
+
   async function handleDelete(v: Video) {
     if (!confirm(`Delete "${v.title}"? This cannot be undone.`)) return;
     setDeleting(v.id);
     await supabase.from("playbook_videos").delete().eq("id", v.id);
+    await revalidatePlaybook();
     setDeleting(null);
     await loadVideos();
   }

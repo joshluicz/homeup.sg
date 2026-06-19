@@ -224,6 +224,11 @@ function StageSection({
             {!playingVideo && (
               <div className="mt-3">
                 <p className="text-sm font-semibold text-neutral-700">{primaryVideo.title}</p>
+                {primaryVideo.description && (
+                  <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-neutral-500">
+                    {primaryVideo.description}
+                  </p>
+                )}
                 {primaryVideo.slug && primaryVideo.article?.trim() && (
                   <Link
                     href={`/playbook/${primaryVideo.slug}`}

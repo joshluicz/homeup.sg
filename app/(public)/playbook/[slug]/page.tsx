@@ -103,7 +103,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             {video.title}
           </h1>
           {video.description && (
-            <p className="mt-3 text-lg leading-relaxed text-neutral-600">
+            <p className="mt-3 whitespace-pre-line text-lg leading-relaxed text-neutral-600">
               {video.description}
             </p>
           )}
