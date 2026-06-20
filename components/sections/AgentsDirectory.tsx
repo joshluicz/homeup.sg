@@ -15,9 +15,7 @@ export function AgentsDirectory() {
           <Eyebrow>Our Agents</Eyebrow>
           <h1 className="section-title">Meet the HomeUP team</h1>
           <p className="section-lead">
-            CEA-licensed advisors who combine real transaction experience with a
-            fixed-fee model, so guidance stays aligned with your interests, not
-            commission targets.
+            CEA-licensed advisors who combine real transaction experience with a fixed-fee model.
           </p>
         </FadeInUp>
 
@@ -41,9 +39,6 @@ export function AgentsDirectory() {
                 <div className="flex flex-1 flex-col p-5">
                   <h2 className="text-sm font-bold text-neutral-900">{agent.name}</h2>
                   <p className="mt-1 text-sm font-normal text-neutral-400">{agent.cea}</p>
-                  <p className="mt-3 flex-1 text-sm font-normal leading-relaxed text-neutral-600">
-                    {agent.bio}
-                  </p>
                   <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600">
                     View profile
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

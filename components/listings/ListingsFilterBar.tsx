@@ -26,8 +26,6 @@ import { cn } from "@/lib/utils";
 interface ListingsFilterBarProps {
   filters: ListingsFilterState;
   onFiltersChange: (filters: ListingsFilterState) => void;
-  resultCount: number;
-  totalCount: number;
 }
 
 function QuickFilterPill({
@@ -63,8 +61,6 @@ function QuickFilterPill({
 export function ListingsFilterBar({
   filters,
   onFiltersChange,
-  resultCount,
-  totalCount,
 }: ListingsFilterBarProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetTab, setSheetTab] = useState<PrimaryFilterTab>("type");
@@ -149,14 +145,6 @@ export function ListingsFilterBar({
           </button>
         )}
       </div>
-
-      <p className="text-sm text-neutral-500">
-        <span className="font-semibold text-neutral-900">{resultCount.toLocaleString()}</span>
-        {resultCount !== totalCount && (
-          <span> of {totalCount.toLocaleString()}</span>
-        )}{" "}
-        {resultCount === 1 ? "property" : "properties"} in Singapore
-      </p>
 
       <ListingsFiltersSheet
         open={sheetOpen}

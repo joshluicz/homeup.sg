@@ -39,9 +39,13 @@ export function ListingsGrid({ listings }: ListingsGridProps) {
             <p className="text-sm font-semibold uppercase tracking-wide text-primary-600">
               All properties
             </p>
-            <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
-              <span className="tabular-nums text-primary-600">{listings.length.toLocaleString()}</span>{" "}
-              active listing{listings.length === 1 ? "" : "s"}
+            <h2 className="mt-1 flex flex-wrap items-baseline gap-x-2 font-display font-extrabold tracking-tight text-neutral-900">
+              <span className="text-4xl tabular-nums text-primary-600 sm:text-5xl">
+                {listings.length.toLocaleString()}
+              </span>
+              <span className="text-xl sm:text-2xl">
+                active listing{listings.length === 1 ? "" : "s"}
+              </span>
             </h2>
           </div>
           <p className="text-sm text-neutral-500">
@@ -53,8 +57,6 @@ export function ListingsGrid({ listings }: ListingsGridProps) {
           <ListingsFilterBar
             filters={filters}
             onFiltersChange={setFilters}
-            resultCount={filtered.length}
-            totalCount={listings.length}
           />
         </div>
 

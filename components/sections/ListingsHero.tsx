@@ -1,19 +1,6 @@
-import { Home, TrendingUp, MapPin, LayoutGrid } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import type { ListingStats } from "@/lib/listings/queries";
 
-type ListingsHeroProps = {
-  stats: ListingStats;
-};
-
-export function ListingsHero({ stats }: ListingsHeroProps) {
-  const statItems = [
-    { icon: LayoutGrid, value: `${stats.total}`, label: "Active Listings" },
-    { icon: Home, value: `${stats.hdb}`, label: "HDB" },
-    { icon: TrendingUp, value: `${stats.condo}`, label: "Condo" },
-    { icon: MapPin, value: `${stats.landed}`, label: "Landed" },
-  ];
-
+export function ListingsHero() {
   return (
     <section className="relative overflow-hidden bg-neutral-50 pb-16 pt-16 sm:pb-20 sm:pt-20">
       <div
@@ -31,31 +18,8 @@ export function ListingsHero({ stats }: ListingsHeroProps) {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
-            Browse{" "}
-            <span className="font-semibold tabular-nums text-neutral-900">
-              {stats.total.toLocaleString("en-SG")} active listing{stats.total === 1 ? "" : "s"}
-            </span>{" "}
-            across HDB, condo, and landed properties in Singapore. Every property is represented by
-            a CEA-licensed HomeUP advisor at a transparent fixed fee, not a percentage of the sale
-            price. Enquire directly via WhatsApp and speak with the agent handling the listing.
+            Browse all our active listings across HDB, condo, and landed properties in Singapore.
           </p>
-        </div>
-
-        <div className="mx-auto mt-12 grid max-w-2xl grid-cols-2 gap-4 sm:max-w-3xl sm:grid-cols-4">
-          {statItems.map(({ icon: Icon, value, label }) => (
-            <div
-              key={label}
-              className="flex flex-col items-center gap-1.5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-50">
-                <Icon className="h-4 w-4 text-primary-600" />
-              </div>
-              <p className="font-display text-xl font-extrabold tabular-nums text-neutral-900">
-                {value}
-              </p>
-              <p className="text-center text-xs text-neutral-500">{label}</p>
-            </div>
-          ))}
         </div>
       </div>
     </section>

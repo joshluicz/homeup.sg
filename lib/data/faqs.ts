@@ -225,7 +225,7 @@ export const BUY_FAQ_HDB: FaqItem[] = [
   },
   {
     q: "How long does an HDB resale purchase take after OTP?",
-    a: "From exercised Option to Purchase (OTP) to completion is often 16 to 20 weeks, including Resale Portal steps, grant processing, valuation, and the completion appointment. Time to find and secure an OTP depends on your budget and competition in your preferred towns.",
+    a: "Most resales take 3-4 months after you accept an offer. That covers the 21-day option period, HDB Resale Portal submission, HDB approval, and completion at HDB Hub. How long you wait for a suitable offer depends on price and demand in your town.",
   },
   {
     q: "Can I buy before my current home sells?",
@@ -236,27 +236,39 @@ export const BUY_FAQ_HDB: FaqItem[] = [
 export const BUY_FAQ_CONDO: FaqItem[] = [
   {
     q: "Do I pay HomeUP directly when buying resale condo or landed?",
-    a: "No. On standard resale private property transactions, the buyer's agent fee is paid from the seller's side. You do not pay HomeUP for that representation.",
+    a: "No, we share commissions with the seller agents as per normal market practices.",
   },
   {
     q: "How much ABSD will I pay as a buyer?",
-    a: "Singapore citizens pay 0% Additional Buyer's Stamp Duty (ABSD) on a first property, 20% on a second, and 30% on a third and beyond. Permanent residents pay 5% on a first and 30% on later properties. Foreigners pay 60% on residential property. HomeUP builds ABSD into affordability before you make an offer.",
+    a: "Singapore citizens pay 0% Additional Buyer's Stamp Duty (ABSD) on a first property, 20% on a second, and 30% on a third and beyond. Permanent residents pay 5% on a first and 30% on later properties. Foreigners pay 60% on residential property.",
   },
   {
     q: "What should I check before making an offer on a resale condo?",
-    a: "Outstanding seller mortgage, management fee or sinking fund arrears, existing tenancy and end dates, whether Seller's Stamp Duty (SSD) limits the seller's flexibility, and recent transacted prices in the same development. HomeUP reviews these before advising you to offer.",
+    a: "Outstanding seller mortgage, management fee or sinking fund arrears, existing tenancy and end dates, and recent transacted prices in the same development. HomeUP reviews these before advising you to offer.",
   },
   {
     q: "How do you align completion dates when I am selling and buying?",
-    a: "Private completions are often 20 to 24 weeks from Option to Purchase (OTP). The goal is to line up sale proceeds with purchase deadlines, or negotiate deferred completion on one side. HomeUP coordinates both files so you are not committed to a purchase before sale proceeds are realistic.",
+    a: "You can attempt to do a sell and buy concurrently, without ABSD and cash flow issues.",
+    link: {
+      href: "https://www.tiktok.com/@homeseller_condo/video/7332074788590046465",
+      label: "Click here to find out more.",
+    },
   },
   {
     q: "Resale condo or new launch: which fits my timeline?",
-    a: "Resale lets you view the actual unit and move in sooner. New launch means buying off-plan with delivery often 3 to 5 years away and progressive payment during construction. HomeUP compares both against your hold period, budget, and urgency to move.",
+    a: "Resale lets you view the actual unit and move in sooner. New launch means buying off-plan with delivery often 3 to 4 years away and progressive payment during construction. HomeUP compares both against your hold period, budget, and urgency to move.",
   },
 ];
 
 export const BUY_FAQ_NEW_LAUNCH: FaqItem[] = [
+  {
+    q: "Do I pay HomeUP directly when buying new launch?",
+    a: "No, we share commissions with the seller agents as per normal market practices.",
+  },
+  {
+    q: "How much ABSD will I pay as a buyer?",
+    a: "Singapore citizens pay 0% Additional Buyer's Stamp Duty (ABSD) on a first property, 20% on a second, and 30% on a third and beyond. Permanent residents pay 5% on a first and 30% on later properties. Foreigners pay 60% on residential property.",
+  },
   {
     q: "How does balloting work on a popular new launch?",
     a: "Developers often register buyers before launch day and assign queue numbers by ballot. Your number sets when you enter the showflat to pick a unit. HomeUP helps you register early, shortlist stacks, and decide limits before time pressure hits on the day.",
@@ -267,11 +279,23 @@ export const BUY_FAQ_NEW_LAUNCH: FaqItem[] = [
   },
   {
     q: "Does HomeUP represent buyers on every new launch project?",
-    a: "HomeUP has access to most major Singapore launches. On some projects we hold direct marketing appointments with earlier unit information. On others we still attend as your buyer's agent with independent analysis. The advice role does not change.",
+    a: "HomeUP has access to all Singapore new launches through our agent network. We will attend as your buyer's agent with independent analysis. The advisor role does not change.",
   },
   {
     q: "When do I collect keys on a new launch purchase?",
-    a: "At Temporary Occupation Permit (TOP), typically 3 to 5 years after launch depending on the build. After TOP you inspect the unit for defects (snagging) before key collection. HomeUP can help coordinate that process.",
+    a: "At Temporary Occupation Permit (TOP), typically 3 to 4 years after launch depending on the build. After TOP you inspect the unit for defects (snagging) before key collection. HomeUP can help coordinate that process.",
+  },
+  {
+    q: "How do you align completion dates when I am selling and buying?",
+    a: "You can attempt to do a sell and buy concurrently, without ABSD and cash flow issues.",
+    link: {
+      href: "https://www.tiktok.com/@homeseller_condo/video/7332074788590046465",
+      label: "Click here to find out more.",
+    },
+  },
+  {
+    q: "Resale condo or new launch: which fits my timeline?",
+    a: "Resale lets you view the actual unit and move in sooner. New launch means buying off-plan with delivery often 3 to 4 years away and progressive payment during construction. HomeUP compares both against your hold period, budget, and urgency to move.",
   },
   {
     q: "How do I compare new launch projects without showroom bias?",
@@ -279,6 +303,6 @@ export const BUY_FAQ_NEW_LAUNCH: FaqItem[] = [
   },
   {
     q: "What happens if I walk away after paying the option fee?",
-    a: "If you do not exercise the Option to Purchase (OTP), you forfeit the option fee (commonly 5%). After exercise and signing the Sale and Purchase (S&P) Agreement, backing out has serious legal and financial consequences. HomeUP ensures you understand terms and comparables before you sign.",
+    a: "If you do not exercise the Option to Purchase (OTP), the developer will usually forfeit 25% of your option fee (1.25% of the purchase price).",
   },
 ];

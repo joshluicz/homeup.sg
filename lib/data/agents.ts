@@ -4,6 +4,11 @@ export interface AgentVideo {
   publishedAt?: string;
 }
 
+export interface AgentTikTokVideo {
+  id: string;
+  url: string;
+}
+
 export interface AgentSocialLinks {
   instagram?: string;
   youtube?: string;
@@ -19,8 +24,12 @@ export interface Agent {
   photo: string;
   /** Short pull-quote for the profile hero */
   quote?: string;
+  /** When true, hero quote renders as third-person summary without quotation marks */
+  quoteThirdPerson?: boolean;
   /** Expanded about bullets — agent-specific, not site-wide copy */
   about: string[];
+  /** Awards, credentials, and recognition */
+  accolades?: string[];
   specialties: string[];
   social?: AgentSocialLinks;
   /** YouTube @handle without the @ prefix */
@@ -29,6 +38,10 @@ export interface Agent {
   youtubeChannelId?: string;
   /** Curated videos when RSS fetch is unavailable */
   featuredVideos?: AgentVideo[];
+  /** Curated TikTok embeds for the agent profile page */
+  featuredTikTokVideos?: AgentTikTokVideo[];
+  /** Hero intro video on the agent profile page */
+  introYoutubeVideoId?: string;
 }
 
 export const AGENTS: Agent[] = [
@@ -39,13 +52,15 @@ export const AGENTS: Agent[] = [
     bio: "Straight-talking guidance shaped by real ownership and upgrade experience, including private and landed homes in Singapore.",
     photo: "/images/agent-dennis.png",
     quote:
-      "Selling isn't just about listing. It's about planning your next move with clarity, so more of your equity stays with your family.",
-    about: [
-      "Experienced across HDB, condo, and landed sales and upgrades",
-      "Known for direct, honest advice grounded in real ownership experience",
-      "Leads coordinated sell-and-buy planning for upgrading families",
-      "Regular contributor on HomeUP's property education content",
+      "Dennis brings extensive experience across Singapore's property market, with 5 private property investments including a landed home in Singapore held under trust and 3 properties in China. His expertise spans property ownership, investment structures, and cross-border real estate.",
+    quoteThirdPerson: true,
+    accolades: [
+      "NUS BBA (Hons)",
+      "ABF Award (Ministry of Trade & Industry)",
+      "Top Sale (Residential) I 2025",
+      "Double Centurion Award 2025",
     ],
+    about: [],
     specialties: ["HDB upgrades", "Landed sales", "Sell-and-buy planning"],
     social: {
       instagram: "https://www.instagram.com/homeup_dennis?igsh=MXhvY2drMTFqN2hoYQ==",
@@ -54,21 +69,36 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeup_dennis?_r=1&_t=ZS-97B1n2NKNtM",
     },
     youtubeChannelHandle: "homeupdennis",
+    introYoutubeVideoId: "pBcnhk05rJs",
+    featuredTikTokVideos: [
+      {
+        id: "7638950012826799380",
+        url: "https://www.tiktok.com/@homeup_dennis/video/7638950012826799380",
+      },
+      {
+        id: "7631940560378465557",
+        url: "https://www.tiktok.com/@homeup_dennis/video/7631940560378465557",
+      },
+      {
+        id: "7638994457123360021",
+        url: "https://www.tiktok.com/@homeup_dennis/video/7638994457123360021",
+      },
+    ],
   },
   {
     slug: "yeo-tong-boon",
     name: "Yeo Tong Boon",
     cea: "R069651E",
-    bio: "Passionate about helping homeowners plan their next move with clarity, structure, and confidence.",
+    bio: "Having completed hundreds of property transactions across Singapore, Tong Boon has helped hundreds of families successfully upgrade and acquire their next home.",
     photo: "/images/agent-tong-boon.png",
     quote:
-      "The best buying decisions come from understanding your options first, not rushing into the next viewing.",
-    about: [
-      "Senior advisor on HomeUP's buying team",
-      "Supports buyers through financing, shortlisting, and negotiation",
-      "Experienced with HDB, resale condo, and new launch purchases",
-      "Focused on structured planning rather than transactional pressure",
+      "Having completed hundreds of property transactions across Singapore, Tong Boon has helped hundreds of families successfully upgrade and acquire their next home. His market insights and transaction experience have led to invitations from CNA and features on 99.co, where he shares commentary on Singapore's residential property market as a subject matter expert.",
+    quoteThirdPerson: true,
+    accolades: [
+      "CNA commentary on Singapore's residential property market",
+      "Featured on 99.co as a subject matter expert",
     ],
+    about: [],
     specialties: ["Buyer representation", "New launch", "Upgrader planning"],
     social: {
       instagram: "https://www.instagram.com/homeup_tongboon?igsh=azdldjc4NWNoZmUy",
@@ -77,7 +107,6 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeup_tongboon?_r=1&_t=ZS-97B4uCSU72i",
     },
     youtubeChannelHandle: "homeup_tongboon",
-    featuredVideos: [],
   },
   {
     slug: "edmund-lee",

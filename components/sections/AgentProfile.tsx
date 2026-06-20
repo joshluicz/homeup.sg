@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import type { Agent } from "@/lib/data/agents";
 import type { AgentVideo } from "@/lib/data/agents";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
+import { TikTokEmbed } from "@/components/ui/TikTokEmbed";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { youtubeWatchUrl, youtubeThumbnail } from "@/lib/youtube";
 
@@ -15,6 +16,11 @@ interface AgentProfileProps {
 export function AgentProfile({ agent, videos }: AgentProfileProps) {
   const featured = videos[0];
   const moreVideos = videos.slice(1);
+  const tikTokVideos = agent.featuredTikTokVideos ?? [];
+  const showTikTok = tikTokVideos.length > 0;
+  const showYoutube = !showTikTok && !agent.quoteThirdPerson && featured;
+  const firstName = agent.name.split(" ")[0];
+  const hasIntroVideo = Boolean(agent.introYoutubeVideoId);
 
   return (
     <>
@@ -28,80 +34,140 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
             All agents
           </Link>
 
-          <div className="grid items-start gap-10 lg:grid-cols-[320px_1fr] lg:gap-14">
-            <div className="mx-auto w-full max-w-xs lg:mx-0">
-              <div className="relative aspect-square overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 shadow-sm">
+          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-x-14">
+            <div className="mx-auto w-full min-w-0 max-w-md lg:mx-0">
+              <div className="relative mx-auto aspect-square max-w-xs overflow-hidden lg:mx-0">
                 <Image
                   src={agent.photo}
                   alt={agent.name}
                   fill
                   priority
                   className="object-cover object-[center_5px]"
-                  sizes="320px"
+                  sizes="(max-width: 1024px) 320px, 360px"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_78%_at_50%_40%,transparent_0%,transparent_52%,rgba(255,255,255,0.35)_72%,rgba(255,255,255,0.85)_88%,white_100%)]"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white via-white/70 to-transparent"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white via-white/75 to-transparent"
                 />
               </div>
-              <p className="mt-4 text-center text-sm font-normal text-neutral-400 lg:text-left">
-                {agent.cea}
-              </p>
-              {agent.social && (
+              <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
+                {agent.name}
+              </h1>
+              {agent.quote && (
+                <div className="relative mt-5 pl-5">
+                  <div
+                    aria-hidden="true"
+                    className="absolute bottom-0 left-0 top-0 w-1 rounded-full bg-gradient-to-b from-primary-400 via-primary-500 to-primary-600"
+                  />
+                  <p className="font-display text-lg font-medium leading-relaxed tracking-tight text-neutral-800 sm:text-xl sm:leading-relaxed">
+                    {agent.quoteThirdPerson ? agent.quote : `\u201C${agent.quote}\u201D`}
+                  </p>
+                </div>
+              )}
+              <p className="mt-4 text-sm font-normal text-neutral-400">{agent.cea}</p>
+              {agent.social && !hasIntroVideo && (
                 <AgentSocialLinks
                   links={agent.social}
                   agentName={agent.name}
                   className="mt-4"
                 />
               )}
-            </div>
-
-            <div>
-              <h1 className="font-display text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
-                {agent.name}
-              </h1>
-
-              {agent.quote && (
-                <blockquote className="mt-5 border-l-4 border-primary-500 pl-4 text-sm font-normal italic leading-relaxed text-neutral-600">
-                  &ldquo;{agent.quote}&rdquo;
-                </blockquote>
+              {agent.accolades && agent.accolades.length > 0 && (
+                <div className="mt-8">
+                  <h2 className="font-display text-lg font-bold tracking-tight text-neutral-900">
+                    Accolades
+                  </h2>
+                  <ul className="mt-4 space-y-2">
+                    {agent.accolades.map((item) => (
+                      <li
+                        key={item}
+                        className="flex items-start gap-3 text-sm font-normal text-neutral-700"
+                      >
+                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-
-              <div className="mt-6 flex flex-wrap gap-2">
-                {agent.specialties.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full bg-primary-50 px-3 py-1 text-sm font-medium text-primary-700"
-                  >
-                    {s}
-                  </span>
-                ))}
-              </div>
             </div>
+
+            {hasIntroVideo && (
+              <div className="w-full min-w-0 lg:sticky lg:top-24">
+                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-md">
+                  <div className="relative aspect-video">
+                    <YoutubeEmbed
+                      videoId={agent.introYoutubeVideoId!}
+                      title={`Introduction from ${agent.name}`}
+                      autoplay
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </div>
+                </div>
+                <p className="mt-3 text-sm font-normal text-neutral-500">
+                  Introduction from {firstName}
+                </p>
+                {agent.social && (
+                  <AgentSocialLinks
+                    links={agent.social}
+                    agentName={agent.name}
+                    className="mt-4"
+                  />
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      <section aria-label={`About ${agent.name}`} className="bg-neutral-50 py-12 sm:section-padding">
-        <div className="container-page">
-          <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
-            About {agent.name.split(" ")[0]}
-          </h2>
-          <ul className="mt-6 max-w-3xl space-y-3">
-            {agent.about.map((point) => (
-              <li key={point} className="flex items-start gap-3 text-sm font-normal text-neutral-700">
-                <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
-                {point}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      {agent.about.length > 0 && (
+        <section aria-label={`About ${agent.name}`} className="bg-neutral-50 py-12 sm:section-padding">
+          <div className="container-page">
+            <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
+              About {firstName}
+            </h2>
+            <ul className="mt-6 max-w-3xl space-y-3">
+              {agent.about.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-sm font-normal text-neutral-700">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
-      {featured && (
+      {showTikTok && (
+        <section aria-label={`${agent.name} on TikTok`} className="section-padding bg-white">
+          <div className="container-page">
+            <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
+              Property insights on TikTok
+            </h2>
+            <p className="mt-2 text-sm font-normal text-neutral-600">
+              Short-form tips and real-world property advice from {firstName}.
+            </p>
+            <TikTokEmbed videos={tikTokVideos} />
+          </div>
+        </section>
+      )}
+
+      {showYoutube && (
         <section aria-label={`${agent.name} videos`} className="section-padding bg-white">
           <div className="container-page">
             <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
-              Latest from {agent.name.split(" ")[0]}
+              Latest from {firstName}
             </h2>
             <p className="mt-2 text-sm font-normal text-neutral-600">
-              Property insights and updates from {agent.name.split(" ")[0]}&apos;s channel.
+              Property insights and updates from {firstName}&apos;s channel.
             </p>
 
             <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">

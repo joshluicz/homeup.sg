@@ -3,8 +3,8 @@ import type { BuyPropertyType } from "@/lib/data/buy-pricing";
 export interface BuyPageHero {
   title: string;
   highlight: string;
-  subtitle: string;
-  body: string;
+  subtitle?: string;
+  body?: string;
   points: string[];
   ctaNote: string;
 }
@@ -96,9 +96,7 @@ export const BUY_PAGE_CONDO_LANDED: BuyPageConfig = {
   defaultSliderType: "CondoLanded",
   hero: {
     title: "Buy Condo or Landed.",
-    highlight: "Complimentary Representation.",
-    subtitle: "Resale purchases at no cost to you.",
-    body: "Access market insights, project comparisons, and negotiation support for resale condo and landed homes, fully covered by HomeUP at no cost to the buyer.",
+    highlight: "No Agent Fees",
     points: [
       "Unbiased market and project comparisons",
       "Viewing coordination and offer negotiation",
@@ -131,9 +129,8 @@ export const BUY_PAGE_NEW_LAUNCH: BuyPageConfig = {
   defaultSliderType: "NewLaunch",
   hero: {
     title: "Buy a New Launch.",
-    highlight: "No Buyer Commission.",
+    highlight: "No Agent Fees",
     subtitle: "Straight from developers, with unbiased guidance.",
-    body: "We assist you to purchase New Launch straight from developers. Buyer pays no commission. HomeUP provides project analysis, unit selection, and developer liaison at no cost to you.",
     points: [
       "Unbiased project and floor plan analysis",
       "Unit selection guidance aligned with your budget and goals",

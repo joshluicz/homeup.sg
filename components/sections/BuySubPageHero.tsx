@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Check, ChevronRight } from "lucide-react";
-import { SavingsSlider } from "@/components/ui/SavingsSlider";
 import { BuyPlanCard } from "@/components/ui/BuyPlanCard";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
 import { BUY_TYPE_LABELS, type BuyPropertyType } from "@/lib/data/buy-pricing";
@@ -33,12 +32,16 @@ export function BuySubPageHero({ content, filterType }: BuySubPageHeroProps) {
               {content.title}{" "}
               <span className="text-primary-600">{content.highlight}</span>
             </h1>
-            <p className="mt-2 text-sm font-medium text-neutral-500">{content.subtitle}</p>
-            <p className="mt-3 max-w-xl text-sm font-normal leading-relaxed text-neutral-600">
-              {content.body}
-            </p>
+            {content.subtitle ? (
+              <p className="mt-2 text-sm font-medium text-neutral-500">{content.subtitle}</p>
+            ) : null}
+            {content.body ? (
+              <p className="mt-3 max-w-xl text-sm font-normal leading-relaxed text-neutral-600">
+                {content.body}
+              </p>
+            ) : null}
 
-            <ul className="mt-4 space-y-2">
+            <ul className={`space-y-2 ${content.subtitle || content.body ? "mt-4" : "mt-3"}`}>
               {content.points.slice(0, 3).map((point) => (
                 <li key={point} className="flex items-start gap-2 text-sm font-normal text-neutral-700">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-600" aria-hidden="true" />
@@ -46,14 +49,6 @@ export function BuySubPageHero({ content, filterType }: BuySubPageHeroProps) {
                 </li>
               ))}
             </ul>
-
-            <SavingsSlider
-              mode="buy"
-              defaultType={filterType}
-              lockType
-              variant="embedded"
-              className="mt-6 sm:mt-8"
-            />
           </div>
 
           <div className="lg:sticky lg:top-24">

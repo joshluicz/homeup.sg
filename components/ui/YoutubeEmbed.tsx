@@ -12,9 +12,10 @@ interface YoutubeEmbedProps {
   videoId: string;
   title: string;
   className?: string;
+  autoplay?: boolean;
 }
 
-export function YoutubeEmbed({ videoId, title, className }: YoutubeEmbedProps) {
+export function YoutubeEmbed({ videoId, title, className, autoplay = false }: YoutubeEmbedProps) {
   const containerId = useId().replace(/:/g, "");
   const playerRef = useRef<YTPlayer | null>(null);
 
@@ -34,6 +35,7 @@ export function YoutubeEmbed({ videoId, title, className }: YoutubeEmbedProps) {
           playsinline: 1,
           fs: 1,
           origin: window.location.origin,
+          ...(autoplay ? { autoplay: 1, mute: 1 } : {}),
         },
         events: {
           onReady: (event) => requestHighestYoutubeQuality(event.target),
@@ -58,7 +60,7 @@ export function YoutubeEmbed({ videoId, title, className }: YoutubeEmbedProps) {
       playerRef.current?.destroy();
       playerRef.current = null;
     };
-  }, [videoId, containerId]);
+  }, [videoId, containerId, autoplay]);
 
   return (
     <div

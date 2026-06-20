@@ -42,7 +42,7 @@ export default async function ListingsPage() {
       />
       <Navbar />
       <main className="bg-white">
-        <ListingsHero stats={stats} />
+        <ListingsHero />
         <ListingsPageClient initialListings={listings} initialStats={stats} />
         <CtaBanner />
       </main>

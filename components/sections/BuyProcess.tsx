@@ -59,7 +59,7 @@ const CONDO_STEPS: ProcessStep[] = [
   },
   {
     step: "03",
-    title: "Coordinated Viewings",
+    title: "Viewing with you",
     body: "Viewings arranged across shortlisted units. HomeUP attends with you and checks layout efficiency, noise, orientation, and any red flags before you form an attachment.",
   },
   {
@@ -69,8 +69,8 @@ const CONDO_STEPS: ProcessStep[] = [
   },
   {
     step: "05",
-    title: "S&P & Completion",
-    body: "Sale and Purchase (S&P) Agreement coordinated with your solicitor. Loan approved, insurance arranged, and completion timeline tracked. HomeUP monitors every milestone through to keys.",
+    title: "Completion",
+    body: "Loan approved, insurance arranged, and completion timeline tracked. HomeUP monitors every milestone to key collection.",
   },
 ];
 
@@ -87,7 +87,7 @@ const NEW_LAUNCH_STEPS: ProcessStep[] = [
   },
   {
     step: "03",
-    title: "Preview & Launch",
+    title: "Preview and Launch",
     body: "HomeUP secures preview access, advises on which stacks to prioritise, and attends launch day with you. We help you make a clear-headed decision under time pressure, not an emotional one.",
   },
   {
@@ -97,8 +97,8 @@ const NEW_LAUNCH_STEPS: ProcessStep[] = [
   },
   {
     step: "05",
-    title: "S&P & Progressive Payments",
-    body: "Sale and Purchase (S&P) Agreement signed. HomeUP walks you through the progressive payment schedule tied to construction milestones. Snagging and handover coordinated at Temporary Occupation Permit (TOP).",
+    title: "Completion",
+    body: "HomeUP walks you through the progressive payment schedule tied to construction milestones. HomeUP monitors every milestone to key collection.",
   },
 ];
 
@@ -139,15 +139,15 @@ const STEPS_BY_TYPE: Record<BuyPropertyType | "General", ProcessStep[]> = {
 
 const TITLE_BY_TYPE: Record<BuyPropertyType | "General", string> = {
   HDB: "Buying an HDB flat: here's how HomeUP handles it.",
-  CondoLanded: "Buying resale condo or landed: what we do for you.",
-  NewLaunch: "Buying a new launch: from analysis to keys.",
+  CondoLanded: "What we do better",
+  NewLaunch: "Buying a new launch",
   General: "How HomeUP guides your purchase, start to finish.",
 };
 
 const LEAD_BY_TYPE: Record<BuyPropertyType | "General", string> = {
   HDB: "HDB resale has more steps than most buyers expect: grants, loan eligibility, HDB Portal submission, and tight timelines. HomeUP plans it all upfront so there are no surprises.",
   CondoLanded: "Resale private property requires objective analysis and disciplined negotiation. HomeUP's fee isn't tied to your purchase price, so our advice stays neutral throughout.",
-  NewLaunch: "New launch decisions are made under time pressure with incomplete information. HomeUP's independent analysis and launch day support means you choose with clarity, not pressure.",
+  NewLaunch: "New launch decisions are made under time pressure. HomeUP's independent analysis and launch day support means you choose with clarity, not pressure.",
   General: "Whether you're buying HDB, resale private property, or a new launch, HomeUP coordinates the full purchase journey so you can focus on finding the right home.",
 };
 
