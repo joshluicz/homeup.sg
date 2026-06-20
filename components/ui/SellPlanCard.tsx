@@ -3,7 +3,8 @@
 import { HydrationSafeNumberFlow } from "@/components/ui/HydrationSafeNumberFlow";
 import { Check } from "lucide-react";
 import { ListingPlatformIcons } from "@/components/ui/ListingPlatformIcons";
-import { cn } from "@/lib/utils";import {
+import { cn } from "@/lib/utils";
+import {
   SELL_PLANS,
   SELL_THEME_STYLES,
   type SellPropertyType,
@@ -16,7 +17,8 @@ const PACKAGE_FEATURES = [
   { id: "documentation", label: "Full documentation (e.g. OTP)" },
 ] as const;
 
-interface SellPlanCardProps {  filterType: SellPropertyType;
+interface SellPlanCardProps {
+  filterType: SellPropertyType;
   showLearnMore?: boolean;
   learnMoreHref?: string;
   className?: string;

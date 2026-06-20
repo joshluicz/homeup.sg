@@ -56,6 +56,28 @@ function FaqAnswer({ item, listingCount }: { item: FaqItem; listingCount?: numbe
   return item.a;
 }
 
+function FaqAnswerBody({ item, listingCount }: { item: FaqItem; listingCount?: number }) {
+  const answer = <FaqAnswer item={item} listingCount={listingCount} />;
+
+  if (item.link) {
+    return (
+      <>
+        {answer}{" "}
+        <a
+          href={item.link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary-600 underline underline-offset-2 transition-colors hover:text-primary-700"
+        >
+          {item.link.label}
+        </a>
+      </>
+    );
+  }
+
+  return answer;
+}
+
 export function FAQSection({
   items,
   eyebrow = "Common Questions",
@@ -96,7 +118,7 @@ export function FAQSection({
                         i < speakableAnswerCount ? " speakable-faq-answer" : ""
                       }`}
                     >
-                      <FaqAnswer item={item} listingCount={listingCount} />
+                      <FaqAnswerBody item={item} listingCount={listingCount} />
                     </AccordionContent>
                   </AccordionItem>
                 ))}

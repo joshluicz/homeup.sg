@@ -65,7 +65,7 @@ const CONDO_STEPS: ProcessStep[] = [
   },
   {
     step: "04",
-    title: "OTP & S&P",
+    title: "Issue OTP",
     body: "Offer accepted and negotiated. We will issue OTP when option fee is received. HomeUP coordinates with both solicitors through the Sale & Purchase Agreement.",
   },
   {

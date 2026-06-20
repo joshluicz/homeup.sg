@@ -4,6 +4,10 @@ export interface FaqItem {
   q: string;
   a: string;
   listingCountVariant?: ListingCountFaqVariant;
+  link?: {
+    href: string;
+    label: string;
+  };
 }
 
 export function faqAnswerWithListingCount(
@@ -20,11 +24,14 @@ export function faqAnswerWithListingCount(
 
 export function faqItemsForSchema(items: FaqItem[], listingCount?: number): FaqItem[] {
   if (listingCount == null) return items;
-  return items.map((item) =>
-    item.listingCountVariant
-      ? { ...item, a: faqAnswerWithListingCount(item.listingCountVariant, listingCount) }
-      : item,
-  );
+  return items.map((item) => {
+    const a = item.listingCountVariant
+      ? faqAnswerWithListingCount(item.listingCountVariant, listingCount)
+      : item.link
+        ? `${item.a} ${item.link.label} ${item.link.href}`
+        : item.a;
+    return item.listingCountVariant || item.link ? { ...item, a } : item;
+  });
 }
 
 export const HOMEPAGE_FAQ: FaqItem[] = [
@@ -116,10 +123,6 @@ export const SELL_FAQ_HDB: FaqItem[] = [
 
 export const SELL_FAQ_CONDO: FaqItem[] = [
   {
-    q: "How much CPF must I return when I sell my condo?",
-    a: "CPF used to buy the unit, plus accrued interest at 2.5% per year, goes back to your CPF Ordinary Account when you sell. If needed, HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
-  },
-  {
     q: "How long does a condo resale take from accepted offer to completion?",
     a: "Most resales take 3-4 months after you accept an offer. That covers the OTP period, Sale and Purchase Agreement, loan approval, and legal completion. How long you wait for a suitable offer depends on price and demand in your development.",
   },
@@ -128,12 +131,12 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
     a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and coordinates with both solicitors through completion for you.",
   },
   {
-    q: "When is the bank valuation done and why does it matter?",
-    a: "After the unit is optioned out, the buyer will request a valuation report from the bank. It affects the buyer's loan and CPF usage, which can affect whether the deal goes through at your agreed price.",
-  },
-  {
     q: "What if I need to buy my next home after my condo sale?",
-    a: "We plan your sale and purchase timeline from the start. We will touch on important points like whether you need an extension of stay and your current housing situation. We will not rush you into an offer that leaves you without a plan for your next home.",
+    a: "We plan your sale and purchase timeline from the start. We will touch on important points like whether you need an extension of stay and your current housing situation.",
+    link: {
+      href: "https://www.tiktok.com/@homeseller_condo/video/7332074788590046465",
+      label: "Find out more here.",
+    },
   },
   {
     q: "Are there any other hidden fees?",
@@ -141,11 +144,7 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
   },
   {
     q: "Does Seller's Stamp Duty apply to my condo sale?",
-    a: "SSD applies if you sell within three years of purchase. Rates are 12% within one year, 8% within two years, and 4% within three years, based on the higher of sale price or market value. HomeUP confirms whether SSD applies in your first meeting before any listing date is set.",
-  },
-  {
-    q: "Can I sell an Executive Condominium on the open market?",
-    a: "After the five-year Minimum Occupation Period, an EC can be sold on the open market like a private condo. Before MOP, resale is back to HDB only. After privatisation (typically ten years), foreign buyers may also be eligible. HomeUP confirms your status before marketing begins.",
+    a: "SSD applies if you sell within four years of purchase. Rates are 16% within one year, 12% within two years, 8% within three years, and 4% within 4 years.",
   },
   {
     q: "Do I need my own lawyer for a condo sale?",
