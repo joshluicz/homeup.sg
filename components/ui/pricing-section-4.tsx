@@ -237,7 +237,6 @@ export default function PricingSection4({
                   filterType={plan.type}
                   showLearnMore={showLearnMore}
                   learnMoreHref={plan.learnMoreHref}
-                  plainDocumentationLabel
                 />
               </motion.div>
             </StaggerItem>
