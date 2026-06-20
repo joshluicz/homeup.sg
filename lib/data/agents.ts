@@ -98,6 +98,7 @@ export const AGENTS: Agent[] = [
       "NUS Real Estate (Hons)",
       "Agency Top Private Property Buying Transactor (2025)",
       "Top Agent Under 40 & Top 3 Producer in Agency (2025)",
+      "Centurion Award 2025",
     ],
     about: [],
     specialties: ["Buyer representation", "New launch", "Upgrader planning"],

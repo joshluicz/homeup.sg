@@ -91,17 +91,6 @@ export function AboutContent() {
               );
             })}
           </div>
-
-          <FadeInUp delay={0.25} className="mt-12 overflow-hidden rounded-2xl border border-neutral-200 shadow-sm">
-            <Image
-              src="/images/team-group.png"
-              alt="The HomeUP team, six CEA-licensed property agents in Singapore"
-              width={920}
-              height={614}
-              className="h-auto w-full object-cover"
-              priority
-            />
-          </FadeInUp>
         </div>
       </section>
 

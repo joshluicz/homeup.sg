@@ -100,7 +100,9 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
             </div>
 
             {hasIntroVideo && (
-              <div className="w-full min-w-0 lg:sticky lg:top-24">
+              <div
+                className={`w-full min-w-0 lg:sticky lg:top-24${showTikTok ? " max-lg:mb-0.5" : ""}`}
+              >
                 <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-md">
                   <div className="relative aspect-video">
                     <YoutubeEmbed

@@ -85,7 +85,7 @@ function StatsCard() {
             <span className="text-sm font-medium"> closed</span>
           </p>
           <p className="mt-0.5 text-[11px] leading-snug text-neutral-400">
-            CEA records · Dennis, Tongboon, Edmund
+            CEA records · Dennis, Tong Boon, Edmund
           </p>
         </div>
 
