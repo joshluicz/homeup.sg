@@ -69,7 +69,7 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeup_dennis?_r=1&_t=ZS-97B1n2NKNtM",
     },
     youtubeChannelHandle: "homeupdennis",
-    introYoutubeVideoId: "pBcnhk05rJs",
+    introYoutubeVideoId: "6uAbIF5tVKY",
     featuredTikTokVideos: [
       {
         id: "7638950012826799380",
@@ -95,8 +95,9 @@ export const AGENTS: Agent[] = [
       "Having completed hundreds of property transactions across Singapore, Tong Boon has helped hundreds of families successfully upgrade and acquire their next home. His market insights and transaction experience have led to invitations from CNA and features on 99.co, where he shares commentary on Singapore's residential property market as a subject matter expert.",
     quoteThirdPerson: true,
     accolades: [
-      "CNA commentary on Singapore's residential property market",
-      "Featured on 99.co as a subject matter expert",
+      "NUS Real Estate (Hons)",
+      "Agency Top Private Property Buying Transactor (2025)",
+      "Top Agent Under 40 & Top 3 Producer in Agency (2025)",
     ],
     about: [],
     specialties: ["Buyer representation", "New launch", "Upgrader planning"],
@@ -107,6 +108,21 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeup_tongboon?_r=1&_t=ZS-97B4uCSU72i",
     },
     youtubeChannelHandle: "homeup_tongboon",
+    introYoutubeVideoId: "esxB41Md9kc",
+    featuredTikTokVideos: [
+      {
+        id: "7631845291800481032",
+        url: "https://www.tiktok.com/@homeup_tongboon/video/7631845291800481032",
+      },
+      {
+        id: "7620785028812836103",
+        url: "https://www.tiktok.com/@homeup_tongboon/video/7620785028812836103",
+      },
+      {
+        id: "7642310615293316370",
+        url: "https://www.tiktok.com/@homeup_tongboon/video/7642310615293316370",
+      },
+    ],
   },
   {
     slug: "edmund-lee",
@@ -115,13 +131,9 @@ export const AGENTS: Agent[] = [
     bio: "A steady hand with three decades of experience guiding HDB homeowners through resale decisions calmly and methodically.",
     photo: "/images/agent-edmund.png",
     quote:
-      "HDB resale has a rhythm to it. When you understand the timeline, decisions become much calmer.",
-    about: [
-      "Three decades of experience in Singapore property",
-      "Specialises in HDB resale and long-tenure owner transitions",
-      "Methodical approach to pricing, timing, and documentation",
-      "Trusted by homeowners who value patience over pressure",
-    ],
+      "Edmund Lee is a steady hand with three decades of experience guiding HDB homeowners through resale decisions calmly and methodically. He specialises in HDB resale and long-tenure owner transitions, with a trusted, patient approach to pricing, timing, and documentation.",
+    quoteThirdPerson: true,
+    about: [],
     specialties: ["HDB resale", "Senior owners", "Resale documentation"],
     social: {
       instagram: "https://www.instagram.com/edmundleesw?igsh=MXQyaWNkdDY4dTZmZg==",
@@ -130,6 +142,7 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@edmundleesiewwah?_r=1&_t=ZS-97B51ZndzSX",
     },
     youtubeChannelHandle: "edmundlee9189",
+    introYoutubeVideoId: "HijepXyK4U0",
   },
   {
     slug: "kenji-ching",
@@ -138,13 +151,9 @@ export const AGENTS: Agent[] = [
     bio: "Patient, practical support for homeowners navigating resale or their first upgrade.",
     photo: "/images/agent-kenji.png",
     quote:
-      "First-time sellers often just need someone to explain the process clearly. That's where good advice starts.",
-    about: [
-      "Supports first-time sellers and upgraders through resale",
-      "Known for responsive follow-through on viewings and offers",
-      "Experienced across HDB and private property transactions",
-      "Patient, practical guidance from listing through completion",
-    ],
+      "Kenji Ching provides patient, practical support for homeowners navigating resale or their first upgrade. He is known for responsive follow-through on viewings and offers, with experience across HDB and private property transactions from listing through completion.",
+    quoteThirdPerson: true,
+    about: [],
     specialties: ["First-time sellers", "HDB resale", "Viewing coordination"],
     social: {
       instagram: "https://www.instagram.com/homeup_kenji?igsh=MW8wbTI1em05c253dQ==",
@@ -153,6 +162,7 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeup_kenji?_r=1&_t=ZS-97B4xfP5Hme",
     },
     youtubeChannelHandle: "homeup_kenji",
+    introYoutubeVideoId: "_ufdxj3qftc",
   },
   {
     slug: "olivia-neo",
@@ -161,13 +171,10 @@ export const AGENTS: Agent[] = [
     bio: "A friendly law diploma graduate, dedicated to guiding buyers and sellers on a smooth and transparent property journey.",
     photo: "/images/agent-olivia.png",
     quote:
-      "Transparency matters on both sides of a transaction. Buyers and sellers should always know what happens next.",
-    about: [
-      "Law diploma graduate with a focus on clear documentation",
-      "Guides buyers and sellers through Option to Purchase (OTP) and completion paperwork",
-      "Brings a calm, friendly approach to complex transactions",
-      "Dedicated to keeping clients informed at every step",
-    ],
+      "Olivia Neo is a friendly law diploma graduate dedicated to guiding buyers and sellers on a smooth and transparent property journey. She brings a calm approach to complex transactions and keeps clients informed at every step, from Option to Purchase through completion paperwork.",
+    quoteThirdPerson: true,
+    accolades: ["Law diploma graduate"],
+    about: [],
     specialties: ["Documentation", "Buyer support", "Transaction coordination"],
     social: {
       instagram: "https://www.instagram.com/homeup_olivia?igsh=bWZ6OGx1MGE0OGk0",
@@ -176,6 +183,7 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeup_olivia?_r=1&_t=ZS-97B4y7SmVLZ",
     },
     youtubeChannelHandle: "homeupolivia",
+    introYoutubeVideoId: "O-t1i4W_an4",
   },
   {
     slug: "isaac-tay",
@@ -184,13 +192,9 @@ export const AGENTS: Agent[] = [
     bio: "Dedicated to exceptional service, honest advice, and maximum value through HOMEUP's transparent fixed fee approach.",
     photo: "/images/agent-isaac.png",
     quote:
-      "Believes in delivering exceptional service, honest advice and maximum value through our transparent fixed fee approach.",
-    about: [
-      "Focused on honest, client-first advice at every stage of a transaction",
-      "Champions HOMEUP's transparent fixed fee model for maximum seller value",
-      "Experienced across HDB and private property sales and purchases",
-      "Committed to responsive follow-through from listing through completion",
-    ],
+      "Isaac Tay is dedicated to exceptional service, honest advice, and maximum value through HOMEUP's transparent fixed fee approach. He champions client-first advice at every stage, with experience across HDB and private property sales and purchases and responsive follow-through from listing through completion.",
+    quoteThirdPerson: true,
+    about: [],
     specialties: ["Fixed-fee sales", "Honest advisory", "HDB & private property"],
     social: {
       instagram: "https://www.instagram.com/homeup_isaac?igsh=MWZwOXJsc2o1d3dleA==",
@@ -199,6 +203,7 @@ export const AGENTS: Agent[] = [
       tiktok: "https://www.tiktok.com/@homeupisaac?_r=1&_t=ZS-97B4wwo3mKr",
     },
     youtubeChannelHandle: "homeup_isaac",
+    introYoutubeVideoId: "HSgarssnd7Y",
   },
 ];
 

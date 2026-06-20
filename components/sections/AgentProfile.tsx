@@ -45,18 +45,6 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                   className="object-cover object-[center_5px]"
                   sizes="(max-width: 1024px) 320px, 360px"
                 />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_78%_at_50%_40%,transparent_0%,transparent_52%,rgba(255,255,255,0.35)_72%,rgba(255,255,255,0.85)_88%,white_100%)]"
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-white via-white/70 to-transparent"
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white via-white/75 to-transparent"
-                />
               </div>
               <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
                 {agent.name}
