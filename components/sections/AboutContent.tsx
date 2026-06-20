@@ -14,8 +14,8 @@ const FOUNDERS = [
     slug: "dennis-lim",
     displayName: "Dennis Lim",
     paragraphs: [
-      "I strongly believe in the fixed fee model because it allows homeowners to achieve better outcomes without overpaying in commissions, while still getting strong exposure and viewings for their property.",
-      "We started HomeUP with a long term vision to build a modern, tech driven property advisory. By using AI tools, automation, and video systems, we aim to keep our operating costs efficient so we can continue offering a fixed fee of $1,999 for Singapore homeowners for as long as possible.",
+      "I believe the fixed fee model will allow homeowners to achieve higher selling prices without overpaying in commission.",
+      "We started HomeUP.sg with a long term vision to build a modern, tech driven property advisory. By using AI tools, automation, and video systems, we aim to keep our operating costs efficient so that we can continue to offer low fixed fees (starting from $1,999) for Singapore homeowners.",
     ],
   },
   {
@@ -29,38 +29,21 @@ const FOUNDERS = [
   },
 ] as const;
 
-const FOUNDER_STYLES = [
-  {
-    card: "relative overflow-hidden rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/70 shadow-[0_8px_32px_rgba(0,154,68,0.12)]",
-    bar: "bg-primary-600",
-    glow: "bg-primary-400/30",
-    glowPosition: "-right-12 -top-12",
-    imageRing: "ring-primary-200/80",
-  },
-  {
-    card: "relative overflow-hidden rounded-2xl border border-accent-200/80 bg-gradient-to-br from-accent-50 via-white to-primary-50/80 shadow-[0_8px_32px_rgba(224,160,8,0.12)]",
-    bar: "bg-gradient-to-r from-accent-400 to-primary-500",
-    glow: "bg-accent-300/35",
-    glowPosition: "-left-12 -bottom-12",
-    imageRing: "ring-accent-200/80",
-  },
-] as const;
-
 export function AboutContent() {
-  const [visionLead, visionEmphasis] = SITE_VISION.split(", because ");
+  const [visionLead, visionTail] = SITE_VISION.split(", because ");
+  const [realEstateLead] = visionTail.split("should finally be fair");
 
   return (
     <>
-      <section
-        aria-label="About HomeUP"
-        className="section-padding bg-gradient-to-b from-primary-50/50 via-white to-white"
-      >
+      <section aria-label="About HomeUP" className="section-padding bg-white">
         <div className="container-page">
           <FadeInUp className="mx-auto max-w-3xl text-center">
             <Eyebrow>About HomeUP</Eyebrow>
             <h1 className="section-title">
-              {visionLead}, because{" "}
-              <span className="text-primary-600">{visionEmphasis}</span>
+              {visionLead}, because
+              <br />
+              {realEstateLead}
+              <span className="text-primary-600">should finally be fair.</span>
             </h1>
           </FadeInUp>
 
@@ -69,49 +52,38 @@ export function AboutContent() {
               const agent = getAgentBySlug(founder.slug);
               if (!agent) return null;
 
-              const style = FOUNDER_STYLES[index % FOUNDER_STYLES.length];
-
               return (
                 <FadeInUp key={founder.slug} delay={0.1 + index * 0.08} className="h-full">
-                  <div className={`${style.card} h-full`}>
-                    <div
-                      aria-hidden="true"
-                      className={`absolute inset-x-0 top-0 h-1 ${style.bar}`}
-                    />
-                    <div
-                      aria-hidden="true"
-                      className={`pointer-events-none absolute h-36 w-36 rounded-full blur-3xl ${style.glow} ${style.glowPosition}`}
-                    />
-                    <div className="relative flex h-full flex-col gap-6 p-6 sm:p-8">
-                      <div
-                        className={`relative mx-auto aspect-[4/5] w-full max-w-[200px] shrink-0 overflow-hidden rounded-2xl bg-white shadow-md ring-2 ${style.imageRing}`}
-                      >
-                        <Image
-                          src={agent.photo}
-                          alt={`${agent.name}, HomeUP co-founder`}
-                          fill
-                          className="object-cover object-top"
-                          sizes="(max-width: 1024px) 200px, 280px"
-                        />
-                      </div>
-                      <div className="flex min-w-0 flex-1 flex-col">
-                        <p className="flex flex-wrap items-center gap-x-1.5 text-sm">
-                          <span className="font-bold text-neutral-900">{founder.displayName}</span>
-                          <span aria-hidden="true" className="font-normal text-neutral-400">
-                            ·
-                          </span>
-                          <span className="font-semibold text-primary-700">Co-founder</span>
-                        </p>
-                        <div className="mt-4 space-y-4">
-                          {founder.paragraphs.map((paragraph) => (
-                            <p
-                              key={paragraph}
-                              className="text-sm font-normal leading-relaxed text-neutral-700"
-                            >
-                              {paragraph}
-                            </p>
-                          ))}
-                        </div>
+                  <div className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-primary-600 bg-white">
+                    <div className="relative aspect-[5/6] w-full shrink-0 bg-white">
+                      <Image
+                        src={agent.photo}
+                        alt={`${agent.name}, HomeUP co-founder`}
+                        fill
+                        className="object-cover object-[center_5px]"
+                        sizes="(max-width: 1024px) 100vw, 560px"
+                      />
+                    </div>
+                    <div className="flex min-w-0 flex-1 flex-col p-6 sm:p-8">
+                      <p className="flex flex-wrap items-center gap-x-2 text-sm">
+                        <span className="font-bold text-neutral-900">{founder.displayName}</span>
+                        <span
+                          aria-hidden="true"
+                          className="text-lg font-bold leading-none text-neutral-500"
+                        >
+                          ·
+                        </span>
+                        <span className="font-semibold text-primary-700">Co-founder</span>
+                      </p>
+                      <div className="mt-4 space-y-4">
+                        {founder.paragraphs.map((paragraph) => (
+                          <p
+                            key={paragraph}
+                            className="text-sm font-normal leading-relaxed text-neutral-700"
+                          >
+                            {paragraph}
+                          </p>
+                        ))}
                       </div>
                     </div>
                   </div>
