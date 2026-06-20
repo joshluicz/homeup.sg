@@ -39,13 +39,11 @@ const FAQ_BY_TYPE = {
     items: SELL_FAQ_CONDO,
     eyebrow: "Selling condo: common questions",
     title: "What condo sellers ask us most",
-    lead: "SSD, legal timelines, EC rules, and what happens between OTP and completion. Answered clearly.",
   },
   Landed: {
     items: SELL_FAQ_LANDED,
     eyebrow: "Selling landed: common questions",
     title: "What landed sellers ask us most",
-    lead: "Buyer eligibility, tenure differences, valuation, and why patience matters in a landed sale. Answered honestly.",
   },
 };
 

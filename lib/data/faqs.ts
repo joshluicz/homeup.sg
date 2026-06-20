@@ -127,8 +127,16 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
     a: "Most resales take 3-4 months after you accept an offer. That covers the OTP period, Sale and Purchase Agreement, loan approval, and legal completion. How long you wait for a suitable offer depends on price and demand in your development.",
   },
   {
-    q: "Does HomeUP handle the Sale and Purchase paperwork?",
-    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and coordinates with both solicitors through completion for you.",
+    q: "Does HomeUP handle the paperwork?",
+    a: "Yes, HomeUP prepares the OTP and coordinates with the solicitors through completion for you.",
+  },
+  {
+    q: "Does Seller's Stamp Duty apply to my condo sale?",
+    a: "SSD applies if you sell within four years of purchase. Rates are 16% within one year, 12% within two years, 8% within three years, and 4% within 4 years.",
+  },
+  {
+    q: "Do I need my own lawyer for a condo sale?",
+    a: "Yes. Private property sales require separate solicitors for buyer and seller. HomeUP can refer experienced conveyancing lawyers, but their fees are separate from HomeUP's flat fee. Seller conveyancing is commonly $2,000 to $3,500 plus GST.",
   },
   {
     q: "What if I need to buy my next home after my condo sale?",
@@ -141,14 +149,6 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
   {
     q: "Are there any other hidden fees?",
     a: "No, there are no hidden fees. The price is fixed at $4,999 + GST.",
-  },
-  {
-    q: "Does Seller's Stamp Duty apply to my condo sale?",
-    a: "SSD applies if you sell within four years of purchase. Rates are 16% within one year, 12% within two years, 8% within three years, and 4% within 4 years.",
-  },
-  {
-    q: "Do I need my own lawyer for a condo sale?",
-    a: "Yes. Private property sales require separate solicitors for buyer and seller. HomeUP can refer experienced conveyancing lawyers, but their fees are separate from HomeUP's flat fee. Seller conveyancing is commonly $2,000 to $3,500 plus GST.",
   },
 ];
 
@@ -176,6 +176,10 @@ export const SELL_FAQ_LANDED: FaqItem[] = [
   {
     q: "How does HomeUP handle negotiation on higher-value landed sales?",
     a: "We present each offer with a full read of terms, not just the headline price: payment schedule, completion date, and conditions. Landed deals need patience. We will not pressure you to accept before you are comfortable with the outcome.",
+  },
+  {
+    q: "Are there any other hidden fees?",
+    a: "No, there are no hidden fees. The price is fixed at $9,999 + GST.",
   },
 ];
 

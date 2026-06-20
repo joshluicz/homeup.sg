@@ -10,6 +10,7 @@ import {
   type BuyPropertyType,
 } from "@/lib/data/buy-pricing";
 import {
+  SELL_DEFAULT_BY_TYPE,
   SELL_MAX_BY_TYPE,
   type SellPropertyType,
 } from "@/lib/data/sell-pricing";
@@ -112,6 +113,16 @@ function formatAmount(value: number): string {
   return value.toLocaleString("en-SG");
 }
 
+function defaultPropertyValue(
+  propertyType: SellPropertyType | BuyPropertyType,
+  isBuy: boolean,
+): number {
+  if (!isBuy) {
+    return SELL_DEFAULT_BY_TYPE[propertyType as SellPropertyType];
+  }
+  return 500_000;
+}
+
 function withGst(amount: number): number {
   return Math.round(amount * (1 + GST_RATE));
 }
@@ -152,7 +163,9 @@ export function SavingsSlider({
   const [propertyType, setPropertyType] = useState<SellPropertyType | BuyPropertyType>(
     initialType,
   );
-  const [propertyValue, setPropertyValue] = useState(500_000);
+  const [propertyValue, setPropertyValue] = useState(() =>
+    defaultPropertyValue(initialType, isBuy),
+  );
   const [inputDraft, setInputDraft] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -182,8 +195,12 @@ export function SavingsSlider({
   }, [max]);
 
   useEffect(() => {
-    if (defaultType) setPropertyType(defaultType);
-  }, [defaultType]);
+    if (defaultType) {
+      setPropertyType(defaultType);
+      setPropertyValue(defaultPropertyValue(defaultType, isBuy));
+      setInputDraft(null);
+    }
+  }, [defaultType, isBuy]);
 
   const fees = isBuy ? BUY_FEES : SELL_FEES;
   const feeConfig = fees[propertyType as keyof typeof fees];
@@ -267,7 +284,11 @@ export function SavingsSlider({
                   size="sm"
                   showIcon={false}
                   successDuration={600}
-                  onClick={() => setPropertyType(t)}
+                  onClick={() => {
+                    setPropertyType(t);
+                    setPropertyValue(defaultPropertyValue(t, isBuy));
+                    setInputDraft(null);
+                  }}
                   className={cn(
                     "h-auto min-h-0 flex-1 rounded-lg border-0 px-2 py-2.5 text-xs font-semibold shadow-none ring-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 sm:px-3 sm:text-sm",
                     propertyType === t

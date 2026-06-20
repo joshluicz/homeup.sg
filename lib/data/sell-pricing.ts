@@ -48,6 +48,12 @@ export const SELL_MAX_BY_TYPE: Record<SellPropertyType, number> = {
   Landed: 6_000_000,
 };
 
+export const SELL_DEFAULT_BY_TYPE: Record<SellPropertyType, number> = {
+  HDB: 500_000,
+  Condo: 1_500_000,
+  Landed: 3_000_000,
+};
+
 export const SELL_THEME_STYLES = {
   blue: {
     topBar: "bg-blue-500",
