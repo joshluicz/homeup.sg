@@ -8,20 +8,12 @@ export interface SellPageHero {
   ctaNote: string;
 }
 
-export interface SellTypeGuideContent {
-  eyebrow: string;
-  title: string;
-  lead: string;
-  points: string[];
-}
-
 export interface SellPageConfig {
   slug: string;
   canonicalPath: string;
   filterType: SellPropertyType | null;
   defaultSliderType: SellPropertyType;
   hero: SellPageHero;
-  typeGuide: SellTypeGuideContent | null;
   meta: {
     title: string;
     description: string;
@@ -45,7 +37,6 @@ export const SELL_PAGE_GENERAL: SellPageConfig = {
     body: "Most Singapore homeowners give away $10,000 to $70,000 in commission. HomeUP charges a fixed fee for the same full service, whether you're selling an HDB, condo, or landed home.",
     ctaNote: sharedProcessNote.ctaNote,
   },
-  typeGuide: null,
   meta: {
     title: "Sell Your Property in Singapore",
     description:
@@ -62,19 +53,8 @@ export const SELL_PAGE_HDB: SellPageConfig = {
     title: "Sell Your HDB Flat.",
     highlight: "Keep More of Your Proceeds.",
     subtitle: sharedProcessNote.subtitle,
-    body: "HDB resale comes with its own timeline: MOP, valuation, and HDB submission. HomeUP handles it all at a fixed $1,999 + GST, not a percentage of your sale price.",
+    body: "HomeUP's full HDB agent services include marketing, OTP documents, valuation, HDB submission, and guidance all the way till completion. HomeUP HDB agents handle it all at a fixed $1,999 + GST, without compromising on service.",
     ctaNote: sharedProcessNote.ctaNote,
-  },
-  typeGuide: {
-    eyebrow: "Selling HDB",
-    title: "Selling an HDB flat comes with its own timeline. We plan around it.",
-    lead: "From eligibility checks to HDB submission, every step is structured so you know what happens next.",
-    points: [
-      "MOP and eligibility review before you commit to a sale timeline",
-      "Valuation guidance aligned with recent transacted prices in your block and town",
-      "Coordinated marketing across PropertyGuru, SRX, 99.co and social channels",
-      "Full HDB resale documentation and submission handled by your dedicated agent",
-    ],
   },
   meta: {
     title: "Sell Your HDB Flat in Singapore",
@@ -95,17 +75,6 @@ export const SELL_PAGE_CONDO: SellPageConfig = {
     body: "Resale condo sales need visibility and pricing discipline, not guesswork. HomeUP charges a fixed $4,999 + GST for the same full-service experience typical agents charge 2% for.",
     ctaNote: sharedProcessNote.ctaNote,
   },
-  typeGuide: {
-    eyebrow: "Selling Condo / EC",
-    title: "Resale condo sales need visibility and pricing discipline, not guesswork.",
-    lead: "Your home is marketed broadly, reviewed regularly, and managed with structured follow-through.",
-    points: [
-      "Multi-platform listing across major property portals and social channels",
-      "Regular market feedback reviews, not a 'list and hope' approach",
-      "Flexible viewing arrangements to maximise buyer interest through the week",
-      "Contract drafting, negotiation, and completion handled end-to-end",
-    ],
-  },
   meta: {
     title: "Sell Your Condo or EC in Singapore",
     description:
@@ -124,17 +93,6 @@ export const SELL_PAGE_LANDED: SellPageConfig = {
     subtitle: sharedProcessNote.subtitle,
     body: "Landed properties deserve the same structured approach at a fee that makes sense. HomeUP charges a fixed $9,999 + GST, not a percentage that scales with your home's value.",
     ctaNote: sharedProcessNote.ctaNote,
-  },
-  typeGuide: {
-    eyebrow: "Selling Landed",
-    title: "Landed properties deserve the same structured approach at a fee that makes sense.",
-    lead: "Tenure checks, buyer qualification, and patient negotiation, handled with the same commitment as every HomeUP listing.",
-    points: [
-      "Tenure and zoning checks before listing to avoid surprises later",
-      "Targeted marketing to reach serious landed buyers, not casual browsers",
-      "Structured viewing coordination and offer assessment with clear net proceeds",
-      "Full contract drafting, negotiation, and completion support",
-    ],
   },
   meta: {
     title: "Sell Your Landed Property in Singapore",

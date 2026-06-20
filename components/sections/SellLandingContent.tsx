@@ -14,11 +14,9 @@ import { ComparisonTable } from "@/components/sections/ComparisonTable";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { PropertyTypeNav } from "@/components/sections/PropertyTypeNav";
-import { SellFeeExplainer } from "@/components/sections/SellFeeExplainer";
 import { SellHero } from "@/components/sections/SellHero";
 import { SellSubPageHero } from "@/components/sections/SellSubPageHero";
 import { SellProcessFlow } from "@/components/sections/SellProcessFlow";
-import { SellTypeGuide } from "@/components/sections/SellTypeGuide";
 import { SocialPanel } from "@/components/sections/SocialPanel";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { WhyCheaper } from "@/components/sections/WhyCheaper";
@@ -84,7 +82,6 @@ export function SellLandingContent({ config, listingCount }: SellLandingContentP
           defaultSliderType={config.defaultSliderType}
           showSlider
         />
-        <SellFeeExplainer />
         <Benefits />
         <ComparisonTable />
         <FAQSection
@@ -107,10 +104,8 @@ export function SellLandingContent({ config, listingCount }: SellLandingContentP
   return (
     <>
       <SellSubPageHero content={config.hero} filterType={config.filterType!} />
-      <SellFeeExplainer />
       <SellProcessFlow propertyType={config.filterType!} />
       <ComparisonTable />
-      {config.typeGuide && <SellTypeGuide content={config.typeGuide} />}
       <FAQSection
         items={faqConfig.items}
         eyebrow={faqConfig.eyebrow}
