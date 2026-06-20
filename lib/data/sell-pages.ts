@@ -72,7 +72,7 @@ export const SELL_PAGE_CONDO: SellPageConfig = {
     title: "Sell Your Condo or EC.",
     highlight: "Fixed Fee. Full Service.",
     subtitle: sharedProcessNote.subtitle,
-    body: "Resale condo sales need visibility and pricing discipline, not guesswork. HomeUP charges a fixed $4,999 + GST for the same full-service experience typical agents charge 2% for.",
+    body: "HomeUP's full condo agent services include marketing, OTP documents, negotiation, S&P coordination, and guidance all the way till completion. HomeUP condo agents handle it all at a fixed $4,999 + GST, without compromising on service.",
     ctaNote: sharedProcessNote.ctaNote,
   },
   meta: {

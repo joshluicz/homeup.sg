@@ -108,9 +108,37 @@ export const SELL_FAQ_HDB: FaqItem[] = [
     q: "What if I need to buy my next home after my HDB sale?",
     a: "We plan your sale and purchase timeline from the start. We will touch on important points like whether you need an extension of stay and your current housing situation. We will not rush you into an offer that leaves you without a plan for your next home.",
   },
+  {
+    q: "Are there any other hidden fees?",
+    a: "No, there are no hidden fees. The price is fixed at $1,999 + GST.",
+  },
 ];
 
 export const SELL_FAQ_CONDO: FaqItem[] = [
+  {
+    q: "How much CPF must I return when I sell my condo?",
+    a: "CPF used to buy the unit, plus accrued interest at 2.5% per year, goes back to your CPF Ordinary Account when you sell. If needed, HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
+  },
+  {
+    q: "How long does a condo resale take from accepted offer to completion?",
+    a: "Most resales take 3-4 months after you accept an offer. That covers the OTP period, Sale and Purchase Agreement, loan approval, and legal completion. How long you wait for a suitable offer depends on price and demand in your development.",
+  },
+  {
+    q: "Does HomeUP handle the Sale and Purchase paperwork?",
+    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and coordinates with both solicitors through completion for you.",
+  },
+  {
+    q: "When is the bank valuation done and why does it matter?",
+    a: "After the unit is optioned out, the buyer will request a valuation report from the bank. It affects the buyer's loan and CPF usage, which can affect whether the deal goes through at your agreed price.",
+  },
+  {
+    q: "What if I need to buy my next home after my condo sale?",
+    a: "We plan your sale and purchase timeline from the start. We will touch on important points like whether you need an extension of stay and your current housing situation. We will not rush you into an offer that leaves you without a plan for your next home.",
+  },
+  {
+    q: "Are there any other hidden fees?",
+    a: "No, there are no hidden fees. The price is fixed at $4,999 + GST.",
+  },
   {
     q: "Does Seller's Stamp Duty apply to my condo sale?",
     a: "SSD applies if you sell within three years of purchase. Rates are 12% within one year, 8% within two years, and 4% within three years, based on the higher of sale price or market value. HomeUP confirms whether SSD applies in your first meeting before any listing date is set.",
@@ -118,18 +146,6 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
   {
     q: "Can I sell an Executive Condominium on the open market?",
     a: "After the five-year Minimum Occupation Period, an EC can be sold on the open market like a private condo. Before MOP, resale is back to HDB only. After privatisation (typically ten years), foreign buyers may also be eligible. HomeUP confirms your status before marketing begins.",
-  },
-  {
-    q: "How is a condo resale different from an HDB resale?",
-    a: "There is no HDB Portal. The sale runs on private conveyancing: OTP, Sale and Purchase Agreement, and lawyer-led completion. OTP is typically 14 days, and legal completion is often 10 to 12 weeks after the S and P is signed. HomeUP coordinates with both sides' solicitors through to completion.",
-  },
-  {
-    q: "Can foreigners buy my resale condo?",
-    a: "In most cases, yes. Foreigners and permanent residents can buy resale condominium units, unlike most HDB flats and landed homes. That wider buyer pool is one reason broad portal marketing matters. HomeUP still qualifies enquiries so viewings are not wasted.",
-  },
-  {
-    q: "What happens between OTP exercise and legal completion?",
-    a: "After the buyer exercises the OTP and pays the balance of the option fee, lawyers draft the Sale and Purchase Agreement. The buyer's loan is confirmed, insurance is arranged, and your outstanding loan is discharged. HomeUP tracks deadlines and keeps both legal teams aligned.",
   },
   {
     q: "Do I need my own lawyer for a condo sale?",

@@ -60,18 +60,18 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "03",
     title: "Open-the-Door",
-    body: "HomeUP briefs you, screens buyers for seriousness and eligibility, and manages the viewing schedule. You show your unit. We follow up with every buyer and track feedback closely.",
+    body: "HomeUP will brief buyers on your unit's details (floor plan, videos, etc.), screen interested parties, and coordinate the schedule. We just need someone to open the doors for the buyers.",
     highlight: true,
   },
   {
     step: "04",
     title: "OTP & S&P",
-    body: "Offer negotiated. OTP signed at 1% option fee. HomeUP coordinates with both solicitors through the Sale & Purchase Agreement and ensures all deadlines are met.",
+    body: "Offer accepted and negotiated. We will issue OTP when option fee is received. HomeUP coordinates with both solicitors through the Sale & Purchase Agreement.",
   },
   {
     step: "05",
     title: "Legal Completion",
-    body: "Legal completion confirmed with your solicitor. Mortgage discharged. Net sale proceeds received. HomeUP tracks every milestone from S&P to the day funds clear.",
+    body: "Legal completion confirmed with your solicitor. Mortgage discharged. Net sale proceeds received.",
   },
 ];
 
@@ -112,7 +112,7 @@ const STEPS_BY_TYPE: Record<SellPropertyType, ProcessStep[]> = {
 
 const TITLE_BY_TYPE: Record<SellPropertyType, string> = {
   HDB: "Every step mapped out, from first call to completion.",
-  Condo: "From first call to legal completion. No guesswork.",
+  Condo: "Every step mapped out, from first call to completion.",
   Landed: "A structured process for a considered sale.",
 };
 
