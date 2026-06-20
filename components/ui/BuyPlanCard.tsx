@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
+  BUY_NO_FEE_LABEL,
   BUY_PLANS,
   BUY_THEME_STYLES,
   type BuyPropertyType,
@@ -47,7 +48,7 @@ export function BuyPlanCard({
           <span className={cn("font-display text-3xl font-bold tracking-tight sm:text-4xl", t.price)}>
             {plan.price}
           </span>
-          {plan.price !== "Complimentary" && (
+          {plan.price !== BUY_NO_FEE_LABEL && (
             <span className="text-sm font-medium text-neutral-500">+ GST</span>
           )}
         </div>

@@ -62,8 +62,8 @@ export function BuyPricing({
               <h2 className="section-title">What buying support does HomeUP offer?</h2>
               <p className="section-lead">
                 HomeUP provides full buyer representation for HDB resale ($1,999 + GST),
-                resale condo and landed (complimentary), and new launch purchases
-                (complimentary), including affordability planning, shortlisting,
+                resale condo and landed (no fees), and new launch purchases
+                (no fees), including affordability planning, shortlisting,
                 viewings, negotiation, and documentation through to completion.
               </p>
             </FadeInUp>
@@ -94,7 +94,7 @@ export function BuyPricing({
           <h2 className="section-title">How much does it cost to buy property with HomeUP?</h2>
           <p className="section-lead">
             HDB buyer representation is a fixed $1,999 + GST. Condo, landed, and new launch
-            purchases are complimentary. The seller or developer covers the agent fee under
+            purchases have no fees. The seller or developer covers the agent fee under
             standard Singapore co-broke arrangements, so you pay nothing for representation.
           </p>
         </FadeInUp>
@@ -119,7 +119,7 @@ export function BuyPricing({
 
         <FadeInUp delay={0.2}>
           <p className="mt-6 text-center text-xs text-neutral-400">
-            GST applicable on paid packages. Complimentary packages are funded via standard
+            GST applicable on paid packages. No Fees packages are funded via standard
             co-broke arrangements.
           </p>
         </FadeInUp>

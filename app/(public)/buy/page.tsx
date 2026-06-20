@@ -50,13 +50,13 @@ export default function BuyPage() {
               name: "Condo/Landed Purchase Representation",
               price: "0",
               description:
-                "Complimentary buyer representation for resale condo and landed purchases.",
+                "No Fees buyer representation for resale condo and landed purchases.",
             },
             {
               name: "New Launch Purchase Representation",
               price: "0",
               description:
-                "Complimentary assistance to purchase New Launch straight from developers.",
+                "No Fees assistance to purchase New Launch straight from developers.",
             },
           ],
         }}

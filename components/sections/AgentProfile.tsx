@@ -50,8 +50,21 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                   sizes="(max-width: 1024px) 320px, 360px"
                 />
               </div>
-              <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
-                {agent.name}
+              <h1 className="mt-4 flex flex-wrap items-center gap-x-2 font-display font-extrabold tracking-tight text-neutral-900">
+                <span className="text-3xl sm:text-4xl">{agent.name}</span>
+                {agent.profileTitle && (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="text-2xl font-bold leading-none text-neutral-500 sm:text-3xl"
+                    >
+                      ·
+                    </span>
+                    <span className="text-lg font-semibold text-primary-700 sm:text-xl">
+                      {agent.profileTitle}
+                    </span>
+                  </>
+                )}
               </h1>
               {agent.quote && (
                 <div className="relative mt-5 overflow-hidden rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/70 p-5 shadow-[0_4px_24px_rgba(0,154,68,0.08)] sm:p-6">

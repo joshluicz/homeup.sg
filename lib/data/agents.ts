@@ -30,6 +30,8 @@ export interface Agent {
   about: string[];
   /** Awards, credentials, and recognition */
   accolades?: string[];
+  /** Role shown on the agent profile page (e.g. Co-Founder, Partner) */
+  profileTitle?: string;
   specialties: string[];
   social?: AgentSocialLinks;
   /** YouTube @handle without the @ prefix */
@@ -48,6 +50,7 @@ export const AGENTS: Agent[] = [
   {
     slug: "dennis-lim",
     name: "Dennis Lim",
+    profileTitle: "Co-Founder",
     cea: "R055990G",
     bio: "Straight-talking guidance shaped by real ownership and upgrade experience, including private and landed homes in Singapore.",
     photo: "/images/agent-dennis.png",
@@ -88,6 +91,7 @@ export const AGENTS: Agent[] = [
   {
     slug: "yeo-tong-boon",
     name: "Yeo Tong Boon",
+    profileTitle: "Co-Founder",
     cea: "R069651E",
     bio: "Having completed hundreds of property transactions across Singapore, Tong Boon has helped hundreds of families successfully upgrade and acquire their next home.",
     photo: "/images/agent-tong-boon.png",
@@ -96,8 +100,8 @@ export const AGENTS: Agent[] = [
     quoteThirdPerson: true,
     accolades: [
       "NUS Real Estate (Hons)",
-      "Agency Top Private Property Buying Transactor (2025)",
-      "Top Agent Under 40 & Top 3 Producer in Agency (2025)",
+      "Top Private Property Transactor | C&H 2025",
+      "Top Agent Under 40 & Top 3 Producer | C&H 2025",
       "Centurion Award 2025",
     ],
     about: [],
@@ -128,6 +132,7 @@ export const AGENTS: Agent[] = [
   {
     slug: "edmund-lee",
     name: "Edmund Lee",
+    profileTitle: "Partner",
     cea: "R023385H",
     bio: "A steady hand with three decades of experience guiding HDB homeowners through resale decisions calmly and methodically.",
     photo: "/images/agent-edmund.png",
@@ -148,6 +153,7 @@ export const AGENTS: Agent[] = [
   {
     slug: "kenji-ching",
     name: "Kenji Ching",
+    profileTitle: "Partner",
     cea: "R070948I",
     bio: "Patient, practical support for homeowners navigating resale or their first upgrade.",
     photo: "/images/agent-kenji.png",

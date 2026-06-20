@@ -14,6 +14,8 @@ export interface BuyPlan {
   includes: string[];
 }
 
+export const BUY_NO_FEE_LABEL = "No Fees";
+
 export const BUY_PLANS: BuyPlan[] = [
   {
     name: "HDB Purchase",
@@ -37,7 +39,7 @@ export const BUY_PLANS: BuyPlan[] = [
     tag: "Condo / Landed",
     theme: "green",
     type: "CondoLanded",
-    price: "Complimentary",
+    price: BUY_NO_FEE_LABEL,
     description:
       "Market insights, project comparisons and negotiation support for resale condo and landed homes, at no cost to you.",
     learnMoreHref: "/buy-condo-landed",
@@ -54,7 +56,7 @@ export const BUY_PLANS: BuyPlan[] = [
     tag: "New Launch",
     theme: "amber",
     type: "NewLaunch",
-    price: "Complimentary",
+    price: BUY_NO_FEE_LABEL,
     description:
       "We assist you to purchase New Launch straight from developers. Buyer pays no commission.",
     learnMoreHref: "/buy-new-launch",

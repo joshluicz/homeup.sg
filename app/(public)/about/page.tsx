@@ -16,6 +16,11 @@ export const metadata = buildPageMetadata({
 
 export default async function AboutPage() {
   const stats = await getListingStatsServer();
+  const asOfDate = new Date().toLocaleDateString("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <>
@@ -31,7 +36,7 @@ export default async function AboutPage() {
       />
       <Navbar />
       <main className="bg-white">
-        <AboutContent listingCount={stats.total} />
+        <AboutContent listingCount={stats.total} listingsAsOfDate={asOfDate} />
         <CtaBanner />
       </main>
       <Footer />

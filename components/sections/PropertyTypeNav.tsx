@@ -89,7 +89,7 @@ const BUY_CARDS: PropertyTypeCard[] = [
   {
     icon: Home,
     label: "Condo or Landed",
-    tag: "Complimentary",
+    tag: "No Fees",
     fee: "Free",
     feeNote: "No buyer commission",
     bullets: [
@@ -105,7 +105,7 @@ const BUY_CARDS: PropertyTypeCard[] = [
   {
     icon: Sparkles,
     label: "New Launch",
-    tag: "Complimentary",
+    tag: "No Fees",
     fee: "Free",
     feeNote: "Developer pays agent",
     bullets: [

@@ -28,7 +28,7 @@ export default function BuyCondoLandedPage() {
         howTo={{
           name: "How to buy resale condo or landed property with HomeUP",
           description:
-            "Complimentary buyer representation for resale private property purchases in Singapore.",
+            "No Fees buyer representation for resale private property purchases in Singapore.",
           steps: BUY_HOW_TO_STEPS,
         }}
         service={{
@@ -39,7 +39,7 @@ export default function BuyCondoLandedPage() {
             {
               name: "Condo/Landed Purchase Representation",
               price: "0",
-              description: "Complimentary buyer representation for resale private property.",
+              description: "No Fees buyer representation for resale private property.",
             },
           ],
         }}

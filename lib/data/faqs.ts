@@ -36,7 +36,7 @@ export function faqItemsForSchema(items: FaqItem[], listingCount?: number): FaqI
 
 export const HOMEPAGE_FAQ: FaqItem[] = [
   {
-    q: "Why is HomeUP's fee so much lower if the service is full?",
+    q: "Why is HomeUP's fees so much lower?",
     listingCountVariant: "hosting-scale",
     a: faqAnswerWithListingCount("hosting-scale", 120),
   },

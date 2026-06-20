@@ -39,7 +39,7 @@ export default function BuyNewLaunchPage() {
             {
               name: "New Launch Purchase Representation",
               price: "0",
-              description: "Complimentary buyer representation for new launch purchases.",
+              description: "No Fees buyer representation for new launch purchases.",
             },
           ],
         }}

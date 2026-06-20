@@ -366,7 +366,7 @@ export function SavingsSlider({
               className="mt-4 font-display font-black tracking-tight text-primary-700"
               style={{ fontSize: "clamp(2rem, 7vw, 3rem)" }}
             >
-              Complimentary
+              No Fees
             </p>
             <p className="mt-2 text-sm text-neutral-600">
               {BUY_TYPE_LABELS[propertyType as BuyPropertyType]} purchase · fully covered by

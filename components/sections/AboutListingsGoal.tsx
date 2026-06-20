@@ -95,18 +95,29 @@ function AnimatedGoalNumber({
 
 type AboutListingsGoalProps = {
   listingCount?: number;
+  asOfDate?: string;
 };
 
-export function AboutListingsGoal({ listingCount }: AboutListingsGoalProps) {
+function formatAsOfDate(date: Date): string {
+  return date.toLocaleDateString("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export function AboutListingsGoal({ listingCount, asOfDate }: AboutListingsGoalProps) {
+  const prefersReducedMotion = useReducedMotion();
   const effectiveCount = listingCount ?? COUNT_FALLBACK;
   const progressPct = Math.min(
     100,
     Math.round((effectiveCount / ACTIVE_LISTINGS_GOAL) * 100),
   );
   const remaining = Math.max(0, ACTIVE_LISTINGS_GOAL - effectiveCount);
+  const dateLabel = asOfDate ?? formatAsOfDate(new Date());
 
   return (
-    <section aria-label="Active listings goal" className="section-padding bg-white">
+    <section aria-label="Active listings goal" className="section-padding bg-neutral-50">
       <div className="container-page">
         <FadeInUp>
           <div className="relative overflow-hidden rounded-3xl border border-primary-600/25 bg-neutral-950 px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-16">
@@ -129,7 +140,7 @@ export function AboutListingsGoal({ listingCount }: AboutListingsGoalProps) {
                 </h2>
                 <p className="mt-5 max-w-xl text-base font-normal leading-relaxed text-neutral-400">
                   More homes on HomeUP means stronger buyer reach, shared marketing power, and fixed
-                  fees that stay low. We&apos;re scaling deliberately — one listing at a time.
+                  fees that stay low. We&apos;re scaling deliberately.
                 </p>
                 <Link
                   href="/listings"
@@ -146,15 +157,16 @@ export function AboutListingsGoal({ listingCount }: AboutListingsGoalProps) {
                     className="opacity-60"
                     strokeClassName="text-primary-300/80"
                   />
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-400">
-                        Live today
-                      </p>
+                  <div className="relative z-10 px-0.5">
+                    <div className="flex items-center gap-2 pl-1">
                       <TrendingUp
                         className="h-4 w-4 shrink-0 text-primary-400"
                         aria-hidden="true"
                       />
+                      <p className="text-xs font-semibold text-neutral-400">
+                        Live today
+                        <span className="font-normal text-neutral-500"> · {dateLabel}</span>
+                      </p>
                     </div>
 
                     <AnimatedGoalNumber listingCount={listingCount} goal={ACTIVE_LISTINGS_GOAL} />

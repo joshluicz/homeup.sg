@@ -102,7 +102,7 @@ export const BUY_PAGE_CONDO_LANDED: BuyPageConfig = {
       "Viewing coordination and offer negotiation",
       "Sell-and-buy timing planned alongside your sale",
     ],
-    ctaNote: "No commitment · Complimentary buyer representation",
+    ctaNote: "No commitment · No Fees buyer representation",
   },
   typeGuide: {
     eyebrow: "Buying Condo / Landed",

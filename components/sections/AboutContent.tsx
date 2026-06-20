@@ -30,7 +30,13 @@ const FOUNDERS = [
   },
 ] as const;
 
-export function AboutContent({ listingCount }: { listingCount?: number }) {
+export function AboutContent({
+  listingCount,
+  listingsAsOfDate,
+}: {
+  listingCount?: number;
+  listingsAsOfDate?: string;
+}) {
   const [visionLead, visionTail] = SITE_VISION.split(", because ");
   const [realEstateLead] = visionTail.split("should finally be fair");
 
@@ -95,7 +101,9 @@ export function AboutContent({ listingCount }: { listingCount?: number }) {
         </div>
       </section>
 
-      <section aria-label="Meet the team" className="section-padding bg-neutral-50">
+      <AboutListingsGoal listingCount={listingCount} asOfDate={listingsAsOfDate} />
+
+      <section aria-label="Meet the team" className="section-padding bg-white">
         <div className="container-page">
           <FadeInUp className="section-header">
             <Eyebrow>Our Team</Eyebrow>
@@ -143,9 +151,7 @@ export function AboutContent({ listingCount }: { listingCount?: number }) {
         </div>
       </section>
 
-      <AboutListingsGoal listingCount={listingCount} />
-
-      <section aria-label="Company details" className="section-padding bg-white">
+      <section aria-label="Company details" className="section-padding bg-neutral-50">
         <div className="container-page">
           <div className="mx-auto max-w-3xl rounded-2xl border border-neutral-200 bg-neutral-50 p-8">
             <h2 className="text-sm font-bold text-neutral-900">Company information</h2>
