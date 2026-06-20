@@ -52,12 +52,12 @@ export const AGENTS: Agent[] = [
     bio: "Straight-talking guidance shaped by real ownership and upgrade experience, including private and landed homes in Singapore.",
     photo: "/images/agent-dennis.png",
     quote:
-      "Dennis brings extensive experience across Singapore's property market, with 5 private property investments including a landed home in Singapore held under trust and 3 properties in China. His expertise spans property ownership, investment structures, and cross-border real estate.",
+      "Dennis brings extensive experience across Singapore's property market, with 5 private property investments including a landed home in Singapore held under trust and 3 properties in China.",
     quoteThirdPerson: true,
     accolades: [
       "NUS BBA (Hons)",
       "ABF Award (Ministry of Trade & Industry)",
-      "Top Sale (Residential) I 2025",
+      "Top Sale (Residential) 2025",
       "Double Centurion Award 2025",
     ],
     about: [],

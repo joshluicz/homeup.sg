@@ -24,7 +24,10 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
 
   return (
     <>
-      <section aria-label={`${agent.name} profile`} className="bg-white section-padding">
+      <section
+        aria-label={`${agent.name} profile`}
+        className={`bg-white section-padding${showTikTok ? " max-lg:pb-0" : ""}`}
+      >
         <div className="container-page">
           <Link
             href="/agents"
@@ -60,7 +63,7 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                   </p>
                 </div>
               )}
-              <p className="mt-4 text-sm font-normal text-neutral-400">{agent.cea}</p>
+              <p className="mt-4 text-sm font-normal text-neutral-400">CEA: {agent.cea}</p>
               {agent.social && !hasIntroVideo && (
                 <AgentSocialLinks
                   links={agent.social}
@@ -135,7 +138,7 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
       )}
 
       {showTikTok && (
-        <section aria-label={`${agent.name} on TikTok`} className="section-padding bg-white">
+        <section aria-label={`${agent.name} on TikTok`} className="section-padding bg-white max-lg:pt-0">
           <div className="container-page">
             <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
               Property insights on TikTok
