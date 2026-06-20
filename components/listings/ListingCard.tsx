@@ -14,6 +14,7 @@ import { getPublicListingPath } from "@/lib/listings/utils";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 import { trackButtonClick } from "@/lib/analytics";
+import { ListingImage } from "@/components/listings/ListingImage";
 
 const typeBadge: Record<string, string> = {
   HDB: "bg-blue-50 text-blue-700 border-blue-200",
@@ -24,9 +25,11 @@ const typeBadge: Record<string, string> = {
 type ListingCardProps = {
   listing: Listing;
   compact?: boolean;
+  /** First visible cards load eagerly for faster LCP on /listings. */
+  priority?: boolean;
 };
 
-export function ListingCard({ listing, compact = false }: ListingCardProps) {
+export function ListingCard({ listing, compact = false, priority = false }: ListingCardProps) {
   const typeLabel = flatTypeBadgeLabel(listing.flat_type);
   const priceLabel = formatListingPrice(listing);
   const href = getPublicListingPath(listing.slug);
@@ -34,11 +37,12 @@ export function ListingCard({ listing, compact = false }: ListingCardProps) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:border-primary-600/40 hover:shadow-md">
       <Link href={href} className="relative block aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ListingImage
           src={getListingImage(listing)}
           alt={listing.title}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          variant={compact ? "compact" : "card"}
+          priority={priority}
+          className="transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <span

@@ -56,13 +56,18 @@ export function ListingsPageClient({ initialListings, initialStats }: Props) {
   useEffect(() => {
     setHydrated(true);
 
+    if (initialListings.length > 0) {
+      setLoading(false);
+      return;
+    }
+
     getActiveListings()
       .then((listingsData) => {
         setListings(listingsData);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialListings.length]);
 
   if (loading) {
     return <ListingsGridSkeleton />;

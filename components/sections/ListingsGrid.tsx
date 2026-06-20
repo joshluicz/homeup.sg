@@ -67,8 +67,12 @@ export function ListingsGrid({ listings }: ListingsGridProps) {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           >
-            {filtered.map((listing) => (
-              <ListingCard key={listing.id} listing={listing} />
+            {filtered.map((listing, index) => (
+              <ListingCard
+                key={listing.id}
+                listing={listing}
+                priority={index < 4}
+              />
             ))}
           </motion.div>
         </AnimatePresence>

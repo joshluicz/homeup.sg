@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ListingImage } from "@/components/listings/ListingImage";
 
 const AUTOPLAY_MS = 5000;
 const SWIPE_THRESHOLD_PX = 40;
@@ -105,14 +106,16 @@ export function ListingImageGallery({ images, alt }: ListingImageGalleryProps) {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          key={images[active]}
-          src={images[active]}
-          alt={alt}
-          className="aspect-[4/3] w-full object-cover transition-opacity duration-300"
-          draggable={false}
-        />
+        <div className="relative aspect-[4/3] w-full">
+          <ListingImage
+            key={images[active]}
+            src={images[active]}
+            alt={alt}
+            variant="gallery"
+            priority
+            className="transition-opacity duration-300"
+          />
+        </div>
 
         {count > 1 && (
           <>
@@ -185,12 +188,12 @@ export function ListingImageGallery({ images, alt }: ListingImageGalleryProps) {
                     : "opacity-50 hover:opacity-100",
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <ListingImage
                   src={images[index]}
                   alt=""
-                  className="h-full w-full object-cover"
-                  draggable={false}
+                  variant="thumb"
+                  fill
+                  className="h-full w-full"
                 />
               </button>
             ))}

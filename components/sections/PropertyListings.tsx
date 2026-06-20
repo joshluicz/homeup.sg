@@ -87,8 +87,8 @@ export function PropertyListings({
         ) : (
           <FadeInUp delay={0.12}>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {preview.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} compact />
+              {preview.map((listing, index) => (
+                <ListingCard key={listing.id} listing={listing} compact priority={index < 3} />
               ))}
             </div>
           </FadeInUp>

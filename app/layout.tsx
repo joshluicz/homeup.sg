@@ -13,6 +13,7 @@ import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -77,10 +78,18 @@ export default function RootLayout({
     <html lang="en" className={jakarta.variable}>
       <head>
         <style id="critical-css" dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
+        {SUPABASE_URL && (
+          <>
+            <link rel="preconnect" href={SUPABASE_URL} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={SUPABASE_URL} />
+          </>
+        )}
+        <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body>
         {GA_ID && (
-          <Script id="ga4-loader" strategy="afterInteractive">{`
+          <Script id="ga4-loader" strategy="lazyOnload">{`
             try {
               if (localStorage.getItem('homeup-internal') === '1') {
                 window['ga-disable-${GA_ID}'] = true;

@@ -238,6 +238,7 @@ export function Hero() {
               width={920}
               height={614}
               priority
+              quality={85}
               className="block w-full object-contain object-top"
               sizes="(max-width: 1024px) 100vw, 56vw"
             />

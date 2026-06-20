@@ -8,6 +8,7 @@ import {
   listedAsLabel,
 } from "@/lib/listings/public-utils";
 import { getPublicListingPath } from "@/lib/listings/utils";
+import { ListingImage } from "@/components/listings/ListingImage";
 
 const typeBadge: Record<string, string> = {
   HDB: "bg-blue-50 text-blue-700 border-blue-200",
@@ -18,10 +19,11 @@ const typeBadge: Record<string, string> = {
 type ListingCardStaticProps = {
   listing: Listing;
   compact?: boolean;
+  priority?: boolean;
 };
 
 /** Server-rendered listing card for crawlers and first paint. */
-export function ListingCardStatic({ listing, compact = false }: ListingCardStaticProps) {
+export function ListingCardStatic({ listing, compact = false, priority = false }: ListingCardStaticProps) {
   const typeLabel = flatTypeBadgeLabel(listing.flat_type);
   const priceLabel = formatListingPrice(listing);
   const href = getPublicListingPath(listing.slug);
@@ -29,11 +31,11 @@ export function ListingCardStatic({ listing, compact = false }: ListingCardStati
   return (
     <article className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <Link href={href} className="relative block aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ListingImage
           src={getListingImage(listing)}
           alt={listing.title}
-          className="absolute inset-0 h-full w-full object-cover"
+          variant={compact ? "compact" : "card"}
+          priority={priority}
         />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <span

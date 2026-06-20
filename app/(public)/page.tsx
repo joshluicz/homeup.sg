@@ -5,6 +5,7 @@ import { AgentProfiles } from "@/components/sections/AgentProfiles";
 import { BuyCta } from "@/components/sections/BuyCta";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { Hero } from "@/components/sections/Hero";
+import { HeroImagePreload } from "@/components/sections/HeroImagePreload";
 import { PropertyListings } from "@/components/sections/PropertyListings";
 import { SocialPanel } from "@/components/sections/SocialPanel";
 import { FAQSection } from "@/components/sections/FAQSection";
@@ -48,6 +49,7 @@ export default async function Home() {
 
   return (
     <>
+      <HeroImagePreload />
       <JsonLd
         data={[
           organizationSchema(),
