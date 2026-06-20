@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Building2, Home, Menu, Sparkles, Trees } from "lucide-react";
+import { Building2, ChevronDown, Home, Menu, Sparkles, Trees } from "lucide-react";
 
 import {
   Accordion,
@@ -12,13 +12,12 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/Button";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
@@ -27,7 +26,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-
 interface MenuItem {
   title: string;
   url: string;
@@ -139,11 +137,9 @@ const Navbar1 = ({
             )}
           </div>
           <div className="flex items-center gap-6">
-            <NavigationMenu>
-              <NavigationMenuList>
-                {menu.map((item) => renderMenuItem(item))}
-              </NavigationMenuList>
-            </NavigationMenu>
+            <ul className="flex list-none items-center gap-1">
+              {menu.map((item) => renderMenuItem(item))}
+            </ul>
             {(showLogin || showSignup) && (
               <div className="flex gap-2">
                 {showLogin && auth?.login && (
@@ -244,59 +240,54 @@ const Navbar1 = ({
 function renderMenuItem(item: MenuItem) {
   if (item.items) {
     return (
-      <NavigationMenuItem key={item.title}>
-        <NavigationMenuTrigger className={desktopNavItemClass}>
-          {item.title}
-        </NavigationMenuTrigger>
-        <NavigationMenuContent>
-          <ul className="w-80 p-3">
+      <li key={item.title}>
+        <DropdownMenu>
+          <DropdownMenuTrigger className={cn(desktopNavItemClass, "group gap-1")}>
+            {item.title}
+            <ChevronDown className="h-3 w-3 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="z-[60] w-80 p-3">
             {item.items.map((subItem) => (
-              <li key={subItem.title}>
-                <NavigationMenuLink asChild>
-                  <NavLink
-                    href={subItem.url}
-                    className="flex select-none gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-muted hover:text-accent-foreground"
-                  >
-                    {subItem.icon}
-                    <div>
-                      <div className="text-sm font-semibold">{subItem.title}</div>
-                      {subItem.description && (
-                        <p className="text-sm leading-snug text-muted-foreground">
-                          {subItem.description}
-                        </p>
-                      )}
-                    </div>
-                  </NavLink>
-                </NavigationMenuLink>
-              </li>
-            ))}
-            <li className="mt-2 border-t pt-3">
-              <NavigationMenuLink asChild>
+              <DropdownMenuItem key={subItem.title} asChild className="cursor-pointer p-0 focus:bg-transparent">
                 <NavLink
-                  href={item.url}
-                  className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white no-underline outline-none transition-colors hover:bg-primary-700"
+                  href={subItem.url}
+                  className="flex select-none gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-muted hover:text-accent-foreground"
                 >
-                  View all {item.title}
+                  {subItem.icon}
+                  <div>
+                    <div className="text-sm font-semibold">{subItem.title}</div>
+                    {subItem.description && (
+                      <p className="text-sm leading-snug text-muted-foreground">
+                        {subItem.description}
+                      </p>
+                    )}
+                  </div>
                 </NavLink>
-              </NavigationMenuLink>
-            </li>
-          </ul>
-        </NavigationMenuContent>
-      </NavigationMenuItem>
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator className="my-2" />
+            <DropdownMenuItem asChild className="cursor-pointer p-0 focus:bg-transparent">
+              <NavLink
+                href={item.url}
+                className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white no-underline outline-none transition-colors hover:bg-primary-700"
+              >
+                View all {item.title}
+              </NavLink>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </li>
     );
   }
 
   return (
-    <NavigationMenuItem key={item.title}>
-      <NavigationMenuLink asChild>
-        <NavLink href={item.url} className={desktopNavItemClass}>
-          {item.title}
-        </NavLink>
-      </NavigationMenuLink>
-    </NavigationMenuItem>
+    <li key={item.title}>
+      <NavLink href={item.url} className={desktopNavItemClass}>
+        {item.title}
+      </NavLink>
+    </li>
   );
 }
-
 function renderMobileMenuItem(item: MenuItem) {
   if (item.items) {
     return (
