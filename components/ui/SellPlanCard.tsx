@@ -14,7 +14,11 @@ import { buildSellPlanWhatsAppUrl } from "@/lib/whatsapp";
 const PACKAGE_FEATURES = [
   { id: "consultation", label: "Full agent services" },
   { id: "listing", label: "List on" },
-  { id: "documentation", label: "Full documentation (e.g. Option to Purchase (OTP))" },
+  {
+    id: "documentation",
+    label: "Full documentation (e.g. Option to Purchase (OTP))",
+    plainLabel: "Full documentation (e.g. Option to Purchase)",
+  },
 ] as const;
 
 interface SellPlanCardProps {
@@ -22,6 +26,8 @@ interface SellPlanCardProps {
   showLearnMore?: boolean;
   learnMoreHref?: string;
   className?: string;
+  /** Pricing section cards spell out Option to Purchase without OTP abbreviation */
+  plainDocumentationLabel?: boolean;
 }
 
 export function SellPlanCard({
@@ -29,6 +35,7 @@ export function SellPlanCard({
   showLearnMore = false,
   learnMoreHref,
   className,
+  plainDocumentationLabel = false,
 }: SellPlanCardProps) {
   const plan = SELL_PLANS.find((p) => p.type === filterType);
   if (!plan) return null;
@@ -73,7 +80,9 @@ export function SellPlanCard({
                     <ListingPlatformIcons />
                   </>
                 ) : (
-                  feature.label
+                  feature.id === "documentation" && plainDocumentationLabel && "plainLabel" in feature
+                    ? feature.plainLabel
+                    : feature.label
                 )}
               </span>
             </li>
