@@ -26,9 +26,9 @@ const SELL_CARDS: PropertyTypeCard[] = [
     fee: "$1,999",
     feeNote: "+ GST fixed fee",
     bullets: [
-      "MOP and eligibility checked upfront",
+      "Minimum Occupation Period (MOP) and eligibility checked upfront",
       "HDB Resale Portal submission handled",
-      "CPF impact and net proceeds estimated",
+      "Central Provident Fund (CPF) impact and net proceeds estimated",
     ],
     href: "/sell-hdb",
     accentClass: "border-blue-200 hover:border-blue-400",
@@ -42,7 +42,7 @@ const SELL_CARDS: PropertyTypeCard[] = [
     fee: "$4,999",
     feeNote: "+ GST fixed fee",
     bullets: [
-      "SSD checked before listing timeline set",
+      "Seller's Stamp Duty (SSD) checked before listing timeline set",
       "Multi-platform listing + social marketing",
       "Lawyer coordination through to completion",
     ],
@@ -77,9 +77,9 @@ const BUY_CARDS: PropertyTypeCard[] = [
     fee: "$1,999",
     feeNote: "+ GST buyer fee",
     bullets: [
-      "Grant eligibility and CPF planning first",
+      "Grant eligibility and Central Provident Fund (CPF) planning first",
       "HDB loan vs bank loan guidance",
-      "Full OTP and resale portal support",
+      "Full Option to Purchase (OTP) and resale portal support",
     ],
     href: "/buy-hdb",
     accentClass: "border-blue-200 hover:border-blue-400",
@@ -93,7 +93,7 @@ const BUY_CARDS: PropertyTypeCard[] = [
     fee: "Free",
     feeNote: "No buyer commission",
     bullets: [
-      "ABSD and affordability reviewed upfront",
+      "Additional Buyer's Stamp Duty (ABSD) and affordability reviewed upfront",
       "Unbiased project and unit comparisons",
       "Sell-and-buy timing coordinated",
     ],

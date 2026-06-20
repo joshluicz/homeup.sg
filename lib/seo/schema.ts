@@ -76,7 +76,7 @@ export function howToSchema(
 export const SELL_HOW_TO_STEPS: HowToStep[] = [
   {
     name: "Planning consultation",
-    text: "Review your financial position, outstanding CPF, estimated net proceeds, and selling timeline. Free and obligation-free.",
+    text: "Review your financial position, outstanding Central Provident Fund (CPF), estimated net proceeds, and selling timeline. Free and obligation-free.",
   },
   {
     name: "List and market",
@@ -88,7 +88,7 @@ export const SELL_HOW_TO_STEPS: HowToStep[] = [
   },
   {
     name: "Documentation and completion",
-    text: "HomeUP handles all sales documentation, including OTP, contracts, and HDB submission where applicable, through to a smooth handover.",
+    text: "HomeUP handles all sales documentation, including Option to Purchase (OTP), contracts, and HDB submission where applicable, through to a smooth handover.",
   },
 ];
 
@@ -99,7 +99,7 @@ export const BUY_HOW_TO_STEPS: HowToStep[] = [
   },
   {
     name: "Shortlist and compare properties",
-    text: "HomeUP helps you compare HDB, condo, landed, or new launch options with clear guidance on grants, ABSD, and sell-and-buy timing.",
+    text: "HomeUP helps you compare HDB, condo, landed, or new launch options with clear guidance on grants, Additional Buyer's Stamp Duty (ABSD), and sell-and-buy timing.",
   },
   {
     name: "Viewings and offer strategy",
@@ -107,7 +107,7 @@ export const BUY_HOW_TO_STEPS: HowToStep[] = [
   },
   {
     name: "Complete the purchase",
-    text: "HomeUP supports OTP, financing, and documentation through to completion, with a fixed $1,999 fee for HDB or complimentary representation for most private purchases.",
+    text: "HomeUP supports Option to Purchase (OTP), financing, and documentation through to completion, with a fixed $1,999 fee for HDB or complimentary representation for most private purchases.",
   },
 ];
 

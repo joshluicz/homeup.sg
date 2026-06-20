@@ -44,7 +44,7 @@ export default function BuyPage() {
               name: "HDB Purchase Representation",
               price: "1999",
               description:
-                "Full guidance through CPF grants, financing, and the HDB resale process.",
+                "Full guidance through Central Provident Fund (CPF) grants, financing, and the HDB resale process.",
             },
             {
               name: "Condo/Landed Purchase Representation",

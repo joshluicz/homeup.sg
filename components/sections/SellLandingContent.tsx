@@ -7,6 +7,7 @@ import {
   SELL_FAQ_GENERAL,
   SELL_FAQ_HDB,
   SELL_FAQ_LANDED,
+  type FaqItem,
 } from "@/lib/data/faqs";
 import { AgentProfiles } from "@/components/sections/AgentProfiles";
 import { Benefits } from "@/components/sections/Benefits";
@@ -28,12 +29,19 @@ const FAQ_WHATSAPP_BY_TYPE: Record<NonNullable<SellPageConfig["filterType"]>, Wh
   Landed: "faqSellLanded",
 };
 
-const FAQ_BY_TYPE = {
+type SellFaqSectionConfig = {
+  items: FaqItem[];
+  eyebrow: string;
+  title: string;
+  lead?: string;
+};
+
+const FAQ_BY_TYPE: Record<NonNullable<SellPageConfig["filterType"]>, SellFaqSectionConfig> = {
   HDB: {
     items: SELL_FAQ_HDB,
     eyebrow: "Selling HDB: common questions",
     title: "What HDB sellers ask us most",
-    lead: "CPF refunds, valuation timing, sell-and-buy dates, and pricing discipline. Practical answers before you commit to a sale.",
+    lead: "Central Provident Fund (CPF) refunds, valuation timing, sell-and-buy dates, and pricing discipline. Practical answers before you commit to a sale.",
   },
   Condo: {
     items: SELL_FAQ_CONDO,
@@ -47,7 +55,7 @@ const FAQ_BY_TYPE = {
   },
 };
 
-const GENERAL_FAQ = {
+const GENERAL_FAQ: SellFaqSectionConfig = {
   items: SELL_FAQ_GENERAL,
   eyebrow: "Common Questions",
   title: "What sellers ask us most",

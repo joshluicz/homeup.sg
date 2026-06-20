@@ -135,7 +135,7 @@ export const AGENTS: Agent[] = [
       "Transparency matters on both sides of a transaction. Buyers and sellers should always know what happens next.",
     about: [
       "Law diploma graduate with a focus on clear documentation",
-      "Guides buyers and sellers through OTP and completion paperwork",
+      "Guides buyers and sellers through Option to Purchase (OTP) and completion paperwork",
       "Brings a calm, friendly approach to complex transactions",
       "Dedicated to keeping clients informed at every step",
     ],

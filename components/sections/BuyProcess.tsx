@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import type { BuyPropertyType } from "@/lib/data/buy-pricing";
 import { Eyebrow } from "@/components/ui/Eyebrow";
@@ -9,39 +10,39 @@ interface ProcessStep {
   step: string;
   title: string;
   body: string;
-  weeks: string;
+  highlight?: boolean;
+}
+
+function stepLabel(step: string) {
+  return `Step ${Number(step)}`;
 }
 
 const HDB_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "Consult & Plan",
-    body: "Grant eligibility confirmed. CPF usage, HDB vs bank loan options, and affordability reviewed. If you're selling and buying, timelines are mapped together from day one.",
-    weeks: "Week 1",
+    body: "Grant eligibility confirmed. Central Provident Fund (CPF) usage, HDB vs bank loan options, and affordability reviewed. If you're selling and buying, timelines are mapped together from day one.",
   },
   {
     step: "02",
-    title: "Shortlist Homes",
-    body: "HomeUP shortlists units aligned to your budget, location preferences, floor level priorities, and lease remaining. We filter out options that don't make financial sense for your situation.",
-    weeks: "Week 2–4",
+    title: "Valuation Advice",
+    body: "HomeUP advisors give you personalised advice on your shortlisted home. We will run a valuation analysis for you and advise on what is a right price to pay, along with the terms.",
   },
   {
     step: "03",
-    title: "Arrange Viewings",
-    body: "Viewings coordinated with sellers' agents. HomeUP attends with you, reviews the unit condition, checks the block history, and gives an objective assessment before you form a view.",
-    weeks: "Week 2–6",
+    title: "View at Your Convenience",
+    body: "You view the HDB unit anytime at your own convenience, and our HDB advisors will provide you with support one-call-away.",
+    highlight: true,
   },
   {
     step: "04",
     title: "Offer & Negotiate",
-    body: "Offer price assessed against recent transacted prices for the block. HomeUP structures the offer and negotiates on your behalf. The goal is to close right, not just close fast.",
-    weeks: "Week 4–8",
+    body: "Once unit has been shortlisted, HomeUP agents will advise and negotiate on your behalf. With a fixed fee, our agents will do our best to secure the lowest price.",
   },
   {
     step: "05",
     title: "OTP & Documentation",
-    body: "OTP signed and grant applications submitted. HDB Resale Portal application filed. Checklist tracked through to the HDB completion appointment.",
-    weeks: "Week 6–16",
+    body: "Once your offer has been accepted, we will handle the Option to Purchase (OTP) documentation on your behalf. We will also submit the valuation request to HDB, manage the HDB Resale Application, and guide you through every step of the process right up to completion.",
   },
 ];
 
@@ -49,32 +50,27 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "Consult & Plan",
-    body: "ABSD reviewed based on your profile. Affordability and loan headroom calculated. If you're selling simultaneously, both timelines are coordinated to reduce financial risk.",
-    weeks: "Week 1",
+    body: "Additional Buyer's Stamp Duty (ABSD) reviewed based on your profile. Affordability and loan headroom calculated. If you're selling simultaneously, both timelines are coordinated to reduce financial risk.",
   },
   {
     step: "02",
     title: "Market Analysis",
     body: "Shortlist of developments built around your budget, location, tenure, and investment intent. Resale potential, price psf trends, and nearby supply pipeline reviewed independently.",
-    weeks: "Week 1–3",
   },
   {
     step: "03",
     title: "Coordinated Viewings",
     body: "Viewings arranged across shortlisted units. HomeUP attends with you and checks layout efficiency, noise, orientation, and any red flags before you form an attachment.",
-    weeks: "Week 2–6",
   },
   {
     step: "04",
     title: "Negotiate & OTP",
     body: "Offer structured based on comparable transacted prices, unit condition, and seller urgency. HomeUP negotiates with your interests as the only priority, not speed of close.",
-    weeks: "Week 4–9",
   },
   {
     step: "05",
     title: "S&P & Completion",
-    body: "Sale & Purchase Agreement coordinated with your solicitor. Loan approved, insurance arranged, and completion timeline tracked. HomeUP monitors every milestone through to keys.",
-    weeks: "Week 7–24",
+    body: "Sale and Purchase (S&P) Agreement coordinated with your solicitor. Loan approved, insurance arranged, and completion timeline tracked. HomeUP monitors every milestone through to keys.",
   },
 ];
 
@@ -82,32 +78,27 @@ const NEW_LAUNCH_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "Consult & Plan",
-    body: "ABSD and total debt servicing reviewed. Budget aligned to what the progressive payment schedule can sustainably support. Project shortlist built from your goals, not a developer's incentive.",
-    weeks: "Week 1",
+    body: "Additional Buyer's Stamp Duty (ABSD) and total debt servicing reviewed. Budget aligned to what the progressive payment schedule can sustainably support. Project shortlist built from your goals, not a developer's incentive.",
   },
   {
     step: "02",
     title: "Project Analysis",
     body: "HomeUP compares shortlisted projects across location, developer track record, pricing psf vs nearby comparables, floor plan efficiency, stack orientation, and projected resale potential.",
-    weeks: "Week 1–4",
   },
   {
     step: "03",
     title: "Preview & Launch",
     body: "HomeUP secures preview access, advises on which stacks to prioritise, and attends launch day with you. We help you make a clear-headed decision under time pressure, not an emotional one.",
-    weeks: "Week 3–6",
   },
   {
     step: "04",
     title: "Unit Selection & Option",
-    body: "Unit selected based on your priorities, not the developer's preferred stack. Option fee (typically 5%) paid. OTP terms reviewed before you commit.",
-    weeks: "Week 5–8",
+    body: "Unit selected based on your priorities, not the developer's preferred stack. Option fee (typically 5%) paid. Option to Purchase (OTP) terms reviewed before you commit.",
   },
   {
     step: "05",
     title: "S&P & Progressive Payments",
-    body: "Sale & Purchase Agreement signed. HomeUP walks you through the progressive payment schedule tied to construction milestones. Snagging and handover coordinated at TOP.",
-    weeks: "Week 7 onwards",
+    body: "Sale and Purchase (S&P) Agreement signed. HomeUP walks you through the progressive payment schedule tied to construction milestones. Snagging and handover coordinated at Temporary Occupation Permit (TOP).",
   },
 ];
 
@@ -115,32 +106,27 @@ const GENERAL_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "Understand your position",
-    body: "Grants, CPF, loan eligibility, ABSD, and sell-buy timing reviewed. You'll know your real budget and the safest path forward before you view a single home.",
-    weeks: "Week 1",
+    body: "Grants, Central Provident Fund (CPF), loan eligibility, Additional Buyer's Stamp Duty (ABSD), and sell-buy timing reviewed. You'll know your real budget and the safest path forward before you view a single home.",
   },
   {
     step: "02",
     title: "Shortlist & Compare",
     body: "HomeUP shortlists properties against your budget, goals, and constraints, and compares them honestly. No pressure toward higher-priced options.",
-    weeks: "Week 2–4",
   },
   {
     step: "03",
     title: "Viewings, coordinated",
     body: "All viewings scheduled and attended. Unit condition, location trade-offs, and resale potential reviewed at each one, so you make decisions with context.",
-    weeks: "Week 2–6",
   },
   {
     step: "04",
     title: "Negotiate & Offer",
     body: "Offer price benchmarked to recent transactions. HomeUP negotiates on your behalf, with your net position (not the speed of close) as the priority.",
-    weeks: "Week 4–8",
   },
   {
     step: "05",
     title: "Documentation & Completion",
-    body: "OTP, S&P, grant applications, and legal coordination handled through to completion. If you're selling and buying, both transactions are tracked as one.",
-    weeks: "Week 6 onwards",
+    body: "Option to Purchase (OTP), Sale and Purchase (S&P), grant applications, and legal coordination handled through to completion. If you're selling and buying, both transactions are tracked as one.",
   },
 ];
 
@@ -169,9 +155,67 @@ interface BuyProcessProps {
   propertyType?: BuyPropertyType | null;
 }
 
+function useIsDesktopProcessLayout() {
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  return isDesktop;
+}
+
+function ProcessStepCard({ step }: { step: ProcessStep }) {
+  return (
+    <div
+      className={[
+        "relative flex w-full flex-col rounded-2xl p-5 transition-shadow",
+        step.highlight
+          ? "bg-primary-600 text-neutral-0 shadow-brand-md ring-2 ring-primary-400"
+          : "border border-neutral-200 bg-white shadow-sm",
+      ].join(" ")}
+    >
+      <div
+        className={[
+          "mb-1 font-display text-xl font-extrabold lg:text-2xl",
+          step.highlight ? "text-primary-200" : "text-primary-600",
+        ].join(" ")}
+      >
+        {stepLabel(step.step)}
+      </div>
+      <h3
+        className={[
+          "mt-2 text-sm font-bold",
+          step.highlight ? "text-neutral-0" : "text-neutral-900",
+        ].join(" ")}
+      >
+        {step.title}
+        {step.highlight && (
+          <span className="ml-2 inline-block rounded-full bg-primary-400 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-900">
+            You do this
+          </span>
+        )}
+      </h3>
+      <p
+        className={[
+          "mt-2 text-xs leading-relaxed",
+          step.highlight ? "text-primary-100" : "text-neutral-600",
+        ].join(" ")}
+      >
+        {step.body}
+      </p>
+    </div>
+  );
+}
+
 export function BuyProcess({ propertyType = null }: BuyProcessProps) {
   const key = propertyType ?? "General";
   const steps = STEPS_BY_TYPE[key];
+  const isDesktop = useIsDesktopProcessLayout();
 
   return (
     <section aria-label="How buying with HomeUP works" className="section-padding bg-neutral-50">
@@ -182,59 +226,33 @@ export function BuyProcess({ propertyType = null }: BuyProcessProps) {
           <p className="section-lead">{LEAD_BY_TYPE[key]}</p>
         </FadeInUp>
 
-        {/* Desktop: horizontal arrow flow */}
-        <div className="hidden lg:flex items-stretch gap-0 mt-10">
-          {steps.map((s, i) => (
-            <div key={s.step} className="flex items-stretch flex-1 min-w-0">
-              <div className="relative flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 w-full shadow-sm">
-                <div className="mb-1 text-xs font-medium uppercase tracking-widest text-neutral-400">
-                  {s.weeks}
-                </div>
-                <div className="font-display text-2xl font-extrabold text-primary-600">
-                  {s.step}
-                </div>
-                <h3 className="mt-2 text-sm font-bold text-neutral-900">{s.title}</h3>
-                <p className="mt-2 text-xs leading-relaxed text-neutral-600">{s.body}</p>
+        {isDesktop !== false ? (
+          <div className="mt-10 flex items-stretch gap-0">
+            {steps.map((s, i) => (
+              <div key={s.step} className="flex min-w-0 flex-1 items-stretch">
+                <ProcessStepCard step={s} />
+                {i < steps.length - 1 && (
+                  <div className="flex shrink-0 items-center justify-center px-2">
+                    <ArrowRight aria-hidden="true" className="h-5 w-5 text-neutral-300" />
+                  </div>
+                )}
               </div>
-              {i < steps.length - 1 && (
-                <div className="flex-shrink-0 flex items-center justify-center px-2">
-                  <ArrowRight aria-hidden="true" className="h-5 w-5 text-neutral-300" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Mobile: vertical stack */}
-        <div className="flex flex-col gap-0 mt-10 lg:hidden">
-          {steps.map((s, i) => (
-            <div key={s.step}>
-              <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium uppercase tracking-widest text-neutral-400">
-                    {s.weeks}
-                  </span>
-                  <span className="font-display text-xl font-extrabold text-primary-600">
-                    {s.step}
-                  </span>
-                </div>
-                <h3 className="text-sm font-bold text-neutral-900">{s.title}</h3>
-                <p className="mt-2 text-xs leading-relaxed text-neutral-600">{s.body}</p>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-10 flex flex-col gap-0">
+            {steps.map((s, i) => (
+              <div key={s.step}>
+                <ProcessStepCard step={s} />
+                {i < steps.length - 1 && (
+                  <div className="flex justify-center py-1">
+                    <ChevronDown aria-hidden="true" className="h-5 w-5 text-neutral-300" />
+                  </div>
+                )}
               </div>
-              {i < steps.length - 1 && (
-                <div className="flex justify-center py-1">
-                  <ChevronDown aria-hidden="true" className="h-5 w-5 text-neutral-300" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <FadeInUp delay={0.2} className="mt-8 rounded-xl bg-neutral-900 px-6 py-5 text-center">
-          <p className="text-sm font-medium text-neutral-200">
-            No commitment required to start. Your first consultation is free, and there&#39;s no obligation to proceed.
-          </p>
-        </FadeInUp>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

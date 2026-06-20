@@ -9,12 +9,10 @@ import {
   BUY_FAQ_NEW_LAUNCH,
 } from "@/lib/data/faqs";
 import { AgentProfiles } from "@/components/sections/AgentProfiles";
-import { BuyFeeExplainer } from "@/components/sections/BuyFeeExplainer";
 import { BuyHero } from "@/components/sections/BuyHero";
 import { BuySubPageHero } from "@/components/sections/BuySubPageHero";
 import { BuyPricing } from "@/components/sections/BuyPricing";
 import { BuyProcess } from "@/components/sections/BuyProcess";
-import { BuyTypeGuide } from "@/components/sections/BuyTypeGuide";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { FAQSection } from "@/components/sections/FAQSection";
 import { PropertyTypeNav } from "@/components/sections/PropertyTypeNav";
@@ -38,13 +36,13 @@ const FAQ_BY_TYPE = {
     items: BUY_FAQ_CONDO,
     eyebrow: "Buying condo or landed: common questions",
     title: "What resale private property buyers ask us most",
-    lead: "ABSD, buyer fees, sell-and-buy timing, and what to check before making an offer. Covered in full.",
+    lead: "Additional Buyer's Stamp Duty (ABSD), buyer fees, sell-and-buy timing, and what to check before making an offer. Covered in full.",
   },
   NewLaunch: {
     items: BUY_FAQ_NEW_LAUNCH,
     eyebrow: "Buying new launch: common questions",
     title: "What new launch buyers ask us most",
-    lead: "Balloting, progressive payment schedules, project comparisons, and what happens at TOP. Answered without the showroom spin.",
+    lead: "Balloting, progressive payment schedules, project comparisons, and what happens at Temporary Occupation Permit (TOP). Answered without the showroom spin.",
   },
 };
 
@@ -80,7 +78,6 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
           defaultSliderType={config.defaultSliderType}
           showServices
         />
-        <BuyFeeExplainer />
         <BuyProcess propertyType={null} />
         <FAQSection
           items={faqConfig.items}
@@ -100,9 +97,7 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
   return (
     <>
       <BuySubPageHero content={config.hero} filterType={config.filterType!} />
-      <BuyFeeExplainer />
       <BuyProcess propertyType={config.filterType} />
-      {config.typeGuide && <BuyTypeGuide content={config.typeGuide} />}
       <FAQSection
         items={faqConfig.items}
         eyebrow={faqConfig.eyebrow}

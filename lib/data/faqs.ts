@@ -58,7 +58,7 @@ export const HOMEPAGE_FAQ: FaqItem[] = [
   },
   {
     q: "If my home sells for well above $500,000, do I still pay the same fixed fee?",
-    a: "Yes. HDB is $1,999, condo and EC is $4,999, and landed is $9,999, each plus GST. The fee does not change with your sale price. You know the number before you sign.",
+    a: "Yes. HDB is $1,999, condo and Executive Condominium (EC) is $4,999, and landed is $9,999, each plus GST. The fee does not change with your sale price. You know the number before you sign.",
   },
   {
     q: "How is HomeUP different from a typical 2% commission agent in practice?",
@@ -69,7 +69,7 @@ export const HOMEPAGE_FAQ: FaqItem[] = [
 export const SELL_FAQ_GENERAL: FaqItem[] = [
   {
     q: "What is included in HomeUP's fixed fee?",
-    a: "The fee is $1,999 for HDB, $4,999 for condo or EC, and $9,999 for landed, each plus GST. It covers listing on major portals, marketing, buyer screening, viewing coordination, negotiation, and sales paperwork through to completion. There is no success fee and no percentage of your sale price.",
+    a: "The fee is $1,999 for HDB, $4,999 for condo or Executive Condominium (EC), and $9,999 for landed, each plus GST. It covers listing on major portals, marketing, buyer screening, viewing coordination, negotiation, and sales paperwork through to completion. There is no success fee and no percentage of your sale price.",
   },
   {
     q: "Why is HomeUP's fee lower than a traditional agent?",
@@ -97,7 +97,7 @@ export const SELL_FAQ_GENERAL: FaqItem[] = [
 export const SELL_FAQ_HDB: FaqItem[] = [
   {
     q: "How much CPF must I return when I sell my HDB flat?",
-    a: "CPF used to buy the flat, plus accrued interest at 2.5% per year, goes back to your CPF Ordinary Account when you sell. If needed, HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
+    a: "Central Provident Fund (CPF) used to buy the flat, plus accrued interest at 2.5% per year, goes back to your CPF Ordinary Account when you sell. If needed, HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
   },
   {
     q: "How long does an HDB resale take from accepted offer to completion?",
@@ -105,11 +105,11 @@ export const SELL_FAQ_HDB: FaqItem[] = [
   },
   {
     q: "Does HomeUP handle the HDB Resale Portal submission?",
-    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and submits through the HDB Resale Portal for you.",
+    a: "Yes. After the Option to Purchase (OTP) is signed and the option fee is paid, HomeUP prepares the paperwork and submits through the HDB Resale Portal for you.",
   },
   {
     q: "When is the HDB valuation done and why does it matter?",
-    a: "After the HDB is optioned out, the buyer will request for a valuation report from HDB. It affects the buyer's loan and CPF usage, which can affect whether the deal goes through at your agreed price.",
+    a: "After the HDB is optioned out, the buyer will request for a valuation report from HDB. It affects the buyer's loan and Central Provident Fund (CPF) usage, which can affect whether the deal goes through at your agreed price.",
   },
   {
     q: "What if I need to buy my next home after my HDB sale?",
@@ -124,15 +124,15 @@ export const SELL_FAQ_HDB: FaqItem[] = [
 export const SELL_FAQ_CONDO: FaqItem[] = [
   {
     q: "How long does a condo resale take from accepted offer to completion?",
-    a: "Most resales take 3-4 months after you accept an offer. That covers the OTP period, Sale and Purchase Agreement, loan approval, and legal completion. How long you wait for a suitable offer depends on price and demand in your development.",
+    a: "Most resales take 3-4 months after you accept an offer. That covers the Option to Purchase (OTP) period, Sale and Purchase (S&P) Agreement, loan approval, and legal completion. How long you wait for a suitable offer depends on price and demand in your development.",
   },
   {
     q: "Does HomeUP handle the paperwork?",
-    a: "Yes, HomeUP prepares the OTP and coordinates with the solicitors through completion for you.",
+    a: "Yes, HomeUP prepares the Option to Purchase (OTP) and coordinates with the solicitors through completion for you.",
   },
   {
     q: "Does Seller's Stamp Duty apply to my condo sale?",
-    a: "SSD applies if you sell within four years of purchase. Rates are 16% within one year, 12% within two years, 8% within three years, and 4% within 4 years.",
+    a: "Seller's Stamp Duty (SSD) applies if you sell within four years of purchase. Rates are 16% within one year, 12% within two years, 8% within three years, and 4% within 4 years.",
   },
   {
     q: "Do I need my own lawyer for a condo sale?",
@@ -194,7 +194,7 @@ export const BUY_FAQ_GENERAL: FaqItem[] = [
   },
   {
     q: "What does buyer representation include end to end?",
-    a: "Affordability and financing guidance, shortlisting, viewing coordination, offer strategy, OTP and Sale and Purchase review, and paperwork through to completion. For HDB, that also includes grant planning and resale checklist management.",
+    a: "Affordability and financing guidance, shortlisting, viewing coordination, offer strategy, Option to Purchase (OTP) and Sale and Purchase (S&P) review, and paperwork through to completion. For HDB, that also includes grant planning and resale checklist management.",
   },
   {
     q: "Can HomeUP help if I am selling and buying at the same time?",
@@ -209,15 +209,15 @@ export const BUY_FAQ_GENERAL: FaqItem[] = [
 export const BUY_FAQ_HDB: FaqItem[] = [
   {
     q: "Which CPF grants might apply to my HDB resale purchase?",
-    a: "Eligibility depends on citizenship, income, and property history. Common grants include the Enhanced CPF Housing Grant (up to $80,000 for first-timers), the Family Grant ($50,000 for couples), and the Proximity Housing Grant ($30,000 when buying near parents). HomeUP reviews grant eligibility before you shortlist flats.",
+    a: "Eligibility depends on citizenship, income, and property history. Common grants include the Enhanced Central Provident Fund (CPF) Housing Grant, and the Proximity Housing Grant. HomeUP reviews grant eligibility before you shortlist flats.",
   },
   {
     q: "Should I use an HDB loan or a bank loan for resale?",
-    a: "HDB loans are currently 2.6% with up to 80% financing and a 20% down payment from cash or CPF. Bank loans often start lower but can move with the market, and usually require 25% down with at least 5% in cash. The right choice depends on your buffer, how long you plan to hold, and whether you may refinance later. We walk through both at the planning stage.",
+    a: "Home loans are eligible for up to 75% financing. Bank loan rates move in tandem with the market. The right choice depends on your buffer, how long you plan to hold, and whether you may refinance later. We walk through both at the planning stage.",
   },
   {
     q: "Can I buy HDB resale if I still own private property?",
-    a: "Not while you still own private residential property. You must dispose of it first and observe the 15-month wait before buying HDB resale. HomeUP flags eligibility constraints before you spend time on shortlisting.",
+    a: "No, you cannot buy HDB resale while owning private residential property. You must sell it first and observe a 15-month waiting period. However, if you're 55 years old or above, you can purchase a resale HDB flat (4-room maximum) and dispose of your private property afterwards. HomeUP checks HDB eligibility upfront to help you focus on qualifying properties.",
   },
   {
     q: "Does the HDB resale levy apply when I buy on the open market?",
@@ -225,11 +225,11 @@ export const BUY_FAQ_HDB: FaqItem[] = [
   },
   {
     q: "How long does an HDB resale purchase take after OTP?",
-    a: "From exercised OTP to completion is often 16 to 20 weeks, including Resale Portal steps, grant processing, valuation, and the completion appointment. Time to find and secure an OTP depends on your budget and competition in your preferred towns.",
+    a: "From exercised Option to Purchase (OTP) to completion is often 16 to 20 weeks, including Resale Portal steps, grant processing, valuation, and the completion appointment. Time to find and secure an OTP depends on your budget and competition in your preferred towns.",
   },
   {
     q: "Can I buy before my current home sells?",
-    a: "Only if your finances support it. Some buyers can carry two loans or fund the purchase with cash. Most upgraders need sale proceeds and CPF returned from the sale they are exiting. HomeUP models cash flow early so you know the safest sequence.",
+    a: "Only if your finances support it. Some buyers can carry two loans or fund the purchase with cash. Most upgraders need sale proceeds and Central Provident Fund (CPF) returned from the sale they are exiting. HomeUP models cash flow early so you know the safest sequence.",
   },
 ];
 
@@ -240,15 +240,15 @@ export const BUY_FAQ_CONDO: FaqItem[] = [
   },
   {
     q: "How much ABSD will I pay as a buyer?",
-    a: "Singapore citizens pay 0% ABSD on a first property, 20% on a second, and 30% on a third and beyond. Permanent residents pay 5% on a first and 30% on later properties. Foreigners pay 60% on residential property. HomeUP builds ABSD into affordability before you make an offer.",
+    a: "Singapore citizens pay 0% Additional Buyer's Stamp Duty (ABSD) on a first property, 20% on a second, and 30% on a third and beyond. Permanent residents pay 5% on a first and 30% on later properties. Foreigners pay 60% on residential property. HomeUP builds ABSD into affordability before you make an offer.",
   },
   {
     q: "What should I check before making an offer on a resale condo?",
-    a: "Outstanding seller mortgage, management fee or sinking fund arrears, existing tenancy and end dates, whether SSD limits the seller's flexibility, and recent transacted prices in the same development. HomeUP reviews these before advising you to offer.",
+    a: "Outstanding seller mortgage, management fee or sinking fund arrears, existing tenancy and end dates, whether Seller's Stamp Duty (SSD) limits the seller's flexibility, and recent transacted prices in the same development. HomeUP reviews these before advising you to offer.",
   },
   {
     q: "How do you align completion dates when I am selling and buying?",
-    a: "Private completions are often 20 to 24 weeks from OTP. The goal is to line up sale proceeds with purchase deadlines, or negotiate deferred completion on one side. HomeUP coordinates both files so you are not committed to a purchase before sale proceeds are realistic.",
+    a: "Private completions are often 20 to 24 weeks from Option to Purchase (OTP). The goal is to line up sale proceeds with purchase deadlines, or negotiate deferred completion on one side. HomeUP coordinates both files so you are not committed to a purchase before sale proceeds are realistic.",
   },
   {
     q: "Resale condo or new launch: which fits my timeline?",
@@ -263,7 +263,7 @@ export const BUY_FAQ_NEW_LAUNCH: FaqItem[] = [
   },
   {
     q: "How does the progressive payment schedule work?",
-    a: "Payments follow construction milestones under the Progressive Payment Scheme. A common pattern is 5% on option and a further 15% within eight weeks of exercising the OTP, then staged payments through to Temporary Occupation Permit. You are not paying the full price on day one.",
+    a: "Payments follow construction milestones under the Progressive Payment Scheme. A common pattern is 5% on option and a further 15% within eight weeks of exercising the Option to Purchase (OTP), then staged payments through to Temporary Occupation Permit (TOP). You are not paying the full price on day one.",
   },
   {
     q: "Does HomeUP represent buyers on every new launch project?",
@@ -271,7 +271,7 @@ export const BUY_FAQ_NEW_LAUNCH: FaqItem[] = [
   },
   {
     q: "When do I collect keys on a new launch purchase?",
-    a: "At Temporary Occupation Permit, typically 3 to 5 years after launch depending on the build. After TOP you inspect the unit for defects (snagging) before key collection. HomeUP can help coordinate that process.",
+    a: "At Temporary Occupation Permit (TOP), typically 3 to 5 years after launch depending on the build. After TOP you inspect the unit for defects (snagging) before key collection. HomeUP can help coordinate that process.",
   },
   {
     q: "How do I compare new launch projects without showroom bias?",
@@ -279,6 +279,6 @@ export const BUY_FAQ_NEW_LAUNCH: FaqItem[] = [
   },
   {
     q: "What happens if I walk away after paying the option fee?",
-    a: "If you do not exercise the OTP, you forfeit the option fee (commonly 5%). After exercise and signing the Sale and Purchase Agreement, backing out has serious legal and financial consequences. HomeUP ensures you understand terms and comparables before you sign.",
+    a: "If you do not exercise the Option to Purchase (OTP), you forfeit the option fee (commonly 5%). After exercise and signing the Sale and Purchase (S&P) Agreement, backing out has serious legal and financial consequences. HomeUP ensures you understand terms and comparables before you sign.",
   },
 ];

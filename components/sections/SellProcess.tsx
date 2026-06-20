@@ -8,7 +8,7 @@ const baseSteps = [
   {
     step: "01",
     title: "Planning consultation",
-    body: "Review your financial position, outstanding CPF, estimated net proceeds, and selling timeline. Free and obligation-free.",
+    body: "Review your financial position, outstanding Central Provident Fund (CPF), estimated net proceeds, and selling timeline. Free and obligation-free.",
   },
   {
     step: "02",
@@ -23,7 +23,7 @@ const baseSteps = [
 ];
 
 const completionByType: Record<SellPropertyType, string> = {
-  HDB: "HomeUP handles all sales documentation (OTP, contract, and HDB submission) through to a smooth handover.",
+  HDB: "HomeUP handles all sales documentation (Option to Purchase (OTP), contract, and HDB submission) through to a smooth handover.",
   Condo: "HomeUP handles contract drafting, negotiation, and all sales documentation through to completion.",
   Landed: "HomeUP handles contract drafting, negotiation, and all sales documentation through to completion.",
 };
@@ -36,7 +36,7 @@ export function SellProcess({ propertyType = null }: SellProcessProps) {
   const completionBody =
     propertyType != null
       ? completionByType[propertyType]
-      : "HomeUP handles all sales documentation (OTP, contracts, and HDB submission where applicable) through to a smooth handover.";
+      : "HomeUP handles all sales documentation (Option to Purchase (OTP), contracts, and HDB submission where applicable) through to a smooth handover.";
 
   const steps = [
     ...baseSteps,

@@ -63,11 +63,11 @@ export const BUY_PAGE_HDB: BuyPageConfig = {
     title: "Buy Your Next HDB Flat.",
     highlight: "With a Clear Plan.",
     subtitle: "Structured guidance from grants to OTP.",
-    body: "HDB resale involves grants, financing, and strict timelines. HomeUP guides you through affordability planning, shortlisting, and negotiation at a transparent fixed fee of $1,999 + GST.",
+    body: "HomeUP guides you at a transparent fixed fee of $1999 + GST",
     points: [
-      "CPF grant and affordability planning before you shortlist",
+      "Central Provident Fund (CPF) grant and affordability planning before you shortlist",
       "Financing guidance aligned with your sale and purchase timeline",
-      "Resale procedure support from viewing to OTP signing",
+      "Resale procedure support from viewing to Option to Purchase (OTP) signing",
     ],
     ctaNote: "No commitment · Understand your options before you commit",
   },
@@ -79,13 +79,13 @@ export const BUY_PAGE_HDB: BuyPageConfig = {
       "Grant eligibility and affordability review before shortlisting",
       "Unit comparison across towns, blocks, and floor levels",
       "Coordinated viewings and structured offer negotiation",
-      "Full OTP and resale documentation support through completion",
+      "Full Option to Purchase (OTP) and resale documentation support through completion",
     ],
   },
   meta: {
     title: "Buy an HDB Flat in Singapore",
     description:
-      "Buy your next HDB flat with HomeUP for a fixed $1,999 + GST. Grant planning, financing guidance, shortlisting, negotiation, and OTP support from a coordinated buying team.",
+      "Buy your next HDB flat with HomeUP for a fixed $1,999 + GST. Grant planning, financing guidance, shortlisting, negotiation, and Option to Purchase (OTP) support from a coordinated buying team.",
   },
 };
 

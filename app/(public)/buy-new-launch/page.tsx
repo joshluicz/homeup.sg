@@ -28,7 +28,7 @@ export default function BuyNewLaunchPage() {
         howTo={{
           name: "How to buy a new launch property with HomeUP",
           description:
-            "Independent new launch buying guidance from project comparison through to OTP and progressive payment.",
+            "Independent new launch buying guidance from project comparison through to Option to Purchase (OTP) and progressive payment.",
           steps: BUY_HOW_TO_STEPS,
         }}
         service={{

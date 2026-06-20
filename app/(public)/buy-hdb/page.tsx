@@ -28,7 +28,7 @@ export default function BuyHdbPage() {
         howTo={{
           name: "How to buy an HDB resale flat with HomeUP",
           description:
-            "Structured HDB buying guidance from grants and financing through to OTP and completion.",
+            "Structured HDB buying guidance from grants and financing through to Option to Purchase (OTP) and completion.",
           steps: BUY_HOW_TO_STEPS,
         }}
         service={{

@@ -35,6 +35,25 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/favicon.ico",
+        destination: "/icon.png",
+        permanent: true,
+      },
+      {
+        source: "/blog",
+        destination: "/playbook",
+        permanent: true,
+      },
+      {
+        source: "/blog/:path*",
+        destination: "/playbook",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {

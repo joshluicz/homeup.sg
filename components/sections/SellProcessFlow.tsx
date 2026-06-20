@@ -21,7 +21,7 @@ const HDB_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "First Consultation",
-    body: "MOP and eligibility confirmed. CPF impact and net proceeds estimated. Sale price target set with data from recent transactions in your block and town.",
+    body: "Minimum Occupation Period (MOP) and eligibility confirmed. Central Provident Fund (CPF) impact and net proceeds estimated. Sale price target set with data from recent transactions in your block and town.",
   },
   {
     step: "02",
@@ -37,12 +37,12 @@ const HDB_STEPS: ProcessStep[] = [
   {
     step: "04",
     title: "OTP & HDB Submission",
-    body: "Offer accepted and negotiated. We will issue OTP when option fee is received. HomeUP handles HDB Resale Portal submission, coordinates valuation, and tracks HDB approval.",
+    body: "Offer accepted and negotiated. We will issue the Option to Purchase (OTP) when option fee is received. HomeUP handles HDB Resale Portal submission, coordinates valuation, and tracks HDB approval.",
   },
   {
     step: "05",
     title: "Completion",
-    body: "HDB Hub appointment confirmed. Keys handed over. CPF proceeds and net sale amount settled.",
+    body: "HDB Hub appointment confirmed. Keys handed over. Central Provident Fund (CPF) proceeds and net sale amount settled.",
   },
 ];
 
@@ -50,7 +50,7 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "01",
     title: "First Consultation",
-    body: "SSD applicability confirmed. Outstanding mortgage and net proceeds reviewed. Asking price set against recent transacted prices for comparable units in your development.",
+    body: "Seller's Stamp Duty (SSD) applicability confirmed. Outstanding mortgage and net proceeds reviewed. Asking price set against recent transacted prices for comparable units in your development.",
   },
   {
     step: "02",
@@ -66,7 +66,7 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "04",
     title: "Issue OTP",
-    body: "Offer accepted and negotiated. We will issue OTP when option fee is received. HomeUP coordinates with both solicitors through the Sale & Purchase Agreement.",
+    body: "Offer accepted and negotiated. We will issue the Option to Purchase (OTP) when option fee is received. HomeUP coordinates with both solicitors through the Sale and Purchase (S&P) Agreement.",
   },
   {
     step: "05",
@@ -95,12 +95,12 @@ const LANDED_STEPS: ProcessStep[] = [
   {
     step: "04",
     title: "Negotiate & OTP",
-    body: "Patient, structured negotiation focused on your net proceeds, not a rushed close. OTP signed with terms reviewed carefully. HomeUP presents all offers with a full assessment.",
+    body: "Patient, structured negotiation focused on your net proceeds, not a rushed close. Option to Purchase (OTP) signed with terms reviewed carefully. HomeUP presents all offers with a full assessment.",
   },
   {
     step: "05",
     title: "Legal Completion",
-    body: "S&P Agreement prepared by solicitors. Buyer caveat lodged. Any foreign buyer LDAU approval tracked. Legal completion confirmed. Proceeds settled and keys handed over.",
+    body: "Sale and Purchase (S&P) Agreement prepared by solicitors. Buyer caveat lodged. Any foreign buyer Land Dealings Approval Unit (LDAU) approval tracked. Legal completion confirmed. Proceeds settled and keys handed over.",
   },
 ];
 
@@ -118,7 +118,7 @@ const TITLE_BY_TYPE: Record<SellPropertyType, string> = {
 
 const LEAD_BY_TYPE: Record<SellPropertyType, string> = {
   HDB: "The HDB resale process has fixed timelines and mandatory steps. HomeUP plans around all of them so you always know what happens next and when.",
-  Condo: "Resale condo sales move through legal milestones. HomeUP coordinates every deadline from OTP to completion so nothing falls through the cracks.",
+  Condo: "Resale condo sales move through legal milestones. HomeUP coordinates every deadline from Option to Purchase (OTP) to completion so nothing falls through the cracks.",
   Landed: "Landed sales take longer and require more careful buyer qualification. HomeUP manages the full process so you can make decisions calmly, not under pressure.",
 };
 

@@ -14,7 +14,7 @@ import { buildSellPlanWhatsAppUrl } from "@/lib/whatsapp";
 const PACKAGE_FEATURES = [
   { id: "consultation", label: "Full agent services" },
   { id: "listing", label: "List on" },
-  { id: "documentation", label: "Full documentation (e.g. OTP)" },
+  { id: "documentation", label: "Full documentation (e.g. Option to Purchase (OTP))" },
 ] as const;
 
 interface SellPlanCardProps {
