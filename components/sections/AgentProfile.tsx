@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import type { Agent } from "@/lib/data/agents";
 import type { AgentVideo } from "@/lib/data/agents";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { TikTokEmbed } from "@/components/ui/TikTokEmbed";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 import { youtubeWatchUrl, youtubeThumbnail } from "@/lib/youtube";
@@ -53,17 +54,24 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
                 {agent.name}
               </h1>
               {agent.quote && (
-                <div className="relative mt-5 pl-5">
+                <div className="relative mt-5 overflow-hidden rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/70 p-5 shadow-[0_4px_24px_rgba(0,154,68,0.08)] sm:p-6">
                   <div
                     aria-hidden="true"
-                    className="absolute bottom-0 left-0 top-0 w-1 rounded-full bg-gradient-to-b from-primary-400 via-primary-500 to-primary-600"
+                    className="absolute inset-x-0 top-0 h-1 bg-primary-600"
                   />
-                  <p className="font-display text-lg font-medium leading-relaxed tracking-tight text-neutral-800 sm:text-xl sm:leading-relaxed">
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-primary-400/20 blur-2xl"
+                  />
+                  <Eyebrow className="relative mb-3">Profile</Eyebrow>
+                  <p className="relative font-display text-lg font-medium leading-relaxed tracking-tight text-neutral-800 sm:text-xl sm:leading-relaxed">
                     {agent.quoteThirdPerson ? agent.quote : `\u201C${agent.quote}\u201D`}
                   </p>
                 </div>
               )}
-              <p className="mt-4 text-sm font-normal text-neutral-400">CEA: {agent.cea}</p>
+              <p className="mt-4 inline-flex items-center rounded-full border border-primary-100 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-700">
+                CEA: {agent.cea}
+              </p>
               {agent.social && !hasIntroVideo && (
                 <AgentSocialLinks
                   links={agent.social}
