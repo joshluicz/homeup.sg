@@ -16,9 +16,22 @@ interface ModelContext extends EventTarget {
 }
 
 declare global {
+  interface Navigator {
+    modelContext?: ModelContext;
+  }
   interface Document {
     modelContext?: ModelContext;
   }
+}
+
+function getModelContext(): ModelContext | undefined {
+  if (typeof navigator !== "undefined" && navigator.modelContext) {
+    return navigator.modelContext;
+  }
+  if (typeof document !== "undefined" && document.modelContext) {
+    return document.modelContext;
+  }
+  return undefined;
 }
 
 const PAGE_ROUTES: Record<string, string> = {
@@ -31,10 +44,10 @@ const PAGE_ROUTES: Record<string, string> = {
 
 export function WebMCPProvider() {
   useEffect(() => {
-    if (!document.modelContext) return;
+    const mc = getModelContext();
+    if (!mc) return;
 
     const controller = new AbortController();
-    const mc = document.modelContext;
     const opts = { signal: controller.signal };
 
     const tools: McpTool[] = [

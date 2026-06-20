@@ -12,6 +12,10 @@ export const HOMEPAGE_LINK_HEADER = [
   `<${API_CATALOG_PATH}>; rel="api-catalog"`,
   `<${OPENID_CONFIGURATION_PATH}>; rel="openid-configuration"`,
   `<${OAUTH_AUTHORIZATION_SERVER_PATH}>; rel="oauth-authorization-server"`,
+  `</.well-known/oauth-protected-resource>; rel="oauth-protected-resource"`,
+  `</.well-known/mcp/server-card.json>; rel="mcp-server-card"`,
+  `</.well-known/agent-skills/index.json>; rel="agent-skills"`,
+  `</auth.md>; rel="auth-md"; type="text/markdown"`,
   `</llms.txt>; rel="describedby"; type="text/plain"`,
 ].join(", ");
 

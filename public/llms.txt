@@ -12,8 +12,17 @@
 ## APIs and authentication
 - `API catalog -> https://homeup.sg/.well-known/api-catalog`: Machine-readable index of public JSON APIs.
 - `Public listings API -> https://homeup.sg/api/public/listings`: Active listings (no auth required).
-- `OAuth discovery -> https://homeup.sg/.well-known/oauth-authorization-server`: OAuth 2.0 metadata for protected admin APIs.
+- `OAuth protected resource -> https://homeup.sg/.well-known/oauth-protected-resource`: RFC 9728 metadata for protected admin APIs.
+- `OAuth authorization server -> https://homeup.sg/.well-known/oauth-authorization-server`: OAuth 2.0 discovery with agent_auth registration block.
 - `OpenID Connect -> https://homeup.sg/.well-known/openid-configuration`: OIDC discovery for Supabase-backed sign-in.
+- `auth.md -> https://homeup.sg/auth.md`: Agent registration and credential instructions.
+- `MCP server card -> https://homeup.sg/.well-known/mcp/server-card.json`: MCP tool discovery for listings search.
+- `Agent skills -> https://homeup.sg/.well-known/agent-skills/index.json`: Published agent skill index.
+- `Agent index -> https://homeup.sg/.well-known/agent-index.json`: HTTPS agent discovery index.
+- `DNS-AID manifest -> https://homeup.sg/.well-known/dns-aid.json`: Required DNS SVCB/HTTPS records and DNSSEC steps.
+
+## Markdown for agents
+Send `Accept: text/markdown` on any public HTML page to receive a markdown representation (for example `/`, `/about`, `/listings`).
 
 ## Facts for citation
 - Operating agency: C & H Properties Pte Ltd, CEA licence L3007139C

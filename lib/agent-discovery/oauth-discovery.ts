@@ -1,4 +1,6 @@
 import { SITE_URL } from "@/lib/seo/constants";
+import { buildAgentAuthBlock } from "@/lib/agent-discovery/auth-md";
+import { OAUTH_PROTECTED_RESOURCE_URL } from "@/lib/agent-discovery/oauth-protected-resource";
 
 export const OPENID_CONFIGURATION_PATH = "/.well-known/openid-configuration";
 export const OAUTH_AUTHORIZATION_SERVER_PATH = "/.well-known/oauth-authorization-server";
@@ -30,6 +32,8 @@ export function buildOAuthAuthorizationServerMetadata() {
     userinfo_endpoint: `${authBase}/userinfo`,
     service_documentation: `${SITE_URL}/llms.txt`,
     api_catalog_uri: `${SITE_URL}/.well-known/api-catalog`,
+    protected_resource_metadata: OAUTH_PROTECTED_RESOURCE_URL,
+    agent_auth: buildAgentAuthBlock(),
     scopes_supported: ["openid", "email", "profile"],
     response_types_supported: ["code"],
     response_modes_supported: ["query"],
