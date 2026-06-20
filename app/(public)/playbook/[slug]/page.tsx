@@ -21,11 +21,10 @@ import {
   videoObjectsSchema,
 } from "@/lib/seo/schema";
 
-// Vercel (dynamic) hosting: serve new/edited articles WITHOUT a redeploy.
+// Vercel hosting: serve new/edited articles WITHOUT a redeploy.
 //  - dynamicParams: slugs added after build render on demand (instead of 404).
 //  - revalidate: existing pages refresh on a schedule; the admin save route also
 //    triggers on-demand revalidation (revalidatePath) so edits go live immediately.
-// NOTE: incompatible with a STATIC_EXPORT=true build — keep STATIC_EXPORT unset on Vercel.
 export const dynamicParams = true;
 export const revalidate = 3600;
 

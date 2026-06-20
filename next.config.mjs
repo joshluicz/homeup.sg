@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
-const isStaticExport = process.env.STATIC_EXPORT === "true";
-
 const nextConfig = {
-  ...(isStaticExport ? { output: "export", trailingSlash: true } : {}),
   experimental: {
     serverComponentsExternalPackages: ["patchright", "patchright-core"],
     optimizeCss: true,
@@ -23,7 +20,6 @@ const nextConfig = {
     return config;
   },
   images: {
-    unoptimized: isStaticExport,
     remotePatterns: [
       {
         protocol: "https",
@@ -40,7 +36,6 @@ const nextConfig = {
     ],
   },
   async headers() {
-    if (isStaticExport) return [];
     return [
       {
         source: "/images/:path*",

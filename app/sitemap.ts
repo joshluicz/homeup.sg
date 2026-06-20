@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
-import { LISTING_DETAIL_FALLBACK_SLUG } from "@/lib/listings/slug-from-path";
 import { SITE_URL } from "@/lib/seo/constants";
 
 /** Refresh listing URLs hourly so new inventory appears without a full redeploy. */
@@ -38,9 +37,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const core = coreSitemapEntries(now);
 
   try {
-    const listingSlugs = (await getAllListingSlugsServer()).filter(
-      (slug) => slug && slug !== LISTING_DETAIL_FALLBACK_SLUG,
-    );
+    const listingSlugs = (await getAllListingSlugsServer()).filter(Boolean);
     const listingPages = listingSlugs.map((slug) => ({
       url: `${SITE_URL}/listings/${slug}`,
       lastModified: now,
