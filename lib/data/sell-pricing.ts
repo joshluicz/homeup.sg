@@ -8,7 +8,6 @@ export interface SellPlan {
   theme: SellTheme;
   type: SellPropertyType;
   price: number;
-  typicalPrice: number;
   learnMoreHref: string;
   buttonText: string;
 }
@@ -20,7 +19,6 @@ export const SELL_PLANS: SellPlan[] = [
     theme: "blue",
     type: "HDB",
     price: 1999,
-    typicalPrice: 10000,
     learnMoreHref: "/sell-hdb",
     buttonText: "Connect with HOMEUP agent",
   },
@@ -30,7 +28,6 @@ export const SELL_PLANS: SellPlan[] = [
     theme: "green",
     type: "Condo",
     price: 4999,
-    typicalPrice: 24000,
     learnMoreHref: "/sell-condo",
     buttonText: "Connect with HOMEUP agent",
   },
@@ -40,7 +37,6 @@ export const SELL_PLANS: SellPlan[] = [
     theme: "amber",
     type: "Landed",
     price: 9999,
-    typicalPrice: 60000,
     learnMoreHref: "/sell-landed",
     buttonText: "Connect with HOMEUP agent",
   },

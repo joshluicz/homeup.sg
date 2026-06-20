@@ -55,11 +55,7 @@ export function SellPlanCard({
             <HydrationSafeNumberFlow format={{ style: "decimal" }} value={plan.price} />
           </span>
           <span className="text-sm font-medium text-neutral-500">+ GST</span>
-          <span className="text-sm text-neutral-500">/ fixed fee</span>
         </div>
-        <p className="mt-1.5 text-xs text-neutral-500">
-          Typical 2% agent fee: ~${plan.typicalPrice.toLocaleString()} + GST (varies by agent)
-        </p>
       </div>
 
       <div className="flex flex-1 flex-col px-6 pb-6">

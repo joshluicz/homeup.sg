@@ -35,8 +35,6 @@ const breakdown = [
   { key: "condo" as const, target: 260, label: "Condo & Landed" },
 ];
 
-const AGENT_COUNT = 7;
-
 const agents = [
   { src: "/images/agent-dennis.png", name: "Dennis" },
   { src: "/images/agent-tong-boon.png", name: "Tong Boon" },
@@ -119,11 +117,9 @@ function StatsCard() {
 }
 
 function AgentAvatars({ className = "" }: { className?: string }) {
-  const overflowCount = AGENT_COUNT - agents.length;
-
   return (
     <div className={`flex items-center gap-2.5 ${className}`.trim()}>
-      <div className="flex -space-x-2.5" aria-label={`${AGENT_COUNT} CEA-licensed agents`}>
+      <div className="flex -space-x-2.5" aria-label={`${agents.length} CEA-licensed agents`}>
         {agents.map((agent) => (
           <div
             key={agent.name}
@@ -137,17 +133,9 @@ function AgentAvatars({ className = "" }: { className?: string }) {
             />
           </div>
         ))}
-        {overflowCount > 0 && (
-          <div
-            className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white bg-primary-50 text-xs font-bold tabular-nums text-primary-700 shadow-sm"
-            aria-hidden="true"
-          >
-            +{overflowCount}
-          </div>
-        )}
       </div>
       <span className="text-sm font-medium text-neutral-600">
-        {AGENT_COUNT} CEA-licensed agents
+        {agents.length} CEA-licensed agents
       </span>
     </div>
   );

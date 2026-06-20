@@ -89,7 +89,7 @@ export function TestimonialsColumn({
           <React.Fragment key={loop}>
             {testimonials.map((item) => (
               <article
-                key={`${loop}-${item.name}-${item.role}`}
+                key={`${loop}-${item.name}`}
                 className="w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm sm:rounded-2xl"
               >
                 {/* Photo banner — shown only when a photo is available */}

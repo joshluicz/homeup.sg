@@ -75,7 +75,6 @@ function PhotoTestimonialCard({ item }: { item: TestimonialColumnItem }) {
         <div className="mb-2 flex items-center justify-between gap-2">
           <div>
             <p className="text-xs font-semibold text-neutral-900">{item.name}</p>
-            <p className="text-[11px] text-neutral-500">{item.role}</p>
           </div>
           {item.source && (
             <span className={cn("text-[10px] font-medium", SOURCE_STYLES[item.source] ?? "text-neutral-400")}>

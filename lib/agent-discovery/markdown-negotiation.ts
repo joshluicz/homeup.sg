@@ -39,7 +39,7 @@ HomeUP helps Singapore homeowners sell for more with a transparent fixed fee.
 
 - 1,000+ transactions closed
 - 860+ HDB · 260+ condo and landed
-- 7 CEA-licensed agents
+- 6 CEA-licensed agents
 
 ## Links
 

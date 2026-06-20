@@ -26,7 +26,6 @@ const breakdown = [
   { key: "condo" as const, label: "Condo & Landed" },
 ];
 
-const AGENT_COUNT = 7;
 const agents = [
   { src: "/images/agent-dennis.png", name: "Dennis" },
   { src: "/images/agent-tong-boon.png", name: "Tong Boon" },
@@ -115,8 +114,6 @@ interface SellHeroProps {
 }
 
 export function SellHero({ content }: SellHeroProps) {
-  const overflowCount = AGENT_COUNT - agents.length;
-
   return (
     <section aria-label="Sell with HomeUP" className="bg-white">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
@@ -187,7 +184,7 @@ export function SellHero({ content }: SellHeroProps) {
           </div>
 
           <div className="order-3 flex items-center gap-2.5">
-            <div className="flex -space-x-2.5" aria-label={`${AGENT_COUNT} CEA-licensed agents`}>
+            <div className="flex -space-x-2.5" aria-label={`${agents.length} CEA-licensed agents`}>
               {agents.map((agent) => (
                 <div
                   key={agent.name}
@@ -196,17 +193,9 @@ export function SellHero({ content }: SellHeroProps) {
                   <Image src={agent.src} alt={agent.name} fill className="object-cover object-center" />
                 </div>
               ))}
-              {overflowCount > 0 && (
-                <div
-                  className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white bg-primary-50 text-xs font-bold tabular-nums text-primary-700 shadow-sm"
-                  aria-hidden="true"
-                >
-                  +{overflowCount}
-                </div>
-              )}
             </div>
             <span className="text-sm font-medium text-neutral-600">
-              {AGENT_COUNT} CEA-licensed agents
+              {agents.length} CEA-licensed agents
             </span>
           </div>
         </motion.div>

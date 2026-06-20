@@ -248,9 +248,8 @@ export default function PricingSection4({
             Same service. Different fee model.
           </h3>
           <p className="mt-4 text-center text-sm leading-relaxed text-neutral-600 sm:text-base speakable-fixed-fee-definition">
-            A fixed-fee agent charges one set price no matter what your home sells for. You
-            still get listing, marketing, negotiation, and full documentation. The only change
-            is what you pay at the end.
+            A fixed-fee agent charges one flat fee. You still get listing, marketing,
+            negotiation, and full documentation. The only change is what you pay at the end.
           </p>
         </FadeInUp>
 
