@@ -22,9 +22,9 @@ const FOUNDERS = [
     slug: "yeo-tong-boon",
     displayName: "Yeo Tong Boon",
     paragraphs: [
-      "I also believe strongly in the fixed fee model because I have seen first hand how much it helps the average Singaporean save meaningful costs when selling or buying a home.",
-      "There is still a misconception that fixed fee agents are lower quality or purely transactional. I want to change that perception by showing that structured, transparent service can still come with strong advisory and care.",
-      "Our goal is to be a trusted fixed fee partner for families, not just for selling, but also for buying the right next property. A poor purchase decision can cost just as much as high commissions, so we place strong emphasis on guiding clients to make sound, long term decisions.",
+      "There is a misconception that fixed fee agents are lower quality or purely transactional that just help you to sell. I want to change that perception.",
+      "Our goal is to help Singaporeans to sell and upgrade with confidence to their next property.",
+      "I will build a strong home buying team, where clients are supported by dedicated analysts, research, and technology.",
     ],
   },
 ] as const;
@@ -109,11 +109,9 @@ export function AboutContent() {
         <div className="container-page">
           <FadeInUp className="section-header">
             <Eyebrow>Our Team</Eyebrow>
-            <h2 className="section-title">CEA-licensed advisors you can verify</h2>
+            <h2 className="section-title">CEA-licensed advisors you can trust</h2>
             <p className="section-lead">
-              Every HomeUP advisor is CEA-registered with a public registration number,
-              industry credentials, and hands-on transaction experience across HDB, condo,
-              and landed property.
+              Every HomeUP advisor is CEA-registered with a public registration number.
             </p>
           </FadeInUp>
 
@@ -161,26 +159,8 @@ export function AboutContent() {
             <h2 className="text-sm font-bold text-neutral-900">Company information</h2>
             <dl className="mt-4 grid gap-4 text-sm text-neutral-600 sm:grid-cols-2">
               <div>
-                <dt className="font-semibold text-neutral-900">Operating agency</dt>
-                <dd className="mt-1 font-normal">C &amp; H Properties Pte Ltd</dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-neutral-900">Parent company</dt>
-                <dd className="mt-1 font-normal">Haus Plus Pte. Ltd. (UEN 202538756D)</dd>
-              </div>
-              <div>
-                <dt className="font-semibold text-neutral-900">CEA licence</dt>
-                <dd className="mt-1 font-normal">
-                  <a
-                    href="https://www.cea.gov.sg"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-600 underline-offset-2 hover:underline"
-                  >
-                    L3007139C
-                  </a>{" "}
-                  (Council for Estate Agencies)
-                </dd>
+                <dt className="font-semibold text-neutral-900">Real estate agency</dt>
+                <dd className="mt-1 font-normal">C &amp; H Properties Pte Ltd · L3007139C</dd>
               </div>
               <div>
                 <dt className="font-semibold text-neutral-900">Office</dt>
