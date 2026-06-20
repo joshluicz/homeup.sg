@@ -16,7 +16,7 @@ const PACKAGE_FEATURES = [
   { id: "listing", label: "List on" },
   {
     id: "documentation",
-    label: "Full documentation (e.g. Option to Purchase (OTP))",
+    label: "Full documentation (e.g. OTP)",
     plainLabel: "Full documentation (e.g. Option to Purchase)",
   },
 ] as const;
