@@ -1,4 +1,6 @@
 export const SITE_URL = "https://homeup.sg";
+export const SITE_VISION =
+  "Fixed fees and real advice, because real estate should finally be fair.";
 export const ORG_ID = `${SITE_URL}/#organization`;
 export const OG_IMAGE = `${SITE_URL}/images/team-group.png`;
 export const LEGAL_NAME = "C & H Properties Pte Ltd";

@@ -2,48 +2,65 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Award, Building2, Users } from "lucide-react";
-import { AGENTS } from "@/lib/data/agents";
-import { ListingCount } from "@/components/listings/ListingCount";
+import { ArrowRight } from "lucide-react";
+import { AGENTS, getAgentBySlug } from "@/lib/data/agents";
+import { SITE_VISION } from "@/lib/seo/constants";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
 
-const STATS = [
-  { value: "1,000+", label: "Transactions closed" },
-  { value: "$200M+", label: "Real estate transacted" },
-  { value: "6", label: "CEA-licensed advisors" },
-  { value: null as string | null, label: "Active listings", dynamic: true },
-];
+const FOUNDERS = [
+  {
+    slug: "dennis-lim",
+    displayName: "Dennis",
+    paragraphs: [
+      "I strongly believe in the fixed fee model because it allows homeowners to achieve better outcomes without overpaying in commissions, while still getting strong exposure and viewings for their property.",
+      "We started HomeUP with a long term vision to build a modern, tech driven property advisory firm. By using AI tools, automation, and video systems, we aim to keep our operating costs efficient so we can continue offering a fixed fee of $1,999 for Singapore homeowners for as long as possible.",
+    ],
+  },
+  {
+    slug: "yeo-tong-boon",
+    displayName: "Tong Boon",
+    paragraphs: [
+      "I also believe strongly in the fixed fee model because I have seen first hand how much it helps the average Singaporean save meaningful costs when selling or buying a home.",
+      "There is still a misconception that fixed fee agents are lower quality or purely transactional. I want to change that perception by showing that structured, transparent service can still come with strong advisory and care.",
+      "Our goal is to be a trusted fixed fee partner for families, not just for selling, but also for buying the right next property. A poor purchase decision can cost just as much as high commissions, so we place strong emphasis on guiding clients to make sound, long term decisions.",
+    ],
+  },
+] as const;
 
-const VALUES = [
+const FOUNDER_STYLES = [
   {
-    icon: Building2,
-    title: "Transparent fixed fees",
-    body: "HDB from $1,999, Condo/EC from $4,999, Landed from $9,999. You get the same full service as a traditional agent, without percentage commission.",
+    card: "relative overflow-hidden rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-accent-50/70 shadow-[0_8px_32px_rgba(0,154,68,0.12)]",
+    bar: "bg-primary-600",
+    glow: "bg-primary-400/30",
+    glowPosition: "-right-12 -top-12",
+    imageRing: "ring-primary-200/80",
   },
   {
-    icon: Users,
-    title: "Named advisors, not a call centre",
-    body: "Every client works with a CEA-licensed advisor who knows your transaction. Registration numbers you can verify, plus real deal experience.",
+    card: "relative overflow-hidden rounded-2xl border border-accent-200/80 bg-gradient-to-br from-accent-50 via-white to-primary-50/80 shadow-[0_8px_32px_rgba(224,160,8,0.12)]",
+    bar: "bg-gradient-to-r from-accent-400 to-primary-500",
+    glow: "bg-accent-300/35",
+    glowPosition: "-left-12 -bottom-12",
+    imageRing: "ring-accent-200/80",
   },
-  {
-    icon: Award,
-    title: "Advice aligned with your interests",
-    body: "Our fee is fixed, not tied to your sale price. Pricing guidance, negotiation, and planning stay focused on your outcome, not commission targets.",
-  },
-];
+] as const;
 
-export function AboutContent({ listingCount }: { listingCount?: number }) {
+export function AboutContent() {
+  const [visionLead, visionEmphasis] = SITE_VISION.split(", because ");
+
   return (
     <>
-      <section aria-label="About HomeUP" className="section-padding bg-white">
+      <section
+        aria-label="About HomeUP"
+        className="section-padding bg-gradient-to-b from-primary-50/50 via-white to-white"
+      >
         <div className="container-page">
           <FadeInUp className="mx-auto max-w-3xl text-center">
             <Eyebrow>About HomeUP</Eyebrow>
             <h1 className="section-title">
-              More value. Less guesswork.{" "}
-              <span className="text-primary-600">Better decisions.</span>
+              {visionLead}, because{" "}
+              <span className="text-primary-600">{visionEmphasis}</span>
             </h1>
             <p className="section-lead mx-auto">
               HomeUP is a Singapore property advisory built around transparent fixed fees,
@@ -53,7 +70,65 @@ export function AboutContent({ listingCount }: { listingCount?: number }) {
             </p>
           </FadeInUp>
 
-          <FadeInUp delay={0.1} className="mt-12 overflow-hidden rounded-2xl border border-neutral-200 shadow-sm">
+          <div className="mx-auto mt-12 max-w-4xl space-y-8">
+            {FOUNDERS.map((founder, index) => {
+              const agent = getAgentBySlug(founder.slug);
+              if (!agent) return null;
+
+              const imageFirst = index % 2 === 0;
+              const style = FOUNDER_STYLES[index % FOUNDER_STYLES.length];
+
+              return (
+                <FadeInUp key={founder.slug} delay={0.1 + index * 0.08}>
+                  <div className={style.card}>
+                    <div
+                      aria-hidden="true"
+                      className={`absolute inset-x-0 top-0 h-1 ${style.bar}`}
+                    />
+                    <div
+                      aria-hidden="true"
+                      className={`pointer-events-none absolute h-36 w-36 rounded-full blur-3xl ${style.glow} ${style.glowPosition}`}
+                    />
+                    <div
+                      className={`relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-start lg:gap-10 ${
+                        imageFirst ? "" : "lg:flex-row-reverse"
+                      }`}
+                    >
+                      <div
+                        className={`relative mx-auto aspect-[4/5] w-full max-w-[220px] shrink-0 overflow-hidden rounded-2xl bg-white shadow-md ring-2 ${style.imageRing} lg:mx-0`}
+                      >
+                        <Image
+                          src={agent.photo}
+                          alt={`${agent.name}, HomeUP co-founder`}
+                          fill
+                          className="object-cover object-top"
+                          sizes="220px"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-neutral-900">{founder.displayName}</p>
+                        <div className="mt-4 space-y-4">
+                          {founder.paragraphs.map((paragraph) => (
+                            <p
+                              key={paragraph}
+                              className="text-sm font-normal leading-relaxed text-neutral-700"
+                            >
+                              {paragraph}
+                            </p>
+                          ))}
+                        </div>
+                        <p className="mt-5 inline-flex items-center rounded-full border border-primary-100 bg-white/80 px-3 py-1 text-sm font-semibold text-primary-700 backdrop-blur-sm">
+                          Co-founder
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </FadeInUp>
+              );
+            })}
+          </div>
+
+          <FadeInUp delay={0.25} className="mt-12 overflow-hidden rounded-2xl border border-neutral-200 shadow-sm">
             <Image
               src="/images/team-group.png"
               alt="The HomeUP team, six CEA-licensed property agents in Singapore"
@@ -63,55 +138,6 @@ export function AboutContent({ listingCount }: { listingCount?: number }) {
               priority
             />
           </FadeInUp>
-        </div>
-      </section>
-
-      <section aria-label="HomeUP at a glance" className="section-padding bg-neutral-50">
-        <div className="container-page">
-          <StaggerContainer className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {STATS.map((stat) => (
-              <StaggerItem key={stat.label}>
-                <div className="rounded-2xl border border-neutral-200 bg-white p-6 text-center shadow-sm">
-                  <p className="font-display text-3xl font-extrabold text-primary-600">
-                    {"dynamic" in stat && stat.dynamic ? (
-                      <ListingCount initialCount={listingCount} suffix="+" />
-                    ) : (
-                      stat.value
-                    )}
-                  </p>
-                  <p className="mt-2 text-sm font-normal text-neutral-600">{stat.label}</p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
-
-      <section aria-label="What we stand for" className="section-padding bg-white">
-        <div className="container-page">
-          <FadeInUp className="section-header">
-            <Eyebrow>Our Approach</Eyebrow>
-            <h2 className="section-title">A different model for Singapore property</h2>
-            <p className="section-lead">
-              Most homeowners give away $10,000 to $70,000 in agent commission on a single
-              transaction. HomeUP was built to offer the same end-to-end service at a fee
-              you know before you sign.
-            </p>
-          </FadeInUp>
-
-          <StaggerContainer className="mt-10 grid gap-6 lg:grid-cols-3">
-            {VALUES.map((item) => (
-              <StaggerItem key={item.title}>
-                <div className="h-full rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-                  <item.icon className="h-6 w-6 text-primary-600" aria-hidden="true" />
-                  <h3 className="mt-4 text-sm font-bold text-neutral-900">{item.title}</h3>
-                  <p className="mt-2 text-sm font-normal leading-relaxed text-neutral-600">
-                    {item.body}
-                  </p>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
         </div>
       </section>
 

@@ -12,6 +12,7 @@ import {
   PARENT_ORG_NAME,
   PARENT_ORG_UEN,
   SITE_URL,
+  SITE_VISION,
 } from "./constants";
 
 export interface BreadcrumbItem {
@@ -349,8 +350,7 @@ export function aboutPageSchema() {
     "@id": `${SITE_URL}/about#webpage`,
     url: `${SITE_URL}/about`,
     name: "About HomeUP",
-    description:
-      "Learn about HomeUP, Singapore's fixed-fee property agency operated by C and H Properties Pte Ltd under the HomeUP brand, with CEA-licensed advisors and transparent pricing.",
+    description: `${SITE_VISION} Learn about HomeUP, Singapore's fixed-fee property agency operated by C and H Properties Pte Ltd under the HomeUP brand, with CEA-licensed advisors and transparent pricing.`,
     isPartOf: { "@id": ORG_ID },
     about: { "@id": ORG_ID },
     mainEntity: { "@id": ORG_ID },

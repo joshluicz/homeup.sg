@@ -3,20 +3,17 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AboutContent } from "@/components/sections/AboutContent";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { SITE_VISION } from "@/lib/seo/constants";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { getListingStatsServer } from "@/lib/listings/server-queries";
 import { aboutPageSchema, breadcrumbSchema, organizationSchema } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
   title: "About HomeUP | Fixed-Fee Property Agents Singapore",
-  description:
-    "Learn about HomeUP, Singapore's fixed-fee property advisory. CEA-licensed advisors, transparent pricing from $1,999, 1,000+ transactions closed, operated by C & H Properties Pte Ltd.",
+  description: `${SITE_VISION} Learn about HomeUP, Singapore's fixed-fee property advisory. CEA-licensed advisors, transparent pricing from $1,999, 1,000+ transactions closed, operated by C & H Properties Pte Ltd.`,
   path: "/about",
 });
 
 export default async function AboutPage() {
-  const stats = await getListingStatsServer();
-
   return (
     <>
       <JsonLd
@@ -31,7 +28,7 @@ export default async function AboutPage() {
       />
       <Navbar />
       <main className="bg-white">
-        <AboutContent listingCount={stats.total} />
+        <AboutContent />
         <CtaBanner />
       </main>
       <Footer />
