@@ -90,27 +90,23 @@ export const SELL_FAQ_GENERAL: FaqItem[] = [
 export const SELL_FAQ_HDB: FaqItem[] = [
   {
     q: "How much CPF must I return when I sell my HDB flat?",
-    a: "CPF used to buy the flat, plus accrued interest, goes back to your CPF Ordinary Account when you sell. Accrued interest is 2.5% per year from the date you withdrew the funds. HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
+    a: "CPF used to buy the flat, plus accrued interest at 2.5% per year, goes back to your CPF Ordinary Account when you sell. If needed, HomeUP estimates your net proceeds in the first meeting so you know how much cash you will receive.",
   },
   {
     q: "How long does an HDB resale take from accepted offer to completion?",
-    a: "Most resales take 16 to 22 weeks after you accept an offer. That covers the 21-day option period, HDB Resale Portal submission, HDB approval (often 4 to 6 weeks), and completion at HDB Hub. How long you wait for a suitable offer before that depends on price and demand in your town.",
+    a: "Most resales take 3-4 months after you accept an offer. That covers the 21-day option period, HDB Resale Portal submission, HDB approval, and completion at HDB Hub. How long you wait for a suitable offer depends on price and demand in your town.",
   },
   {
     q: "Does HomeUP handle the HDB Resale Portal submission?",
-    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and submits through the HDB Resale Portal. We work with the buyer's agent, track HDB's review, and follow through to completion.",
+    a: "Yes. After the OTP is signed and the option fee is paid, HomeUP prepares the paperwork and submits through the HDB Resale Portal for you.",
   },
   {
     q: "When is the HDB valuation done and why does it matter?",
-    a: "A licensed valuer's report is usually ordered after the buyer exercises the OTP. It affects the buyer's loan and CPF usage, which can affect whether the deal goes through at your agreed price. HomeUP explains the valuation timeline before you commit to a price.",
+    a: "After the HDB is optioned out, the buyer will request for a valuation report from HDB. It affects the buyer's loan and CPF usage, which can affect whether the deal goes through at your agreed price.",
   },
   {
-    q: "What if I need to buy my next home before this sale completes?",
-    a: "We plan sale and purchase dates from the start. Sometimes we negotiate a later completion with the buyer, or discuss a short rental stay if that is safer for your family. We will not rush you into an offer that leaves you without a plan for your next home.",
-  },
-  {
-    q: "Will pricing above recent block transactions slow my sale?",
-    a: "Usually, yes. Buyers compare your asking price to recent sales in your block and town. A price set too high often cuts enquiry volume. HomeUP recommends a price backed by recent transacted data, not an inflated figure to win your listing.",
+    q: "What if I need to buy my next home after my HDB sale?",
+    a: "We plan your sale and purchase timeline from the start. We will touch on important points like whether you need an extension of stay and your current housing situation. We will not rush you into an offer that leaves you without a plan for your next home.",
   },
 ];
 
