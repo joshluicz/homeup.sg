@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
-import { BUY_HERO_ALT, BUY_HERO_IMAGE, BUY_HERO_IMAGE_CLASS } from "@/lib/constants/images";
+import {
+  BUY_HERO_PANEL_ALT,
+  BUY_HERO_PANEL_IMAGE,
+  BUY_HERO_PANEL_IMAGE_CLASS,
+} from "@/lib/constants/images";
 import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const WA = whatsAppUrlFor("heroBuy");
@@ -31,7 +35,7 @@ export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
     <section aria-label="Buying with HomeUP" className="bg-white pb-6 sm:pb-8">
       <div className="container-page pt-8 sm:pt-12 lg:pt-16">
         <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
-          <div className="min-w-0 shrink-0 max-lg:w-full lg:w-[44%] lg:pt-4">
+          <div className="min-w-0 shrink-0 max-lg:w-full lg:w-[48%] lg:pt-4">
             <motion.h1
               custom={0}
               initial="hidden"
@@ -95,16 +99,19 @@ export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, delay: 0.25, ease }}
-            className="min-w-0 max-lg:w-full lg:flex-1"
+            className="min-w-0 max-lg:w-full lg:flex-1 lg:max-w-[52%]"
           >
-            <div className="relative overflow-hidden rounded-xl sm:rounded-2xl" style={{ aspectRatio: "4/3" }}>
+            <div
+              className="relative mx-auto w-full max-w-xl overflow-hidden rounded-xl sm:rounded-2xl lg:max-w-none"
+              style={{ aspectRatio: "5/4" }}
+            >
               <Image
-                src={BUY_HERO_IMAGE}
-                alt={BUY_HERO_ALT}
+                src={BUY_HERO_PANEL_IMAGE}
+                alt={BUY_HERO_PANEL_ALT}
                 fill
                 priority
-                className={BUY_HERO_IMAGE_CLASS}
-                sizes="(max-width: 1024px) 100vw, 56vw"
+                className={BUY_HERO_PANEL_IMAGE_CLASS}
+                sizes="(max-width: 1024px) 100vw, 48vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
 

@@ -12,15 +12,15 @@ import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-
 const FOUNDERS = [
   {
     slug: "dennis-lim",
-    displayName: "Dennis",
+    displayName: "Dennis Lim",
     paragraphs: [
       "I strongly believe in the fixed fee model because it allows homeowners to achieve better outcomes without overpaying in commissions, while still getting strong exposure and viewings for their property.",
-      "We started HomeUP with a long term vision to build a modern, tech driven property advisory firm. By using AI tools, automation, and video systems, we aim to keep our operating costs efficient so we can continue offering a fixed fee of $1,999 for Singapore homeowners for as long as possible.",
+      "We started HomeUP with a long term vision to build a modern, tech driven property advisory. By using AI tools, automation, and video systems, we aim to keep our operating costs efficient so we can continue offering a fixed fee of $1,999 for Singapore homeowners for as long as possible.",
     ],
   },
   {
     slug: "yeo-tong-boon",
-    displayName: "Tong Boon",
+    displayName: "Yeo Tong Boon",
     paragraphs: [
       "I also believe strongly in the fixed fee model because I have seen first hand how much it helps the average Singaporean save meaningful costs when selling or buying a home.",
       "There is still a misconception that fixed fee agents are lower quality or purely transactional. I want to change that perception by showing that structured, transparent service can still come with strong advisory and care.",
@@ -62,25 +62,18 @@ export function AboutContent() {
               {visionLead}, because{" "}
               <span className="text-primary-600">{visionEmphasis}</span>
             </h1>
-            <p className="section-lead mx-auto">
-              HomeUP is a Singapore property advisory built around transparent fixed fees,
-              named CEA-licensed advisors, and coordinated sell-and-buy planning. Property
-              services are operated by C and H Properties Pte Ltd (CEA Licence L3007139C).
-              The HomeUP brand is registered under Haus Plus Pte. Ltd. (UEN 202538756D).
-            </p>
           </FadeInUp>
 
-          <div className="mx-auto mt-12 max-w-4xl space-y-8">
+          <div className="mx-auto mt-12 grid max-w-6xl gap-8 lg:grid-cols-2 lg:items-stretch">
             {FOUNDERS.map((founder, index) => {
               const agent = getAgentBySlug(founder.slug);
               if (!agent) return null;
 
-              const imageFirst = index % 2 === 0;
               const style = FOUNDER_STYLES[index % FOUNDER_STYLES.length];
 
               return (
-                <FadeInUp key={founder.slug} delay={0.1 + index * 0.08}>
-                  <div className={style.card}>
+                <FadeInUp key={founder.slug} delay={0.1 + index * 0.08} className="h-full">
+                  <div className={`${style.card} h-full`}>
                     <div
                       aria-hidden="true"
                       className={`absolute inset-x-0 top-0 h-1 ${style.bar}`}
@@ -89,24 +82,26 @@ export function AboutContent() {
                       aria-hidden="true"
                       className={`pointer-events-none absolute h-36 w-36 rounded-full blur-3xl ${style.glow} ${style.glowPosition}`}
                     />
-                    <div
-                      className={`relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-start lg:gap-10 ${
-                        imageFirst ? "" : "lg:flex-row-reverse"
-                      }`}
-                    >
+                    <div className="relative flex h-full flex-col gap-6 p-6 sm:p-8">
                       <div
-                        className={`relative mx-auto aspect-[4/5] w-full max-w-[220px] shrink-0 overflow-hidden rounded-2xl bg-white shadow-md ring-2 ${style.imageRing} lg:mx-0`}
+                        className={`relative mx-auto aspect-[4/5] w-full max-w-[200px] shrink-0 overflow-hidden rounded-2xl bg-white shadow-md ring-2 ${style.imageRing}`}
                       >
                         <Image
                           src={agent.photo}
                           alt={`${agent.name}, HomeUP co-founder`}
                           fill
                           className="object-cover object-top"
-                          sizes="220px"
+                          sizes="(max-width: 1024px) 200px, 280px"
                         />
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-neutral-900">{founder.displayName}</p>
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <p className="flex flex-wrap items-center gap-x-1.5 text-sm">
+                          <span className="font-bold text-neutral-900">{founder.displayName}</span>
+                          <span aria-hidden="true" className="font-normal text-neutral-400">
+                            ·
+                          </span>
+                          <span className="font-semibold text-primary-700">Co-founder</span>
+                        </p>
                         <div className="mt-4 space-y-4">
                           {founder.paragraphs.map((paragraph) => (
                             <p
@@ -117,9 +112,6 @@ export function AboutContent() {
                             </p>
                           ))}
                         </div>
-                        <p className="mt-5 inline-flex items-center rounded-full border border-primary-100 bg-white/80 px-3 py-1 text-sm font-semibold text-primary-700 backdrop-blur-sm">
-                          Co-founder
-                        </p>
                       </div>
                     </div>
                   </div>

@@ -15,9 +15,9 @@ export function BuySubPageHero({ content, filterType }: BuySubPageHeroProps) {
   return (
     <section
       aria-label={`Buying ${BUY_TYPE_LABELS[filterType]}`}
-      className="border-b border-neutral-100 bg-neutral-50"
+      className="border-b border-neutral-100 bg-white"
     >
-      <div className="container-page py-8 sm:py-10 lg:py-12">
+      <div className="container-page pt-8 pb-8 sm:pt-12 sm:pb-10 lg:pt-16 lg:pb-12">
         <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-1.5 text-sm font-normal text-neutral-500">
           <Link href="/buy" className="transition-colors hover:text-primary-600">
             Buy
@@ -26,7 +26,7 @@ export function BuySubPageHero({ content, filterType }: BuySubPageHeroProps) {
           <span className="font-medium text-neutral-800">{BUY_TYPE_LABELS[filterType]}</span>
         </nav>
 
-        <div className="grid items-start gap-8 lg:grid-cols-[1fr_minmax(280px,360px)] lg:gap-10 xl:gap-12">
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,340px)] lg:gap-10 xl:gap-12">
           <div className="min-w-0">
             <h1 className="font-display font-extrabold leading-[1.08] tracking-tight text-neutral-900 text-[clamp(1.5rem,4vw,2.25rem)]">
               {content.title}{" "}
