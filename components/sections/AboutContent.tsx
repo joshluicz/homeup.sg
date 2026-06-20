@@ -37,7 +37,7 @@ export function AboutContent({
   listingCount?: number;
   listingsAsOfDate?: string;
 }) {
-  const [visionLead, visionTail] = SITE_VISION.split(", because ");
+  const [visionLead, visionTail] = SITE_VISION.split(", ");
   const [realEstateLead] = visionTail.split("should finally be fair");
 
   return (
@@ -47,7 +47,7 @@ export function AboutContent({
           <FadeInUp className="mx-auto max-w-3xl text-center">
             <Eyebrow>About HomeUP</Eyebrow>
             <h1 className="section-title">
-              {visionLead}, because
+              {visionLead},
               <br />
               {realEstateLead}
               <span className="text-primary-600">should finally be fair.</span>
