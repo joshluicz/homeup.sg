@@ -1,17 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { BuyHeroPanel } from "@/components/sections/BuyHeroPanel";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
 import { BUY_PAGE_GENERAL } from "@/lib/data/buy-pages";
-import {
-  BUY_HERO_PANEL_ALT,
-  BUY_HERO_PANEL_IMAGE,
-  BUY_HERO_PANEL_IMAGE_CLASS,
-} from "@/lib/constants/images";
 import { whatsAppUrlFor } from "@/lib/whatsapp";
 
 const WA = whatsAppUrlFor("heroBuy");
@@ -101,36 +96,7 @@ export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
             transition={{ duration: 0.85, delay: 0.25, ease }}
             className="min-w-0 max-lg:w-full lg:flex-1 lg:max-w-[52%]"
           >
-            <div
-              className="relative mx-auto w-full max-w-xl overflow-hidden rounded-xl sm:rounded-2xl lg:max-w-none"
-              style={{ aspectRatio: "5/4" }}
-            >
-              <Image
-                src={BUY_HERO_PANEL_IMAGE}
-                alt={BUY_HERO_PANEL_ALT}
-                fill
-                priority
-                className={BUY_HERO_PANEL_IMAGE_CLASS}
-                sizes="(max-width: 1024px) 100vw, 48vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
-
-              <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2.5 rounded-xl border border-white/20 bg-white/95 px-3 py-2.5 shadow-md backdrop-blur-sm sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm sm:gap-3 sm:px-4 sm:py-3">
-                <Image
-                  src="/images/agent-tong-boon.png"
-                  alt="Yeo Tong Boon"
-                  width={44}
-                  height={44}
-                  className="h-10 w-10 shrink-0 rounded-full border border-neutral-200 object-cover object-top sm:h-11 sm:w-11"
-                />
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-neutral-900 sm:text-sm">HomeUP Buying Team</p>
-                  <p className="text-xs font-normal text-neutral-500 sm:text-sm">
-                    Yeo Tong Boon · Senior Advisor
-                  </p>
-                </div>
-              </div>
-            </div>
+            <BuyHeroPanel className="mx-auto w-full max-w-xl lg:max-w-none" showAdvisor priority />
           </motion.div>
         </div>
       </div>

@@ -2,9 +2,44 @@
 
 import Link from "next/link";
 import { Check, ChevronRight } from "lucide-react";
+import { BuyHeroPanel } from "@/components/sections/BuyHeroPanel";
 import { BuyPlanCard } from "@/components/ui/BuyPlanCard";
 import type { BuyPageHero } from "@/lib/data/buy-pages";
+import {
+  BUY_HERO_CONDO_ALT,
+  BUY_HERO_CONDO_IMAGE,
+  BUY_HERO_HDB_ALT,
+  BUY_HERO_HDB_IMAGE,
+  BUY_HERO_INTERIOR_IMAGE_CLASS,
+  BUY_HERO_PANEL_ALT,
+  BUY_HERO_PANEL_IMAGE,
+  BUY_HERO_PANEL_IMAGE_CLASS,
+} from "@/lib/constants/images";
 import { BUY_TYPE_LABELS, type BuyPropertyType } from "@/lib/data/buy-pricing";
+
+const SUBPAGE_HERO_IMAGES: Record<
+  BuyPropertyType,
+  { src: string; alt: string; imageClass: string; showGradient: boolean }
+> = {
+  HDB: {
+    src: BUY_HERO_HDB_IMAGE,
+    alt: BUY_HERO_HDB_ALT,
+    imageClass: BUY_HERO_INTERIOR_IMAGE_CLASS,
+    showGradient: false,
+  },
+  CondoLanded: {
+    src: BUY_HERO_CONDO_IMAGE,
+    alt: BUY_HERO_CONDO_ALT,
+    imageClass: BUY_HERO_INTERIOR_IMAGE_CLASS,
+    showGradient: false,
+  },
+  NewLaunch: {
+    src: BUY_HERO_PANEL_IMAGE,
+    alt: BUY_HERO_PANEL_ALT,
+    imageClass: BUY_HERO_PANEL_IMAGE_CLASS,
+    showGradient: true,
+  },
+};
 
 interface BuySubPageHeroProps {
   content: BuyPageHero;
@@ -49,6 +84,11 @@ export function BuySubPageHero({ content, filterType }: BuySubPageHeroProps) {
                 </li>
               ))}
             </ul>
+
+            <BuyHeroPanel
+              className="mt-6 max-w-xl"
+              {...SUBPAGE_HERO_IMAGES[filterType]}
+            />
           </div>
 
           <div className="lg:sticky lg:top-24">

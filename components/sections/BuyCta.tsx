@@ -1,11 +1,10 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { BuyTeamAwards } from "@/components/ui/BuyTeamAwards";
 import { FadeInUp } from "@/components/ui/motion-primitives";
-import { BUY_HERO_ALT, BUY_HERO_IMAGE, BUY_HERO_IMAGE_CLASS } from "@/lib/constants/images";
+import { BuyHeroPanel } from "@/components/sections/BuyHeroPanel";
 
 export function BuyCta() {
   return (
@@ -34,15 +33,8 @@ export function BuyCta() {
               </div>
 
               {/* Photo */}
-              <div className="relative min-h-[240px] overflow-hidden lg:min-h-0">
-                <Image
-                  src={BUY_HERO_IMAGE}
-                  alt={BUY_HERO_ALT}
-                  fill
-                  priority
-                  className={BUY_HERO_IMAGE_CLASS}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
+              <div className="relative min-h-[240px] lg:min-h-0">
+                <BuyHeroPanel className="rounded-none" fillContainer />
               </div>
             </div>
 
