@@ -16,7 +16,7 @@ const FOUNDERS = [
     displayName: "Dennis Lim",
     paragraphs: [
       "I believe the fixed fee model will allow homeowners to achieve higher selling prices without overpaying in commission.",
-      "We started HomeUP.sg with a long term vision to build a modern, tech driven property advisory. By using AI tools, automation, and video systems, we aim to keep our operating costs efficient so that we can continue to offer low fixed fees (starting from $1,999) for Singapore homeowners.",
+      "We started HomeUP.sg with a long term vision to build a modern, tech driven property advisory. By using AI tools, automation, and video systems, we will keep our operating costs efficient so that we can continue to offer low fixed fees (starting from $1,999) for Singapore homeowners.",
     ],
   },
   {
