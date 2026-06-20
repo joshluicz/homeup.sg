@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { AboutListingsGoal } from "@/components/sections/AboutListingsGoal";
 import { AGENTS, getAgentBySlug } from "@/lib/data/agents";
 import { SITE_VISION } from "@/lib/seo/constants";
 import { Eyebrow } from "@/components/ui/Eyebrow";
@@ -29,7 +30,7 @@ const FOUNDERS = [
   },
 ] as const;
 
-export function AboutContent() {
+export function AboutContent({ listingCount }: { listingCount?: number }) {
   const [visionLead, visionTail] = SITE_VISION.split(", because ");
   const [realEstateLead] = visionTail.split("should finally be fair");
 
@@ -141,6 +142,8 @@ export function AboutContent() {
           </FadeInUp>
         </div>
       </section>
+
+      <AboutListingsGoal listingCount={listingCount} />
 
       <section aria-label="Company details" className="section-padding bg-white">
         <div className="container-page">

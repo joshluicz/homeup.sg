@@ -6,6 +6,7 @@ import { CtaBanner } from "@/components/sections/CtaBanner";
 import { SITE_VISION } from "@/lib/seo/constants";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { aboutPageSchema, breadcrumbSchema, organizationSchema } from "@/lib/seo/schema";
+import { getListingStatsServer } from "@/lib/listings/server-queries";
 
 export const metadata = buildPageMetadata({
   title: "About HomeUP | Fixed-Fee Property Agents Singapore",
@@ -14,6 +15,8 @@ export const metadata = buildPageMetadata({
 });
 
 export default async function AboutPage() {
+  const stats = await getListingStatsServer();
+
   return (
     <>
       <JsonLd
@@ -28,7 +31,7 @@ export default async function AboutPage() {
       />
       <Navbar />
       <main className="bg-white">
-        <AboutContent />
+        <AboutContent listingCount={stats.total} />
         <CtaBanner />
       </main>
       <Footer />
