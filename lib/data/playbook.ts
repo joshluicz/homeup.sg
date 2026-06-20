@@ -31,9 +31,9 @@ export type VideoCategory =
 export type PlaybookTopic = "upgraders" | "buying_first" | "condo_tips";
 
 export const TOPIC_LABELS: Record<PlaybookTopic, string> = {
-  upgraders:    "Upgraders",
-  buying_first: "Buying Your 1st Property",
-  condo_tips:   "Condo Tips",
+  upgraders:    "Sell / Upgrade",
+  buying_first: "Buy Tips",
+  condo_tips:   "Commentary",
 };
 
 export interface FaqEntry {

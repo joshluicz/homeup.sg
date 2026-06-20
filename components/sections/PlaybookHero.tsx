@@ -36,7 +36,7 @@ export function PlaybookHero() {
 
       <div className="container-page relative">
         <div className="mx-auto max-w-3xl text-center">
-          <Eyebrow>Client Playbook</Eyebrow>
+          <Eyebrow>Playbook</Eyebrow>
 
           <h1 className="mt-4 font-display text-display-sm font-extrabold tracking-tight text-neutral-900 sm:text-display-md">
             Your Property Journey,{" "}
@@ -45,8 +45,7 @@ export function PlaybookHero() {
 
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
             A curated library of video guides covering every stage of buying and
-            selling in Singapore, from your first valuation call to final
-            handover. Share any video with your clients in one click.
+            selling in Singapore.
           </p>
         </div>
 
