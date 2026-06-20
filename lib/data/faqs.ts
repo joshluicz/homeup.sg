@@ -155,11 +155,11 @@ export const SELL_FAQ_CONDO: FaqItem[] = [
 export const SELL_FAQ_LANDED: FaqItem[] = [
   {
     q: "Who is allowed to buy my landed property?",
-    a: "Singapore citizens face the fewest restrictions. Permanent residents and foreigners generally need Land Dealings Approval Unit approval for most landed homes. Cluster or strata landed homes are sometimes more accessible to PRs. HomeUP factors eligibility into who we target for viewings.",
+    a: "Permanent residents and foreigners generally need Land Dealings Approval Unit approval for most landed homes. HomeUP factors eligibility into who we target for viewings.",
   },
   {
     q: "Why do landed sales often take longer than HDB or condo?",
-    a: "The qualified buyer pool is smaller and each buyer's financing and eligibility checks take time. Marketing can run 4 to 16 weeks before a suitable offer. Legal completion after acceptance is often 24 to 32 weeks. HomeUP uses targeted marketing rather than volume alone.",
+    a: "The qualified buyer pool is smaller and each buyer's financing and eligibility checks take time. Marketing can run 1 to 6 months before a suitable offer. HomeUP uses targeted marketing rather than volume alone.",
   },
   {
     q: "Does freehold always sell faster than leasehold landed?",
@@ -167,7 +167,7 @@ export const SELL_FAQ_LANDED: FaqItem[] = [
   },
   {
     q: "How do you price a landed home accurately?",
-    a: "Landed value depends on plot size, shape, orientation, road frontage, tenure, and recent sales nearby. HomeUP benchmarks against comparable sales and adjusts for those factors. We do not inflate the asking price to win the listing.",
+    a: "Landed value depends on plot size, shape, home condition, road frontage, tenure, and recent sales nearby. HomeUP benchmarks against comparable sales and adjusts for those factors. We do not inflate the asking price to win the listing.",
   },
   {
     q: "Will HomeUP vet buyers before a viewing?",
