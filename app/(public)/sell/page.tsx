@@ -2,8 +2,9 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { LandingPageJsonLd } from "@/components/seo/LandingPageJsonLd";
 import { SellLandingContent } from "@/components/sections/SellLandingContent";
-import { SELL_FAQ_GENERAL } from "@/lib/data/faqs";
+import { SELL_FAQ_GENERAL, faqItemsForSchema } from "@/lib/data/faqs";
 import { SELL_PAGE_GENERAL } from "@/lib/data/sell-pages";
+import { getListingStatsServer } from "@/lib/listings/server-queries";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { SELL_HOW_TO_STEPS } from "@/lib/seo/schema";
 
@@ -15,7 +16,9 @@ export const metadata = buildPageMetadata({
   path: "/sell",
 });
 
-export default function SellPage() {
+export default async function SellPage() {
+  const stats = await getListingStatsServer();
+
   return (
     <>
       <LandingPageJsonLd
@@ -23,7 +26,7 @@ export default function SellPage() {
           { name: "Home", path: "/" },
           { name: "Sell", path: "/sell" },
         ]}
-        faq={SELL_FAQ_GENERAL}
+        faq={faqItemsForSchema(SELL_FAQ_GENERAL, stats.total)}
         howTo={{
           name: "How to sell your property with HomeUP",
           description:
@@ -55,7 +58,7 @@ export default function SellPage() {
       />
       <Navbar />
       <main>
-        <SellLandingContent config={config} />
+        <SellLandingContent config={config} listingCount={stats.total} />
       </main>
       <Footer />
     </>

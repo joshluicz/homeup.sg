@@ -10,6 +10,7 @@ import {
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FaqContactHighlight } from "@/components/ui/faq-contact-highlight";
 import { FadeInUp } from "@/components/ui/motion-primitives";
+import { ListingCount } from "@/components/listings/ListingCount";
 import {
   buildWhatsAppUrl,
   WHATSAPP_MESSAGES,
@@ -25,6 +26,34 @@ interface FAQSectionProps {
   speakableAnswerCount?: number;
   /** Pre-filled WhatsApp message context for the contact CTA. */
   whatsappContext?: WhatsAppMessageKey;
+  /** Active listing count for dynamic FAQ answers. */
+  listingCount?: number;
+}
+
+function FaqAnswer({ item, listingCount }: { item: FaqItem; listingCount?: number }) {
+  if (item.listingCountVariant === "hosting-scale") {
+    return (
+      <>
+        We keep costs down in two ways. You host viewings at your home, and we have{" "}
+        <ListingCount initialCount={listingCount} suffix=" homes" /> listed at once so marketing
+        work is shared. Your CEA-licensed advisor still handles pricing, negotiation, paperwork,
+        and timeline planning.
+      </>
+    );
+  }
+
+  if (item.listingCountVariant === "shared-marketing") {
+    return (
+      <>
+        We have <ListingCount initialCount={listingCount} suffix=" homes" /> listed at once, so
+        listing and marketing work is shared. Sellers host their own viewings, so your advisor does
+        not travel to every showing. We also run without a large traditional office setup. Those
+        savings show up as a fixed fee instead of a 2% commission.
+      </>
+    );
+  }
+
+  return item.a;
 }
 
 export function FAQSection({
@@ -34,6 +63,7 @@ export function FAQSection({
   lead,
   speakableAnswerCount = 0,
   whatsappContext,
+  listingCount,
 }: FAQSectionProps) {
   const whatsappUrl = whatsappContext
     ? buildWhatsAppUrl(WHATSAPP_MESSAGES[whatsappContext])
@@ -66,7 +96,7 @@ export function FAQSection({
                         i < speakableAnswerCount ? " speakable-faq-answer" : ""
                       }`}
                     >
-                      {item.a}
+                      <FaqAnswer item={item} listingCount={listingCount} />
                     </AccordionContent>
                   </AccordionItem>
                 ))}

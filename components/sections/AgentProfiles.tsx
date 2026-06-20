@@ -17,9 +17,9 @@ export function AgentProfiles({ showViewAll = true }: AgentProfilesProps) {
         <FadeInUp className="section-header">
           <Eyebrow>The Team</Eyebrow>
           <h2 className="section-title">
-            Advisors with perspective,
+            Trusted Property Advisors,
             <br />
-            not sales targets
+            for Sellers, Buyers and Upgraders
           </h2>
           <p className="section-lead">
             HOMEUP advisors combine deep transaction experience as homeowners and

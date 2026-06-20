@@ -12,7 +12,7 @@ import { FAQSection } from "@/components/sections/FAQSection";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { WhyCheaperTeaser } from "@/components/sections/WhyCheaperTeaser";
 import PricingSection4 from "@/components/ui/pricing-section-4";
-import { HOMEPAGE_FAQ } from "@/lib/data/faqs";
+import { HOMEPAGE_FAQ, faqItemsForSchema } from "@/lib/data/faqs";
 import { getActiveListingsServer, getListingStatsServer } from "@/lib/listings/server-queries";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
@@ -53,7 +53,7 @@ export default async function Home() {
       <JsonLd
         data={[
           organizationSchema(),
-          faqSchema(HOMEPAGE_FAQ),
+          faqSchema(faqItemsForSchema(HOMEPAGE_FAQ, stats.total)),
           howToSchema(
             "How to sell your property with HomeUP",
             "HomeUP's transparent 4-step process for selling your Singapore property at a fixed fee, with no percentage commission and no hidden charges.",
@@ -83,6 +83,7 @@ export default async function Home() {
         <GreenDivider />
         <FAQSection
           items={HOMEPAGE_FAQ}
+          listingCount={stats.total}
           eyebrow="Common questions"
           title="What homeowners ask before they list with us"
           lead="Straight answers on fees, incentives, and what you handle yourself. No textbook HDB basics."

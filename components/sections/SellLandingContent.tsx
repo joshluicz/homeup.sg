@@ -60,9 +60,10 @@ const GENERAL_FAQ = {
 
 interface SellLandingContentProps {
   config: SellPageConfig;
+  listingCount?: number;
 }
 
-export function SellLandingContent({ config }: SellLandingContentProps) {
+export function SellLandingContent({ config, listingCount }: SellLandingContentProps) {
   const isGeneral = config.filterType === null;
   const faqConfig = config.filterType ? FAQ_BY_TYPE[config.filterType] : GENERAL_FAQ;
   const faqWhatsappContext: WhatsAppMessageKey = config.filterType
@@ -88,6 +89,7 @@ export function SellLandingContent({ config }: SellLandingContentProps) {
         <ComparisonTable />
         <FAQSection
           items={faqConfig.items}
+          listingCount={listingCount}
           eyebrow={faqConfig.eyebrow}
           title={faqConfig.title}
           lead={faqConfig.lead}

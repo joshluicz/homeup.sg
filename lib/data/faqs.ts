@@ -1,24 +1,49 @@
+export type ListingCountFaqVariant = "hosting-scale" | "shared-marketing";
+
 export interface FaqItem {
   q: string;
   a: string;
+  listingCountVariant?: ListingCountFaqVariant;
+}
+
+export function faqAnswerWithListingCount(
+  variant: ListingCountFaqVariant,
+  count: number,
+): string {
+  switch (variant) {
+    case "hosting-scale":
+      return `We keep costs down in two ways. You host viewings at your home, and we have ${count} homes listed at once so marketing work is shared. Your CEA-licensed advisor still handles pricing, negotiation, paperwork, and timeline planning.`;
+    case "shared-marketing":
+      return `We have ${count} homes listed at once, so listing and marketing work is shared. Sellers host their own viewings, so your advisor does not travel to every showing. We also run without a large traditional office setup. Those savings show up as a fixed fee instead of a 2% commission.`;
+  }
+}
+
+export function faqItemsForSchema(items: FaqItem[], listingCount?: number): FaqItem[] {
+  if (listingCount == null) return items;
+  return items.map((item) =>
+    item.listingCountVariant
+      ? { ...item, a: faqAnswerWithListingCount(item.listingCountVariant, listingCount) }
+      : item,
+  );
 }
 
 export const HOMEPAGE_FAQ: FaqItem[] = [
   {
     q: "Why is HomeUP's fee so much lower if the service is full?",
-    a: "We keep costs down in two ways. You host viewings at your home, and we list more than 120 homes at once so marketing work is shared. Your CEA-licensed advisor still handles pricing, negotiation, paperwork, and timeline planning. The fee stays the same no matter how high your home sells for, so we are not paid more when your price goes up.",
+    listingCountVariant: "hosting-scale",
+    a: faqAnswerWithListingCount("hosting-scale", 120),
   },
   {
     q: "Does a fixed fee mean my agent cares less about my sale price?",
-    a: "No. With a percentage commission, the agent earns more when your price goes up. That can push them to hold out for a higher number even when it slows the sale. HomeUP advisors earn the same fixed fee either way. They still want a smooth sale, but their pay does not rise with your price.",
+    a: "Not at all. HomeUP advisors are motivated by reputation and repeat business, not a percentage of your sale. In fact, commission-based agents can cut both ways: they may hold out for a higher price to earn a bigger cut, or quietly pressure you to accept a low offer after a month of viewings simply because repeated trips to your unit eat into their time. Either way, their advice follows their schedule and their paycheck. HomeUP advisors have no reason to rush you into a low offer. The owner will decide to accept or reject whatever offers that come to us.",
   },
   {
     q: "What do I handle myself compared with a traditional listing?",
     a: "You host viewings at your home. HomeUP screens enquiries, sends you serious buyers, and handles the listing, portal marketing, offers, negotiation, and paperwork. If you cannot host viewings, tell your advisor early so you can work out another plan.",
   },
   {
-    q: "Is HomeUP a discount broker or a full agency?",
-    a: "HomeUP is a full agency under C and H Properties (CEA licence L3007139C). The fee is different, not the service. You get portal listings, marketing, negotiation, and completion paperwork. You pay a flat fee instead of a percentage commission.",
+    q: "Are HomeUP Property Advisors Licensed Real Estate Agents in Singapore?",
+    a: "HomeUP is a division of agents under a Singapore-licensed real estate agency, C & H Properties (L3007139C) All our advisors are CEA registered property agents in Singapore.",
   },
   {
     q: "Can HomeUP coordinate a sale and a purchase at the same time?",
@@ -30,7 +55,7 @@ export const HOMEPAGE_FAQ: FaqItem[] = [
   },
   {
     q: "How is HomeUP different from a typical 2% commission agent in practice?",
-    a: "The daily work is the same: list, market, negotiate, and complete the sale. A 2% agent earns more when you sell for more. HomeUP earns the same fixed fee whether you sell at valuation or above it. That keeps advice focused on your net proceeds and timeline, not a higher commission.",
+    a: "The biggest difference is viewings. Traditional agents accompany every buyer in person, so to protect their time, they may consolidate requests into one viewing slot a week. A keen buyer on Tuesday waits until Saturday — and often moves on. With HomeUP, you host viewings whenever a buyer is ready. More viewings, more offers, more negotiating power. Our advisors handle the important parts (marketing, negotiations and paperwork); you just need to open the door for buyers to view.",
   },
 ];
 
@@ -41,7 +66,8 @@ export const SELL_FAQ_GENERAL: FaqItem[] = [
   },
   {
     q: "Why is HomeUP's fee lower than a traditional agent?",
-    a: "We list more than 120 homes at once, so listing and marketing work is shared. Sellers host their own viewings, so your advisor does not travel to every showing. We also run without a large traditional office setup. Those savings show up as a fixed fee instead of a 2% commission.",
+    listingCountVariant: "shared-marketing",
+    a: faqAnswerWithListingCount("shared-marketing", 120),
   },
   {
     q: "How many viewings should I expect to host?",
