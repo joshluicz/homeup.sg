@@ -208,7 +208,7 @@ export const AGENTS: Agent[] = [
     quote:
       "With a friendly and approachable nature, and experience in both HDB and private property sales and purchases, Olivia is committed to guiding buyers and sellers through every stage of their property journey. She believes in honest advice, prompt communication, and dedicated support to ensure a smooth experience from start to finish.",
     quoteThirdPerson: true,
-    accolades: ["Law diploma graduate"],
+    accolades: ["TP Law Diploma"],
     about: [],
     specialties: ["Documentation", "Buyer support", "Transaction coordination"],
     social: {
