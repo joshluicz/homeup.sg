@@ -100,7 +100,7 @@ export const AGENTS: Agent[] = [
     quoteThirdPerson: true,
     accolades: [
       "NUS Real Estate (Hons)",
-      "Top Private Property Transactor | C&H 2025",
+      "Top Private Property Buying Transactor | C&H 2025",
       "Top Agent Under 40 & Top 3 Producer | C&H 2025",
       "Centurion Award 2025",
     ],

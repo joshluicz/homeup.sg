@@ -15,7 +15,6 @@ import { BuyPricing } from "@/components/sections/BuyPricing";
 import { BuyProcess } from "@/components/sections/BuyProcess";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { FAQSection } from "@/components/sections/FAQSection";
-import { PropertyTypeNav } from "@/components/sections/PropertyTypeNav";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { BuyTeamAwards } from "@/components/ui/BuyTeamAwards";
 
@@ -71,7 +70,6 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
       <>
         <BuyHero content={config.hero} />
         {showAwardsStrip && <BuyTeamAwards strip />}
-        <PropertyTypeNav mode="buy" />
         <BuyPricing
           filterType={null}
           showLearnMore

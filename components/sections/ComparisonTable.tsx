@@ -22,7 +22,7 @@ const rows = [
   },
   {
     label: "Commitment",
-    homeup: "Clear 3-month focus",
+    homeup: "No exclusive signed",
     typical: "Depends on Agent",
   },
   {

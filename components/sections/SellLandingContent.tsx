@@ -14,7 +14,6 @@ import { Benefits } from "@/components/sections/Benefits";
 import { ComparisonTable } from "@/components/sections/ComparisonTable";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { FAQSection } from "@/components/sections/FAQSection";
-import { PropertyTypeNav } from "@/components/sections/PropertyTypeNav";
 import { SellHero } from "@/components/sections/SellHero";
 import { SellSubPageHero } from "@/components/sections/SellSubPageHero";
 import { SellProcessFlow } from "@/components/sections/SellProcessFlow";
@@ -80,7 +79,6 @@ export function SellLandingContent({ config, listingCount }: SellLandingContentP
       <>
         <SellHero content={config.hero} />
         <WhyCheaper />
-        <PropertyTypeNav mode="sell" />
         <PricingSection4
           id="pricing"
           filterType={null}
