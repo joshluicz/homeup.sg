@@ -149,6 +149,20 @@ export const AGENTS: Agent[] = [
     },
     youtubeChannelHandle: "edmundlee9189",
     introYoutubeVideoId: "HijepXyK4U0",
+    featuredTikTokVideos: [
+      {
+        id: "7649749005693406482",
+        url: "https://www.tiktok.com/@edmundleesiewwah/video/7649749005693406482",
+      },
+      {
+        id: "7639603282712792328",
+        url: "https://www.tiktok.com/@edmundleesiewwah/video/7639603282712792328",
+      },
+      {
+        id: "7651599442377706760",
+        url: "https://www.tiktok.com/@edmundleesiewwah/video/7651599442377706760",
+      },
+    ],
   },
   {
     slug: "kenji-ching",
@@ -170,15 +184,29 @@ export const AGENTS: Agent[] = [
     },
     youtubeChannelHandle: "homeup_kenji",
     introYoutubeVideoId: "_ufdxj3qftc",
+    featuredTikTokVideos: [
+      {
+        id: "7625629127298616594",
+        url: "https://www.tiktok.com/@homeup_kenji/video/7625629127298616594",
+      },
+      {
+        id: "7634066326482341128",
+        url: "https://www.tiktok.com/@homeup_kenji/video/7634066326482341128",
+      },
+      {
+        id: "7593327782197759240",
+        url: "https://www.tiktok.com/@homeup_kenji/video/7593327782197759240",
+      },
+    ],
   },
   {
     slug: "olivia-neo",
     name: "Olivia Neo",
     cea: "R072836A",
-    bio: "A friendly law diploma graduate, dedicated to guiding buyers and sellers on a smooth and transparent property journey.",
+    bio: "Friendly, approachable guidance for HDB and private property sales and purchases, with honest advice from start to finish.",
     photo: "/images/agent-olivia.png",
     quote:
-      "Olivia Neo is a friendly law diploma graduate dedicated to guiding buyers and sellers on a smooth and transparent property journey. She brings a calm approach to complex transactions and keeps clients informed at every step, from Option to Purchase through completion paperwork.",
+      "With a friendly and approachable nature, and experience in both HDB and private property sales and purchases, Olivia is committed to guiding buyers and sellers through every stage of their property journey. She believes in honest advice, prompt communication, and dedicated support to ensure a smooth experience from start to finish.",
     quoteThirdPerson: true,
     accolades: ["Law diploma graduate"],
     about: [],
@@ -191,6 +219,20 @@ export const AGENTS: Agent[] = [
     },
     youtubeChannelHandle: "homeupolivia",
     introYoutubeVideoId: "O-t1i4W_an4",
+    featuredTikTokVideos: [
+      {
+        id: "7647084977745612039",
+        url: "https://www.tiktok.com/@homeup_olivia/video/7647084977745612039",
+      },
+      {
+        id: "7637547101282389256",
+        url: "https://www.tiktok.com/@homeup_olivia/video/7637547101282389256",
+      },
+      {
+        id: "7638154827150757138",
+        url: "https://www.tiktok.com/@homeup_olivia/video/7638154827150757138",
+      },
+    ],
   },
   {
     slug: "isaac-tay",
