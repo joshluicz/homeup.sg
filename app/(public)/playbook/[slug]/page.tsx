@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ArticleBody } from "@/components/sections/ArticleBody";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { CATEGORY_LABELS } from "@/lib/data/playbook";
+import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
+import { PlaybookArticleHeader } from "@/components/sections/PlaybookArticleHeader";
+import { PlaybookArticleHeroMedia } from "@/components/sections/PlaybookArticleHeroMedia";
+import { PlaybookStickyVideo } from "@/components/sections/PlaybookStickyVideo";
 import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
-import { toEmbedUrl, isDirectVideoFile } from "@/lib/playbook/embed";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   articleSchema,
@@ -21,15 +21,9 @@ import {
   videoObjectsSchema,
 } from "@/lib/seo/schema";
 
-// Vercel hosting: serve new/edited articles WITHOUT a redeploy.
-//  - dynamicParams: slugs added after build render on demand (instead of 404).
-//  - revalidate: existing pages refresh on a schedule; the admin save route also
-//    triggers on-demand revalidation (revalidatePath) so edits go live immediately.
 export const dynamicParams = true;
 export const revalidate = 3600;
 
-// generateStaticParams still pre-renders the articles that exist at build time (good for SEO);
-// the sentinel slug keeps it valid when none exist yet and renders notFound().
 const FALLBACK_SLUG = "_";
 
 type ArticlePageProps = { params: { slug: string } };
@@ -40,11 +34,9 @@ export async function generateStaticParams() {
   return slugs.map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({
-  params,
-}: ArticlePageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: ArticlePageProps) {
   const video = await getPlaybookVideoBySlugServer(params.slug);
-  if (!video) return { title: "Guide Not Found" };
+  if (!video?.article?.trim()) return { title: "Guide Not Found" };
 
   return buildPageMetadata({
     title: video.title,
@@ -60,9 +52,10 @@ export async function generateMetadata({
 
 export default async function PlaybookArticlePage({ params }: ArticlePageProps) {
   const video = await getPlaybookVideoBySlugServer(params.slug);
-  if (!video) notFound();
+  if (!video?.article?.trim()) notFound();
 
   const hasFaq = (video.faq?.length ?? 0) > 0;
+  const hasVideo = Boolean(video.videoUrl?.trim());
 
   return (
     <>
@@ -75,83 +68,64 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
           ]),
           articleSchema(video),
           ...(hasFaq ? [faqSchema(video.faq!)] : []),
-          ...(video.videoUrl && video.thumbnail
-            ? videoObjectsSchema([video])
-            : []),
+          ...(hasVideo && video.thumbnail ? videoObjectsSchema([video]) : []),
           speakableWebPageSchema({
             path: `/playbook/${video.slug}`,
             name: video.title,
-            cssSelectors: [".speakable-faq-answer"],
+            cssSelectors: [".playbook-article-body", ".speakable-faq-answer"],
           }),
         ]}
       />
       <Navbar />
       <main className="bg-white">
-        <article className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
-          {/* Breadcrumb */}
-          <nav className="mb-6 text-sm text-neutral-500">
-            <Link href="/playbook" className="hover:text-primary-600">
-              ← Back to Playbook
-            </Link>
-          </nav>
-
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">
-            {CATEGORY_LABELS[video.category]}
-          </p>
-          <h1 className="mt-2 font-display text-3xl font-bold leading-tight text-neutral-900 sm:text-4xl">
-            {video.title}
-          </h1>
-          {video.description && (
-            <p className="mt-3 whitespace-pre-line text-lg leading-relaxed text-neutral-600">
-              {video.description}
-            </p>
-          )}
-
-          {/* Video */}
-          {video.videoUrl && (
-            <div className="mt-8 aspect-video w-full overflow-hidden rounded-2xl bg-neutral-900">
-              {isDirectVideoFile(video.videoUrl) ? (
-                <video src={video.videoUrl} title={video.title} controls playsInline className="h-full w-full" />
-              ) : (
-                <iframe
-                  src={toEmbedUrl(video.videoUrl)}
-                  title={video.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="h-full w-full"
-                />
-              )}
+        <div className="border-b border-neutral-100 bg-neutral-50/40">
+          <div className="container-page py-10 sm:py-14">
+            <div className="mx-auto max-w-3xl">
+              <PlaybookArticleHeader video={video} />
+              <PlaybookArticleHeroMedia video={video} />
             </div>
-          )}
+          </div>
+        </div>
 
-          {/* Article */}
-          {video.article && (
-            <div className="mt-10">
-              <ArticleBody markdown={video.article} />
-            </div>
-          )}
+        <article className="container-page py-12 sm:py-16">
+          <div className="mx-auto max-w-[680px]">
+            <ArticleBody markdown={video.article!} />
 
-          {/* FAQ */}
-          {hasFaq && (
-            <section className="mt-12 border-t border-neutral-200 pt-10">
-              <h2 className="font-display text-2xl font-bold text-neutral-900">
-                Frequently asked questions
-              </h2>
-              <div className="mt-6 divide-y divide-neutral-200">
-                {video.faq!.map((item, i) => (
-                  <details key={i} className="group py-4">
-                    <summary className="cursor-pointer list-none text-base font-semibold text-neutral-900 marker:content-none">
-                      {item.q}
-                    </summary>
-                    <p className="speakable-faq-answer mt-3 leading-relaxed text-neutral-600">
-                      {item.a}
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </section>
-          )}
+            {hasFaq && (
+              <section className="mt-14 border-t border-neutral-200 pt-10">
+                <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
+                  Frequently asked questions
+                </h2>
+                <div className="mt-6 divide-y divide-neutral-200">
+                  {video.faq!.map((item, i) => (
+                    <details key={i} className="group py-5">
+                      <summary className="cursor-pointer list-none text-base font-semibold text-neutral-900 marker:content-none">
+                        {item.q}
+                      </summary>
+                      <p className="speakable-faq-answer mt-3 text-base leading-relaxed text-neutral-700">
+                        {item.a}
+                      </p>
+                    </details>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <footer className="mt-14 border-t border-neutral-200 pt-8">
+              <p className="text-sm font-medium text-neutral-500">
+                Written by{" "}
+                <span className="font-semibold text-neutral-800">HomeUP</span>
+                {" · "}
+                Singapore property guides for buyers, sellers, and upgraders.
+              </p>
+              <PlaybookReturnLink className="mt-4 inline-flex font-semibold text-primary-600 hover:text-primary-700">
+                ← Back to Playbook
+              </PlaybookReturnLink>
+            </footer>
+          </div>
         </article>
+
+        {hasVideo && <PlaybookStickyVideo video={video} />}
         <CtaBanner />
       </main>
       <Footer />

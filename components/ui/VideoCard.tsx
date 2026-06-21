@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { Play, Clock, Tag } from "lucide-react";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import { resolveThumbnail } from "@/lib/playbook/embed";
+import { savePlaybookReturn } from "@/lib/playbook/return-to";
 import { cn } from "@/lib/utils";
 
 interface VideoCardProps {
@@ -14,28 +16,12 @@ interface VideoCardProps {
 }
 
 export function VideoCard({ video, onPlay, onReadGuide, featured = false }: VideoCardProps) {
-  const hasVideo = Boolean(video.videoUrl);
+  const hasVideo = Boolean(video.videoUrl?.trim());
   const hasArticle = Boolean(video.article?.trim());
+  const href = hasArticle ? `/playbook/${video.slug}` : undefined;
 
-  return (
-    <article
-      className={cn(
-        "group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300",
-        hasVideo
-          ? "cursor-pointer hover:border-primary-600/40 hover:shadow-md"
-          : "cursor-default",
-        featured && "sm:flex-row"
-      )}
-      onClick={() => hasVideo && onPlay(video)}
-      role={hasVideo ? "button" : undefined}
-      tabIndex={hasVideo ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (hasVideo && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onPlay(video);
-        }
-      }}
-    >
+  const cardInner = (
+    <>
       {/* Thumbnail */}
       <div
         className={cn(
@@ -63,19 +49,21 @@ export function VideoCard({ video, onPlay, onReadGuide, featured = false }: Vide
               <Play className="h-5 w-5 translate-x-0.5 fill-primary-600 text-primary-600" />
             </div>
           </div>
-        ) : (
+        ) : hasArticle ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="rounded-full bg-neutral-950/60 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-              Coming Soon
+              Read guide
             </span>
           </div>
-        )}
+        ) : null}
 
         {/* Duration badge */}
+        {hasVideo && video.duration && (
         <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-md bg-neutral-950/70 px-2 py-0.5 backdrop-blur-sm">
           <Clock className="h-3 w-3 text-white/80" />
           <span className="text-xs font-medium text-white">{video.duration}</span>
         </div>
+        )}
 
         {/* Featured badge */}
         {video.featured && (
@@ -118,26 +106,52 @@ export function VideoCard({ video, onPlay, onReadGuide, featured = false }: Vide
             ))}
           </div>
           <div className="flex items-center gap-3">
-            {hasArticle && onReadGuide && (
+            {hasArticle && (
+              <span className="text-xs font-semibold text-primary-600 group-hover:underline">
+                Read guide →
+              </span>
+            )}
+            {hasVideo && href && (
               <button
                 type="button"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
-                  onReadGuide(video);
+                  onPlay(video);
                 }}
                 className="text-xs font-semibold text-neutral-500 hover:text-primary-600 hover:underline"
               >
-                Read the guide →
+                Watch video
               </button>
-            )}
-            {hasVideo && (
-              <span className="text-xs font-semibold text-primary-600 group-hover:underline">
-                Watch →
-              </span>
             )}
           </div>
         </div>
       </div>
+    </>
+  );
+
+  const className = cn(
+    "group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300",
+    href && "cursor-pointer hover:border-primary-600/40 hover:shadow-md",
+    featured && "sm:flex-row",
+  );
+
+  if (href) {
+    return (
+      <Link href={href} onClick={savePlaybookReturn} className={className}>
+        {cardInner}
+      </Link>
+    );
+  }
+
+  return (
+    <article
+      className={className}
+      onClick={() => hasVideo && onPlay(video)}
+      role={hasVideo ? "button" : undefined}
+      tabIndex={hasVideo ? 0 : undefined}
+    >
+      {cardInner}
     </article>
   );
 }

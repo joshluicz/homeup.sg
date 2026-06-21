@@ -56,8 +56,7 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
         if (error || !data) return;
-        // Show only real videos from the database — no static placeholder cards.
-        setVideos(data.map(rowToVideo));
+        setVideos(data.map(rowToVideo).filter((v) => v.article?.trim()));
       });
   }, []);
 

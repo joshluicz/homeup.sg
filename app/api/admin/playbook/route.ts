@@ -38,9 +38,9 @@ export async function POST(request: Request) {
 
   const article = (fields.article ?? "").trim();
   const videoUrl = (fields.videoUrl ?? "").trim();
-  if (!article && !videoUrl) {
+  if (!article) {
     return NextResponse.json(
-      { error: "Add an article, a video, or both." },
+      { error: "Article body is required. Every playbook entry must include a written guide." },
       { status: 400 },
     );
   }

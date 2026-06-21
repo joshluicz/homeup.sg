@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { PlaybookArticleLink } from "@/components/playbook/PlaybookArticleLink";
 import { ArrowRight, Clock, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -153,7 +153,7 @@ function ArticleCard({ video, isFirst }: { video: PlaybookVideo; isFirst?: boole
   const tag = CATEGORY_TAG[video.category] ?? CATEGORY_TAG.tips;
 
   return (
-    <Link
+    <PlaybookArticleLink
       href={`/playbook/${video.slug}`}
       className="group relative flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-primary-300 hover:shadow-lg"
     >
@@ -193,7 +193,7 @@ function ArticleCard({ video, isFirst }: { video: PlaybookVideo; isFirst?: boole
         Read guide
         <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
       </div>
-    </Link>
+    </PlaybookArticleLink>
   );
 }
 
@@ -258,13 +258,13 @@ function StageSection({
                   </p>
                 )}
                 {primaryVideo.slug && primaryVideo.article?.trim() && (
-                  <Link
+                  <PlaybookArticleLink
                     href={`/playbook/${primaryVideo.slug}`}
                     className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700"
                   >
                     Read the full guide
                     <span aria-hidden>→</span>
-                  </Link>
+                  </PlaybookArticleLink>
                 )}
               </div>
             )}
