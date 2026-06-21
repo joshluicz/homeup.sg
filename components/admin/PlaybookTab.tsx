@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link, Upload } from "lucide-react";
+import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link, Upload, FileText, Layers } from "lucide-react";
 import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
 import { videoThumbnail } from "@/lib/playbook/embed";
 import type { PlaybookTopic } from "@/lib/data/playbook";
@@ -10,8 +10,44 @@ import { createClient } from "@/lib/supabase/client";
 
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
 const CATEGORIES: VideoCategory[] = ["selling", "buying", "process", "market", "tips"];
-
 const TOPICS: PlaybookTopic[] = ["upgraders", "buying_first", "condo_tips"];
+
+type ContentType = "article" | "hybrid";
+
+const CONTENT_TYPES: { id: ContentType; label: string; description: string; Icon: typeof FileText }[] = [
+  {
+    id: "article",
+    label: "Article only",
+    description: "Written guide at /playbook/{slug} — no video required.",
+    Icon: FileText,
+  },
+  {
+    id: "hybrid",
+    label: "Article + video",
+    description: "Full guide with an embedded watch-along video.",
+    Icon: Layers,
+  },
+];
+
+function inferContentType(v: Pick<Video, "article" | "video_url">): ContentType {
+  return v.video_url?.trim() ? "hybrid" : "article";
+}
+
+function contentTypeLabel(v: Pick<Video, "article" | "video_url">): string {
+  const hasArticle = Boolean(v.article?.trim());
+  const hasVideo = Boolean(v.video_url?.trim());
+  if (hasArticle && hasVideo) return "Article + video";
+  if (hasArticle) return "Article";
+  if (hasVideo) return "Video";
+  return "Draft";
+}
+
+function contentTypeBadgeClass(label: string): string {
+  if (label === "Article + video") return "bg-violet-50 text-violet-700 ring-violet-200";
+  if (label === "Article") return "bg-blue-50 text-blue-700 ring-blue-200";
+  if (label === "Video") return "bg-amber-50 text-amber-700 ring-amber-200";
+  return "bg-neutral-100 text-neutral-500 ring-neutral-200";
+}
 
 type FaqEntry = { q: string; a: string };
 
@@ -90,7 +126,7 @@ function TableSkeleton() {
       </div>
       <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
         <div className="border-b border-neutral-100 bg-neutral-50 px-4 py-3 flex gap-6">
-          {["Video", "Category", "Duration", "Published"].map((h) => (
+          {["Title", "Type", "Category", "Published"].map((h) => (
             <div key={h} className="h-3 w-16 rounded bg-neutral-200" />
           ))}
         </div>
@@ -119,6 +155,7 @@ export function PlaybookTab() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [contentType, setContentType] = useState<ContentType>("article");
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [uploadTab, setUploadTab] = useState<"link" | "file">("link");
   const [uploading, setUploading] = useState(false);
@@ -153,6 +190,7 @@ export function PlaybookTab() {
   function openAdd() {
     setEditId(null);
     setForm(emptyForm);
+    setContentType("article");
     setFaq([]);
     setError(null);
     setUploadTab("link");
@@ -177,6 +215,7 @@ export function PlaybookTab() {
       meta_description: v.meta_description ?? "",
     });
     setFaq(v.faq ?? []);
+    setContentType(inferContentType(v));
     setError(null);
     setUploadTab(v.video_url?.startsWith("http") ? "link" : "file");
     setUploadProgress(null);
@@ -233,6 +272,25 @@ export function PlaybookTab() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.title.trim()) { setError("Title is required."); return; }
+
+    const hasArticle = Boolean(form.article.trim());
+    const hasVideo = Boolean(form.video_url.trim());
+
+    if (contentType === "article" && !hasArticle) {
+      setError("Article body is required for article-only guides.");
+      return;
+    }
+    if (contentType === "hybrid") {
+      if (!hasArticle) {
+        setError("Article body is required for article + video guides.");
+        return;
+      }
+      if (!hasVideo) {
+        setError("Add a video link or upload a file for article + video guides.");
+        return;
+      }
+    }
+
     setSaving(true);
     setError(null);
 
@@ -242,9 +300,9 @@ export function PlaybookTab() {
       description: form.description.trim(),
       category: form.category,
       topic: form.topic || null,
-      duration: form.duration.trim(),
+      duration: contentType === "hybrid" ? form.duration.trim() : "",
       thumbnail: form.thumbnail.trim(),
-      video_url: form.video_url.trim(),
+      video_url: contentType === "hybrid" ? form.video_url.trim() : "",
       featured: form.featured,
       published_at: form.published_at,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -301,13 +359,15 @@ export function PlaybookTab() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-neutral-900">Playbook Videos</h1>
-          <p className="mt-0.5 text-sm text-neutral-500">{videos.length} video{videos.length !== 1 ? "s" : ""}</p>
+          <h1 className="text-xl font-bold text-neutral-900">Playbook</h1>
+          <p className="mt-0.5 text-sm text-neutral-500">
+            {videos.length} item{videos.length !== 1 ? "s" : ""} · articles and videos
+          </p>
         </div>
         {!showForm && (
           <Button onClick={openAdd} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            Add video
+            Add guide
           </Button>
         )}
       </div>
@@ -317,7 +377,7 @@ export function PlaybookTab() {
         <div className="mb-8 rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-base font-semibold text-neutral-900">
-              {editId ? "Edit video" : "Add video"}
+              {editId ? "Edit guide" : "Add guide"}
             </h2>
             <button type="button" onClick={cancelForm} className="text-neutral-400 hover:text-neutral-600">
               <ChevronUp className="h-5 w-5" />
@@ -332,12 +392,36 @@ export function PlaybookTab() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* An item can have a video, an article, or both — fill whichever apply. */}
-            <p className="rounded-lg bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
-              Add a <span className="font-semibold text-neutral-700">video</span>, an{" "}
-              <span className="font-semibold text-neutral-700">article</span>, or{" "}
-              <span className="font-semibold text-neutral-700">both</span> — leave a section blank to skip it.
-            </p>
+            {/* Content type */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-neutral-900">Content type</label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {CONTENT_TYPES.map(({ id, label, description, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => {
+                      setContentType(id);
+                      if (id === "article") {
+                        setForm((f) => ({ ...f, video_url: "", duration: "" }));
+                        setUploadProgress(null);
+                      }
+                    }}
+                    className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
+                      contentType === id
+                        ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
+                        : "border-neutral-200 bg-white hover:border-neutral-300"
+                    }`}
+                  >
+                    <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${contentType === id ? "text-primary-600" : "text-neutral-400"}`} />
+                    <span>
+                      <span className="block text-sm font-semibold text-neutral-900">{label}</span>
+                      <span className="mt-0.5 block text-xs text-neutral-500">{description}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Title */}
             <div>
@@ -361,14 +445,175 @@ export function PlaybookTab() {
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
                 rows={3}
-                placeholder="Brief summary shown on the video card..."
+                placeholder="Short hook shown on playbook cards..."
                 className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
               />
             </div>
 
-            {/* Video source */}
+            {/* Category */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-neutral-900">Video <span className="font-normal text-neutral-400">(optional)</span></label>
+              <label className="mb-1 block text-sm font-medium text-neutral-900">Category</label>
+              <select
+                value={form.category}
+                onChange={(e) => set("category", e.target.value)}
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Journey topic */}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-neutral-900">Journey topic</label>
+              <p className="mb-2 text-xs text-neutral-400">Slot this into one of the three Playbook Journey stages shown on the public page.</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => set("topic", "")}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    !form.topic ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                  }`}
+                >
+                  No topic
+                </button>
+                {TOPICS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => set("topic", t)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      form.topic === t ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                    }`}
+                  >
+                    {TOPIC_LABELS[t]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tags + Published */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-900">Tags</label>
+                <input
+                  type="text"
+                  value={form.tags}
+                  onChange={(e) => set("tags", e.target.value)}
+                  placeholder="hdb, selling, tips (comma-separated)"
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-900">Publish Date</label>
+                <input
+                  type="date"
+                  value={form.published_at}
+                  onChange={(e) => set("published_at", e.target.value)}
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+            </div>
+
+            {/* Featured */}
+            <label className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => set("featured", e.target.checked)}
+                className="h-4 w-4 rounded border-neutral-300 accent-primary-600"
+              />
+              <span className="text-sm font-medium text-neutral-900">Featured <span className="font-normal text-neutral-400">(show as the main item in its topic)</span></span>
+            </label>
+
+            {/* Article & SEO */}
+            <div className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">
+                  Article &amp; SEO <span className="text-red-500">*</span>
+                </p>
+                <p className="text-xs text-neutral-400">
+                  Publishes a readable guide at /playbook/{"{slug}"} for search and AI discovery.
+                  {contentType === "hybrid" ? " Pair with the video section below." : ""}
+                </p>
+              </div>
+
+              {/* Meta description */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-900">Meta description</label>
+                <textarea
+                  value={form.meta_description}
+                  onChange={(e) => set("meta_description", e.target.value)}
+                  rows={2}
+                  maxLength={170}
+                  placeholder="~155-character summary shown in Google search results."
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+                <p className="mt-1 text-xs text-neutral-400">{form.meta_description.length}/155 recommended</p>
+              </div>
+
+              {/* Article (Markdown) */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral-900">
+                  Article (Markdown) <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={form.article}
+                  onChange={(e) => set("article", e.target.value)}
+                  rows={12}
+                  placeholder={"## Heading\n\nWrite the full guide here. Supports Markdown: ## headings, **bold**, - lists, [links](url)."}
+                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                />
+              </div>
+
+              {/* FAQ */}
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-sm font-medium text-neutral-900">FAQ</label>
+                  <button type="button" onClick={addFaqItem} className="text-xs font-semibold text-primary-600 hover:underline">
+                    + Add question
+                  </button>
+                </div>
+                {faq.length === 0 && (
+                  <p className="text-xs text-neutral-400">Add common questions to boost search and AI-answer reach.</p>
+                )}
+                <div className="space-y-3">
+                  {faq.map((item, i) => (
+                    <div key={i} className="rounded-lg border border-neutral-200 bg-white p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-semibold text-neutral-500">Question {i + 1}</span>
+                        <button type="button" onClick={() => removeFaqItem(i)} aria-label="Remove question" className="text-neutral-400 hover:text-red-500">
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={item.q}
+                        onChange={(e) => setFaqItem(i, "q", e.target.value)}
+                        placeholder="Question"
+                        className="mb-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                      />
+                      <textarea
+                        value={item.a}
+                        onChange={(e) => setFaqItem(i, "a", e.target.value)}
+                        rows={2}
+                        placeholder="Answer"
+                        className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Video — hybrid only */}
+            {contentType === "hybrid" && (
+              <>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-neutral-900">
+                Video <span className="text-red-500">*</span>
+              </label>
               <div className="flex rounded-lg border border-neutral-200 bg-neutral-50 p-1 w-fit gap-1 mb-3">
                 <button
                   type="button"
@@ -458,173 +703,22 @@ export function PlaybookTab() {
               )}
             </div>
 
-            {/* Category + Duration */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-900">Category</label>
-                <select
-                  value={form.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-900">Duration</label>
-                <input
-                  type="text"
-                  value={form.duration}
-                  onChange={(e) => set("duration", e.target.value)}
-                  placeholder="e.g. 4:32"
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-            </div>
-
-            {/* Journey topic */}
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-900">Journey topic</label>
-              <p className="mb-2 text-xs text-neutral-400">Slot this into one of the three Playbook Journey stages shown on the public page.</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => set("topic", "")}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                    !form.topic ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
-                  }`}
-                >
-                  No topic
-                </button>
-                {TOPICS.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => set("topic", t)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                      form.topic === t ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
-                    }`}
-                  >
-                    {TOPIC_LABELS[t]}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Tags + Published */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-900">Tags</label>
-                <input
-                  type="text"
-                  value={form.tags}
-                  onChange={(e) => set("tags", e.target.value)}
-                  placeholder="hdb, selling, tips (comma-separated)"
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-900">Publish Date</label>
-                <input
-                  type="date"
-                  value={form.published_at}
-                  onChange={(e) => set("published_at", e.target.value)}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-            </div>
-
-            {/* Featured */}
-            <label className="flex cursor-pointer items-center gap-3">
+              <label className="mb-1 block text-sm font-medium text-neutral-900">Duration</label>
               <input
-                type="checkbox"
-                checked={form.featured}
-                onChange={(e) => set("featured", e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 accent-primary-600"
+                type="text"
+                value={form.duration}
+                onChange={(e) => set("duration", e.target.value)}
+                placeholder="e.g. 4:32"
+                className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
               />
-              <span className="text-sm font-medium text-neutral-900">Featured <span className="font-normal text-neutral-400">(show as the main item in its topic)</span></span>
-            </label>
-
-            {/* Article & SEO */}
-            <div className="space-y-4 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
-              <div>
-                <p className="text-sm font-semibold text-neutral-900">Article &amp; SEO <span className="font-normal text-neutral-400">(optional)</span></p>
-                <p className="text-xs text-neutral-400">
-                  Publishes a readable guide at /playbook/{"{slug}"} so this item can be found in search and AI answers. Works alongside a video — fill both to show a watch-and-read entry.
-                </p>
-              </div>
-
-              {/* Meta description */}
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-900">Meta description</label>
-                <textarea
-                  value={form.meta_description}
-                  onChange={(e) => set("meta_description", e.target.value)}
-                  rows={2}
-                  maxLength={170}
-                  placeholder="~155-character summary shown in Google search results."
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                />
-                <p className="mt-1 text-xs text-neutral-400">{form.meta_description.length}/155 recommended</p>
-              </div>
-
-              {/* Article (Markdown) */}
-              <div>
-                <label className="mb-1 block text-sm font-medium text-neutral-900">Article (Markdown)</label>
-                <textarea
-                  value={form.article}
-                  onChange={(e) => set("article", e.target.value)}
-                  rows={12}
-                  placeholder={"## Heading\n\nWrite the full guide here. Supports Markdown: ## headings, **bold**, - lists, [links](url)."}
-                  className="w-full rounded-lg border border-neutral-200 px-3 py-2 font-mono text-xs leading-relaxed text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                />
-              </div>
-
-              {/* FAQ */}
-              <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <label className="block text-sm font-medium text-neutral-900">FAQ</label>
-                  <button type="button" onClick={addFaqItem} className="text-xs font-semibold text-primary-600 hover:underline">
-                    + Add question
-                  </button>
-                </div>
-                {faq.length === 0 && (
-                  <p className="text-xs text-neutral-400">Add common questions to boost search and AI-answer reach.</p>
-                )}
-                <div className="space-y-3">
-                  {faq.map((item, i) => (
-                    <div key={i} className="rounded-lg border border-neutral-200 bg-white p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-neutral-500">Question {i + 1}</span>
-                        <button type="button" onClick={() => removeFaqItem(i)} aria-label="Remove question" className="text-neutral-400 hover:text-red-500">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={item.q}
-                        onChange={(e) => setFaqItem(i, "q", e.target.value)}
-                        placeholder="Question"
-                        className="mb-2 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                      />
-                      <textarea
-                        value={item.a}
-                        onChange={(e) => setFaqItem(i, "a", e.target.value)}
-                        rows={2}
-                        placeholder="Answer"
-                        className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
+              </>
+            )}
 
             <div className="flex items-center gap-3 pt-1">
               <Button type="submit" disabled={saving || uploading} className="min-w-[100px]">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editId ? "Save changes" : "Add video"}
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editId ? "Save changes" : "Add guide"}
               </Button>
               <Button type="button" variant="outline" onClick={cancelForm}>Cancel</Button>
             </div>
@@ -632,12 +726,12 @@ export function PlaybookTab() {
         </div>
       )}
 
-      {/* Video list */}
+      {/* Guide list */}
       {videos.length === 0 ? (
         <div className="rounded-xl border border-dashed border-neutral-200 py-20 text-center">
-          <p className="text-sm text-neutral-500">No videos yet.</p>
+          <p className="text-sm text-neutral-500">No guides yet.</p>
           {!showForm && (
-            <Button onClick={openAdd} className="mt-4">Add your first video</Button>
+            <Button onClick={openAdd} className="mt-4">Add your first guide</Button>
           )}
         </div>
       ) : (
@@ -645,40 +739,52 @@ export function PlaybookTab() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 bg-neutral-50 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                <th className="px-4 py-3">Video</th>
+                <th className="px-4 py-3">Title</th>
+                <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Category</th>
-                <th className="px-4 py-3">Duration</th>
                 <th className="px-4 py-3">Published</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {videos.map((v) => (
+              {videos.map((v) => {
+                const typeLabel = contentTypeLabel(v);
+                return (
                 <tr key={v.id} className="hover:bg-neutral-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {v.thumbnail ? (
                         <img src={v.thumbnail} alt="" className="h-10 w-16 shrink-0 rounded-lg object-cover" />
                       ) : (
-                        <div className="h-10 w-16 shrink-0 rounded-lg bg-neutral-100" />
+                        <div className="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-neutral-100">
+                          <FileText className="h-4 w-4 text-neutral-400" />
+                        </div>
                       )}
                       <div className="min-w-0">
                         <p className="flex items-center gap-1.5 font-medium text-neutral-900 truncate max-w-xs">
                           {v.featured && <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />}
                           {v.title}
                         </p>
-                        {v.video_url ? (
+                        {v.slug && v.article?.trim() ? (
+                          <a href={`/playbook/${v.slug}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:underline">
+                            View article ↗
+                          </a>
+                        ) : v.video_url ? (
                           <a href={v.video_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary-600 hover:underline">
                             View video ↗
                           </a>
                         ) : (
-                          <span className="text-xs text-neutral-400">No video yet</span>
+                          <span className="text-xs text-neutral-400">Incomplete draft</span>
                         )}
                       </div>
                     </div>
                   </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ${contentTypeBadgeClass(typeLabel)}`}>
+                      {typeLabel}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-neutral-600">{CATEGORY_LABELS[v.category]}</td>
-                  <td className="px-4 py-3 text-neutral-600">{v.duration || "—"}</td>
                   <td className="px-4 py-3 text-neutral-600">{v.published_at}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
@@ -697,7 +803,7 @@ export function PlaybookTab() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>

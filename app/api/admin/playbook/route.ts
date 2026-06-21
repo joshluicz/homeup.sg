@@ -36,6 +36,15 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { id, ...fields } = body;
 
+  const article = (fields.article ?? "").trim();
+  const videoUrl = (fields.videoUrl ?? "").trim();
+  if (!article && !videoUrl) {
+    return NextResponse.json(
+      { error: "Add an article, a video, or both." },
+      { status: 400 },
+    );
+  }
+
   const payload = {
     slug: fields.slug || slugify(fields.title),
     title: fields.title,

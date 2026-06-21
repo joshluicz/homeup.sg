@@ -36,3 +36,4 @@ Thumbs.db
 .pg-profile/
 .pg-profile-test/
 .vercel
+.gstack/

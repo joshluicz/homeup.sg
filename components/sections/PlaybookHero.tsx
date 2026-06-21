@@ -3,26 +3,52 @@
 import { useEffect, useState } from "react";
 import { BookOpen, Video, RefreshCcw } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { TOPIC_LABELS } from "@/lib/data/playbook";
+import type { PlaybookTopic } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
 
+type HeroStats = {
+  videoCount: number;
+  topicCount: number;
+};
+
 export function PlaybookHero() {
-  // Live count of real published videos — updates automatically as videos are added.
-  const [videoCount, setVideoCount] = useState<number | null>(null);
+  const [stats, setStats] = useState<HeroStats | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
     supabase
       .from("playbook_videos")
-      .select("id", { count: "exact", head: true })
-      .not("video_url", "is", null)
-      .neq("video_url", "")
-      .then(({ count }) => setVideoCount(count ?? 0));
+      .select("video_url, article, topic")
+      .then(({ data }) => {
+        if (!data) return;
+
+        let videoCount = 0;
+        const topics = new Set<PlaybookTopic>();
+
+        for (const row of data) {
+          const hasVideo = Boolean(row.video_url?.trim());
+          const hasArticle = Boolean(row.article?.trim());
+          if (hasVideo) videoCount++;
+          if (row.topic && (hasVideo || hasArticle)) {
+            topics.add(row.topic as PlaybookTopic);
+          }
+        }
+
+        setStats({ videoCount, topicCount: topics.size });
+      });
   }, []);
 
-  const stats = [
-    { icon: Video, value: videoCount === null ? "—" : `${videoCount}`, label: "Video Guides" },
-    { icon: BookOpen, value: `${Object.keys(TOPIC_LABELS).length}`, label: "Topics Covered" },
+  const statsBar = [
+    {
+      icon: Video,
+      value: stats === null ? "—" : `${stats.videoCount}`,
+      label: "Video Guides",
+    },
+    {
+      icon: BookOpen,
+      value: stats === null ? "—" : `${stats.topicCount}`,
+      label: "Topics Covered",
+    },
     { icon: RefreshCcw, value: "Monthly", label: "New Content" },
   ];
 
@@ -44,14 +70,14 @@ export function PlaybookHero() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
-            A curated library of video guides covering every stage of buying and
+            A curated library of guides covering every stage of buying and
             selling in Singapore.
           </p>
         </div>
 
         {/* Stats bar */}
         <div className="mx-auto mt-12 grid max-w-xl grid-cols-3 gap-4">
-          {stats.map(({ icon: Icon, value, label }) => (
+          {statsBar.map(({ icon: Icon, value, label }) => (
             <div
               key={label}
               className="flex flex-col items-center gap-1.5 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"

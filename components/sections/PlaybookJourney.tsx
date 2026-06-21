@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Clock, Play, X } from "lucide-react";
+import { ArrowRight, Clock, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toEmbedUrl, resolveThumbnail, isDirectVideoFile } from "@/lib/playbook/embed";
@@ -35,21 +35,21 @@ const STAGES: StageConfig[] = [
     step: 1,
     topic: "upgraders",
     description:
-      "For homeowners weighing up whether upgrading makes financial and lifestyle sense right now.",
+      "Worried about ABSD, timing both transactions, or whether upgrading actually makes financial sense right now? These guides answer the questions most agents won't.",
   },
   {
     id: "stage-2",
     step: 2,
     topic: "buying_first",
     description:
-      "For homeowners who've decided to upgrade and want to understand the process, costs, and timing.",
+      "From loan eligibility and down payment maths to negotiation tactics and showroom traps — everything you need before you sign anything.",
   },
   {
     id: "stage-3",
     step: 3,
     topic: "condo_tips",
     description:
-      "For homeowners ready to list and buy — here's what happens step by step.",
+      "Market myths, investment strategies that backfire, and how to spot a genuinely undervalued unit. Straight talk from Dennis.",
   },
 ];
 
@@ -133,38 +133,66 @@ function VideoThumbnail({
   );
 }
 
+// ── Category tag colours ──────────────────────────────────────────────────────
+const CATEGORY_TAG: Record<string, { label: string; className: string }> = {
+  selling: { label: "Upgrading",   className: "bg-amber-50 text-amber-700 ring-amber-200" },
+  buying:  { label: "Buying",      className: "bg-blue-50 text-blue-700 ring-blue-200" },
+  market:  { label: "Commentary",  className: "bg-violet-50 text-violet-700 ring-violet-200" },
+  process: { label: "Process",     className: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  tips:    { label: "Tips",        className: "bg-rose-50 text-rose-700 ring-rose-200" },
+};
+
 // ── Article Card ──────────────────────────────────────────────────────────────
-function ArticleCard({ video }: { video: PlaybookVideo }) {
-  const readTime = video.article
-    ? `${Math.max(1, Math.round(video.article.split(/\s+/).length / 200))} min read`
+function ArticleCard({ video, isFirst }: { video: PlaybookVideo; isFirst?: boolean }) {
+  const wordCount = video.article?.split(/\s+/).length ?? 0;
+  const readTime = wordCount > 0
+    ? `${Math.max(1, Math.round(wordCount / 200))} min read`
     : "Quick read";
+
+  const teaser = video.description?.trim() || "";
+  const tag = CATEGORY_TAG[video.category] ?? CATEGORY_TAG.tips;
 
   return (
     <Link
       href={`/playbook/${video.slug}`}
-      className="group flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-primary-200 hover:shadow-md"
+      className="group relative flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-primary-300 hover:shadow-lg"
     >
-      <div className="mb-3 flex items-center gap-1.5">
-        {video.videoUrl ? (
-          <>
-            <Play className="h-3 w-3 fill-primary-600 text-primary-600" />
-            <span className="text-[11px] font-semibold text-primary-600">Watch + {readTime}</span>
-          </>
-        ) : (
-          <>
-            <Clock className="h-3 w-3 text-primary-600" />
-            <span className="text-[11px] font-semibold text-primary-600">{readTime}</span>
-          </>
-        )}
+      {/* Start here badge */}
+      {isFirst && (
+        <span className="absolute right-4 top-4 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
+          Start here
+        </span>
+      )}
+
+      {/* Category tag + read time */}
+      <div className="mb-3 flex items-center gap-2">
+        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", tag.className)}>
+          {tag.label}
+        </span>
+        <span className="flex items-center gap-1 text-[11px] text-neutral-400">
+          {video.videoUrl
+            ? <><Play className="h-2.5 w-2.5 fill-neutral-400" />Watch + {readTime}</>
+            : <><Clock className="h-2.5 w-2.5" />{readTime}</>}
+        </span>
       </div>
+
+      {/* Title */}
       <p className="font-display text-sm font-bold leading-snug text-neutral-900 group-hover:text-primary-700 sm:text-base">
         {video.title}
       </p>
-      {video.description && (
-        <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-neutral-400">
-          {video.description}
+
+      {/* Teaser — Dennis's hook */}
+      {teaser && (
+        <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-neutral-500">
+          {teaser}
         </p>
       )}
+
+      {/* Read arrow */}
+      <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-primary-600 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+        Read guide
+        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+      </div>
     </Link>
   );
 }
@@ -245,11 +273,16 @@ function StageSection({
 
         {/* Article card grid */}
         {articleCards.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {articleCards.map((video) => (
-              <ArticleCard key={video.id} video={video} />
-            ))}
-          </div>
+          <>
+            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-400">
+              {articleCards.length} guide{articleCards.length !== 1 ? "s" : ""}
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {articleCards.map((video, i) => (
+                <ArticleCard key={video.id} video={video} isFirst={i === 0} />
+              ))}
+            </div>
+          </>
         )}
 
         {!primaryVideo && articleCards.length === 0 && (
@@ -261,7 +294,13 @@ function StageSection({
 }
 
 // ── Stage Navigator ───────────────────────────────────────────────────────────
-function StageNavigator({ activeStage }: { activeStage: string }) {
+function StageNavigator({
+  activeStage,
+  articlesByTopic,
+}: {
+  activeStage: string;
+  articlesByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
+}) {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -300,7 +339,17 @@ function StageNavigator({ activeStage }: { activeStage: string }) {
                 >
                   {stage.step}
                 </span>
-                <span className="leading-tight">{TOPIC_LABELS[stage.topic]}</span>
+                <span className="leading-tight">
+                  {TOPIC_LABELS[stage.topic]}
+                  {articlesByTopic[stage.topic].length > 0 && (
+                    <span className={cn(
+                      "ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                      isActive ? "bg-primary-100 text-primary-700" : "bg-neutral-100 text-neutral-500 group-hover:bg-white/20 group-hover:text-white"
+                    )}>
+                      {articlesByTopic[stage.topic].length}
+                    </span>
+                  )}
+                </span>
               </button>
             );
           })}
@@ -415,7 +464,7 @@ export function PlaybookJourney() {
 
   return (
     <>
-      <StageNavigator activeStage={activeStage} />
+      <StageNavigator activeStage={activeStage} articlesByTopic={articlesByTopic} />
 
       <div className="bg-white">
         {STAGES.map((stage) => (
