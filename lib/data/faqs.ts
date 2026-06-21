@@ -86,11 +86,11 @@ export const SELL_FAQ_GENERAL: FaqItem[] = [
   },
   {
     q: "What if I cannot find my next home before my sale completes?",
-    a: "This comes up often. We plan for it early: realistic buying timelines alongside your sale, and sometimes a longer completion date with the buyer. We will not push you to accept an offer before your next move is sorted.",
+    a: "This comes up often. We plan for it early: realistic buying timelines alongside your sale. We will not push you to accept an offer before your next move is sorted.",
   },
   {
     q: "How long does selling typically take after I accept an offer?",
-    a: "HDB resales often take 16 to 20 weeks from accepted offer to completion because of HDB Portal steps. Condos often take 20 to 24 weeks. Landed can take 24 to 32 weeks because the buyer pool is smaller and legal checks take longer. Time on market before an offer depends on price and demand.",
+    a: "Typically, HDB resale will take 3 to 4 months, while private resales (condo and landed) will take 3 months.",
   },
 ];
 

@@ -203,12 +203,11 @@ export const AGENTS: Agent[] = [
     slug: "olivia-neo",
     name: "Olivia Neo",
     cea: "R072836A",
-    bio: "Friendly, approachable guidance for HDB and private property sales and purchases, with honest advice from start to finish.",
+    bio: "Law diploma graduate offering friendly, approachable guidance for HDB and private property sales and purchases.",
     photo: "/images/agent-olivia.png",
     quote:
-      "With a friendly and approachable nature, and experience in both HDB and private property sales and purchases, Olivia is committed to guiding buyers and sellers through every stage of their property journey. She believes in honest advice, prompt communication, and dedicated support to ensure a smooth experience from start to finish.",
+      "With a friendly and approachable nature, and experience in both HDB and private property sales and purchases, Olivia is a law diploma graduate committed to guiding her clients through every stage of their property journey. She believes in honest advice, prompt communication, and dedicated support to ensure a smooth experience from start to finish.",
     quoteThirdPerson: true,
-    accolades: ["TP Law Diploma"],
     about: [],
     specialties: ["Documentation", "Buyer support", "Transaction coordination"],
     social: {
