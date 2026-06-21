@@ -64,7 +64,7 @@ export function LaurelFrame({
   return (
     <div className="mx-auto flex w-fit max-w-full min-w-0 items-center justify-center">
       <LaurelSide uid={uid} fluid={fluid} />
-      <div className="flex max-w-[9rem] shrink-0 flex-col items-center px-0.5 text-center sm:max-w-[10rem] sm:px-1">
+      <div className="flex w-[clamp(3.75rem,20vw,7.25rem)] shrink-0 flex-col items-center px-0.5 text-center sm:px-1">
         {children}
       </div>
       <LaurelSide uid={uid} flip fluid={fluid} />

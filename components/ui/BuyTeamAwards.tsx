@@ -25,10 +25,10 @@ export const BUY_TEAM_AWARDS: TeamAward[] = [
 function LaurelAwardBadge({ award, fluid }: { award: TeamAward; fluid?: boolean }) {
   return (
     <LaurelFrame fluid={fluid}>
-      <p className="font-bold leading-tight text-white text-[clamp(0.625rem,2.6vw,1rem)]">
+      <p className="w-full break-words font-bold leading-tight text-white text-[clamp(0.625rem,2.6vw,1rem)]">
         {award.source}
       </p>
-      <p className="mt-0.5 font-normal leading-snug text-white/85 text-[clamp(0.5625rem,2.1vw,0.875rem)] sm:mt-1">
+      <p className="mt-0.5 w-full break-words font-normal leading-snug text-white/85 text-[clamp(0.5625rem,2.1vw,0.875rem)] sm:mt-1">
         {award.title}
       </p>
     </LaurelFrame>
@@ -55,7 +55,7 @@ export function BuyTeamAwards({
           .join(" ")}
         aria-label="HOMEUP buying team awards and credentials"
       >
-        <div className="grid w-full grid-cols-1 items-stretch gap-y-[clamp(0.75rem,3vw,1.25rem)] px-[clamp(0.375rem,2vw,1.5rem)] sm:grid-cols-3 sm:gap-x-[clamp(0.25rem,1.5vw,1rem)]">
+        <div className="grid w-full grid-cols-3 items-center gap-x-[clamp(0.125rem,1.5vw,1rem)] px-[clamp(0.375rem,2vw,1.5rem)]">
           {BUY_TEAM_AWARDS.map((award) => (
             <div key={`${award.source}-${award.title}`} className="flex min-w-0 justify-center">
               <LaurelAwardBadge award={award} fluid />
@@ -77,10 +77,10 @@ export function BuyTeamAwards({
         .join(" ")}
       aria-label="HOMEUP buying team awards and credentials"
     >
-      <div className="grid grid-cols-1 gap-y-5 sm:grid-cols-3 sm:gap-x-4 lg:gap-x-6">
+      <div className="grid grid-cols-3 gap-x-[clamp(0.25rem,2vw,1.5rem)]">
         {BUY_TEAM_AWARDS.map((award) => (
           <div key={`${award.source}-${award.title}`} className="flex min-w-0 justify-center">
-            <LaurelAwardBadge award={award} />
+            <LaurelAwardBadge award={award} fluid />
           </div>
         ))}
       </div>
