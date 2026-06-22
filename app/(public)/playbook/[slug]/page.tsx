@@ -78,22 +78,18 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
       />
       <Navbar />
       <main className="bg-white">
-        <div className="border-b border-neutral-100 bg-neutral-50/40">
-          <div className="container-page py-10 sm:py-14">
-            <div className="mx-auto max-w-3xl">
-              <PlaybookArticleHeader video={video} />
-              <PlaybookArticleHeroMedia video={video} />
-            </div>
-          </div>
-        </div>
-
-        <article className="container-page py-12 sm:py-16">
+        <article className="container-page py-8 sm:py-12">
           <div className="mx-auto max-w-[680px]">
-            <ArticleBody markdown={video.article!} />
+            <PlaybookArticleHeader video={video} />
+            <PlaybookArticleHeroMedia video={video} />
+
+            <div className="mt-10 sm:mt-12">
+              <ArticleBody markdown={video.article!} />
+            </div>
 
             {hasFaq && (
               <section className="mt-14 border-t border-neutral-200 pt-10">
-                <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
+                <h2 className="font-display text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">
                   Frequently asked questions
                 </h2>
                 <div className="mt-6 divide-y divide-neutral-200">

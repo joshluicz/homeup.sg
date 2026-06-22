@@ -1,3 +1,4 @@
+import { PlaybookArticleFigure } from "@/components/sections/PlaybookArticleFigure";
 import { isDirectVideoFile, resolveThumbnail, toEmbedUrl } from "@/lib/playbook/embed";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 
@@ -8,7 +9,7 @@ export function PlaybookArticleHeroMedia({ video }: { video: PlaybookVideo }) {
   if (hasVideo) {
     return (
       <figure id="playbook-article-hero-media" className="mt-8">
-        <div className="aspect-[16/9] w-full overflow-hidden bg-neutral-950">
+        <div className="aspect-[16/10] w-full overflow-hidden bg-neutral-950">
           {isDirectVideoFile(video.videoUrl) ? (
             <video
               src={video.videoUrl}
@@ -28,8 +29,8 @@ export function PlaybookArticleHeroMedia({ video }: { video: PlaybookVideo }) {
             />
           )}
         </div>
-        <figcaption className="mt-3 text-sm font-normal leading-relaxed text-neutral-500">
-          Watch along with the full guide below.
+        <figcaption className="mt-2 text-left text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-500">
+          HOMEUP VIDEO · Watch along with the full guide below
         </figcaption>
       </figure>
     );
@@ -37,15 +38,12 @@ export function PlaybookArticleHeroMedia({ video }: { video: PlaybookVideo }) {
 
   if (cover) {
     return (
-      <figure id="playbook-article-hero-media" className="mt-8">
-        <div className="aspect-[16/9] w-full overflow-hidden bg-neutral-100">
-          <img
-            src={cover}
-            alt=""
-            className="h-full w-full object-cover"
-          />
-        </div>
-      </figure>
+      <PlaybookArticleFigure
+        src={cover}
+        alt={video.title}
+        variant="lead"
+        className="mt-8"
+      />
     );
   }
 

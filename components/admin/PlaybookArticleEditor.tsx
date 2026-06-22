@@ -103,10 +103,15 @@ export function PlaybookArticleEditor({
         <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
           Add photos
         </p>
+        <p className="mt-1 text-xs leading-relaxed text-neutral-500">
+          Photos appear on the live article full-width with a caption underneath, like{" "}
+          <span className="font-medium text-neutral-600">HOMEUP PHOTO: your caption</span> on Straits Times stories.
+        </p>
+
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-neutral-600">
           <li>Click in the article text where you want the photo.</li>
-          <li>Click <strong>Choose photo</strong> (or drag a file into the box below).</li>
-          <li>Click <strong>Save changes</strong> at the bottom of the page.</li>
+          <li>Add a short caption (e.g. <em>Diagram of the hybrid upgrade timeline</em>).</li>
+          <li>Click <strong>Choose photo</strong>, then <strong>Save changes</strong>.</li>
         </ol>
 
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -114,7 +119,7 @@ export function PlaybookArticleEditor({
             type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Caption under the photo (optional)"
+            placeholder="e.g. Diagram of the hybrid upgrade timeline"
             className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 sm:flex-1"
           />
           <button
