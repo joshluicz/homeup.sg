@@ -14,10 +14,6 @@ const SUPABASE_OBJECT_PATH =
 const SUPABASE_RENDER_PATH =
   /^https:\/\/([^.]+)\.supabase\.co\/storage\/v1\/render\/image\/public\/(.+?)(?:\?.*)?$/i;
 
-function transformsEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORMS !== "false";
-}
-
 function isUnsplashUrl(url: string): boolean {
   return url.includes("images.unsplash.com");
 }
@@ -34,25 +30,14 @@ function unsplashWithSize(url: string, width: number): string {
   }
 }
 
-/** Rewrite a Supabase public object URL to the render/transform endpoint. */
-function supabaseRenderUrl(
-  origin: string,
-  path: string,
-  variant: ListingImageVariant,
-): string {
-  const { width, height } = VARIANT_DIMENSIONS[variant];
-  const params = new URLSearchParams({
-    width: String(width),
-    height: String(height),
-    resize: "cover",
-    quality: "80",
-  });
-  return `https://${origin}.supabase.co/storage/v1/render/image/public/${path}?${params}`;
+/** Use the direct public object URL — Next.js Image handles resizing on Vercel. */
+function supabaseObjectUrl(origin: string, path: string): string {
+  return `https://${origin}.supabase.co/storage/v1/object/public/${path}`;
 }
 
 /**
  * Returns a display-appropriate image URL.
- * Supabase storage URLs are resized via the render endpoint when transforms are enabled.
+ * Supabase storage URLs are served directly; resizing is done by next/image (not Supabase transforms).
  */
 export function getListingImageSrc(
   url: string,
@@ -64,16 +49,14 @@ export function getListingImageSrc(
     return unsplashWithSize(url, VARIANT_DIMENSIONS[variant].width);
   }
 
-  if (!transformsEnabled()) return url;
-
   const objectMatch = url.match(SUPABASE_OBJECT_PATH);
   if (objectMatch) {
-    return supabaseRenderUrl(objectMatch[1], objectMatch[2], variant);
+    return supabaseObjectUrl(objectMatch[1], objectMatch[2]);
   }
 
   const renderMatch = url.match(SUPABASE_RENDER_PATH);
   if (renderMatch) {
-    return supabaseRenderUrl(renderMatch[1], renderMatch[2], variant);
+    return supabaseObjectUrl(renderMatch[1], renderMatch[2]);
   }
 
   return url;
