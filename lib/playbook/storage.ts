@@ -35,5 +35,5 @@ export async function uploadPlaybookArticleImage(file: File): Promise<string> {
   const supabase = createClient();
   const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
   const buffer = Buffer.from(await file.arrayBuffer());
-  return uploadPlaybookArticleImageFromBuffer(supabase, buffer, ext);
+  return uploadPlaybookArticleImageFromBuffer(supabase, buffer, ext === "jpeg" ? "jpg" : ext);
 }
