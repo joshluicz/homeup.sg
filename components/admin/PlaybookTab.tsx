@@ -8,6 +8,7 @@ import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link as LinkIcon, Up
 import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
 import { videoThumbnail } from "@/lib/playbook/embed";
 import type { PlaybookTopic } from "@/lib/data/playbook";
+import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -683,12 +684,10 @@ export function PlaybookTab() {
 
               <div>
                 <FieldLabel required>Article (Markdown)</FieldLabel>
-                <textarea
+                <PlaybookArticleEditor
                   value={form.article}
-                  onChange={(e) => set("article", e.target.value)}
-                  rows={14}
-                  placeholder={"## Heading\n\nWrite the full guide here. Supports Markdown: ## headings, **bold**, - lists, [links](url)."}
-                  className={cn(inputClass, "font-mono text-xs leading-relaxed")}
+                  onChange={(article) => set("article", article)}
+                  textareaClassName={cn(inputClass, "font-mono text-xs leading-relaxed")}
                 />
               </div>
 

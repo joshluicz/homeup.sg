@@ -72,6 +72,27 @@ const markdownComponents: Components = {
       {children}
     </td>
   ),
+  img: ({ src, alt }) => {
+    if (!src) return null;
+    const caption = alt?.trim();
+    const showCaption = caption && caption !== "Article illustration";
+    return (
+      <figure className="my-8">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={caption || ""}
+          className="w-full rounded-xl border border-neutral-200 bg-neutral-50 shadow-sm"
+          loading="lazy"
+        />
+        {showCaption && (
+          <figcaption className="mt-2 text-center text-sm leading-relaxed text-neutral-500">
+            {caption}
+          </figcaption>
+        )}
+      </figure>
+    );
+  },
 };
 
 /**
