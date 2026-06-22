@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
@@ -190,7 +189,6 @@ function TableSkeleton() {
 }
 
 export function PlaybookTab() {
-  const router = useRouter();
   const supabase = createClient();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -419,15 +417,6 @@ export function PlaybookTab() {
     await revalidatePlaybook();
     setDeleting(null);
     await loadVideos();
-  }
-
-  function openArticle(v: Video) {
-    const slug = v.slug?.trim();
-    if (slug) {
-      router.push(`/playbook/${slug}`);
-      return;
-    }
-    openEdit(v);
   }
 
   if (loading) return <TableSkeleton />;
@@ -877,27 +866,21 @@ export function PlaybookTab() {
           {filteredVideos.map((v) => {
             const typeLabel = contentTypeLabel(v);
             const slug = v.slug?.trim();
-            const canOpenArticle = Boolean(slug);
+            const previewHref = slug ? `/playbook/${slug}` : null;
 
             return (
               <article
                 key={v.id}
-                role={canOpenArticle ? "button" : undefined}
-                tabIndex={canOpenArticle ? 0 : undefined}
-                onClick={() => canOpenArticle && openArticle(v)}
+                role="button"
+                tabIndex={0}
+                onClick={() => openEdit(v)}
                 onKeyDown={(e) => {
-                  if (!canOpenArticle) return;
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    openArticle(v);
+                    openEdit(v);
                   }
                 }}
-                className={cn(
-                  "group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow touch-manipulation",
-                  canOpenArticle
-                    ? "cursor-pointer hover:border-primary-200 hover:shadow-md"
-                    : "",
-                )}
+                className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow touch-manipulation hover:border-primary-200 hover:shadow-md"
               >
                 <div className="relative aspect-[16/9] bg-neutral-100">
                   {v.thumbnail ? (
@@ -940,11 +923,9 @@ export function PlaybookTab() {
                     </p>
                   )}
 
-                  {canOpenArticle && (
-                    <p className="mt-3 text-xs font-semibold text-primary-600">
-                      Tap to open article →
-                    </p>
-                  )}
+                  <p className="mt-3 text-xs font-semibold text-primary-600">
+                    Tap to edit →
+                  </p>
                 </div>
 
                 <div
@@ -954,9 +935,9 @@ export function PlaybookTab() {
                 >
                   <p className="text-xs font-medium text-neutral-400">{v.published_at}</p>
                   <div className="flex items-center gap-1.5">
-                    {canOpenArticle && (
-                      <Button variant="outline" size="sm" asChild title="View live article">
-                        <Link href={`/playbook/${slug}`} target="_blank" rel="noopener noreferrer">
+                    {previewHref && (
+                      <Button variant="outline" size="sm" asChild title="Preview on live site (opens new tab)">
+                        <Link href={previewHref} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="h-3.5 w-3.5" />
                         </Link>
                       </Button>
