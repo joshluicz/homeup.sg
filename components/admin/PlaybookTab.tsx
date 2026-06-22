@@ -402,10 +402,31 @@ export function PlaybookTab() {
   async function handleDelete(v: Video) {
     if (!confirm(`Delete "${v.title}"? This cannot be undone.`)) return;
     setDeleting(v.id);
-    await supabase.from("playbook_videos").delete().eq("id", v.id);
-    await revalidatePlaybook();
-    setDeleting(null);
-    await loadVideos();
+    setError(null);
+
+    try {
+      const response = await fetch("/api/admin/playbook", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: v.id }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || "Could not delete this guide.");
+      }
+
+      if (editId === v.id) {
+        setShowForm(false);
+        setEditId(null);
+      }
+
+      await revalidatePlaybook();
+      await loadVideos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete this guide.");
+    } finally {
+      setDeleting(null);
+    }
   }
 
   if (loading) return <TableSkeleton />;
@@ -443,6 +464,21 @@ export function PlaybookTab() {
               <p className="mt-1 font-display text-2xl font-bold text-neutral-900">{value}</p>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* List errors (form shows its own inline error) */}
+      {error && !showForm && (
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <X className="h-4 w-4 shrink-0" />
+          {error}
+          <button
+            type="button"
+            onClick={() => setError(null)}
+            className="ml-auto text-xs font-semibold text-red-600 hover:underline"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -858,68 +894,68 @@ export function PlaybookTab() {
             return (
               <article
                 key={v.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => openEdit(v)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openEdit(v);
-                  }
-                }}
-                className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow touch-manipulation hover:border-primary-200 hover:shadow-md"
+                className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:border-primary-200 hover:shadow-md"
               >
-                <div className="relative aspect-[16/9] bg-neutral-100">
-                  {v.thumbnail ? (
-                    <img src={v.thumbnail} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" />
-                  ) : (
-                    <div className="flex h-full items-center justify-center">
-                      <FileText className="h-8 w-8 text-neutral-300" />
-                    </div>
-                  )}
-                  {v.featured && (
-                    <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-950">
-                      <Star className="h-3 w-3 fill-current" />
-                      Featured
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex flex-1 flex-col p-4">
-                  <div className="mb-3 flex flex-wrap gap-1.5">
-                    <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", contentTypeBadgeClass(typeLabel))}>
-                      {typeLabel}
-                    </span>
-                    <span className="inline-flex rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-neutral-600">
-                      {CATEGORY_LABELS[v.category]}
-                    </span>
-                    {v.topic && (
-                      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", TOPIC_BADGE[v.topic])}>
-                        {TOPIC_LABELS[v.topic]}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openEdit(v)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openEdit(v);
+                    }
+                  }}
+                  className="flex cursor-pointer flex-1 flex-col touch-manipulation"
+                >
+                  <div className="relative aspect-[16/9] bg-neutral-100">
+                    {v.thumbnail ? (
+                      <img src={v.thumbnail} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <FileText className="h-8 w-8 text-neutral-300" />
+                      </div>
+                    )}
+                    {v.featured && (
+                      <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-950">
+                        <Star className="h-3 w-3 fill-current" />
+                        Featured
                       </span>
                     )}
                   </div>
 
-                  <h3 className="font-display text-base font-bold leading-snug text-neutral-900 line-clamp-2 group-hover:text-primary-700">
-                    {v.title}
-                  </h3>
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="mb-3 flex flex-wrap gap-1.5">
+                      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", contentTypeBadgeClass(typeLabel))}>
+                        {typeLabel}
+                      </span>
+                      <span className="inline-flex rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-neutral-600">
+                        {CATEGORY_LABELS[v.category]}
+                      </span>
+                      {v.topic && (
+                        <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", TOPIC_BADGE[v.topic])}>
+                          {TOPIC_LABELS[v.topic]}
+                        </span>
+                      )}
+                    </div>
 
-                  {v.description?.trim() && (
-                    <p className="mt-2 line-clamp-2 text-sm font-normal leading-relaxed text-neutral-500">
-                      {v.description}
+                    <h3 className="font-display text-base font-bold leading-snug text-neutral-900 line-clamp-2 group-hover:text-primary-700">
+                      {v.title}
+                    </h3>
+
+                    {v.description?.trim() && (
+                      <p className="mt-2 line-clamp-2 text-sm font-normal leading-relaxed text-neutral-500">
+                        {v.description}
+                      </p>
+                    )}
+
+                    <p className="mt-3 text-xs font-semibold text-primary-600">
+                      Tap to edit →
                     </p>
-                  )}
-
-                  <p className="mt-3 text-xs font-semibold text-primary-600">
-                    Tap to edit →
-                  </p>
+                  </div>
                 </div>
 
-                <div
-                  className="flex items-center justify-between gap-2 border-t border-neutral-100 px-4 py-3"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                >
+                <div className="flex items-center justify-between gap-2 border-t border-neutral-100 px-4 py-3">
                   <p className="text-xs font-medium text-neutral-400">{v.published_at}</p>
                   <div className="flex items-center gap-1.5">
                     {previewHref && (
@@ -930,6 +966,7 @@ export function PlaybookTab() {
                       </Button>
                     )}
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => openEdit(v)}
@@ -938,9 +975,13 @@ export function PlaybookTab() {
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
+                      type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(v)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDelete(v);
+                      }}
                       disabled={deleting === v.id}
                       className="border-red-200 text-red-600 hover:bg-red-50"
                       title="Delete"
