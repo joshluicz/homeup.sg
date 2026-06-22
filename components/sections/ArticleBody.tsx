@@ -52,6 +52,26 @@ const markdownComponents: Components = {
       {children}
     </a>
   ),
+  table: ({ children }) => (
+    <div className="my-8 overflow-x-auto rounded-lg border border-neutral-300 bg-white shadow-sm [-webkit-overflow-scrolling:touch]">
+      <table className="w-full min-w-[640px] border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="border-b-2 border-neutral-300 bg-neutral-50">{children}</thead>
+  ),
+  tbody: ({ children }) => <tbody>{children}</tbody>,
+  tr: ({ children }) => <tr className="border-b border-neutral-300 last:border-b-0">{children}</tr>,
+  th: ({ children }) => (
+    <th className="border-r border-neutral-300 px-4 py-3 text-left align-top text-sm font-bold text-neutral-900 last:border-r-0">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border-r border-neutral-300 px-4 py-3 align-top text-sm leading-relaxed text-neutral-700 last:border-r-0">
+      {children}
+    </td>
+  ),
 };
 
 /**
