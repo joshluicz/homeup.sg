@@ -17,10 +17,8 @@ function buildImageMarkdown(url: string, alt: string): string {
 }
 
 function isImageFile(file: File): boolean {
-  if (file.type.startsWith("image/") && !file.type.includes("heic") && !file.type.includes("heif")) {
-    return true;
-  }
-  return /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+  if (file.type.startsWith("image/")) return true;
+  return /\.(jpe?g|png|webp|gif|bmp|svg|ico|tiff?|heic|heif|avif)$/i.test(file.name);
 }
 
 export function PlaybookArticleEditor({
@@ -73,12 +71,7 @@ export function PlaybookArticleEditor({
   async function handleFiles(files: FileList | File[] | null) {
     const file = Array.from(files ?? []).find(isImageFile);
     if (!file) {
-      const hadHeic = Array.from(files ?? []).some((f) => /\.heic$|\.heif$/i.test(f.name));
-      setError(
-        hadHeic
-          ? "iPhone HEIC photos are not supported yet. In Photos, share the image as JPG or PNG, then upload again."
-          : "Please choose a JPG, PNG, or WebP photo.",
-      );
+      setError("Please choose an image file.");
       setSuccess(null);
       return;
     }
@@ -136,7 +129,7 @@ export function PlaybookArticleEditor({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
+            accept="image/*"
             className="hidden"
             onChange={(e) => void handleFiles(e.target.files)}
           />
