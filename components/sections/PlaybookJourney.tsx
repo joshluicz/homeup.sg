@@ -188,8 +188,8 @@ function ArticleCard({ video, isFirst }: { video: PlaybookVideo; isFirst?: boole
         </p>
       )}
 
-      {/* Read arrow */}
-      <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-primary-600 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+      {/* Read arrow — always visible on touch; hover reveal on desktop */}
+      <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-primary-600 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
         Read guide
         <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
       </div>

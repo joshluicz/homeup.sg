@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { savePlaybookReturn } from "@/lib/playbook/return-to";
+import { cn } from "@/lib/utils";
 
 interface PlaybookArticleLinkProps {
   href: string;
@@ -10,13 +11,27 @@ interface PlaybookArticleLinkProps {
 }
 
 export function PlaybookArticleLink({ href, className, children }: PlaybookArticleLinkProps) {
+  const router = useRouter();
+
+  function navigate() {
+    savePlaybookReturn();
+    router.push(href);
+  }
+
   return (
-    <Link
-      href={href}
-      onClick={savePlaybookReturn}
-      className={className}
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={navigate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate();
+        }
+      }}
+      className={cn("cursor-pointer touch-manipulation", className)}
     >
       {children}
-    </Link>
+    </div>
   );
 }
