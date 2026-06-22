@@ -1,39 +1,34 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import type { PlaybookMediaFolder } from "@/lib/playbook/storage-server";
 
-const BUCKET = "playbook-videos";
-
-function buildArticleImagePath(ext: string): string {
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  return `articles/${filename}`;
-}
-
-export async function uploadPlaybookArticleImageFromBuffer(
-  supabase: SupabaseClient,
-  buffer: Buffer | Uint8Array | ArrayBuffer,
-  ext: string,
+async function uploadPlaybookMediaClient(
+  file: File,
+  folder: PlaybookMediaFolder,
 ): Promise<string> {
-  const path = buildArticleImagePath(ext);
-  const body = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
-  const contentType = ext === "jpg" || ext === "jpeg" ? "image/jpeg" : `image/${ext}`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
 
-  const { error } = await supabase.storage.from(BUCKET).upload(path, body, {
-    upsert: false,
-    contentType,
+  const response = await fetch("/api/admin/playbook/upload", {
+    method: "POST",
+    body: formData,
   });
 
-  if (error) throw new Error(error.message);
+  const data = (await response.json()) as { url?: string; error?: string };
+  if (!response.ok || !data.url) {
+    throw new Error(data.error || "Upload failed");
+  }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
-  return publicUrl;
+  return data.url;
 }
 
 export async function uploadPlaybookArticleImage(file: File): Promise<string> {
-  const supabase = createClient();
-  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
-  const buffer = Buffer.from(await file.arrayBuffer());
-  return uploadPlaybookArticleImageFromBuffer(supabase, buffer, ext === "jpeg" ? "jpg" : ext);
+  return uploadPlaybookMediaClient(file, "articles");
+}
+
+export async function uploadPlaybookVideoFile(file: File): Promise<string> {
+  return uploadPlaybookMediaClient(file, "videos");
+}
+
+export async function uploadPlaybookThumbnail(file: File): Promise<string> {
+  return uploadPlaybookMediaClient(file, "thumbnails");
 }

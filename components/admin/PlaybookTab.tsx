@@ -10,6 +10,7 @@ import { videoThumbnail } from "@/lib/playbook/embed";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor";
 import { createClient } from "@/lib/supabase/client";
+import { uploadPlaybookThumbnail, uploadPlaybookVideoFile } from "@/lib/playbook/storage";
 import { cn } from "@/lib/utils";
 
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
@@ -303,38 +304,25 @@ export function PlaybookTab() {
     setUploadProgress("Uploading…");
     setError(null);
 
-    const ext = file.name.split(".").pop() ?? "mp4";
-    const path = `videos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    try {
+      const videoUrl = await uploadPlaybookVideoFile(file);
+      setForm((f) => ({ ...f, video_url: videoUrl }));
 
-    const { data, error: uploadError } = await supabase.storage
-      .from("playbook-videos")
-      .upload(path, file, { upsert: false });
-
-    if (uploadError) {
-      setError(`Upload failed: ${uploadError.message}`);
-      setUploading(false);
-      setUploadProgress(null);
-      return;
-    }
-
-    const { data: urlData } = supabase.storage.from("playbook-videos").getPublicUrl(data.path);
-    setForm((f) => ({ ...f, video_url: urlData.publicUrl }));
-
-    // Auto-generate a thumbnail from the video's first frame.
-    setUploadProgress("Generating thumbnail…");
-    const poster = await capturePoster(file);
-    if (poster) {
-      const tpath = `thumbnails/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-      const { data: tdata, error: terr } = await supabase.storage
-        .from("playbook-videos")
-        .upload(tpath, poster, { contentType: "image/jpeg", upsert: false });
-      if (!terr && tdata) {
-        const { data: turl } = supabase.storage.from("playbook-videos").getPublicUrl(tdata.path);
-        setForm((f) => ({ ...f, thumbnail: f.thumbnail || turl.publicUrl }));
+      setUploadProgress("Generating thumbnail…");
+      const poster = await capturePoster(file);
+      if (poster) {
+        const posterFile = new File([poster], "thumbnail.jpg", { type: "image/jpeg" });
+        const thumbUrl = await uploadPlaybookThumbnail(posterFile);
+        setForm((f) => ({ ...f, thumbnail: f.thumbnail || thumbUrl }));
       }
+
+      setUploadProgress("✓ Uploaded");
+    } catch (err) {
+      setError(`Upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+      setUploadProgress(null);
+    } finally {
+      setUploading(false);
     }
-    setUploadProgress("✓ Uploaded");
-    setUploading(false);
   }
 
   async function handleSubmit(e: React.FormEvent) {

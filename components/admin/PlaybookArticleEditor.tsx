@@ -95,9 +95,7 @@ export function PlaybookArticleEditor({
       setSuccess("Photo added to the article. Scroll the text box to see it, then click Save changes at the bottom.");
     } catch (err) {
       setError(
-        err instanceof Error
-          ? `${err.message} — try again, or ask an admin to check Supabase storage permissions.`
-          : "Image upload failed. Please try again.",
+        err instanceof Error ? err.message : "Image upload failed. Please try again.",
       );
       setLastPreview(null);
     } finally {
