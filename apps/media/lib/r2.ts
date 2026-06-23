@@ -35,3 +35,33 @@ export async function getPresignedReadUrl(key: string): Promise<string> {
 
   return getSignedUrl(r2Client, command, { expiresIn: 3600 });
 }
+
+export function getPublicR2Url(key: string): string {
+  const base = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
+  if (!base) {
+    throw new Error("R2_PUBLIC_URL is not configured");
+  }
+  return `${base}/${key}`;
+}
+
+export async function uploadToR2(
+  key: string,
+  body: Buffer,
+  contentType: string,
+): Promise<void> {
+  await r2Client.send(
+    new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    }),
+  );
+}
+
+const SAFE_R2_KEY_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_./-]*$/;
+
+export function isValidR2Key(key: string): boolean {
+  if (!key || key.includes("..") || key.startsWith("/")) return false;
+  return SAFE_R2_KEY_REGEX.test(key);
+}

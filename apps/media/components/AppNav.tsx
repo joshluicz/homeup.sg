@@ -24,7 +24,13 @@ export function AppNav({ email }: AppNavProps) {
           <span className="text-sm font-semibold text-neutral-900">HomeUp Media</span>
           <nav className="flex gap-4">
             <a href="/upload" className="text-sm text-neutral-600 hover:text-neutral-900">
-              Upload
+              Videos
+            </a>
+            <a href="/upload/raw" className="text-sm text-neutral-600 hover:text-neutral-900">
+              Images
+            </a>
+            <a href="/generate" className="text-sm text-neutral-600 hover:text-neutral-900">
+              Generate
             </a>
           </nav>
         </div>
