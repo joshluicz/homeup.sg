@@ -46,6 +46,11 @@ export function SellSubPageHero({ content, filterType }: SellSubPageHeroProps) {
             <p className="mt-3 max-w-xl text-sm font-normal leading-relaxed text-neutral-600">
               {content.body}
             </p>
+            {content.bodyDisclaimer && (
+              <p className="mt-2 max-w-xl text-xs font-normal leading-relaxed text-neutral-500">
+                {content.bodyDisclaimer}
+              </p>
+            )}
 
             {plan && (
               <SavingsSlider

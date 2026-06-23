@@ -5,6 +5,7 @@ export interface SellPageHero {
   highlight: string;
   subtitle: string;
   body: string;
+  bodyDisclaimer?: string;
   ctaNote: string;
 }
 
@@ -53,7 +54,7 @@ export const SELL_PAGE_HDB: SellPageConfig = {
     title: "Sell Your HDB Flat.",
     highlight: "Keep More of Your Proceeds.",
     subtitle: sharedProcessNote.subtitle,
-    body: "HomeUP's full HDB agent services include marketing, Option to Purchase (OTP) documents, valuation, HDB submission, and guidance all the way till completion. HomeUP HDB agents handle it all at a fixed $1,999 + GST, without compromising on service.",
+    body: "Sell your HDB at fixed fee $1999 + GST without compromising on service. Our full agent services include marketing, documentation (e.g. OTP), HDB submission and guidance till completion.",
     ctaNote: sharedProcessNote.ctaNote,
   },
   meta: {
@@ -72,7 +73,9 @@ export const SELL_PAGE_CONDO: SellPageConfig = {
     title: "Sell Your Condo or EC.",
     highlight: "Fixed Fee. Full Service.",
     subtitle: sharedProcessNote.subtitle,
-    body: "HomeUP's full condo agent services include marketing, Option to Purchase (OTP) documents, negotiation, Sale and Purchase (S&P) coordination, and guidance all the way till completion. HomeUP condo agents handle it all at a fixed $4,999 + GST, without compromising on service.",
+    body: "Sell your Condo at fixed fee $4999* + GST. Our full agent services include marketing, documentation (e.g. OTP) and guidance till completion.",
+    bodyDisclaimer:
+      "*Additional 0.5% (sale price) applies if buyer has a co-broke agent.",
     ctaNote: sharedProcessNote.ctaNote,
   },
   meta: {
