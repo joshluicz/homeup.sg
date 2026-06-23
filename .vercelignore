@@ -1,5 +1,6 @@
-# Separate Next.js app — not part of homeup-sg deployment
-apps/
+# Separate Next.js apps — not part of homeup-sg deployment (homeup-media uses apps/media)
+apps/*
+!apps/media
 
 # Local / tooling artifacts
 .claude/
