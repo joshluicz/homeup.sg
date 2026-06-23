@@ -111,7 +111,7 @@ export function normalizeArticleFormat(raw: string): string {
 
 export function parseInlineFaq(body: string): Array<{ q: string; a: string }> {
   const items: Array<{ q: string; a: string }> = [];
-  const re = /Q:\s*(.+?)\s+A:\s*(.+?)(?=\s*Q:|$)/gis;
+  const re = /Q:\s*([\s\S]+?)\s+A:\s*([\s\S]+?)(?=\s*Q:|$)/gi;
   let match: RegExpExecArray | null;
   while ((match = re.exec(body)) !== null) {
     const q = match[1].trim();

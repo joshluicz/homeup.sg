@@ -12,6 +12,7 @@ import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor"
 import { createClient } from "@/lib/supabase/client";
 import { uploadPlaybookThumbnail, uploadPlaybookVideoFile } from "@/lib/playbook/storage";
 import { PLAYBOOK_ARTICLE_TEMPLATE } from "@/lib/playbook/article-format";
+import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 import { cn } from "@/lib/utils";
 
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
