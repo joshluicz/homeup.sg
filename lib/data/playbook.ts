@@ -36,6 +36,49 @@ export const TOPIC_LABELS: Record<PlaybookTopic, string> = {
   condo_tips:   "Commentary",
 };
 
+export interface PlaybookJourneySection {
+  id: string;
+  step: number;
+  topic: PlaybookTopic;
+  description: string;
+}
+
+/** Public playbook sections — articles and videos are grouped under these topics. */
+export const PLAYBOOK_JOURNEY_SECTIONS: PlaybookJourneySection[] = [
+  {
+    id: "stage-1",
+    step: 1,
+    topic: "upgraders",
+    description:
+      "Worried about ABSD, timing both transactions, or whether upgrading actually makes financial sense right now? These guides answer the questions most agents won't.",
+  },
+  {
+    id: "stage-2",
+    step: 2,
+    topic: "buying_first",
+    description:
+      "From loan eligibility and down payment maths to negotiation tactics and showroom traps — everything you need before you sign anything.",
+  },
+  {
+    id: "stage-3",
+    step: 3,
+    topic: "condo_tips",
+    description:
+      "Market myths, investment strategies that backfire, and how to spot a genuinely undervalued unit. Straight talk from Dennis.",
+  },
+];
+
+export const PLAYBOOK_TOPICS: PlaybookTopic[] = PLAYBOOK_JOURNEY_SECTIONS.map((s) => s.topic);
+
+/** Default journey section when inferring from legacy category data. */
+export function inferPlaybookTopicFromCategory(
+  category: Exclude<VideoCategory, "all">,
+): PlaybookTopic {
+  if (category === "buying") return "buying_first";
+  if (category === "market" || category === "tips") return "condo_tips";
+  return "upgraders";
+}
+
 export interface FaqEntry {
   q: string;
   a: string;
@@ -57,6 +100,7 @@ export interface PlaybookVideo {
   faq?: FaqEntry[];          // Q&A pairs rendered as FAQ + FAQPage schema
   metaDescription?: string;  // SEO meta description for the article page
   topic?: PlaybookTopic | null; // Which journey stage this article/video belongs to
+  contentKind?: "article" | "video";
 }
 
 export const CATEGORY_LABELS: Record<VideoCategory, string> = {

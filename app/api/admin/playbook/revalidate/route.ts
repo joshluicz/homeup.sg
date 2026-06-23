@@ -12,7 +12,9 @@ export async function POST() {
   if (error) return error;
 
   revalidatePath("/playbook");
-  revalidatePath("/playbook/[slug]", "page"); // all article pages
+  revalidatePath("/playbook/articles");
+  revalidatePath("/playbook/videos");
+  revalidatePath("/playbook/[slug]", "page");
 
   return NextResponse.json({ ok: true });
 }

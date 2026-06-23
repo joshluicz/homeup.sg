@@ -17,7 +17,13 @@ function readTimeMinutes(article: string): number {
   return Math.max(1, Math.round(words / 200));
 }
 
-export function PlaybookArticleHeader({ video }: { video: PlaybookVideo }) {
+export function PlaybookArticleHeader({
+  video,
+  hideDescription = false,
+}: {
+  video: PlaybookVideo;
+  hideDescription?: boolean;
+}) {
   const topicLabel = video.topic ? TOPIC_LABELS[video.topic] : null;
   const readTime = readTimeMinutes(video.article ?? "");
   const published = formatPublishedDate(video.publishedAt);
@@ -46,7 +52,7 @@ export function PlaybookArticleHeader({ video }: { video: PlaybookVideo }) {
         {video.title}
       </h1>
 
-      {video.description?.trim() && (
+      {video.description?.trim() && !hideDescription && (
         <p className="mt-5 text-lg font-medium leading-[1.65] text-neutral-800 sm:text-xl">
           {video.description.trim()}
         </p>

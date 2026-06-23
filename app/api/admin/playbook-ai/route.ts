@@ -60,8 +60,34 @@ Return ALL of these fields:
 - "title": punchy, max 10 words.
 - "description": 1–2 sentences, max 35 words (shown on the video card).
 - "metaDescription": SEO meta description, max 155 characters, includes the key search phrase.
-- "article": a Markdown article of about 450–700 words. Use ## and ### headings, short paragraphs, and bullet lists. Be specific and accurate to Singapore property rules; do NOT invent figures, dates, or legal specifics — keep claims general where unsure. Start with a 1–2 sentence direct answer to the core question.
-- "faq": an array of 3–5 objects {"q": "...", "a": "..."} answering the most common related questions. Each answer 1–3 sentences, self-contained.
+- "article": a structured plain-text article of about 450–700 words using EXACTLY this section order and labels (each label on its own line, blank line after each label):
+
+Quick Answer:
+
+[2–4 sentences — direct answer first]
+
+Introduction:
+
+[Who this is for + brief Dennis/HomeUP intro]
+
+[Question heading ending with ? on its own line — repeat for 2–4 sections]
+
+How HomeUp Approaches This:
+
+[How HomeUP helps + CTA links]
+
+Conclusion:
+
+[Summary + optional CTA]
+
+FAQ:
+
+Q: [question]? A: [answer.]
+
+[Repeat Q/A pairs — 3–5 total in this section]
+
+Rules: short paragraphs (2–4 sentences max). Question section headings must end with ? and sit on their own line. Do NOT use ## markdown headings — use plain question lines. Be accurate to Singapore property rules; do NOT invent figures or legal specifics.
+- "faq": duplicate the FAQ section as an array of 3–5 objects {"q": "...", "a": "..."} matching the FAQ block above.
 
 IMPORTANT: The user will review and edit before publishing, so prefer accurate-but-general over confidently-wrong specifics.
 

@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 // pages so the ISR-cached /playbook/[slug] (and the listing) regenerate on next request.
 function revalidatePlaybook(slug?: string) {
   revalidatePath("/playbook");
+  revalidatePath("/playbook/articles");
+  revalidatePath("/playbook/videos");
   if (slug) revalidatePath(`/playbook/${slug}`);
 }
 
@@ -38,9 +40,40 @@ export async function POST(request: Request) {
 
   const article = (fields.article ?? "").trim();
   const videoUrl = (fields.videoUrl ?? "").trim();
-  if (!article) {
+  const contentKind = fields.contentKind === "video" ? "video" : "article";
+
+  if (contentKind === "article" && videoUrl) {
     return NextResponse.json(
-      { error: "Article body is required. Every playbook entry must include a written guide." },
+      { error: "Articles cannot include a video. Add the clip under Playbook → Videos instead." },
+      { status: 400 },
+    );
+  }
+
+  if (contentKind === "video" && article) {
+    return NextResponse.json(
+      { error: "Videos cannot include an article body. Add the written guide under Playbook → Articles instead." },
+      { status: 400 },
+    );
+  }
+
+  if (contentKind === "article" && !article) {
+    return NextResponse.json(
+      { error: "Article body is required for playbook articles." },
+      { status: 400 },
+    );
+  }
+
+  if (contentKind === "video" && !videoUrl) {
+    return NextResponse.json(
+      { error: "Video URL or upload is required for playbook videos." },
+      { status: 400 },
+    );
+  }
+
+  const validTopics = ["upgraders", "buying_first", "condo_tips"] as const;
+  if (!fields.topic || !validTopics.includes(fields.topic)) {
+    return NextResponse.json(
+      { error: "Choose a playbook section (Sell/Upgrade, Buy Tips, or Commentary)." },
       { status: 400 },
     );
   }
@@ -50,17 +83,17 @@ export async function POST(request: Request) {
     title: fields.title,
     description: fields.description ?? "",
     category: fields.category,
-    duration: fields.duration ?? "",
+    duration: contentKind === "video" ? (fields.duration ?? "") : "",
     thumbnail: fields.thumbnail ?? "",
-    video_url: fields.videoUrl ?? "",
+    video_url: contentKind === "video" ? (fields.videoUrl ?? "") : "",
     featured: fields.featured ?? false,
     published_at: fields.publishedAt ?? new Date().toISOString().slice(0, 10),
     tags: fields.tags ?? [],
-    article: fields.article ?? "",
-    faq: Array.isArray(fields.faq)
+    article: contentKind === "article" ? (fields.article ?? "") : "",
+    faq: contentKind === "article" && Array.isArray(fields.faq)
       ? fields.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
       : [],
-    meta_description: fields.metaDescription ?? "",
+    meta_description: contentKind === "article" ? (fields.metaDescription ?? "") : "",
     topic: fields.topic ?? null,
     updated_at: new Date().toISOString(),
   };

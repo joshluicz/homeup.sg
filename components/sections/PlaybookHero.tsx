@@ -5,8 +5,10 @@ import { BookOpen, Video, RefreshCcw } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
+import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 
 type HeroStats = {
+  articleCount: number;
   videoCount: number;
   topicCount: number;
 };
@@ -22,32 +24,36 @@ export function PlaybookHero() {
       .then(({ data }) => {
         if (!data) return;
 
+        let articleCount = 0;
         let videoCount = 0;
         const topics = new Set<PlaybookTopic>();
 
         for (const row of data) {
-          const hasVideo = Boolean(row.video_url?.trim());
-          const hasArticle = Boolean(row.article?.trim());
-          if (hasVideo) videoCount++;
-          if (row.topic && (hasVideo || hasArticle)) {
+          const entry = {
+            article: row.article as string,
+            videoUrl: row.video_url as string,
+          };
+          if (isPlaybookArticle(entry) && row.article?.trim()) articleCount++;
+          if (isPlaybookVideo(entry) && row.video_url?.trim()) videoCount++;
+          if (row.topic && isPlaybookArticle(entry)) {
             topics.add(row.topic as PlaybookTopic);
           }
         }
 
-        setStats({ videoCount, topicCount: topics.size });
+        setStats({ articleCount, videoCount, topicCount: topics.size });
       });
   }, []);
 
   const statsBar = [
     {
-      icon: Video,
-      value: stats === null ? "—" : `${stats.videoCount}`,
-      label: "Video Guides",
+      icon: BookOpen,
+      value: stats === null ? "—" : `${stats.articleCount}`,
+      label: "Articles",
     },
     {
-      icon: BookOpen,
-      value: stats === null ? "—" : `${stats.topicCount}`,
-      label: "Topics Covered",
+      icon: Video,
+      value: stats === null ? "—" : `${stats.videoCount}`,
+      label: "Videos",
     },
     { icon: RefreshCcw, value: "Monthly", label: "New Content" },
   ];

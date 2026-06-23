@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { rowToVideo } from "@/lib/playbook/queries";
+import { isPlaybookArticle } from "@/lib/playbook/content-kind";
 
 /** Server/build-time Supabase queries (no cookies). Used by generateStaticParams and the
  *  static-rendered /playbook/[slug] article pages. Mirrors lib/listings/server-queries.ts. */
@@ -10,14 +11,21 @@ export async function getAllPlaybookSlugs(): Promise<string[]> {
   if (!url || !key) return [];
 
   const supabase = createClient(url, key);
-  const { data, error } = await supabase.from("playbook_videos").select("slug");
+  const { data, error } = await supabase
+    .from("playbook_videos")
+    .select("slug, article, video_url");
 
   if (error) {
     console.warn("getAllPlaybookSlugs:", error.message);
     return [];
   }
 
-  return (data ?? []).map((row) => row.slug as string);
+  return (data ?? [])
+    .filter((row) => {
+      const entry = rowToVideo(row);
+      return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
+    })
+    .map((row) => row.slug as string);
 }
 
 export async function getPlaybookVideoBySlugServer(
@@ -35,5 +43,7 @@ export async function getPlaybookVideoBySlugServer(
     .maybeSingle();
 
   if (error || !data) return null;
-  return rowToVideo(data);
+  const video = rowToVideo(data);
+  if (!isPlaybookArticle(video) || !video.article?.trim()) return null;
+  return video;
 }

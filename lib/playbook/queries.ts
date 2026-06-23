@@ -18,6 +18,7 @@ export function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
     faq: ((row.faq as FaqEntry[]) ?? []).filter((f) => f?.q && f?.a),
     metaDescription: (row.meta_description as string) ?? "",
     topic: (row.topic as PlaybookVideo["topic"]) ?? null,
+    contentKind: (row.content_kind as PlaybookVideo["contentKind"]) ?? undefined,
   };
 }
 

@@ -9,7 +9,10 @@ import { AnalyticsTab } from "@/components/admin/AnalyticsTab";
 function ListingsContent() {
   const searchParams = useSearchParams();
   const tab = searchParams.get("tab");
-  if (tab === "playbook") return <PlaybookTab />;
+  if (tab === "playbook") {
+    const view = searchParams.get("view") === "videos" ? "videos" : "articles";
+    return <PlaybookTab mode={view === "videos" ? "video" : "article"} key={view} />;
+  }
   if (tab === "analytics") return <AnalyticsTab />;
   return <ListingsIndexClient />;
 }

@@ -3,11 +3,11 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ArticleBody } from "@/components/sections/ArticleBody";
+import { articleHasInlineFaq, parsePlaybookArticleBlocks } from "@/lib/playbook/article-format";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { PlaybookArticleHeader } from "@/components/sections/PlaybookArticleHeader";
 import { PlaybookArticleHeroMedia } from "@/components/sections/PlaybookArticleHeroMedia";
-import { PlaybookStickyVideo } from "@/components/sections/PlaybookStickyVideo";
 import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
@@ -18,7 +18,6 @@ import {
   breadcrumbSchema,
   faqSchema,
   speakableWebPageSchema,
-  videoObjectsSchema,
 } from "@/lib/seo/schema";
 
 export const dynamicParams = true;
@@ -55,7 +54,9 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
   if (!video?.article?.trim()) notFound();
 
   const hasFaq = (video.faq?.length ?? 0) > 0;
-  const hasVideo = Boolean(video.videoUrl?.trim());
+  const articleBlocks = parsePlaybookArticleBlocks(video.article!);
+  const showStructuredFaq = articleHasInlineFaq(articleBlocks);
+  const showDbFaq = hasFaq && !showStructuredFaq;
 
   return (
     <>
@@ -67,8 +68,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             { name: video.title, path: `/playbook/${video.slug}` },
           ]),
           articleSchema(video),
-          ...(hasFaq ? [faqSchema(video.faq!)] : []),
-          ...(hasVideo && video.thumbnail ? videoObjectsSchema([video]) : []),
+          ...(showDbFaq ? [faqSchema(video.faq!)] : []),
           speakableWebPageSchema({
             path: `/playbook/${video.slug}`,
             name: video.title,
@@ -80,14 +80,17 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
       <main className="bg-white">
         <article className="container-page py-8 sm:py-12">
           <div className="mx-auto max-w-[680px]">
-            <PlaybookArticleHeader video={video} />
+            <PlaybookArticleHeader
+              video={video}
+              hideDescription={articleBlocks.some((block) => block.kind === "quick_answer")}
+            />
             <PlaybookArticleHeroMedia video={video} />
 
             <div className="mt-10 sm:mt-12">
               <ArticleBody markdown={video.article!} />
             </div>
 
-            {hasFaq && (
+            {showDbFaq && (
               <section className="mt-14 border-t border-neutral-200 pt-10">
                 <h2 className="font-display text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">
                   Frequently asked questions
@@ -121,7 +124,6 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
           </div>
         </article>
 
-        {hasVideo && <PlaybookStickyVideo video={video} />}
         <CtaBanner />
       </main>
       <Footer />

@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/listings/pg-sources", label: "Listings Sync" },
-  { href: "/admin/listings?tab=playbook", label: "Playbook" },
+  { href: "/admin/listings?tab=playbook&view=articles", label: "Articles" },
+  { href: "/admin/listings?tab=playbook&view=videos", label: "Videos" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
 ];
 
@@ -21,8 +22,11 @@ function AdminNav() {
   const tab = searchParams.get("tab");
 
   function isActive(item: (typeof NAV_ITEMS)[number]) {
-    if (item.href === "/admin/listings?tab=playbook") {
-      return pathname === "/admin/listings" && tab === "playbook";
+    if (item.href === "/admin/listings?tab=playbook&view=articles") {
+      return pathname === "/admin/listings" && tab === "playbook" && searchParams.get("view") !== "videos";
+    }
+    if (item.href === "/admin/listings?tab=playbook&view=videos") {
+      return pathname === "/admin/listings" && tab === "playbook" && searchParams.get("view") === "videos";
     }
     if (item.href === "/admin/listings?tab=analytics") {
       return pathname === "/admin/listings" && tab === "analytics";

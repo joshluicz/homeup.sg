@@ -5,53 +5,23 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link as LinkIcon, Upload, FileText, Layers, Search, ExternalLink, BookOpen } from "lucide-react";
-import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
+import { CATEGORY_LABELS, TOPIC_LABELS, PLAYBOOK_TOPICS, inferPlaybookTopicFromCategory } from "@/lib/data/playbook";
 import { videoThumbnail } from "@/lib/playbook/embed";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor";
 import { createClient } from "@/lib/supabase/client";
 import { uploadPlaybookThumbnail, uploadPlaybookVideoFile } from "@/lib/playbook/storage";
+import { PLAYBOOK_ARTICLE_TEMPLATE } from "@/lib/playbook/article-format";
 import { cn } from "@/lib/utils";
 
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
 const CATEGORIES: VideoCategory[] = ["selling", "buying", "process", "market", "tips"];
-const TOPICS: PlaybookTopic[] = ["upgraders", "buying_first", "condo_tips"];
 
-type ContentType = "article" | "hybrid";
+type ContentType = "article" | "video";
 
-const CONTENT_TYPES: { id: ContentType; label: string; description: string; Icon: typeof FileText }[] = [
-  {
-    id: "article",
-    label: "Article only",
-    description: "Written guide at /playbook/{slug} — no video required.",
-    Icon: FileText,
-  },
-  {
-    id: "hybrid",
-    label: "Article + video",
-    description: "Full guide with an embedded watch-along video.",
-    Icon: Layers,
-  },
-];
-
-function inferContentType(v: Pick<Video, "article" | "video_url">): ContentType {
-  return v.video_url?.trim() ? "hybrid" : "article";
-}
-
-function contentTypeLabel(v: Pick<Video, "article" | "video_url">): string {
-  const hasArticle = Boolean(v.article?.trim());
-  const hasVideo = Boolean(v.video_url?.trim());
-  if (hasArticle && hasVideo) return "Article + video";
-  if (hasArticle) return "Article";
-  if (hasVideo) return "Video";
-  return "Draft";
-}
-
-function contentTypeBadgeClass(label: string): string {
-  if (label === "Article + video") return "bg-violet-50 text-violet-700 ring-violet-200";
-  if (label === "Article") return "bg-blue-50 text-blue-700 ring-blue-200";
-  if (label === "Video") return "bg-amber-50 text-amber-700 ring-amber-200";
-  return "bg-neutral-100 text-neutral-500 ring-neutral-200";
+function matchesMode(v: Video, mode: ContentType): boolean {
+  const row = { article: v.article, videoUrl: v.video_url };
+  return mode === "video" ? isPlaybookVideo(row) : isPlaybookArticle(row);
 }
 
 const TOPIC_BADGE: Record<PlaybookTopic, string> = {
@@ -118,7 +88,7 @@ const emptyForm = {
   title: "",
   description: "",
   category: "selling" as VideoCategory,
-  topic: "" as PlaybookTopic | "",
+  topic: "upgraders" as PlaybookTopic,
   duration: "",
   thumbnail: "",
   video_url: "",
@@ -190,7 +160,8 @@ function TableSkeleton() {
   );
 }
 
-export function PlaybookTab() {
+export function PlaybookTab({ mode }: { mode: ContentType }) {
+  const isVideoMode = mode === "video";
   const supabase = createClient();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
@@ -200,7 +171,6 @@ export function PlaybookTab() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [contentType, setContentType] = useState<ContentType>("article");
   const [faq, setFaq] = useState<FaqEntry[]>([]);
   const [uploadTab, setUploadTab] = useState<"link" | "file">("link");
   const [uploading, setUploading] = useState(false);
@@ -210,15 +180,15 @@ export function PlaybookTab() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const stats = useMemo(() => {
-    const articles = videos.filter((v) => v.article?.trim()).length;
-    const hybrid = videos.filter((v) => v.article?.trim() && v.video_url?.trim()).length;
-    const featured = videos.filter((v) => v.featured).length;
-    return { total: videos.length, articles, hybrid, featured };
-  }, [videos]);
+    const scoped = videos.filter((v) => matchesMode(v, mode));
+    const featured = scoped.filter((v) => v.featured).length;
+    return { total: scoped.length, featured };
+  }, [videos, mode]);
 
   const filteredVideos = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return videos.filter((v) => {
+      if (!matchesMode(v, mode)) return false;
       if (topicFilter === "none" && v.topic) return false;
       if (topicFilter !== "all" && topicFilter !== "none" && v.topic !== topicFilter) return false;
       if (!q) return true;
@@ -229,7 +199,12 @@ export function PlaybookTab() {
         CATEGORY_LABELS[v.category].toLowerCase().includes(q)
       );
     });
-  }, [videos, searchQuery, topicFilter]);
+  }, [videos, searchQuery, topicFilter, mode]);
+
+  useEffect(() => {
+    setShowForm(false);
+    setEditId(null);
+  }, [mode]);
 
   async function loadVideos() {
     const { data } = await supabase
@@ -258,8 +233,11 @@ export function PlaybookTab() {
 
   function openAdd() {
     setEditId(null);
-    setForm(emptyForm);
-    setContentType("article");
+    setForm({
+      ...emptyForm,
+      topic: "upgraders",
+      article: isVideoMode ? "" : PLAYBOOK_ARTICLE_TEMPLATE,
+    });
     setFaq([]);
     setError(null);
     setUploadTab("link");
@@ -271,20 +249,19 @@ export function PlaybookTab() {
     setEditId(v.id);
     setForm({
       title: v.title,
-      description: v.description,
+      description: isVideoMode ? "" : v.description,
       category: v.category,
-      topic: (v.topic ?? "") as PlaybookTopic | "",
-      duration: v.duration,
+      topic: (v.topic ?? inferPlaybookTopicFromCategory(v.category)) as PlaybookTopic,
+      duration: isVideoMode ? v.duration : "",
       thumbnail: v.thumbnail,
-      video_url: v.video_url,
+      video_url: isVideoMode ? v.video_url : "",
       featured: v.featured,
       published_at: v.published_at,
       tags: v.tags?.join(", ") ?? "",
-      article: v.article ?? "",
-      meta_description: v.meta_description ?? "",
+      article: isVideoMode ? "" : (v.article ?? ""),
+      meta_description: isVideoMode ? "" : (v.meta_description ?? ""),
     });
-    setFaq(v.faq ?? []);
-    setContentType(inferContentType(v));
+    setFaq(isVideoMode ? [] : (v.faq ?? []));
     setError(null);
     setUploadTab(v.video_url?.startsWith("http") ? "link" : "file");
     setUploadProgress(null);
@@ -332,19 +309,17 @@ export function PlaybookTab() {
     const hasArticle = Boolean(form.article.trim());
     const hasVideo = Boolean(form.video_url.trim());
 
-    if (contentType === "article" && !hasArticle) {
-      setError("Article body is required for article-only guides.");
+    if (mode === "article" && !hasArticle) {
+      setError("Article body is required.");
       return;
     }
-    if (contentType === "hybrid") {
-      if (!hasArticle) {
-        setError("Article body is required for article + video guides.");
-        return;
-      }
-      if (!hasVideo) {
-        setError("Add a video link or upload a file for article + video guides.");
-        return;
-      }
+    if (mode === "video" && !hasVideo) {
+      setError("Add a video link or upload a file.");
+      return;
+    }
+    if (!form.topic || !PLAYBOOK_TOPICS.includes(form.topic as PlaybookTopic)) {
+      setError("Choose a playbook section (Sell/Upgrade, Buy Tips, or Commentary).");
+      return;
     }
 
     setSaving(true);
@@ -355,18 +330,18 @@ export function PlaybookTab() {
       title: form.title.trim(),
       description: form.description.trim(),
       category: form.category,
-      topic: form.topic || null,
-      duration: contentType === "hybrid" ? form.duration.trim() : "",
+      topic: form.topic as PlaybookTopic,
+      duration: mode === "video" ? form.duration.trim() : "",
       thumbnail: form.thumbnail.trim(),
-      video_url: contentType === "hybrid" ? form.video_url.trim() : "",
+      video_url: mode === "video" ? form.video_url.trim() : "",
       featured: form.featured,
       published_at: form.published_at,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      article: form.article,
-      meta_description: form.meta_description.trim(),
-      faq: faq
-        .map((item) => ({ q: item.q.trim(), a: item.a.trim() }))
-        .filter((item) => item.q && item.a),
+      article: mode === "article" ? form.article : "",
+      meta_description: mode === "article" ? form.meta_description.trim() : "",
+      faq: mode === "article"
+        ? faq.map((item) => ({ q: item.q.trim(), a: item.a.trim() })).filter((item) => item.q && item.a)
+        : [],
       updated_at: new Date().toISOString(),
     };
 
@@ -436,27 +411,29 @@ export function PlaybookTab() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">Content</p>
-          <h1 className="mt-1 font-display text-2xl font-bold text-neutral-900">Playbook guides</h1>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">Playbook</p>
+          <h1 className="mt-1 font-display text-2xl font-bold text-neutral-900">
+            {isVideoMode ? "Videos" : "Articles"}
+          </h1>
           <p className="mt-1 text-sm font-normal text-neutral-500">
-            Manage articles and hybrid video guides for the public playbook.
+            {isVideoMode
+              ? "Short-form vertical videos — grouped under their section on /playbook."
+              : "Long-form written guides — shown on /playbook and /playbook/[slug]."}
           </p>
         </div>
         {!showForm && (
           <Button onClick={openAdd} className="flex shrink-0 items-center gap-2 self-start">
             <Plus className="h-4 w-4" />
-            Add guide
+            {isVideoMode ? "Add video" : "Add article"}
           </Button>
         )}
       </div>
 
       {/* Stats */}
-      {!showForm && videos.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {!showForm && stats.total > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:max-w-md">
           {[
-            { label: "Total guides", value: stats.total },
-            { label: "With articles", value: stats.articles },
-            { label: "Article + video", value: stats.hybrid },
+            { label: isVideoMode ? "Total videos" : "Total articles", value: stats.total },
             { label: "Featured", value: stats.featured },
           ].map(({ label, value }) => (
             <div key={label} className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
@@ -528,10 +505,12 @@ export function PlaybookTab() {
           <div className="mb-5 flex items-center justify-between rounded-xl border border-neutral-200 bg-white px-4 py-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary-600">
-                {editId ? "Editing" : "New guide"}
+                {editId ? "Editing" : "New"}
               </p>
               <h2 className="mt-0.5 text-lg font-bold text-neutral-900">
-                {editId ? "Edit guide" : "Add guide"}
+                {editId
+                  ? isVideoMode ? "Edit video" : "Edit article"
+                  : isVideoMode ? "Add video" : "Add article"}
               </h2>
             </div>
             <button type="button" onClick={cancelForm} className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600">
@@ -547,95 +526,55 @@ export function PlaybookTab() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <FormSection title="Content type" description="Choose whether this guide is article-only or includes a video.">
-            {/* Content type */}
+            <FormSection
+              title="Basics"
+              description={
+                isVideoMode
+                  ? "One-line title shown under the vertical video on /playbook."
+                  : "Headline and card hook for the public article pages."
+              }
+            >
             <div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {CONTENT_TYPES.map(({ id, label, description, Icon }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      setContentType(id);
-                      if (id === "article") {
-                        setForm((f) => ({ ...f, video_url: "", duration: "" }));
-                        setUploadProgress(null);
-                      }
-                    }}
-                    className={`flex items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
-                      contentType === id
-                        ? "border-primary-500 bg-primary-50 ring-1 ring-primary-200"
-                        : "border-neutral-200 bg-white hover:border-neutral-300"
-                    }`}
-                  >
-                    <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${contentType === id ? "text-primary-600" : "text-neutral-400"}`} />
-                    <span>
-                      <span className="block text-sm font-bold text-neutral-900">{label}</span>
-                      <span className="mt-0.5 block text-xs font-normal text-neutral-500">{description}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            </FormSection>
-
-            <FormSection title="Basics" description="Title and card hook shown on the public playbook.">
-            {/* Title */}
-            <div>
-              <FieldLabel required>Title</FieldLabel>
+              <FieldLabel required>{isVideoMode ? "One-line video title" : "Title"}</FieldLabel>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => set("title", e.target.value)}
-                placeholder="e.g. How We Saved a Seller $32,000 in Commission"
+                placeholder={
+                  isVideoMode
+                    ? "e.g. When is 99-year lease better than freehold?"
+                    : "e.g. How We Saved a Seller $32,000 in Commission"
+                }
                 className={inputClass}
                 required
               />
             </div>
 
-            {/* Description */}
+            {!isVideoMode && (
             <div>
               <FieldLabel>Card hook / description</FieldLabel>
               <textarea
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
                 rows={3}
-                placeholder="Short hook shown on playbook cards..."
+                placeholder="Short hook shown on article cards..."
                 className={inputClass}
               />
             </div>
+            )}
             </FormSection>
 
-            <FormSection title="Placement" description="Category, journey stage, tags, and publish settings.">
-            {/* Category */}
+            <FormSection title="Placement" description="Section, category, tags, and publish settings.">
+            {/* Playbook section */}
             <div>
-              <FieldLabel>Category</FieldLabel>
-              <select
-                value={form.category}
-                onChange={(e) => set("category", e.target.value)}
-                className={inputClass}
-              >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Journey topic */}
-            <div>
-              <FieldLabel>Journey topic</FieldLabel>
-              <p className="mb-2 text-xs font-normal text-neutral-500">Which Playbook Journey stage this appears under on the public site.</p>
+              <FieldLabel required>Playbook section</FieldLabel>
+              <p className="mb-2 text-xs font-normal text-neutral-500">
+                {isVideoMode
+                  ? "Videos appear under their playbook section on /playbook."
+                  : "Articles appear under their playbook section on /playbook and at /playbook/[slug]."}
+              </p>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => set("topic", "")}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                    !form.topic ? "border-primary-500 bg-primary-50 text-primary-700" : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
-                  }`}
-                >
-                  No topic
-                </button>
-                {TOPICS.map((t) => (
+                {PLAYBOOK_TOPICS.map((t) => (
                   <button
                     key={t}
                     type="button"
@@ -648,6 +587,20 @@ export function PlaybookTab() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Category */}
+            <div>
+              <FieldLabel>Category</FieldLabel>
+              <select
+                value={form.category}
+                onChange={(e) => set("category", e.target.value)}
+                className={inputClass}
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                ))}
+              </select>
             </div>
 
             {/* Tags + Published */}
@@ -688,10 +641,10 @@ export function PlaybookTab() {
             </label>
             </FormSection>
 
-            {/* Article & SEO */}
+            {!isVideoMode && (
             <FormSection
               title="Article & SEO"
-              description="Required written guide for search and the public /playbook/[slug] page."
+              description="Written guide for search and the public /playbook/[slug] page."
             >
               <div>
                 <FieldLabel>Meta description</FieldLabel>
@@ -753,9 +706,10 @@ export function PlaybookTab() {
                 </div>
               </div>
             </FormSection>
+            )}
 
-            {contentType === "hybrid" && (
-              <FormSection title="Video" description="YouTube/Vimeo link or uploaded file — shown in the article hero.">
+            {isVideoMode && (
+              <FormSection title="Video" description="9:16 vertical clip — YouTube/TikTok link or uploaded MP4.">
                 <div className="flex w-fit gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1">
                   <button
                     type="button"
@@ -840,7 +794,7 @@ export function PlaybookTab() {
                     className={inputClass}
                   />
                   {form.thumbnail && (
-                    <img src={form.thumbnail} alt="" className="mt-2 h-20 w-36 rounded-lg border border-neutral-200 object-cover" />
+                    <img src={form.thumbnail} alt="" className="mt-2 h-36 w-24 rounded-lg border border-neutral-200 object-contain bg-neutral-950" />
                   )}
                 </div>
 
@@ -868,14 +822,24 @@ export function PlaybookTab() {
       )}
 
       {/* Guide list */}
-      {videos.length === 0 ? (
+      {stats.total === 0 && !showForm ? (
         <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 py-16 text-center">
-          <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
-          <p className="mt-4 text-sm font-semibold text-neutral-700">No guides yet</p>
-          <p className="mt-1 text-sm font-normal text-neutral-500">Add your first article to populate the public playbook.</p>
-          {!showForm && (
-            <Button onClick={openAdd} className="mt-6">Add your first guide</Button>
+          {isVideoMode ? (
+            <Layers className="mx-auto h-10 w-10 text-neutral-300" />
+          ) : (
+            <BookOpen className="mx-auto h-10 w-10 text-neutral-300" />
           )}
+          <p className="mt-4 text-sm font-semibold text-neutral-700">
+            No {isVideoMode ? "videos" : "articles"} yet
+          </p>
+          <p className="mt-1 text-sm font-normal text-neutral-500">
+            {isVideoMode
+              ? "Add short vertical videos with a one-line title."
+              : "Add your first written guide for the public playbook."}
+          </p>
+          <Button onClick={openAdd} className="mt-6">
+            {isVideoMode ? "Add your first video" : "Add your first article"}
+          </Button>
         </div>
       ) : filteredVideos.length === 0 ? (
         <div className="rounded-xl border border-neutral-200 bg-white py-12 text-center">
@@ -885,11 +849,14 @@ export function PlaybookTab() {
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className={cn("grid gap-4", isVideoMode ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2 xl:grid-cols-3")}>
           {filteredVideos.map((v) => {
-            const typeLabel = contentTypeLabel(v);
             const slug = v.slug?.trim();
-            const previewHref = slug ? `/playbook/${slug}` : null;
+            const previewHref = isVideoMode
+              ? "/playbook"
+              : slug
+                ? `/playbook/${slug}`
+                : null;
 
             return (
               <article
@@ -908,12 +875,23 @@ export function PlaybookTab() {
                   }}
                   className="flex cursor-pointer flex-1 flex-col touch-manipulation"
                 >
-                  <div className="relative aspect-[16/9] bg-neutral-100">
-                    {v.thumbnail ? (
-                      <img src={v.thumbnail} alt="" className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]" />
+                  <div className={cn("relative bg-neutral-950", isVideoMode ? "aspect-[9/16]" : "aspect-[16/9] bg-neutral-100")}>
+                    {v.thumbnail || v.video_url ? (
+                      <img
+                        src={v.thumbnail || videoThumbnail(v.video_url)}
+                        alt=""
+                        className={cn(
+                          "h-full w-full transition-transform duration-200 group-hover:scale-[1.02]",
+                          isVideoMode ? "object-contain" : "object-cover",
+                        )}
+                      />
                     ) : (
                       <div className="flex h-full items-center justify-center">
-                        <FileText className="h-8 w-8 text-neutral-300" />
+                        {isVideoMode ? (
+                          <Layers className="h-8 w-8 text-neutral-300" />
+                        ) : (
+                          <FileText className="h-8 w-8 text-neutral-300" />
+                        )}
                       </div>
                     )}
                     {v.featured && (
@@ -926,9 +904,6 @@ export function PlaybookTab() {
 
                   <div className="flex flex-1 flex-col p-4">
                     <div className="mb-3 flex flex-wrap gap-1.5">
-                      <span className={cn("inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", contentTypeBadgeClass(typeLabel))}>
-                        {typeLabel}
-                      </span>
                       <span className="inline-flex rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-neutral-600">
                         {CATEGORY_LABELS[v.category]}
                       </span>
@@ -939,11 +914,11 @@ export function PlaybookTab() {
                       )}
                     </div>
 
-                    <h3 className="font-display text-base font-bold leading-snug text-neutral-900 line-clamp-2 group-hover:text-primary-700">
+                    <h3 className="font-display text-base font-bold leading-snug text-neutral-900 line-clamp-3 group-hover:text-primary-700">
                       {v.title}
                     </h3>
 
-                    {v.description?.trim() && (
+                    {!isVideoMode && v.description?.trim() && (
                       <p className="mt-2 line-clamp-2 text-sm font-normal leading-relaxed text-neutral-500">
                         {v.description}
                       </p>

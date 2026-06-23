@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Check, ImagePlus, Loader2, Upload } from "lucide-react";
 import { uploadPlaybookArticleImage } from "@/lib/playbook/storage";
+import { PLAYBOOK_ARTICLE_TEMPLATE } from "@/lib/playbook/article-format";
 import { cn } from "@/lib/utils";
 
 type PlaybookArticleEditorProps = {
@@ -104,8 +105,8 @@ export function PlaybookArticleEditor({
           Add photos
         </p>
         <p className="mt-1 text-xs leading-relaxed text-neutral-500">
-          Photos appear on the live article full-width with a caption underneath, like{" "}
-          <span className="font-medium text-neutral-600">HOMEUP PHOTO: your caption</span> on Straits Times stories.
+          Follow the section labels (Quick Answer, Introduction, question headings ending with ?, How HomeUp Approaches This, Conclusion, FAQ). Use{" "}
+          <strong>Choose photo</strong> above to add images — no special code needed.
         </p>
 
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-neutral-600">
@@ -183,9 +184,7 @@ export function PlaybookArticleEditor({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={14}
-        placeholder={
-          "## Heading\n\nWrite the full guide here. Use Choose photo above to add images — you do not need to type any special code."
-        }
+        placeholder={PLAYBOOK_ARTICLE_TEMPLATE}
         className={textareaClassName}
       />
 

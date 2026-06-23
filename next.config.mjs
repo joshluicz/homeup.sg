@@ -52,6 +52,16 @@ const nextConfig = {
         destination: "/playbook",
         permanent: false,
       },
+      {
+        source: "/playbook/articles",
+        destination: "/playbook",
+        permanent: true,
+      },
+      {
+        source: "/playbook/videos",
+        destination: "/playbook",
+        permanent: true,
+      },
     ];
   },
   async headers() {

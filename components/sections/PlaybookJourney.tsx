@@ -4,222 +4,127 @@
 // PLAYBOOK JOURNEY SECTION
 //
 // BLOCK 1 — Three-stage journey navigator (sticky step bar)
-// BLOCK 2 — Three content stage sections (live video embed + article cards)
+// BLOCK 2 — Per stage: horizontal videos row, then article cards below
 // BLOCK 3 — Sticky WhatsApp planning-call CTA (desktop right / mobile bottom bar)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from "react";
-import { PlaybookArticleLink } from "@/components/playbook/PlaybookArticleLink";
-import { ArrowRight, Clock, Play, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { toEmbedUrl, resolveThumbnail, isDirectVideoFile } from "@/lib/playbook/embed";
+import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import { trackVideoPlay } from "@/lib/analytics";
+import { PlaybookVideoCard, PlaybookVideoModalFrame } from "@/components/playbook/PlaybookVideoCard";
+import { PlaybookArticleCard } from "@/components/playbook/PlaybookArticleCard";
 import type { PlaybookVideo, PlaybookTopic } from "@/lib/data/playbook";
-import { TOPIC_LABELS } from "@/lib/data/playbook";
+import {
+  PLAYBOOK_JOURNEY_SECTIONS,
+  PLAYBOOK_TOPICS,
+  TOPIC_LABELS,
+  inferPlaybookTopicFromCategory,
+} from "@/lib/data/playbook";
 
 // ── WhatsApp URL ──────────────────────────────────────────────────────────────
 const WA_URL =
   "https://wa.me/6580877015?text=Hi%2C%20I%20found%20the%20HomeUP%20Playbook%20and%20would%20like%20a%20planning%20call.";
 
-// ── Stage metadata (structural, not content) ──────────────────────────────────
-interface StageConfig {
-  id: string;
-  step: number;
-  topic: PlaybookTopic;
-  description: string;
+const STAGES = PLAYBOOK_JOURNEY_SECTIONS;
+
+function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
+  const topic = row.topic as PlaybookTopic | null;
+  if (topic && PLAYBOOK_TOPICS.includes(topic)) return topic;
+  return inferPlaybookTopicFromCategory(row.category as PlaybookVideo["category"]);
 }
 
-const STAGES: StageConfig[] = [
-  {
-    id: "stage-1",
-    step: 1,
-    topic: "upgraders",
-    description:
-      "Worried about ABSD, timing both transactions, or whether upgrading actually makes financial sense right now? These guides answer the questions most agents won't.",
-  },
-  {
-    id: "stage-2",
-    step: 2,
-    topic: "buying_first",
-    description:
-      "From loan eligibility and down payment maths to negotiation tactics and showroom traps — everything you need before you sign anything.",
-  },
-  {
-    id: "stage-3",
-    step: 3,
-    topic: "condo_tips",
-    description:
-      "Market myths, investment strategies that backfire, and how to spot a genuinely undervalued unit. Straight talk from Dennis.",
-  },
-];
-
-// ── Inline Video Player ───────────────────────────────────────────────────────
-function InlineVideo({
-  video,
-  onClose,
-}: {
-  video: PlaybookVideo;
-  onClose: () => void;
-}) {
-  return (
-    <div className="relative w-full overflow-hidden rounded-2xl bg-neutral-900" style={{ aspectRatio: "16/9" }}>
-      <button
-        onClick={onClose}
-        aria-label="Close video"
-        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800/80 text-white backdrop-blur-sm transition-colors hover:bg-neutral-700"
-      >
-        <X className="h-4 w-4" />
-      </button>
-      {isDirectVideoFile(video.videoUrl) ? (
-        <video
-          src={video.videoUrl}
-          title={video.title}
-          controls
-          autoPlay
-          playsInline
-          className="h-full w-full"
-        />
-      ) : (
-        <iframe
-          src={`${toEmbedUrl(video.videoUrl)}?autoplay=1&rel=0`}
-          title={video.title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="h-full w-full"
-        />
-      )}
-    </div>
-  );
+function rowToPlaybookVideo(row: Record<string, unknown>, topic: PlaybookTopic): PlaybookVideo {
+  return {
+    id: row.id as string,
+    slug: row.slug as string,
+    title: row.title as string,
+    description: row.description as string,
+    category: row.category as PlaybookVideo["category"],
+    duration: row.duration as string,
+    thumbnail: row.thumbnail as string,
+    videoUrl: row.video_url as string,
+    featured: row.featured as boolean,
+    publishedAt: row.published_at as string,
+    tags: row.tags as string[],
+    article: (row.article as string) ?? "",
+    faq: ((row.faq as { q: string; a: string }[]) ?? []).filter((f) => f?.q && f?.a),
+    metaDescription: (row.meta_description as string) ?? "",
+    topic,
+    contentKind: (row.content_kind as PlaybookVideo["contentKind"]) ?? undefined,
+  };
 }
 
-// ── Video Thumbnail (click to play inline) ───────────────────────────────────
-function VideoThumbnail({
+// ── Video card + modal (shared full-frame vertical layout) ────────────────────
+function StageVideoCard({
   video,
   onPlay,
 }: {
   video: PlaybookVideo;
-  onPlay: () => void;
+  onPlay: (video: PlaybookVideo) => void;
 }) {
   return (
-    <button
-      onClick={onPlay}
-      className="group relative w-full overflow-hidden rounded-2xl bg-neutral-100 focus:outline-none"
-      style={{ aspectRatio: "16/9" }}
-      aria-label={`Play: ${video.title}`}
-    >
-      {resolveThumbnail(video.thumbnail, video.videoUrl) ? (
-        <img
-          src={resolveThumbnail(video.thumbnail, video.videoUrl)}
-          alt={video.title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-      ) : (
-        <div className="h-full w-full bg-neutral-200" />
-      )}
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-neutral-950/30 transition-opacity duration-200 group-hover:bg-neutral-950/20" />
-      {/* Play button */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg transition-transform duration-200 group-hover:scale-110">
-          <Play className="h-6 w-6 translate-x-0.5 fill-primary-600 text-primary-600" />
-        </div>
-        {video.duration && (
-          <span className="rounded-full bg-neutral-950/60 px-2.5 py-0.5 text-xs font-semibold text-white">
-            {video.duration}
-          </span>
-        )}
-      </div>
-    </button>
+    <PlaybookVideoCard
+      thumbnailSrc={resolveThumbnail(video.thumbnail, video.videoUrl)}
+      title={video.title}
+      duration={video.duration}
+      onClick={() => onPlay(video)}
+    />
   );
 }
 
-// ── Category tag colours ──────────────────────────────────────────────────────
-const CATEGORY_TAG: Record<string, { label: string; className: string }> = {
-  selling: { label: "Upgrading",   className: "bg-amber-50 text-amber-700 ring-amber-200" },
-  buying:  { label: "Buying",      className: "bg-blue-50 text-blue-700 ring-blue-200" },
-  market:  { label: "Commentary",  className: "bg-violet-50 text-violet-700 ring-violet-200" },
-  process: { label: "Process",     className: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
-  tips:    { label: "Tips",        className: "bg-rose-50 text-rose-700 ring-rose-200" },
-};
-
-// ── Article Card ──────────────────────────────────────────────────────────────
-function ArticleCard({ video, isFirst }: { video: PlaybookVideo; isFirst?: boolean }) {
-  const wordCount = video.article?.split(/\s+/).length ?? 0;
-  const readTime = wordCount > 0
-    ? `${Math.max(1, Math.round(wordCount / 200))} min read`
-    : "Quick read";
-
-  const teaser = video.description?.trim() || "";
-  const tag = CATEGORY_TAG[video.category] ?? CATEGORY_TAG.tips;
-
+function VideoModal({ video, onClose }: { video: PlaybookVideo; onClose: () => void }) {
   return (
-    <PlaybookArticleLink
-      href={`/playbook/${video.slug}`}
-      className="group relative flex flex-col rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all duration-200 hover:border-primary-300 hover:shadow-lg"
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/85 px-4 py-8 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
     >
-      {/* Start here badge */}
-      {isFirst && (
-        <span className="absolute right-4 top-4 rounded-full bg-primary-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-600 ring-1 ring-primary-200">
-          Start here
-        </span>
-      )}
-
-      {/* Category tag + read time */}
-      <div className="mb-3 flex items-center gap-2">
-        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1", tag.className)}>
-          {tag.label}
-        </span>
-        <span className="flex items-center gap-1 text-[11px] text-neutral-400">
-          {video.videoUrl
-            ? <><Play className="h-2.5 w-2.5 fill-neutral-400" />Watch + {readTime}</>
-            : <><Clock className="h-2.5 w-2.5" />{readTime}</>}
-        </span>
+      <div className="w-full max-w-[min(100%,22rem)]">
+        <PlaybookVideoModalFrame title={video.title} onClose={onClose}>
+          {isDirectVideoFile(video.videoUrl) ? (
+            <video
+              src={video.videoUrl}
+              title={video.title}
+              controls
+              autoPlay
+              playsInline
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <iframe
+              src={toEmbedUrl(video.videoUrl)}
+              title={video.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full"
+            />
+          )}
+        </PlaybookVideoModalFrame>
       </div>
-
-      {/* Title */}
-      <p className="font-display text-sm font-bold leading-snug text-neutral-900 group-hover:text-primary-700 sm:text-base">
-        {video.title}
-      </p>
-
-      {/* Teaser — Dennis's hook */}
-      {teaser && (
-        <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-neutral-500">
-          {teaser}
-        </p>
-      )}
-
-      {/* Read arrow — always visible on touch; hover reveal on desktop */}
-      <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-primary-600 opacity-100 sm:opacity-0 sm:transition-opacity sm:duration-200 sm:group-hover:opacity-100">
-        Read guide
-        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-      </div>
-    </PlaybookArticleLink>
+    </div>
   );
 }
 
 // ── Stage Section ─────────────────────────────────────────────────────────────
 function StageSection({
   stage,
+  videos,
   articles,
+  onPlayVideo,
   sectionRef,
 }: {
-  stage: StageConfig;
+  stage: (typeof STAGES)[number];
+  videos: PlaybookVideo[];
   articles: PlaybookVideo[];
+  onPlayVideo: (video: PlaybookVideo) => void;
   sectionRef: (el: HTMLElement | null) => void;
 }) {
-  const [playingVideo, setPlayingVideo] = useState<PlaybookVideo | null>(null);
-
-  // Main video for this topic = the MOST POPULAR one (featured); fall back to the latest.
-  // Any other videos in the topic surface in the Library grid below, not here.
-  const topicVideos = articles.filter((a) => a.videoUrl);
-  const primaryVideo = topicVideos.find((a) => a.featured) ?? topicVideos[0] ?? null;
-  // Article cards = any item with a readable written guide (and a slug), EXCEPT the one
-  // already shown as this topic's main video (it gets a "Read the full guide" link instead).
-  // Items that have BOTH a video and an article still appear here so the guide is reachable —
-  // their /playbook/[slug] page renders the video AND the article together.
-  const articleCards = articles.filter(
-    (a) => a.slug && a.article?.trim() && a.id !== primaryVideo?.id,
-  );
+  const articleCards = articles.filter((a) => a.slug && a.article?.trim());
+  const stageVideos = videos.filter((v) => v.videoUrl?.trim());
+  const hasContent = stageVideos.length > 0 || articleCards.length > 0;
 
   return (
     <section
@@ -228,7 +133,6 @@ function StageSection({
       className="scroll-mt-32 border-t border-neutral-100 py-16 sm:py-20"
     >
       <div className="container-page">
-        {/* Header */}
         <div className="mb-10 max-w-2xl">
           <span className="mb-3 inline-flex h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white">
             {stage.step}
@@ -241,51 +145,25 @@ function StageSection({
           </p>
         </div>
 
-        {/* Video */}
-        {primaryVideo && (
-          <div className="mb-10 w-full max-w-3xl">
-            {playingVideo ? (
-              <InlineVideo video={playingVideo} onClose={() => setPlayingVideo(null)} />
-            ) : (
-              <VideoThumbnail video={primaryVideo} onPlay={() => setPlayingVideo(primaryVideo)} />
-            )}
-            {!playingVideo && (
-              <div className="mt-3">
-                <p className="text-sm font-semibold text-neutral-700">{primaryVideo.title}</p>
-                {primaryVideo.description && (
-                  <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-neutral-500">
-                    {primaryVideo.description}
-                  </p>
-                )}
-                {primaryVideo.slug && primaryVideo.article?.trim() && (
-                  <PlaybookArticleLink
-                    href={`/playbook/${primaryVideo.slug}`}
-                    className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700"
-                  >
-                    Read the full guide
-                    <span aria-hidden>→</span>
-                  </PlaybookArticleLink>
-                )}
-              </div>
-            )}
+        {stageVideos.length > 0 && (
+          <div className={cn(articleCards.length > 0 && "mb-10")}>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {stageVideos.map((video) => (
+                <StageVideoCard key={video.id} video={video} onPlay={onPlayVideo} />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Article card grid */}
         {articleCards.length > 0 && (
-          <>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-neutral-400">
-              {articleCards.length} guide{articleCards.length !== 1 ? "s" : ""}
-            </p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {articleCards.map((video, i) => (
-                <ArticleCard key={video.id} video={video} isFirst={i === 0} />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {articleCards.map((video, i) => (
+              <PlaybookArticleCard key={video.id} article={video} isFirst={i === 0} />
+            ))}
+          </div>
         )}
 
-        {!primaryVideo && articleCards.length === 0 && (
+        {!hasContent && (
           <p className="text-sm text-neutral-400">Content coming soon.</p>
         )}
       </div>
@@ -296,9 +174,11 @@ function StageSection({
 // ── Stage Navigator ───────────────────────────────────────────────────────────
 function StageNavigator({
   activeStage,
+  videosByTopic,
   articlesByTopic,
 }: {
   activeStage: string;
+  videosByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
   articlesByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
 }) {
   const scrollTo = (id: string) => {
@@ -341,12 +221,12 @@ function StageNavigator({
                 </span>
                 <span className="leading-tight">
                   {TOPIC_LABELS[stage.topic]}
-                  {articlesByTopic[stage.topic].length > 0 && (
+                  {(videosByTopic[stage.topic].length + articlesByTopic[stage.topic].length) > 0 && (
                     <span className={cn(
                       "ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
                       isActive ? "bg-primary-100 text-primary-700" : "bg-neutral-100 text-neutral-500 group-hover:bg-white/20 group-hover:text-white"
                     )}>
-                      {articlesByTopic[stage.topic].length}
+                      {videosByTopic[stage.topic].length + articlesByTopic[stage.topic].length}
                     </span>
                   )}
                 </span>
@@ -396,6 +276,12 @@ function PlaybookWhatsAppCTA() {
 // ── Main export ───────────────────────────────────────────────────────────────
 export function PlaybookJourney() {
   const [activeStage, setActiveStage] = useState(STAGES[0].id);
+  const [activeVideo, setActiveVideo] = useState<PlaybookVideo | null>(null);
+  const [videosByTopic, setVideosByTopic] = useState<Record<PlaybookTopic, PlaybookVideo[]>>({
+    upgraders: [],
+    buying_first: [],
+    condo_tips: [],
+  });
   const [articlesByTopic, setArticlesByTopic] = useState<Record<PlaybookTopic, PlaybookVideo[]>>({
     upgraders: [],
     buying_first: [],
@@ -408,39 +294,37 @@ export function PlaybookJourney() {
     supabase
       .from("playbook_videos")
       .select("*")
-      .not("topic", "is", null)
       .order("published_at", { ascending: false })
       .then(({ data }) => {
         if (!data) return;
-        const grouped: Record<PlaybookTopic, PlaybookVideo[]> = {
+        const videos: Record<PlaybookTopic, PlaybookVideo[]> = {
+          upgraders: [],
+          buying_first: [],
+          condo_tips: [],
+        };
+        const articles: Record<PlaybookTopic, PlaybookVideo[]> = {
           upgraders: [],
           buying_first: [],
           condo_tips: [],
         };
         for (const row of data) {
-          const topic = row.topic as PlaybookTopic;
-          if (!grouped[topic]) continue;
-          grouped[topic].push({
-            id: row.id as string,
-            slug: row.slug as string,
-            title: row.title as string,
-            description: row.description as string,
-            category: row.category as PlaybookVideo["category"],
-            duration: row.duration as string,
-            thumbnail: row.thumbnail as string,
-            videoUrl: row.video_url as string,
-            featured: row.featured as boolean,
-            publishedAt: row.published_at as string,
-            tags: row.tags as string[],
-            article: (row.article as string) ?? "",
-            faq: row.faq ?? [],
-            metaDescription: (row.meta_description as string) ?? "",
-            topic,
-          });
+          const topic = resolveTopic(row);
+          const entry = rowToPlaybookVideo(row, topic);
+          if (isPlaybookVideo(entry) && entry.videoUrl?.trim()) {
+            videos[topic].push(entry);
+          } else if (isPlaybookArticle(entry) && entry.article?.trim()) {
+            articles[topic].push(entry);
+          }
         }
-        setArticlesByTopic(grouped);
+        setVideosByTopic(videos);
+        setArticlesByTopic(articles);
       });
   }, []);
+
+  function handlePlayVideo(video: PlaybookVideo) {
+    setActiveVideo(video);
+    trackVideoPlay(video.title, video.slug, video.category);
+  }
 
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
@@ -464,42 +348,28 @@ export function PlaybookJourney() {
 
   return (
     <>
-      <StageNavigator activeStage={activeStage} articlesByTopic={articlesByTopic} />
+      <StageNavigator
+        activeStage={activeStage}
+        videosByTopic={videosByTopic}
+        articlesByTopic={articlesByTopic}
+      />
 
       <div className="bg-white">
         {STAGES.map((stage) => (
           <StageSection
             key={stage.id}
             stage={stage}
+            videos={videosByTopic[stage.topic]}
             articles={articlesByTopic[stage.topic]}
+            onPlayVideo={handlePlayVideo}
             sectionRef={setRef(stage.id)}
           />
         ))}
       </div>
 
-      {/* Not sure where to start? */}
-      <section className="border-t border-neutral-100 bg-neutral-50 py-14 sm:py-16">
-        <div className="container-page flex flex-col items-center gap-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <div>
-            <h2 className="font-display text-xl font-extrabold tracking-tight text-primary-600 sm:text-2xl">
-              Not sure where to start?
-            </h2>
-            <p className="mt-1.5 text-sm leading-relaxed text-neutral-500 sm:text-base">
-              Browse all our guides and videos below — organised by topic, at your own pace.
-            </p>
-          </div>
-          <a
-            href="#playbook-library"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById("playbook-library")?.scrollIntoView({ behavior: "smooth" });
-            }}
-            className="shrink-0 rounded-xl border-2 border-primary-600 px-6 py-3 text-sm font-bold text-primary-600 transition-all hover:bg-primary-600 hover:text-white"
-          >
-            Browse All Articles →
-          </a>
-        </div>
-      </section>
+      {activeVideo && (
+        <VideoModal video={activeVideo} onClose={() => setActiveVideo(null)} />
+      )}
 
       <PlaybookWhatsAppCTA />
     </>
