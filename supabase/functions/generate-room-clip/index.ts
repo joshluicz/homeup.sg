@@ -4,15 +4,20 @@ const HIGGSFIELD_API_KEY = Deno.env.get("HIGGSFIELD_API_KEY")!;
 const HIGGSFIELD_BASE = "https://api.higgsfield.ai";
 
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504, 522, 524]);
-const MAX_ATTEMPTS = 4;
-const RETRY_DELAYS_MS = [2_000, 5_000, 10_000, 20_000];
+const START_MAX_ATTEMPTS = 2;
+const START_RETRY_DELAYS_MS = [1_500, 4_000];
+const REQUEST_TIMEOUT_MS = 25_000;
+
+type ClipAction = "start" | "poll";
 
 type ClipRequest = {
-  blueprint_id: string;
-  label: string;
-  r2_url: string;
-  higgsfield_prompt: string;
-  duration_seconds: number;
+  action?: ClipAction;
+  blueprint_id?: string;
+  label?: string;
+  r2_url?: string;
+  higgsfield_prompt?: string;
+  duration_seconds?: number;
+  job_id?: string;
 };
 
 type ClipDiagnostics = {
@@ -26,6 +31,7 @@ type ClipDiagnostics = {
   used_batch_fallback: boolean;
   elapsed_ms: number;
   last_error?: string;
+  poll_status?: string;
 };
 
 function trimHiggsfieldError(text: string, status: number): string {
@@ -53,13 +59,19 @@ async function sleep(ms: number): Promise<void> {
 async function higgsfieldRequest(
   path: string,
   options: RequestInit = {},
+  maxAttempts = START_MAX_ATTEMPTS,
+  retryDelays = START_RETRY_DELAYS_MS,
 ): Promise<Record<string, unknown>> {
   let lastError: Error | null = null;
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
     try {
       const res = await fetch(`${HIGGSFIELD_BASE}${path}`, {
         ...options,
+        signal: controller.signal,
         headers: {
           Authorization: `Bearer ${HIGGSFIELD_API_KEY}`,
           "Content-Type": "application/json",
@@ -67,12 +79,13 @@ async function higgsfieldRequest(
         },
       });
 
+      clearTimeout(timeout);
       const text = await res.text();
 
       if (!res.ok) {
         const message = trimHiggsfieldError(text, res.status);
-        if (isRetryableStatus(res.status) && attempt < MAX_ATTEMPTS - 1) {
-          await sleep(RETRY_DELAYS_MS[attempt] ?? 20_000);
+        if (isRetryableStatus(res.status) && attempt < maxAttempts - 1) {
+          await sleep(retryDelays[attempt] ?? 4_000);
           continue;
         }
         throw new Error(`Higgsfield ${path} ${res.status}: ${message}`);
@@ -80,15 +93,17 @@ async function higgsfieldRequest(
 
       return text ? JSON.parse(text) : {};
     } catch (error) {
+      clearTimeout(timeout);
       lastError = error instanceof Error ? error : new Error(String(error));
       const retryable =
+        lastError.name === "AbortError" ||
         lastError.message.includes("522") ||
         lastError.message.includes("timed out") ||
         lastError.message.includes("503") ||
         lastError.message.includes("502");
 
-      if (retryable && attempt < MAX_ATTEMPTS - 1) {
-        await sleep(RETRY_DELAYS_MS[attempt] ?? 20_000);
+      if (retryable && attempt < maxAttempts - 1) {
+        await sleep(retryDelays[attempt] ?? 4_000);
         continue;
       }
 
@@ -107,7 +122,10 @@ async function runAuthSmokeTest(): Promise<Response> {
       Authorization: `Bearer ${HIGGSFIELD_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ url: "https://example.invalid/smoke-test.jpg", type: "image" }),
+    body: JSON.stringify({
+      url: "https://example.invalid/smoke-test.jpg",
+      type: "image",
+    }),
   });
 
   const text = await res.text();
@@ -149,7 +167,8 @@ function extractMediaId(result: Record<string, unknown>): string {
 
   if (!mediaId || typeof mediaId !== "string") {
     throw new Error(
-      "No media_id in Higgsfield response: " + JSON.stringify(result).slice(0, 300),
+      "No media_id in Higgsfield response: " +
+        JSON.stringify(result).slice(0, 300),
     );
   }
 
@@ -193,7 +212,9 @@ async function uploadImageBytes(
 
   if (!putRes.ok) {
     const text = await putRes.text();
-    throw new Error(`Higgsfield media upload PUT ${putRes.status}: ${text.slice(0, 300)}`);
+    throw new Error(
+      `Higgsfield media upload PUT ${putRes.status}: ${text.slice(0, 300)}`,
+    );
   }
 
   await higgsfieldRequest(`/v1/media/${mediaId}/upload`, {
@@ -205,9 +226,10 @@ async function uploadImageBytes(
   return mediaId;
 }
 
-async function importImage(url: string): Promise<string> {
+async function importImage(url: string): Promise<{ mediaId: string; usedBatchFallback: boolean }> {
   try {
-    return await importImageFromUrl(url);
+    const mediaId = await importImageFromUrl(url);
+    return { mediaId, usedBatchFallback: false };
   } catch (primaryError) {
     console.warn("upload/url failed, trying batch upload fallback:", primaryError);
 
@@ -218,7 +240,8 @@ async function importImage(url: string): Promise<string> {
 
     const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
     const bytes = new Uint8Array(await imageRes.arrayBuffer());
-    return await uploadImageBytes(bytes, contentType);
+    const mediaId = await uploadImageBytes(bytes, contentType);
+    return { mediaId, usedBatchFallback: true };
   }
 }
 
@@ -254,45 +277,58 @@ async function submitJob(
   return jobId;
 }
 
-async function pollJob(jobId: string, maxAttempts = 8): Promise<string> {
-  for (let i = 0; i < maxAttempts; i++) {
-    await sleep(15_000);
+function extractVideoUrl(result: Record<string, unknown>): string | null {
+  const videoUrl =
+    (result.results as { url?: string }[] | undefined)?.[0]?.url ??
+    (result.results as { result_url?: string }[] | undefined)?.[0]
+      ?.result_url ??
+    result.result_url ??
+    result.output_url ??
+    (result.output as { media_url?: string[] } | undefined)?.media_url?.[0];
 
-    let result: Record<string, unknown>;
-    try {
-      result = await higgsfieldRequest(`/v1/generation/video/${jobId}`);
-    } catch {
-      continue;
-    }
+  return typeof videoUrl === "string" ? videoUrl : null;
+}
 
-    const status = String(result.status ?? "").toLowerCase();
+async function checkJobStatus(jobId: string): Promise<{
+  status: "processing" | "completed" | "failed";
+  video_url?: string;
+  error?: string;
+  raw_status?: string;
+}> {
+  const result = await higgsfieldRequest(
+    `/v1/generation/video/${jobId}`,
+    {},
+    1,
+    [],
+  );
+  const rawStatus = String(result.status ?? "").toLowerCase();
 
-    if (status === "completed" || status === "complete" || status === "done") {
-      const videoUrl =
-        (result.results as { url?: string }[] | undefined)?.[0]?.url ??
-        (result.results as { result_url?: string }[] | undefined)?.[0]
-          ?.result_url ??
-        result.result_url ??
-        result.output_url ??
-        (result.output as { media_url?: string[] } | undefined)?.media_url?.[0];
-
-      if (!videoUrl || typeof videoUrl !== "string") {
-        throw new Error(
+  if (
+    rawStatus === "completed" ||
+    rawStatus === "complete" ||
+    rawStatus === "done"
+  ) {
+    const videoUrl = extractVideoUrl(result);
+    if (!videoUrl) {
+      return {
+        status: "failed",
+        error:
           "Completed but no video URL: " + JSON.stringify(result).slice(0, 300),
-        );
-      }
-
-      return videoUrl;
+        raw_status: rawStatus,
+      };
     }
-
-    if (status === "failed" || status === "error") {
-      throw new Error("Higgsfield job failed: " + JSON.stringify(result).slice(0, 300));
-    }
+    return { status: "completed", video_url: videoUrl, raw_status: rawStatus };
   }
 
-  throw new Error(
-    `Higgsfield job is still processing after ~120s. Please retry this room clip.`,
-  );
+  if (rawStatus === "failed" || rawStatus === "error") {
+    return {
+      status: "failed",
+      error: "Higgsfield job failed: " + JSON.stringify(result).slice(0, 300),
+      raw_status: rawStatus,
+    };
+  }
+
+  return { status: "processing", raw_status: rawStatus || "unknown" };
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -303,6 +339,168 @@ function jsonResponse(body: unknown, status = 200): Response {
       "Access-Control-Allow-Headers": "*",
     },
   });
+}
+
+function isRetryableError(message: string): boolean {
+  return (
+    message.includes("timed out") ||
+    message.includes("522") ||
+    message.includes("503") ||
+    message.includes("502") ||
+    message.includes("504")
+  );
+}
+
+async function handleStart(body: ClipRequest): Promise<Response> {
+  const { blueprint_id, label, r2_url, higgsfield_prompt, duration_seconds } =
+    body;
+
+  if (!blueprint_id || !label || !r2_url || !higgsfield_prompt) {
+    return jsonResponse(
+      {
+        success: false,
+        error:
+          "Missing required fields: blueprint_id, label, r2_url, higgsfield_prompt",
+      },
+      400,
+    );
+  }
+
+  const startedAt = Date.now();
+  let stage: ClipDiagnostics["stage"] = "import_image";
+  let usedBatchFallback = false;
+
+  try {
+    console.log(`[${label}] Importing image: ${r2_url}`);
+    const imported = await importImage(r2_url);
+    usedBatchFallback = imported.usedBatchFallback;
+    console.log(`[${label}] media_id: ${imported.mediaId}`);
+
+    stage = "submit_job";
+    console.log(`[${label}] Submitting Kling 3.0 job`);
+    const jobId = await submitJob(
+      imported.mediaId,
+      higgsfield_prompt,
+      duration_seconds ?? 10,
+    );
+    console.log(`[${label}] job_id: ${jobId}`);
+
+    const diagnostics: ClipDiagnostics = {
+      stage: "submit_job",
+      attempt_count: 1,
+      used_batch_fallback: usedBatchFallback,
+      elapsed_ms: Date.now() - startedAt,
+    };
+
+    return jsonResponse({
+      success: true,
+      status: "processing",
+      label,
+      job_id: jobId,
+      higgsfield_job_id: jobId,
+      diagnostics,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[${label}] Start error:`, message);
+
+    return jsonResponse({
+      success: false,
+      label,
+      error: message,
+      retryable: isRetryableError(message),
+      diagnostics: {
+        stage,
+        attempt_count: 1,
+        used_batch_fallback: usedBatchFallback,
+        elapsed_ms: Date.now() - startedAt,
+        last_error: message,
+      } satisfies ClipDiagnostics,
+    });
+  }
+}
+
+async function handlePoll(body: ClipRequest): Promise<Response> {
+  const { job_id, label, blueprint_id } = body;
+
+  if (!job_id) {
+    return jsonResponse({ success: false, error: "Missing job_id" }, 400);
+  }
+
+  const startedAt = Date.now();
+
+  try {
+    const result = await checkJobStatus(job_id);
+
+    if (result.status === "completed") {
+      return jsonResponse({
+        success: true,
+        status: "completed",
+        label,
+        blueprint_id,
+        job_id,
+        higgsfield_job_id: job_id,
+        video_url: result.video_url,
+        diagnostics: {
+          stage: "completed",
+          attempt_count: 1,
+          used_batch_fallback: false,
+          elapsed_ms: Date.now() - startedAt,
+          poll_status: result.raw_status,
+        } satisfies ClipDiagnostics,
+      });
+    }
+
+    if (result.status === "failed") {
+      return jsonResponse({
+        success: false,
+        status: "failed",
+        label,
+        job_id,
+        error: result.error ?? "Higgsfield job failed",
+        retryable: false,
+        diagnostics: {
+          stage: "poll_job",
+          attempt_count: 1,
+          used_batch_fallback: false,
+          elapsed_ms: Date.now() - startedAt,
+          poll_status: result.raw_status,
+          last_error: result.error,
+        } satisfies ClipDiagnostics,
+      });
+    }
+
+    return jsonResponse({
+      success: true,
+      status: "processing",
+      label,
+      job_id,
+      diagnostics: {
+        stage: "poll_job",
+        attempt_count: 1,
+        used_batch_fallback: false,
+        elapsed_ms: Date.now() - startedAt,
+        poll_status: result.raw_status,
+      } satisfies ClipDiagnostics,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return jsonResponse({
+      success: false,
+      status: "processing",
+      label,
+      job_id,
+      error: message,
+      retryable: isRetryableError(message),
+      diagnostics: {
+        stage: "poll_job",
+        attempt_count: 1,
+        used_batch_fallback: false,
+        elapsed_ms: Date.now() - startedAt,
+        last_error: message,
+      } satisfies ClipDiagnostics,
+    });
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -327,86 +525,12 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ success: false, error: "Invalid JSON body" }, 400);
   }
 
-  const { blueprint_id, label, r2_url, higgsfield_prompt, duration_seconds } =
-    body;
+  const action: ClipAction =
+    body.action === "poll" || body.job_id ? "poll" : "start";
 
-  if (!blueprint_id || !label || !r2_url || !higgsfield_prompt) {
-    return jsonResponse({
-      success: false,
-      error: "Missing required fields: blueprint_id, label, r2_url, higgsfield_prompt",
-    }, 400);
+  if (action === "poll") {
+    return await handlePoll(body);
   }
 
-  const startedAt = Date.now();
-  let stage: ClipDiagnostics["stage"] = "import_image";
-  let usedBatchFallback = false;
-  let attemptCount = 1;
-
-  try {
-
-    console.log(`[${label}] Importing image: ${r2_url}`);
-    let mediaId: string;
-    try {
-      mediaId = await importImageFromUrl(r2_url);
-    } catch (err) {
-      usedBatchFallback = true;
-      console.warn(`[${label}] upload/url failed, switching to batch upload`, err);
-      const imageRes = await fetch(r2_url);
-      if (!imageRes.ok) throw err;
-      const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
-      const bytes = new Uint8Array(await imageRes.arrayBuffer());
-      mediaId = await uploadImageBytes(bytes, contentType);
-    }
-    console.log(`[${label}] media_id: ${mediaId}`);
-
-    stage = "submit_job";
-    console.log(`[${label}] Submitting Kling 3.0 job`);
-    const jobId = await submitJob(mediaId, higgsfield_prompt, duration_seconds ?? 10);
-    console.log(`[${label}] job_id: ${jobId}`);
-
-    stage = "poll_job";
-    console.log(`[${label}] Polling...`);
-    const videoUrl = await pollJob(jobId);
-    console.log(`[${label}] Done: ${videoUrl}`);
-
-    stage = "completed";
-    const diagnostics: ClipDiagnostics = {
-      stage,
-      attempt_count: attemptCount,
-      used_batch_fallback: usedBatchFallback,
-      elapsed_ms: Date.now() - startedAt,
-    };
-
-    return jsonResponse({
-      success: true,
-      label,
-      higgsfield_job_id: jobId,
-      video_url: videoUrl,
-      diagnostics,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[${label}] Error:`, message);
-
-    const retryable =
-      message.includes("timed out") ||
-      message.includes("522") ||
-      message.includes("503") ||
-      message.includes("502") ||
-      message.includes("504");
-
-    return jsonResponse({
-      success: false,
-      label,
-      error: message,
-      retryable,
-      diagnostics: {
-        stage,
-        attempt_count: attemptCount,
-        used_batch_fallback: usedBatchFallback,
-        elapsed_ms: Date.now() - startedAt,
-        last_error: message,
-      } satisfies ClipDiagnostics,
-    });
-  }
+  return await handleStart(body);
 });
