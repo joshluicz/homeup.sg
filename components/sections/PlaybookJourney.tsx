@@ -6,7 +6,7 @@
 // Per section: videos rail → featured carousel + article grid (mockup layout)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
@@ -14,7 +14,15 @@ import {
   groupPlaybookVideosByTopic,
   mergePlaybookVideos,
 } from "@/lib/playbook/public-videos";
+import {
+  countPlaybookMatches,
+  DEFAULT_PLAYBOOK_JOURNEY_FILTERS,
+  filterPlaybookByTopic,
+  hasActivePlaybookFilters,
+  type PlaybookJourneyFilters,
+} from "@/lib/playbook/playbook-filters";
 import { PlaybookArticleBlogSection } from "@/components/playbook/PlaybookArticleBlogSection";
+import { PlaybookJourneyToolbar } from "@/components/playbook/PlaybookJourneyToolbar";
 import { PlaybookVideoRail } from "@/components/playbook/PlaybookVideoRail";
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import {
@@ -73,11 +81,13 @@ function StageSection({
   videos,
   articles,
   sectionRef,
+  filtersActive,
 }: {
   stage: (typeof STAGES)[number];
   videos: PlaybookVideo[];
   articles: PlaybookVideo[];
   sectionRef: (el: HTMLElement | null) => void;
+  filtersActive: boolean;
 }) {
   const articleCards = articles.filter((a) => a.slug && a.article?.trim());
   const stageVideos = videos.filter((v) => v.videoUrl?.trim());
@@ -115,7 +125,9 @@ function StageSection({
         />
 
         {!hasContent && (
-          <p className="text-sm text-neutral-400">Content coming soon.</p>
+          <p className="text-sm text-neutral-400">
+            {filtersActive ? "No videos or articles match your filters." : "Content coming soon."}
+          </p>
         )}
       </div>
     </section>
@@ -126,10 +138,12 @@ function StageNavigator({
   activeStage,
   videosByTopic,
   articlesByTopic,
+  stages,
 }: {
   activeStage: string;
   videosByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
   articlesByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
+  stages: typeof STAGES;
 }) {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -143,7 +157,7 @@ function StageNavigator({
           aria-label="Playbook categories"
           className="flex flex-wrap items-center gap-2 sm:gap-3"
         >
-          {STAGES.map((stage) => {
+          {stages.map((stage) => {
             const isActive = activeStage === stage.id;
             const count =
               videosByTopic[stage.topic].length + articlesByTopic[stage.topic].length;
@@ -214,9 +228,28 @@ export function PlaybookJourney({
   initialVideosByTopic?: Record<PlaybookTopic, PlaybookVideo[]>;
 }) {
   const [activeStage, setActiveStage] = useState(STAGES[0].id);
+  const [filters, setFilters] = useState<PlaybookJourneyFilters>(DEFAULT_PLAYBOOK_JOURNEY_FILTERS);
   const [articlesByTopic, setArticlesByTopic] = useState(initialArticlesByTopic);
   const [videosByTopic, setVideosByTopic] = useState(initialVideosByTopic);
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+
+  const filteredVideosByTopic = useMemo(
+    () => filterPlaybookByTopic(videosByTopic, filters),
+    [videosByTopic, filters],
+  );
+  const filteredArticlesByTopic = useMemo(
+    () => filterPlaybookByTopic(articlesByTopic, filters),
+    [articlesByTopic, filters],
+  );
+  const visibleStages = useMemo(
+    () => STAGES.filter((stage) => filters.topic === "all" || stage.topic === filters.topic),
+    [filters.topic],
+  );
+  const resultCount = useMemo(
+    () => countPlaybookMatches(videosByTopic, articlesByTopic, filters),
+    [videosByTopic, articlesByTopic, filters],
+  );
+  const filtersActive = hasActivePlaybookFilters(filters);
 
   useEffect(() => {
     setArticlesByTopic(initialArticlesByTopic);
@@ -258,6 +291,15 @@ export function PlaybookJourney({
   }, []);
 
   useEffect(() => {
+    if (filters.topic === "all") return;
+    const stage = STAGES.find((item) => item.topic === filters.topic);
+    if (!stage) return;
+    setActiveStage(stage.id);
+    const el = document.getElementById(stage.id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [filters.topic]);
+
+  useEffect(() => {
     let observers: IntersectionObserver[] = [];
 
     const disconnectAll = () => {
@@ -268,6 +310,7 @@ export function PlaybookJourney({
     const observeSections = () => {
       disconnectAll();
       STAGES.forEach((stage) => {
+        if (!visibleStages.some((item) => item.id === stage.id)) return;
         const el = sectionRefs.current.get(stage.id);
         if (!el) return;
         const obs = new IntersectionObserver(
@@ -288,7 +331,7 @@ export function PlaybookJourney({
       window.clearTimeout(retry);
       disconnectAll();
     };
-  }, [articlesByTopic, videosByTopic]);
+  }, [articlesByTopic, videosByTopic, visibleStages]);
 
   const setRef = (id: string) => (el: HTMLElement | null) => {
     if (el) sectionRefs.current.set(id, el);
@@ -297,22 +340,46 @@ export function PlaybookJourney({
 
   return (
     <>
+      <PlaybookJourneyToolbar
+        filters={filters}
+        onChange={setFilters}
+        resultCount={resultCount}
+      />
+
       <StageNavigator
         activeStage={activeStage}
-        videosByTopic={videosByTopic}
-        articlesByTopic={articlesByTopic}
+        videosByTopic={filteredVideosByTopic}
+        articlesByTopic={filteredArticlesByTopic}
+        stages={visibleStages}
       />
 
       <div className="bg-white pb-20 lg:pb-0">
-        {STAGES.map((stage) => (
-          <StageSection
-            key={stage.id}
-            stage={stage}
-            videos={videosByTopic[stage.topic]}
-            articles={articlesByTopic[stage.topic]}
-            sectionRef={setRef(stage.id)}
-          />
-        ))}
+        {resultCount === 0 && filtersActive ? (
+          <div className="container-page py-16 text-center">
+            <p className="text-sm font-semibold text-neutral-700">No results found</p>
+            <p className="mt-2 text-sm text-neutral-500">
+              Try a different topic, agent, or search term.
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilters(DEFAULT_PLAYBOOK_JOURNEY_FILTERS)}
+              className="mt-4 text-sm font-semibold text-primary-600 hover:underline"
+            >
+              Clear all filters
+            </button>
+          </div>
+        ) : (
+          visibleStages.map((stage) => (
+            <StageSection
+              key={stage.id}
+              stage={stage}
+              videos={filteredVideosByTopic[stage.topic]}
+              articles={filteredArticlesByTopic[stage.topic]}
+              sectionRef={setRef(stage.id)}
+              filtersActive={filtersActive}
+            />
+          ))
+        )}
       </div>
 
       <PlaybookWhatsAppCTA />

@@ -62,9 +62,17 @@ export function mergeAdminPlaybookVideos(
     );
   }
 
-  const scopedDb = dbRows.filter((row) =>
-    isPlaybookVideo({ article: row.article, videoUrl: row.video_url }),
-  );
+  const scopedDb = dbRows
+    .filter((row) => isPlaybookVideo({ article: row.article, videoUrl: row.video_url }))
+    .map((row) => {
+      const sheet = PLAYBOOK_SHEET_VIDEOS.find(
+        (video) => videoUrlKey(video.videoUrl) === videoUrlKey(row.video_url),
+      );
+      if (!row.thumbnail?.trim() && sheet?.thumbnail?.trim()) {
+        return { ...row, thumbnail: sheet.thumbnail.trim() };
+      }
+      return row;
+    });
 
   const dbVideoUrls = new Set(
     scopedDb.map((row) => row.video_url).filter(Boolean).map(videoUrlKey),

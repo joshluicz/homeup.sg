@@ -2,14 +2,14 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { X, ExternalLink, Star, Play } from "lucide-react";
+import { X, Star, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { ArticleBody } from "@/components/sections/ArticleBody";
+import { PlaybookEmbeddedVideoPlayer, PlaybookExternalWatchButton } from "@/components/playbook/PlaybookEmbeddedVideoPlayer";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
-import { isDirectVideoFile } from "@/lib/playbook/embed";
 import { trackVideoPlay } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
@@ -74,10 +74,9 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
       : videos.filter((v) => v.category === activeCategory);
 
   const handlePlay = useCallback((video: PlaybookVideo) => {
-    if (video.videoUrl) {
-      setActiveVideo(video);
-      trackVideoPlay(video.title, video.slug, video.category);
-    }
+    if (!video.videoUrl) return;
+    trackVideoPlay(video.title, video.slug, video.category);
+    setActiveVideo(video);
   }, []);
 
   const closeModal = useCallback(() => setActiveVideo(null), []);
@@ -86,26 +85,6 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
     setActiveArticle(video);
   }, []);
   const closeArticle = useCallback(() => setActiveArticle(null), []);
-
-  // Convert a YouTube watch URL to an embeddable URL
-  const toEmbedUrl = (url: string) => {
-    try {
-      const u = new URL(url);
-      if (u.hostname.includes("youtube.com")) {
-        const id = u.searchParams.get("v");
-        return id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0` : url;
-      }
-      if (u.hostname.includes("youtu.be")) {
-        return `https://www.youtube.com/embed${u.pathname}?autoplay=1&rel=0`;
-      }
-      if (u.hostname.includes("vimeo.com")) {
-        return `https://player.vimeo.com/video${u.pathname}?autoplay=1`;
-      }
-      return url;
-    } catch {
-      return url;
-    }
-  };
 
   return (
     <>
@@ -223,29 +202,20 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
               </button>
 
               {/* Video player */}
-              <div className="aspect-video w-full bg-neutral-900">
-                {isDirectVideoFile(activeVideo.videoUrl) ? (
-                  <video
-                    src={activeVideo.videoUrl}
-                    title={activeVideo.title}
-                    controls
-                    autoPlay
-                    playsInline
-                    className="h-full w-full"
-                  />
-                ) : (
-                  <iframe
-                    src={toEmbedUrl(activeVideo.videoUrl)}
-                    title={activeVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full"
-                  />
-                )}
+              <div className="bg-neutral-950 p-1">
+                <PlaybookEmbeddedVideoPlayer
+                  videoUrl={activeVideo.videoUrl}
+                  title={activeVideo.title}
+                  thumbnail={activeVideo.thumbnail}
+                  autoplay
+                  aspect="landscape"
+                  showExternalLink={false}
+                  playerClassName="rounded-xl"
+                />
               </div>
 
               {/* Video info */}
-              <div className="flex items-start justify-between gap-4 px-5 py-4">
+              <div className="space-y-4 px-5 py-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-primary-400">
                     {CATEGORY_LABELS[activeVideo.category]}
@@ -257,15 +227,10 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
                     {activeVideo.description}
                   </p>
                 </div>
-                <a
-                  href={activeVideo.videoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="shrink-0 flex items-center gap-1.5 rounded-xl border border-neutral-700 px-3 py-2 text-xs font-semibold text-neutral-300 transition-colors hover:border-neutral-500 hover:text-white"
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Open in YouTube
-                </a>
+                <PlaybookExternalWatchButton
+                  videoUrl={activeVideo.videoUrl}
+                  className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:border-neutral-500 hover:bg-neutral-800 hover:text-white"
+                />
               </div>
             </motion.div>
           </motion.div>

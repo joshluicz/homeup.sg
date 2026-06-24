@@ -1,19 +1,26 @@
 "use client";
 
-import { Play, X } from "lucide-react";
+import { X } from "lucide-react";
+import { PlaybookVideoBrowseTile } from "@/components/playbook/PlaybookVideoBrowseTile";
+import {
+  PlaybookEmbeddedVideoPlayer,
+  PlaybookExternalWatchButton,
+} from "@/components/playbook/PlaybookEmbeddedVideoPlayer";
 import { cn } from "@/lib/utils";
 
 type PlaybookVideoCardProps = {
-  thumbnailSrc: string;
+  thumbnail?: string;
+  videoUrl?: string;
   title: string;
   duration?: string;
   onClick: () => void;
   className?: string;
 };
 
-/** Vertical video card — full thumbnail visible (no crop), 9:16 frame with letterboxing if needed. */
+/** Vertical video card — 9:16 browse tile with visible poster image. */
 export function PlaybookVideoCard({
-  thumbnailSrc,
+  thumbnail,
+  videoUrl,
   title,
   duration,
   onClick,
@@ -24,46 +31,41 @@ export function PlaybookVideoCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex w-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white text-left shadow-sm transition hover:border-primary-600/40 hover:shadow-md",
+        "group/tile w-full text-left transition hover:-translate-y-0.5",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
         className,
       )}
+      aria-label={`Watch ${title}`}
     >
-      <div className="relative aspect-[9/16] w-full bg-neutral-950">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={thumbnailSrc}
-          alt=""
-          className="absolute inset-0 h-full w-full object-contain"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-neutral-950/50 via-transparent to-transparent opacity-80 transition-opacity group-hover:opacity-60" />
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/95 shadow-md backdrop-blur-sm transition-transform group-hover:scale-105">
-            <Play className="h-5 w-5 translate-x-0.5 fill-primary-600 text-primary-600" />
-          </div>
-        </div>
-        {duration && (
-          <span className="absolute bottom-3 right-3 rounded-md bg-neutral-950/75 px-2 py-0.5 text-xs font-medium text-white">
-            {duration}
-          </span>
-        )}
-      </div>
-      <p className="px-4 py-4 text-sm font-bold leading-snug text-neutral-900 group-hover:text-primary-700">
-        {title}
-      </p>
+      <PlaybookVideoBrowseTile
+        thumbnail={thumbnail}
+        videoUrl={videoUrl}
+        title={title}
+        duration={duration}
+        variant="grid"
+      />
     </button>
   );
 }
 
 type PlaybookVideoModalFrameProps = {
-  children: React.ReactNode;
+  videoUrl: string;
   title: string;
+  thumbnail?: string;
   onClose: () => void;
+  aspect?: "portrait" | "landscape";
 };
 
-export function PlaybookVideoModalFrame({ children, title, onClose }: PlaybookVideoModalFrameProps) {
+export function PlaybookVideoModalFrame({
+  videoUrl,
+  title,
+  thumbnail,
+  onClose,
+  aspect = "portrait",
+}: PlaybookVideoModalFrameProps) {
   return (
     <div
-      className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-neutral-950 shadow-xl"
+      className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
       onClick={(e) => e.stopPropagation()}
     >
       <button
@@ -74,11 +76,31 @@ export function PlaybookVideoModalFrame({ children, title, onClose }: PlaybookVi
       >
         <X className="h-4 w-4" />
       </button>
-      <div className="flex min-h-0 flex-1 items-center justify-center bg-neutral-950 p-1">
-        <div className="aspect-[9/16] max-h-[min(75vh,640px)] w-full">{children}</div>
+
+      <div className="flex min-h-0 flex-1 flex-col bg-neutral-950 p-1">
+        <div
+          className={cn(
+            "mx-auto w-full",
+            aspect === "portrait"
+              ? "aspect-[9/16] max-h-[min(75vh,640px)]"
+              : "aspect-video max-h-[min(75vh,640px)]",
+          )}
+        >
+          <PlaybookEmbeddedVideoPlayer
+            videoUrl={videoUrl}
+            title={title}
+            thumbnail={thumbnail}
+            autoplay
+            aspect={aspect}
+            showExternalLink={false}
+            playerClassName="h-full rounded-xl"
+          />
+        </div>
       </div>
-      <div className="shrink-0 bg-white px-5 py-4">
+
+      <div className="shrink-0 space-y-3 px-5 py-4">
         <p className="text-sm font-bold leading-snug text-neutral-900">{title}</p>
+        <PlaybookExternalWatchButton videoUrl={videoUrl} />
       </div>
     </div>
   );

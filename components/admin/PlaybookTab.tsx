@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link as LinkIcon, Upload, FileText, Layers, Search, ExternalLink, BookOpen } from "lucide-react";
 import { CATEGORY_LABELS, TOPIC_LABELS, PLAYBOOK_TOPICS, inferPlaybookTopicFromCategory } from "@/lib/data/playbook";
-import { resolveThumbnail } from "@/lib/playbook/embed";
+import { resolveThumbnail, resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor";
@@ -1057,7 +1057,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                 ? `/playbook/${slug}`
                 : null;
             const cardImageSrc = isVideoMode
-              ? resolveThumbnail(v.thumbnail, v.video_url)
+              ? resolveVideoThumbnailCandidatesForDisplay(v.thumbnail, v.video_url)[0] ?? ""
               : resolveArticleThumbnail({
                   slug: v.slug,
                   title: v.title,
@@ -1086,9 +1086,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                       <img
                         src={cardImageSrc}
                         alt=""
-                        className={cn(
-                          "h-full w-full object-contain object-center transition-transform duration-200 group-hover:scale-[1.01]",
-                        )}
+                        className="h-full w-full object-cover object-center transition-transform duration-200 group-hover:scale-[1.01]"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">

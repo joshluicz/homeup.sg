@@ -103,6 +103,84 @@ export function tiktokVideoId(url?: string): string {
   return "";
 }
 
+export type VideoPlatform = "youtube" | "tiktok" | "vimeo" | "file" | "unknown";
+
+export function getVideoPlatform(url?: string): VideoPlatform {
+  if (!url?.trim()) return "unknown";
+  if (isDirectVideoFile(url)) return "file";
+  try {
+    const host = new URL(url).hostname;
+    if (host.includes("tiktok.com")) return "tiktok";
+    if (host.includes("youtube.com") || host.includes("youtu.be")) return "youtube";
+    if (host.includes("vimeo.com")) return "vimeo";
+  } catch {}
+  return "unknown";
+}
+
+export function tiktokHandle(url?: string): string | null {
+  if (!url) return null;
+  const match = url.match(/tiktok\.com\/@([^/?#]+)/i);
+  return match?.[1] ?? null;
+}
+
+/** Canonical watch URL on TikTok / YouTube / Vimeo (no tracking junk). */
+export function externalVideoWatchUrl(url: string): string {
+  try {
+    const platform = getVideoPlatform(url);
+    if (platform === "tiktok") {
+      const handle = tiktokHandle(url);
+      const id = tiktokVideoId(url);
+      if (handle && id) return `https://www.tiktok.com/@${handle}/video/${id}`;
+      return url.split("?")[0];
+    }
+    if (platform === "youtube") {
+      const id = youtubeId(url);
+      if (!id) return url.split("?")[0];
+      if (/\/shorts\//i.test(url)) return `https://www.youtube.com/shorts/${id}`;
+      return `https://www.youtube.com/watch?v=${id}`;
+    }
+    if (platform === "vimeo") {
+      const path = new URL(url).pathname.replace(/\/$/, "");
+      return `https://vimeo.com${path}`;
+    }
+  } catch {}
+  return url.trim();
+}
+
+export function tiktokProfileUrlFromVideo(url: string): string | null {
+  const handle = tiktokHandle(url);
+  return handle ? `https://www.tiktok.com/@${handle}` : null;
+}
+
+export function externalWatchLabel(url?: string): string {
+  switch (getVideoPlatform(url)) {
+    case "tiktok":
+      return "Watch on TikTok";
+    case "youtube":
+      return "Watch on YouTube";
+    case "vimeo":
+      return "Watch on Vimeo";
+    default:
+      return "Watch video";
+  }
+}
+
+/** @deprecated All supported platforms now embed on-site; use supportsExternalWatchLink for outbound CTAs. */
+export function prefersExternalVideoPlayer(_url?: string): boolean {
+  return false;
+}
+
+export function playbookVideoHref(video: { slug: string; videoUrl?: string }): {
+  href: string;
+  external: boolean;
+} {
+  const slug = video.slug?.trim();
+  if (slug && video.videoUrl?.trim()) {
+    return { href: `/playbook/watch/${slug}`, external: false };
+  }
+  return { href: "/playbook", external: false };
+}
+
 /** Convert a YouTube/Vimeo/TikTok watch URL into an embeddable player URL. */
 export function toEmbedUrl(url: string): string {
   try {

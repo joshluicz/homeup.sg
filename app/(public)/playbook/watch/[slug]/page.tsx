@@ -3,17 +3,14 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { PlaybookEmbeddedVideoPlayer } from "@/components/playbook/PlaybookEmbeddedVideoPlayer";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import {
   getAllWatchSlugsServer,
   getPlaybookVideoForWatchServer,
 } from "@/lib/playbook/server-queries";
-import {
-  isDirectVideoFile,
-  resolveThumbnail,
-  toEmbedUrl,
-} from "@/lib/playbook/embed";
+import { resolveThumbnail } from "@/lib/playbook/embed";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 
@@ -43,8 +40,6 @@ export default async function PlaybookWatchPage({ params }: WatchPageProps) {
   const video = await getPlaybookVideoForWatchServer(params.slug);
   if (!video?.videoUrl?.trim()) notFound();
 
-  const thumb = resolveThumbnail(video.thumbnail, video.videoUrl);
-
   return (
     <>
       <JsonLd
@@ -60,29 +55,14 @@ export default async function PlaybookWatchPage({ params }: WatchPageProps) {
           <PlaybookReturnLink>← Back to Playbook</PlaybookReturnLink>
 
           <div className="mx-auto mt-8 max-w-lg">
-            <div className="overflow-hidden rounded-2xl bg-neutral-950 shadow-xl">
-              <div className="relative aspect-[9/16] w-full">
-                {isDirectVideoFile(video.videoUrl) ? (
-                  <video
-                    src={video.videoUrl}
-                    title={video.title}
-                    controls
-                    autoPlay
-                    playsInline
-                    poster={thumb}
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <iframe
-                    src={`${toEmbedUrl(video.videoUrl)}?autoplay=1`}
-                    title={video.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full border-0"
-                  />
-                )}
-              </div>
-            </div>
+            <PlaybookEmbeddedVideoPlayer
+              videoUrl={video.videoUrl}
+              title={video.title}
+              thumbnail={video.thumbnail}
+              autoplay
+              aspect="portrait"
+              playerClassName="rounded-2xl shadow-xl ring-1 ring-neutral-200"
+            />
 
             <div className="mt-6">
               <h1 className="font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
@@ -102,7 +82,7 @@ export default async function PlaybookWatchPage({ params }: WatchPageProps) {
               )}
               <Link
                 href="/playbook"
-                className="mt-6 inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-primary-700"
+                className="mt-6 inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-bold text-neutral-800 transition hover:border-neutral-300 hover:bg-neutral-50"
               >
                 Browse more tips
               </Link>

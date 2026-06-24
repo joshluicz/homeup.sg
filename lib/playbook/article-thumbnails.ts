@@ -37,6 +37,24 @@ const LOCAL_THUMBNAIL_BY_SLUG: Record<string, string> = {
     "/images/playbook/articles/article-upgrade-guide-hdb-vs-condo.png",
   "decoupling-property-singapore-does-it-make-sense":
     "/images/playbook/articles/article-decoupling-does-it-make-sense.png",
+  "factors-couples-miss-first-resale-condo":
+    "/images/playbook/articles/article-couples-missed-factors-first-resale-condo.png",
+  "new-launch-vs-resale-condo-myths":
+    "/images/playbook/articles/article-resale-condo-assumptions-myths.png",
+  "investment-strategies-may-backfire-private-property":
+    "/images/playbook/articles/article-condo-strategies-may-backfire.png",
+  "hdb-to-condo-upgrading-mistakes-to-avoid":
+    "/images/playbook/articles/article-hdb-to-condo-timing-mistakes.png",
+  "buying-private-property-age-45-singapore":
+    "/images/playbook/articles/article-buying-private-property-age-45.png",
+  "buying-first-private-property-before-35":
+    "/images/playbook/articles/article-buying-private-property-before-35.png",
+  "new-launch-condo-showroom-tips-singapore":
+    "/images/playbook/articles/article-new-launch-showroom-tips.png",
+  "how-to-spot-undervalued-condo-singapore":
+    "/images/playbook/articles/article-new-launch-vs-resale-best-deal.png",
+  "singles-buying-first-condo-singapore-tips":
+    "/images/playbook/articles/article-singles-first-condo-checklist.png",
 };
 
 const SUPABASE_THUMBNAIL_BY_SLUG = thumbnailUrls as Record<string, string>;
@@ -59,6 +77,15 @@ const ARTICLE_THUMBNAIL_RULES: Array<{ match: RegExp; slug: string }> = [
   { match: /hdb owners.*upgrade in 2026|should you upgrade in 2026/i, slug: "hdb-owners-should-you-upgrade-in-2026-singapore" },
   { match: /upgrade guide.*hdb vs condo|hdb vs condo.*which is better for you/i, slug: "upgrade-guide-hdb-vs-condo-which-is-better-for-you" },
   { match: /decoupling.*make sense|property decoupling|practical guide.*decoupling/i, slug: "decoupling-property-singapore-does-it-make-sense" },
+  { match: /commonly missed factors|couples.*first resale condo/i, slug: "factors-couples-miss-first-resale-condo" },
+  { match: /assumptions about resale|don't hold up|resale condo.*assumption/i, slug: "new-launch-vs-resale-condo-myths" },
+  { match: /strategies.*backfire|investment strategies.*backfire|condo investment strategies/i, slug: "investment-strategies-may-backfire-private-property" },
+  { match: /timing mistakes.*hdb|hdb upgraders.*condo|4 timing mistakes/i, slug: "hdb-to-condo-upgrading-mistakes-to-avoid" },
+  { match: /after 45|age 45|45 yrs|45 years or older|buying private property.*45/i, slug: "buying-private-property-age-45-singapore" },
+  { match: /before 35|age 35|buying.*first private property before 35/i, slug: "buying-first-private-property-before-35" },
+  { match: /showroom is designed|showflat.*impress|what to look past/i, slug: "new-launch-condo-showroom-tips-singapore" },
+  { match: /new launch may not|best deal|undervalued condo|where to look instead/i, slug: "how-to-spot-undervalued-condo-singapore" },
+  { match: /first condo as a single|single.*first condo|3 checklist|3 things first/i, slug: "singles-buying-first-condo-singapore-tips" },
 ];
 
 function isBrokenSiteThumbnail(thumbnail?: string): boolean {

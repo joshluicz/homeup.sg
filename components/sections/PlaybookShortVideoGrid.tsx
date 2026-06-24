@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
-import { isDirectVideoFile, resolveThumbnail, toEmbedUrl } from "@/lib/playbook/embed";
+import { mergePlaybookVideos } from "@/lib/playbook/public-videos";
 import { isPlaybookVideo } from "@/lib/playbook/content-kind";
 import { trackVideoPlay } from "@/lib/analytics";
 import { PlaybookVideoCard, PlaybookVideoModalFrame } from "@/components/playbook/PlaybookVideoCard";
@@ -46,14 +46,15 @@ export function PlaybookShortVideoGrid({ limit }: PlaybookShortVideoGridProps) {
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
         if (error || !data) return;
-        const rows = data.map(rowToVideo).filter((v) => isPlaybookVideo(v) && v.videoUrl?.trim());
-        setVideos(limit ? rows.slice(0, limit) : rows);
+        const dbVideos = data.map(rowToVideo).filter((v) => isPlaybookVideo(v) && v.videoUrl?.trim());
+        const merged = mergePlaybookVideos(dbVideos);
+        setVideos(limit ? merged.slice(0, limit) : merged);
       });
   }, [limit]);
 
   const openVideo = useCallback((video: PlaybookVideo) => {
-    setActiveVideo(video);
     trackVideoPlay(video.title, video.slug, video.category);
+    setActiveVideo(video);
   }, []);
 
   const closeVideo = useCallback(() => setActiveVideo(null), []);
@@ -66,7 +67,8 @@ export function PlaybookShortVideoGrid({ limit }: PlaybookShortVideoGridProps) {
         {videos.map((video) => (
           <PlaybookVideoCard
             key={video.id}
-            thumbnailSrc={resolveThumbnail(video.thumbnail, video.videoUrl)}
+            thumbnail={video.thumbnail}
+            videoUrl={video.videoUrl}
             title={video.title}
             duration={video.duration}
             onClick={() => openVideo(video)}
@@ -89,26 +91,12 @@ export function PlaybookShortVideoGrid({ limit }: PlaybookShortVideoGridProps) {
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-[min(100%,22rem)]"
             >
-              <PlaybookVideoModalFrame title={activeVideo.title} onClose={closeVideo}>
-                {isDirectVideoFile(activeVideo.videoUrl) ? (
-                  <video
-                    src={activeVideo.videoUrl}
-                    title={activeVideo.title}
-                    controls
-                    autoPlay
-                    playsInline
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <iframe
-                    src={toEmbedUrl(activeVideo.videoUrl)}
-                    title={activeVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full"
-                  />
-                )}
-              </PlaybookVideoModalFrame>
+              <PlaybookVideoModalFrame
+                videoUrl={activeVideo.videoUrl}
+                title={activeVideo.title}
+                thumbnail={activeVideo.thumbnail}
+                onClose={closeVideo}
+              />
             </motion.div>
           </motion.div>
         )}

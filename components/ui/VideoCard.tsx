@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Play, Clock, Tag } from "lucide-react";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
-import { resolveThumbnail } from "@/lib/playbook/embed";
+import { PlaybookVideoThumbnail } from "@/components/playbook/PlaybookVideoThumbnail";
 import { savePlaybookReturn } from "@/lib/playbook/return-to";
 import { cn } from "@/lib/utils";
 
@@ -62,14 +62,11 @@ export function VideoCard({ video, onPlay, featured = false }: VideoCardProps) {
           featured ? "aspect-video sm:w-64 lg:w-80" : "aspect-video w-full",
         )}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={resolveThumbnail(video.thumbnail, video.videoUrl)}
-          alt={video.title}
-          className={cn(
-            "absolute inset-0 h-full w-full object-cover transition-transform duration-500",
-            hasVideo && "group-hover:scale-105",
-          )}
+        <PlaybookVideoThumbnail
+          thumbnail={video.thumbnail}
+          videoUrl={video.videoUrl}
+          title={video.title}
+          className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105"
         />
 
         <div className="absolute inset-0 bg-neutral-950/30 transition-opacity duration-300 group-hover:bg-neutral-950/20" />

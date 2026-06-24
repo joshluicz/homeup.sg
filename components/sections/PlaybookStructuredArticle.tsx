@@ -12,6 +12,8 @@ function SectionEyebrow({ children }: { children: React.ReactNode }) {
 }
 
 function QuickAnswerBlock({ body }: { body: string }) {
+  if (!body.trim()) return null;
+
   return (
     <section className="mb-14">
       <div className="rounded-2xl border border-primary-200 bg-gradient-to-br from-primary-50/80 to-white px-6 py-6 sm:px-8 sm:py-7">
@@ -23,6 +25,8 @@ function QuickAnswerBlock({ body }: { body: string }) {
 }
 
 function IntroductionBlock({ body }: { body: string }) {
+  if (!body.trim()) return null;
+
   return (
     <section className="mb-14">
       <SectionEyebrow>Introduction</SectionEyebrow>

@@ -61,6 +61,39 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/** Strip a leading section label line (plain, with colon, or markdown heading). */
+function stripLeadingSectionLabel(body: string, label: string): string {
+  const escaped = escapeRegExp(label);
+  const patterns = [
+    new RegExp(`^#{1,6}\\s+${escaped}:?\\s*(?:\\n|$)`, "i"),
+    new RegExp(`^${escaped}:?\\s*(?:\\n|$)`, "i"),
+  ];
+
+  let text = body.trim();
+  for (const pattern of patterns) {
+    text = text.replace(pattern, "").trim();
+  }
+  return text;
+}
+
+/** Split quick-answer copy when Introduction was pasted inside the same section. */
+function splitQuickAnswerBody(body: string): { qa: string; intro: string } {
+  const qaBody = stripLeadingSectionLabel(body, "quick answer");
+  const introMatch = qaBody.match(/(?:^|\n\n)(?:#{1,6}\s+)?Introduction:?\s*\n/i);
+  if (!introMatch || introMatch.index === undefined) {
+    return { qa: qaBody, intro: "" };
+  }
+
+  return {
+    qa: qaBody.slice(0, introMatch.index).trim(),
+    intro: qaBody.slice(introMatch.index + introMatch[0].length).trim(),
+  };
+}
+
+function isSectionLabelOnly(text: string, label: string): boolean {
+  return new RegExp(`^${escapeRegExp(label)}:?$`, "i").test(text.trim());
+}
+
 function isQuestionHeading(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed || /^#{1,6}\s/.test(trimmed)) return false;
@@ -76,6 +109,8 @@ export function normalizeArticleFormat(raw: string): string {
   if (!text) return "";
 
   for (const label of SECTION_LABELS) {
+    const bareLine = new RegExp(`^(${escapeRegExp(label)})\\s*$`, "gim");
+    text = text.replace(bareLine, "$1:");
     const inline = new RegExp(`^(${escapeRegExp(label)}):\\s+(.+)$`, "gim");
     text = text.replace(inline, "$1:\n\n$2");
     const bare = new RegExp(`^(${escapeRegExp(label)}):\\s*$`, "gim");
@@ -196,11 +231,20 @@ function parseLegacyMarkdownArticle(text: string): PlaybookArticleBlock[] {
 
   if (preamble) {
     const preambleParts = preamble.split(/\n\n+/).filter(Boolean);
-    if (preambleParts.length >= 2) {
-      blocks.push({ kind: "quick_answer", body: preambleParts[0] });
-      blocks.push({ kind: "introduction", body: preambleParts.slice(1).join("\n\n") });
-    } else {
-      blocks.push({ kind: "quick_answer", body: preamble });
+    let qaStart = 0;
+    if (preambleParts[0] && isSectionLabelOnly(preambleParts[0], "Quick Answer")) {
+      qaStart = 1;
+    }
+
+    if (preambleParts.length > qaStart + 1) {
+      const qaBody = preambleParts.slice(qaStart, qaStart + 1).join("\n\n");
+      const introBody = preambleParts.slice(qaStart + 1).join("\n\n");
+      blocks.push({ kind: "quick_answer", body: stripLeadingSectionLabel(qaBody, "quick answer") });
+      blocks.push({ kind: "introduction", body: stripLeadingSectionLabel(introBody, "introduction") });
+    } else if (preambleParts.length > qaStart) {
+      const { qa, intro } = splitQuickAnswerBody(preambleParts.slice(qaStart).join("\n\n"));
+      if (qa) blocks.push({ kind: "quick_answer", body: qa });
+      if (intro) blocks.push(...splitIntroductionAndSections(stripLeadingSectionLabel(intro, "introduction")));
     }
   }
 
@@ -253,11 +297,20 @@ export function parsePlaybookArticleBlocks(raw: string): PlaybookArticleBlock[] 
     if (!kind) continue;
 
     switch (kind) {
-      case "quick_answer":
-        blocks.push({ kind: "quick_answer", body });
+      case "quick_answer": {
+        const { qa, intro } = splitQuickAnswerBody(body);
+        if (qa) blocks.push({ kind: "quick_answer", body: qa });
+        if (intro) {
+          blocks.push(
+            ...splitIntroductionAndSections(stripLeadingSectionLabel(intro, "introduction")),
+          );
+        }
         break;
+      }
       case "introduction":
-        blocks.push(...splitIntroductionAndSections(body));
+        blocks.push(
+          ...splitIntroductionAndSections(stripLeadingSectionLabel(body, "introduction")),
+        );
         break;
       case "homeup":
         blocks.push({ kind: "homeup", body });

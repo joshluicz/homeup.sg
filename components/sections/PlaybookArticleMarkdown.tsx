@@ -21,12 +21,22 @@ function buildMarkdownComponents(variant: PlaybookArticleMarkdownProps["variant"
         ? "mb-4 text-base font-medium leading-[1.75] text-neutral-900 last:mb-0 sm:text-lg"
         : "mb-5 text-base font-normal leading-[1.8] text-neutral-800 last:mb-0";
 
+  const isStructuralHeading = (value: React.ReactNode) => {
+    const text = String(value).trim().toLowerCase().replace(/:$/, "");
+    return ["quick answer", "introduction", "how homeup approaches this", "conclusion", "faq"].includes(
+      text,
+    );
+  };
+
   return {
-    h2: ({ children }) => (
-      <h2 className="mb-4 mt-10 font-display text-xl font-bold leading-snug text-neutral-900 first:mt-0 sm:text-2xl">
-        {children}
-      </h2>
-    ),
+    h2: ({ children }) => {
+      if (variant === "callout" && isStructuralHeading(children)) return null;
+      return (
+        <h2 className="mb-4 mt-10 font-display text-xl font-bold leading-snug text-neutral-900 first:mt-0 sm:text-2xl">
+          {children}
+        </h2>
+      );
+    },
     h3: ({ children }) => (
       <h3 className="mb-3 mt-8 font-display text-lg font-bold leading-snug text-neutral-900 sm:text-xl">
         {children}

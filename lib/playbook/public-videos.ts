@@ -6,6 +6,18 @@ function videoKey(v: PlaybookVideo): string {
   return (v.videoUrl || "").trim().toLowerCase();
 }
 
+/** Prefer DB metadata but keep sheet thumbnail when DB has none. */
+function mergeVideoFields(sheet: PlaybookVideo, db: PlaybookVideo): PlaybookVideo {
+  const dbThumb = db.thumbnail?.trim() ?? "";
+  const sheetThumb = sheet.thumbnail?.trim() ?? "";
+  return {
+    ...db,
+    thumbnail: dbThumb || sheetThumb,
+    duration: db.duration?.trim() ? db.duration : sheet.duration,
+    topic: db.topic ?? sheet.topic,
+  };
+}
+
 /** Sheet catalogue + admin DB videos (DB wins when the same URL exists in both). */
 export function mergePlaybookVideos(
   dbVideos: PlaybookVideo[],
@@ -23,7 +35,8 @@ export function mergePlaybookVideos(
     if (!isPlaybookVideo(v)) continue;
     const key = videoKey(v);
     if (!key) continue;
-    merged.set(key, v);
+    const existing = merged.get(key);
+    merged.set(key, existing ? mergeVideoFields(existing, v) : v);
   }
 
   return Array.from(merged.values());
