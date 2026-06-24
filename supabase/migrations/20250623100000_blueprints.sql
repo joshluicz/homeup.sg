@@ -48,3 +48,10 @@ CREATE POLICY "Authenticated users can update blueprints"
   TO authenticated
   USING (true)
   WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can delete draft blueprints" ON public.blueprints;
+CREATE POLICY "Authenticated users can delete draft blueprints"
+  ON public.blueprints
+  FOR DELETE
+  TO authenticated
+  USING (status = 'draft');

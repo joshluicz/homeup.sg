@@ -145,6 +145,29 @@ async function fetchSavedBlueprints(): Promise<SavedBlueprintSummary[]> {
   return (data ?? []) as SavedBlueprintSummary[];
 }
 
+async function deleteDraftBlueprint(blueprintId: string): Promise<void> {
+  const supabase = createClient();
+
+  const { error: clipsError } = await supabase
+    .from("media_files")
+    .delete()
+    .eq("job_id", blueprintId);
+
+  if (clipsError) {
+    throw new Error(`Failed to delete related clips: ${clipsError.message}`);
+  }
+
+  const { error } = await supabase
+    .from("blueprints")
+    .delete()
+    .eq("id", blueprintId)
+    .eq("status", "draft");
+
+  if (error) {
+    throw new Error(`Failed to delete draft: ${error.message}`);
+  }
+}
+
 function formatSavedDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-SG", {
     day: "numeric",
@@ -245,6 +268,9 @@ export default function GeneratePage() {
   const [loadingBlueprintId, setLoadingBlueprintId] = useState<string | null>(
     null,
   );
+  const [deletingBlueprintId, setDeletingBlueprintId] = useState<string | null>(
+    null,
+  );
 
   const roomPhotoUrlsRef = useRef<Map<string, string>>(new Map());
 
@@ -275,6 +301,31 @@ export default function GeneratePage() {
       setError(err instanceof Error ? err.message : "Failed to load blueprint.");
     } finally {
       setLoadingBlueprintId(null);
+    }
+  }
+
+  async function handleDeleteDraft(blueprintId: string, propertyName: string) {
+    const confirmed = window.confirm(
+      `Delete draft for "${propertyName}"? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setError(null);
+    setDeletingBlueprintId(blueprintId);
+
+    try {
+      await deleteDraftBlueprint(blueprintId);
+
+      if (blueprint?.blueprint_id === blueprintId) {
+        setBlueprint(null);
+        setPageState("form");
+      }
+
+      await refreshSavedBlueprints();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete draft.");
+    } finally {
+      setDeletingBlueprintId(null);
     }
   }
 
@@ -788,15 +839,18 @@ export default function GeneratePage() {
         ) : (
           <ul className="divide-y divide-neutral-100">
             {savedBlueprints.map((item) => (
-              <li key={item.id}>
+              <li key={item.id} className="flex items-stretch gap-2">
                 <button
                   type="button"
                   onClick={() => handleLoadSavedBlueprint(item.id)}
-                  disabled={loadingBlueprintId === item.id}
-                  className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left hover:bg-neutral-50 disabled:opacity-60"
+                  disabled={
+                    loadingBlueprintId === item.id ||
+                    deletingBlueprintId === item.id
+                  }
+                  className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg px-2 py-3 text-left hover:bg-neutral-50 disabled:opacity-60"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-neutral-900">
                       {item.property_name}
                     </p>
                     <p className="text-sm text-neutral-500">
@@ -807,6 +861,17 @@ export default function GeneratePage() {
                     {loadingBlueprintId === item.id ? "Loading…" : item.status}
                   </span>
                 </button>
+                {item.status === "draft" && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDraft(item.id, item.property_name)}
+                    disabled={deletingBlueprintId === item.id}
+                    className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                    aria-label={`Delete draft for ${item.property_name}`}
+                  >
+                    {deletingBlueprintId === item.id ? "Deleting…" : "Delete"}
+                  </button>
+                )}
               </li>
             ))}
           </ul>

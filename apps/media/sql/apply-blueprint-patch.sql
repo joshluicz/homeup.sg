@@ -50,6 +50,13 @@ CREATE POLICY "Authenticated users can update blueprints"
   USING (true)
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Authenticated users can delete draft blueprints" ON public.blueprints;
+CREATE POLICY "Authenticated users can delete draft blueprints"
+  ON public.blueprints
+  FOR DELETE
+  TO authenticated
+  USING (status = 'draft');
+
 -- 2. media_files: allow blueprint clips (job_id = blueprint_id)
 ALTER TABLE public.media_files
   DROP CONSTRAINT IF EXISTS media_files_job_id_fkey;
@@ -65,4 +72,13 @@ CREATE POLICY "Authenticated users can read blueprint room clips"
   TO authenticated
   USING (
     job_id IN (SELECT id FROM public.blueprints)
+  );
+
+DROP POLICY IF EXISTS "Authenticated users can delete draft blueprint clips" ON public.media_files;
+CREATE POLICY "Authenticated users can delete draft blueprint clips"
+  ON public.media_files
+  FOR DELETE
+  TO authenticated
+  USING (
+    job_id IN (SELECT id FROM public.blueprints WHERE status = 'draft')
   );
