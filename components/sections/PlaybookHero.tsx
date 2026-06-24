@@ -15,7 +15,7 @@ export function PlaybookHero() {
           <Eyebrow className="text-primary-300">Playbook</Eyebrow>
 
           <h1 className="mt-4 font-display text-display-sm font-extrabold tracking-tight sm:text-display-md">
-            Unlimited Video Tips
+            Unlimited Tips
             <span className="mt-3 block text-lg font-semibold leading-relaxed text-neutral-300 sm:mt-4 sm:text-xl">
               <span className="block">for</span>
               <span className="mt-1 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-4">

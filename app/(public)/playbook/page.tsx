@@ -12,7 +12,7 @@ import { breadcrumbSchema } from "@/lib/seo/schema";
 export const metadata = buildPageMetadata({
   title: "Property Playbook | Video Tips & Guides",
   description:
-    "Unlimited video tips for buyers, sellers and investors — plus in-depth HomeUP guides covering every stage of property in Singapore.",
+    "Unlimited tips for buyers, sellers and investors — plus in-depth HomeUP guides covering every stage of property in Singapore.",
   path: "/playbook",
 });
 
