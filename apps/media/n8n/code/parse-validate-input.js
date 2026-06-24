@@ -27,7 +27,10 @@ for (const photo of body.room_photos) {
 }
 
 const roomList = `PROPERTY ADDRESS: ${body.address}\n\nROOMS:\n${body.room_photos
-  .map((photo) => `- ${photo.label}: ${photo.r2_url}`)
+  .map(
+    (photo) =>
+      `- ${photo.label} (${photo.duration_seconds || body.seconds_per_room || 5}s): ${photo.r2_url}`,
+  )
   .join("\n")}`;
 
 const roomCount = body.room_photos.length;
@@ -35,7 +38,7 @@ const wordsPerRoom =
   Number(body.words_per_room) || Math.max(20, Math.floor(195 / roomCount));
 const secondsPerRoom =
   Number(body.seconds_per_room) ||
-  Math.max(10, Math.round((wordsPerRoom / 130) * 60));
+  Math.max(5, Math.round((wordsPerRoom / 130) * 60));
 
 return [
   {
@@ -43,8 +46,16 @@ return [
       address: body.address,
       property_type: body.property_type,
       rooms: body.rooms || "Not specified",
+      listing_title: body.listing_title || "Not specified",
+      listing_type: body.listing_type || "For Sale",
+      bedrooms: body.bedrooms || "Not specified",
+      bathrooms: body.bathrooms || "Not specified",
       sqft: body.sqft || "Not specified",
+      area_sqm: body.area_sqm || "Not specified",
       price_range: body.price_range || "Not specified",
+      price_psf: body.price_psf || "Not specified",
+      tenure: body.tenure || "Not specified",
+      condition: body.condition || "Not specified",
       selling_points: body.selling_points,
       renovation_status: body.renovation_status || "Move-in ready",
       agent_notes: body.agent_notes || "None",

@@ -15,7 +15,9 @@ export async function GET(
   const supabase = await createClient();
   const { data, error: dbError } = await supabase
     .from("blueprints")
-    .select("id, script, shot_list, edit_instructions, notes")
+    .select(
+      "id, property_name, status, created_at, script, shot_list, edit_instructions, notes, input_data",
+    )
     .eq("id", id)
     .single();
 

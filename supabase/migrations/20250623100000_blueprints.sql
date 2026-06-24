@@ -12,11 +12,13 @@ CREATE TABLE IF NOT EXISTS public.blueprints (
   shot_list jsonb,
   edit_instructions jsonb,
   notes text,
-  status text NOT NULL DEFAULT 'draft'
+  status text NOT NULL DEFAULT 'draft',
+  input_data jsonb
 );
 
 ALTER TABLE public.blueprints
-  ADD COLUMN IF NOT EXISTS uploaded_by uuid REFERENCES auth.users(id);
+  ADD COLUMN IF NOT EXISTS uploaded_by uuid REFERENCES auth.users(id),
+  ADD COLUMN IF NOT EXISTS input_data jsonb;
 
 DROP TRIGGER IF EXISTS blueprints_updated_at ON public.blueprints;
 CREATE TRIGGER blueprints_updated_at
@@ -49,9 +51,10 @@ CREATE POLICY "Authenticated users can update blueprints"
   USING (true)
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Authenticated users can delete blueprints" ON public.blueprints;
 DROP POLICY IF EXISTS "Authenticated users can delete draft blueprints" ON public.blueprints;
-CREATE POLICY "Authenticated users can delete draft blueprints"
+CREATE POLICY "Authenticated users can delete blueprints"
   ON public.blueprints
   FOR DELETE
   TO authenticated
-  USING (status = 'draft');
+  USING (true);

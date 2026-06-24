@@ -14,6 +14,10 @@ export type Blueprint = {
   colour_grade?: string;
   edit_notes?: string;
   presentation_guide?: string;
+  property_name?: string;
+  status?: string;
+  created_at?: string;
+  input_data?: BlueprintInputData;
 };
 
 export type N8nGenerateResponse = {
@@ -45,6 +49,7 @@ export type BlueprintRow = {
   notes?: string | null;
   status?: string | null;
   created_at?: string | null;
+  input_data?: BlueprintInputData | string | null;
 };
 
 export type SavedBlueprintSummary = {
@@ -54,9 +59,37 @@ export type SavedBlueprintSummary = {
   created_at: string;
 };
 
+export type BlueprintRoomPhotoInput = {
+  label: string;
+  r2_url: string;
+  duration_seconds?: number;
+};
+
+export type BlueprintInputData = {
+  address: string;
+  listing_title?: string;
+  listing_type?: string;
+  property_type?: string;
+  rooms?: string;
+  bedrooms?: string;
+  bathrooms?: string;
+  sqft?: string;
+  area_sqm?: string;
+  price_range?: string;
+  price_psf?: string;
+  tenure?: string;
+  condition?: string;
+  renovation_status?: string;
+  selling_points?: string;
+  agent_notes?: string;
+  seconds_per_room?: number;
+  room_photos?: BlueprintRoomPhotoInput[];
+};
+
 export type BlueprintSaveMeta = {
   address: string;
   uploadedBy: string;
+  inputData?: BlueprintInputData;
 };
 
 function parseJsonField<T>(value: T | string | null | undefined): T | null {
@@ -91,6 +124,7 @@ export function blueprintFromRow(row: BlueprintRow): Blueprint {
   const shotList = parseJsonField<ShotListEntry[]>(row.shot_list) ?? [];
   const editInstructions =
     parseJsonField<EditInstructions>(row.edit_instructions) ?? {};
+  const inputData = parseJsonField<BlueprintInputData>(row.input_data) ?? undefined;
 
   const rooms: BlueprintRoom[] = shotList.map((entry) => ({
     label: String(entry.label ?? ""),
@@ -109,6 +143,10 @@ export function blueprintFromRow(row: BlueprintRow): Blueprint {
     presentation_guide:
       editInstructions.presentation_guide ?? row.notes ?? undefined,
     colour_grade: editInstructions.colorgrade_notes,
+    property_name: row.property_name ?? undefined,
+    status: row.status ?? undefined,
+    created_at: row.created_at ?? undefined,
+    input_data: inputData,
   };
 }
 
@@ -162,6 +200,7 @@ export function blueprintToDbRow(
     },
     notes: blueprint.presentation_guide ?? "",
     status: "draft",
+    input_data: meta.inputData ?? null,
   };
 }
 

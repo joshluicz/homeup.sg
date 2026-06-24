@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   type Blueprint,
+  type BlueprintInputData,
   type BlueprintRoom,
   type SavedBlueprintSummary,
   blueprintFromWebhookPayload,
@@ -45,6 +46,7 @@ type RenovationStatus =
 type RoomEntry = {
   id: string;
   label: string;
+  durationSeconds: number;
   file: File | null;
   previewUrl: string | null;
   r2Url: string | null;
@@ -72,6 +74,7 @@ function createDefaultRooms(): RoomEntry[] {
   return ["Living Room", "Kitchen", "Master Bedroom"].map((label) => ({
     id: crypto.randomUUID(),
     label,
+    durationSeconds: 5,
     file: null,
     previewUrl: null,
     r2Url: null,
@@ -121,7 +124,7 @@ async function fetchBlueprint(blueprintId: string): Promise<Blueprint> {
 
 async function saveBlueprintToDatabase(
   blueprint: Blueprint,
-  meta: { address: string; uploadedBy: string },
+  meta: { address: string; uploadedBy: string; inputData?: BlueprintInputData },
 ): Promise<void> {
   const supabase = createClient();
   const row = blueprintToDbRow(blueprint, meta);
@@ -145,7 +148,7 @@ async function fetchSavedBlueprints(): Promise<SavedBlueprintSummary[]> {
   return (data ?? []) as SavedBlueprintSummary[];
 }
 
-async function deleteDraftBlueprint(blueprintId: string): Promise<void> {
+async function deleteBlueprint(blueprintId: string): Promise<void> {
   const supabase = createClient();
 
   const { error: clipsError } = await supabase
@@ -160,11 +163,10 @@ async function deleteDraftBlueprint(blueprintId: string): Promise<void> {
   const { error } = await supabase
     .from("blueprints")
     .delete()
-    .eq("id", blueprintId)
-    .eq("status", "draft");
+    .eq("id", blueprintId);
 
   if (error) {
-    throw new Error(`Failed to delete draft: ${error.message}`);
+    throw new Error(`Failed to delete blueprint: ${error.message}`);
   }
 }
 
@@ -174,6 +176,21 @@ function formatSavedDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function createRoomEntriesFromInput(
+  roomPhotos: BlueprintInputData["room_photos"] | undefined,
+): RoomEntry[] {
+  if (!roomPhotos || roomPhotos.length === 0) return createDefaultRooms();
+
+  return roomPhotos.map((room) => ({
+    id: crypto.randomUUID(),
+    label: room.label,
+    durationSeconds: room.duration_seconds ?? 5,
+    file: null,
+    previewUrl: null,
+    r2Url: room.r2_url,
+  }));
 }
 
 function mapFileStatus(
@@ -247,15 +264,23 @@ export default function GeneratePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [address, setAddress] = useState("");
+  const [listingTitle, setListingTitle] = useState("");
+  const [listingType, setListingType] = useState("For Sale");
   const [propertyType, setPropertyType] = useState<PropertyType>("HDB Flat");
   const [rooms, setRooms] = useState("");
+  const [bedrooms, setBedrooms] = useState("");
+  const [bathrooms, setBathrooms] = useState("");
   const [sqft, setSqft] = useState("");
+  const [areaSqm, setAreaSqm] = useState("");
   const [priceRange, setPriceRange] = useState("");
+  const [pricePsf, setPricePsf] = useState("");
+  const [tenure, setTenure] = useState("");
+  const [condition, setCondition] = useState("");
   const [renovationStatus, setRenovationStatus] =
     useState<RenovationStatus>("Move-in ready");
   const [sellingPoints, setSellingPoints] = useState("");
   const [agentNotes, setAgentNotes] = useState("");
-  const [secondsPerRoom, setSecondsPerRoom] = useState(15);
+  const [secondsPerRoom, setSecondsPerRoom] = useState(5);
 
   const [roomEntries, setRoomEntries] = useState<RoomEntry[]>(createDefaultRooms);
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
@@ -295,6 +320,12 @@ export default function GeneratePage() {
 
     try {
       const loaded = await fetchBlueprint(blueprintId);
+      if (loaded.input_data?.room_photos) {
+        roomPhotoUrlsRef.current = new Map(
+          loaded.input_data.room_photos.map((room) => [room.label, room.r2_url]),
+        );
+        setRoomEntries(createRoomEntriesFromInput(loaded.input_data.room_photos));
+      }
       setBlueprint(loaded);
       setPageState("review");
     } catch (err) {
@@ -304,9 +335,56 @@ export default function GeneratePage() {
     }
   }
 
-  async function handleDeleteDraft(blueprintId: string, propertyName: string) {
+  async function handleEditDraft(blueprintId: string) {
+    setError(null);
+    setLoadingBlueprintId(blueprintId);
+
+    try {
+      const loaded = await fetchBlueprint(blueprintId);
+      const input = loaded.input_data;
+      if (!input) {
+        throw new Error(
+          "This draft was created before edit support. Please generate a new draft.",
+        );
+      }
+
+      setAddress(input.address ?? "");
+      setListingTitle(input.listing_title ?? "");
+      setListingType(input.listing_type ?? "For Sale");
+      setPropertyType((input.property_type as PropertyType) ?? "HDB Flat");
+      setRooms(input.rooms ?? "");
+      setBedrooms(input.bedrooms ?? "");
+      setBathrooms(input.bathrooms ?? "");
+      setSqft(input.sqft ?? "");
+      setAreaSqm(input.area_sqm ?? "");
+      setPriceRange(input.price_range ?? "");
+      setPricePsf(input.price_psf ?? "");
+      setTenure(input.tenure ?? "");
+      setCondition(input.condition ?? "");
+      setRenovationStatus(
+        (input.renovation_status as RenovationStatus) ?? "Move-in ready",
+      );
+      setSellingPoints(input.selling_points ?? "");
+      setAgentNotes(input.agent_notes ?? "");
+      setSecondsPerRoom(input.seconds_per_room ?? 5);
+      setRoomEntries(createRoomEntriesFromInput(input.room_photos));
+
+      roomPhotoUrlsRef.current = new Map(
+        (input.room_photos ?? []).map((room) => [room.label, room.r2_url]),
+      );
+
+      setBlueprint(loaded);
+      setPageState("form");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load draft for edit.");
+    } finally {
+      setLoadingBlueprintId(null);
+    }
+  }
+
+  async function handleDeleteBlueprint(blueprintId: string, propertyName: string) {
     const confirmed = window.confirm(
-      `Delete draft for "${propertyName}"? This cannot be undone.`,
+      `Delete "${propertyName}"? This cannot be undone.`,
     );
     if (!confirmed) return;
 
@@ -314,7 +392,7 @@ export default function GeneratePage() {
     setDeletingBlueprintId(blueprintId);
 
     try {
-      await deleteDraftBlueprint(blueprintId);
+      await deleteBlueprint(blueprintId);
 
       if (blueprint?.blueprint_id === blueprintId) {
         setBlueprint(null);
@@ -323,7 +401,7 @@ export default function GeneratePage() {
 
       await refreshSavedBlueprints();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete draft.");
+      setError(err instanceof Error ? err.message : "Failed to delete blueprint.");
     } finally {
       setDeletingBlueprintId(null);
     }
@@ -341,6 +419,7 @@ export default function GeneratePage() {
       {
         id: crypto.randomUUID(),
         label: "New Room",
+        durationSeconds: 5,
         file: null,
         previewUrl: null,
         r2Url: null,
@@ -354,7 +433,7 @@ export default function GeneratePage() {
 
   function handleRoomFile(id: string, file: File) {
     const previewUrl = URL.createObjectURL(file);
-    updateRoom(id, { file, previewUrl });
+    updateRoom(id, { file, previewUrl, r2Url: null });
   }
 
   async function handleGenerateBlueprint(e: React.FormEvent) {
@@ -370,7 +449,7 @@ export default function GeneratePage() {
       return;
     }
 
-    const roomsWithPhotos = roomEntries.filter((room) => room.file);
+    const roomsWithPhotos = roomEntries.filter((room) => room.file || room.r2Url);
     if (roomsWithPhotos.length === 0) {
       setError("Please add at least one room photo.");
       return;
@@ -409,6 +488,7 @@ export default function GeneratePage() {
         .map((room) => ({
           label: room.label,
           r2_url: room.r2Url!,
+          duration_seconds: room.durationSeconds,
         }));
 
       const webhookRes = await fetch(WEBHOOK_GENERATE_BLUEPRINT, {
@@ -416,13 +496,22 @@ export default function GeneratePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address: address.trim(),
+          listing_title: requiredField(listingTitle, "Not specified"),
+          listing_type: requiredField(listingType, "For Sale"),
           property_type: propertyType,
           rooms: requiredField(rooms, "Not specified"),
+          bedrooms: requiredField(bedrooms, "Not specified"),
+          bathrooms: requiredField(bathrooms, "Not specified"),
           sqft: requiredField(sqft, "Not specified"),
+          area_sqm: requiredField(areaSqm, "Not specified"),
           price_range: requiredField(priceRange, "Not specified"),
+          price_psf: requiredField(pricePsf, "Not specified"),
+          tenure: requiredField(tenure, "Not specified"),
+          condition: requiredField(condition, "Not specified"),
           selling_points: sellingPoints.trim(),
           renovation_status: renovationStatus,
           agent_notes: requiredField(agentNotes, "None"),
+          seconds_per_room: secondsPerRoom,
           uploaded_by: user.id,
           room_photos: roomPhotos,
         }),
@@ -459,6 +548,26 @@ export default function GeneratePage() {
       await saveBlueprintToDatabase(fullBlueprint, {
         address: address.trim(),
         uploadedBy: user.id,
+        inputData: {
+          address: address.trim(),
+          listing_title: listingTitle.trim(),
+          listing_type: listingType,
+          property_type: propertyType,
+          rooms: rooms.trim(),
+          bedrooms: bedrooms.trim(),
+          bathrooms: bathrooms.trim(),
+          sqft: sqft.trim(),
+          area_sqm: areaSqm.trim(),
+          price_range: priceRange.trim(),
+          price_psf: pricePsf.trim(),
+          tenure: tenure.trim(),
+          condition: condition.trim(),
+          renovation_status: renovationStatus,
+          selling_points: sellingPoints.trim(),
+          agent_notes: agentNotes.trim(),
+          seconds_per_room: secondsPerRoom,
+          room_photos: roomPhotos,
+        },
       });
 
       await refreshSavedBlueprints();
@@ -520,16 +629,18 @@ export default function GeneratePage() {
       : rooms;
 
     return selected.map((room) => {
+      const roomEntry = roomEntries.find((entry) => entry.label === room.label);
       const photoUrl =
         roomPhotoUrlsRef.current.get(room.label) ??
-        roomEntries.find((entry) => entry.label === room.label)?.r2Url ??
+        roomEntry?.r2Url ??
         null;
 
       return {
         label: room.label,
         r2_url: photoUrl ?? "",
         higgsfield_prompt: room.higgsfield_prompt ?? "",
-        duration_seconds: room.duration_seconds ?? secondsPerRoom,
+        duration_seconds:
+          roomEntry?.durationSeconds ?? room.duration_seconds ?? secondsPerRoom,
       };
     });
   }
@@ -951,14 +1062,25 @@ export default function GeneratePage() {
                 {item.status === "draft" && (
                   <button
                     type="button"
-                    onClick={() => handleDeleteDraft(item.id, item.property_name)}
-                    disabled={deletingBlueprintId === item.id}
-                    className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
-                    aria-label={`Delete draft for ${item.property_name}`}
+                    onClick={() => handleEditDraft(item.id)}
+                    disabled={
+                      deletingBlueprintId === item.id || loadingBlueprintId === item.id
+                    }
+                    className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+                    aria-label={`Edit draft for ${item.property_name}`}
                   >
-                    {deletingBlueprintId === item.id ? "Deleting…" : "Delete"}
+                    Edit
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => handleDeleteBlueprint(item.id, item.property_name)}
+                  disabled={deletingBlueprintId === item.id}
+                  className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  aria-label={`Delete blueprint for ${item.property_name}`}
+                >
+                  {deletingBlueprintId === item.id ? "Deleting…" : "Delete"}
+                </button>
               </li>
             ))}
           </ul>
@@ -984,6 +1106,34 @@ export default function GeneratePage() {
                 className={INPUT_CLASS}
                 placeholder="e.g. Blk 123 Ang Mo Kio Ave 3"
               />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Listing Title
+                </label>
+                <input
+                  type="text"
+                  value={listingTitle}
+                  onChange={(e) => setListingTitle(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="e.g. Park Green"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Listing Type
+                </label>
+                <select
+                  value={listingType}
+                  onChange={(e) => setListingType(e.target.value)}
+                  className={INPUT_CLASS}
+                >
+                  <option value="For Sale">For Sale</option>
+                  <option value="For Rent">For Rent</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -1044,6 +1194,33 @@ export default function GeneratePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Bedrooms
+                </label>
+                <input
+                  type="text"
+                  value={bedrooms}
+                  onChange={(e) => setBedrooms(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder='e.g. "3"'
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Bathrooms
+                </label>
+                <input
+                  type="text"
+                  value={bathrooms}
+                  onChange={(e) => setBathrooms(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder='e.g. "2"'
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                   Size sqft
                 </label>
                 <input
@@ -1057,6 +1234,21 @@ export default function GeneratePage() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Area sqm
+                </label>
+                <input
+                  type="text"
+                  value={areaSqm}
+                  onChange={(e) => setAreaSqm(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="e.g. 111.02"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                   Price Range
                 </label>
                 <input
@@ -1065,6 +1257,45 @@ export default function GeneratePage() {
                   onChange={(e) => setPriceRange(e.target.value)}
                   className={INPUT_CLASS}
                   placeholder="e.g. $720k–$740k"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Price psf
+                </label>
+                <input
+                  type="text"
+                  value={pricePsf}
+                  onChange={(e) => setPricePsf(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="e.g. $1,129.71"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Tenure
+                </label>
+                <input
+                  type="text"
+                  value={tenure}
+                  onChange={(e) => setTenure(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="e.g. 99 years"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  Condition
+                </label>
+                <input
+                  type="text"
+                  value={condition}
+                  onChange={(e) => setCondition(e.target.value)}
+                  className={INPUT_CLASS}
+                  placeholder="e.g. Partial Furnishing"
                 />
               </div>
             </div>
@@ -1123,6 +1354,7 @@ export default function GeneratePage() {
                 onChange={(e) => setSecondsPerRoom(Number(e.target.value))}
                 className={INPUT_CLASS}
               >
+                <option value={5}>5s</option>
                 <option value={10}>10s</option>
                 <option value={15}>15s</option>
                 <option value={20}>20s</option>
@@ -1159,6 +1391,9 @@ export default function GeneratePage() {
                 key={room.id}
                 room={room}
                 onLabelChange={(label) => updateRoom(room.id, { label })}
+                onDurationChange={(durationSeconds) =>
+                  updateRoom(room.id, { durationSeconds })
+                }
                 onFileSelect={(file) => handleRoomFile(room.id, file)}
                 onRemove={() => removeRoom(room.id)}
                 canRemove={roomEntries.length > 1}
@@ -1178,12 +1413,14 @@ export default function GeneratePage() {
 function RoomPhotoCard({
   room,
   onLabelChange,
+  onDurationChange,
   onFileSelect,
   onRemove,
   canRemove,
 }: {
   room: RoomEntry;
   onLabelChange: (label: string) => void;
+  onDurationChange: (durationSeconds: number) => void;
   onFileSelect: (file: File) => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -1193,13 +1430,26 @@ function RoomPhotoCard({
   return (
     <div className="rounded-lg border border-neutral-200 p-4">
       <div className="mb-3 flex items-start justify-between gap-2">
-        <input
-          type="text"
-          list="room-suggestions"
-          value={room.label}
-          onChange={(e) => onLabelChange(e.target.value)}
-          className={`${INPUT_CLASS} font-medium`}
-        />
+        <div className="w-full space-y-2">
+          <input
+            type="text"
+            list="room-suggestions"
+            value={room.label}
+            onChange={(e) => onLabelChange(e.target.value)}
+            className={`${INPUT_CLASS} font-medium`}
+          />
+          <select
+            value={room.durationSeconds}
+            onChange={(e) => onDurationChange(Number(e.target.value))}
+            className={INPUT_CLASS}
+          >
+            <option value={5}>5s</option>
+            <option value={10}>10s</option>
+            <option value={15}>15s</option>
+            <option value={20}>20s</option>
+            <option value={25}>25s</option>
+          </select>
+        </div>
         {canRemove && (
           <button
             type="button"

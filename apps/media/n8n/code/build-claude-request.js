@@ -5,11 +5,19 @@ const userMessage = `This property is located at: ${input.address}. Do not refer
 Generate a production blueprint for this property tour video.
 
 PROPERTY DETAILS:
+Listing title: ${input.listing_title}
+Listing type: ${input.listing_type}
 Address: ${input.address}
 Type: ${input.property_type}
 Rooms: ${input.rooms}
+Bedrooms: ${input.bedrooms}
+Bathrooms: ${input.bathrooms}
 Size: ${input.sqft} sqft
+Area: ${input.area_sqm} sqm
 Price range: ${input.price_range}
+Price psf: ${input.price_psf}
+Tenure: ${input.tenure}
+Condition: ${input.condition}
 Selling points: ${input.selling_points}
 Renovation status: ${input.renovation_status}
 Agent notes: ${input.agent_notes || "None"}
