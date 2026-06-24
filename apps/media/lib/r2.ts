@@ -59,6 +59,33 @@ export async function uploadToR2(
   );
 }
 
+export async function archiveRemoteFileToR2(
+  sourceUrl: string,
+  key: string,
+): Promise<{ r2_url: string; file_size: number; content_type: string }> {
+  if (!isValidR2Key(key)) {
+    throw new Error("Invalid R2 key");
+  }
+
+  const response = await fetch(sourceUrl);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to download source video (${response.status})`,
+    );
+  }
+
+  const contentType = response.headers.get("content-type") || "video/mp4";
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  await uploadToR2(key, buffer, contentType);
+
+  return {
+    r2_url: getPublicR2Url(key),
+    file_size: buffer.length,
+    content_type: contentType,
+  };
+}
+
 const SAFE_R2_KEY_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_./-]*$/;
 
 export function isValidR2Key(key: string): boolean {

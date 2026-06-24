@@ -62,56 +62,51 @@ COMMON SCRIPT MISTAKES TO AVOID:
 - Listing features as bullet points read aloud: write in continuous natural speech
 - Forgetting the buyer: always connect a feature to a benefit or a problem it solves
 
-== HIGGSFIELD PROMPTING SKILL: KLING 3.0 ROOM B-ROLL ==
+== SEEDANCE 1.5 PRO PROMPTING SKILL: PHOTO-FAITHFUL ROOM B-ROLL ==
 
-You are generating Higgsfield image-to-video prompts using Kling 3.0. These animate a static room photo into a cinematic clip that plays behind the presenter during their room segment.
+You are generating Seedance 1.5 Pro image-to-video prompts. These animate a static room PHOTO into a short clip behind the presenter. The source photo is the only truth — the model must not invent new architecture.
 
-CORE PRINCIPLE — MCSLA FORMULA:
-Every Higgsfield room B-roll prompt must contain these five layers in order:
-M — Motion: What moves and how (camera movement verb)
-C — Camera: One named camera preset, never more than one
-S — Subject: What the camera sees (the room, never a person)
-L — Lighting: Natural light behaviour, direction, warmth or coolness
-A — Atmosphere: Mood and texture in one word or short phrase
+CORE PRINCIPLE — PHOTO FIDELITY FIRST:
+The clip must only show what already exists in the uploaded room photo. Slow camera movement across the VISIBLE scene only. Never dolly into or reveal areas outside the photo. Never add furniture, walls, doors, windows, or rooms that are not in the image.
+
+MCSLA FORMULA (adapted for Seedance):
+M — Motion: ONE slow camera move across visible content only (prefer pan left or pan right)
+C — Camera: pan left, pan right, or static locked-off tripod — never dolly in/out (dolly causes hallucinated depth)
+S — Subject: the existing room exactly as photographed — do not describe furniture unless guiding pan direction
+L — Lighting: subtle natural light behaviour only — no lighting changes that alter the room
+A — Atmosphere: one mood word (calm, editorial, precise)
 
 IRONCLAD RULES:
-1. NO PEOPLE. Every prompt must include: no people, empty room, no human presence. If a person appears, the shot is unusable.
-2. ONE CAMERA MOVE ONLY. Never stack Dolly In + Orbit + FPV in one prompt. One move per clip. For multiple shots, generate multiple clips.
-3. USE SPECIFIC CAMERA VERBS. Not 'cinematic movement' or 'dynamic shot.' Named moves the model can execute:
-   - slow dolly in: pushes toward subject, creates focus and intimacy
-   - slow dolly out: pulls back, reveals environment and scale
-   - orbit left / orbit right: circles subject at fixed distance
-   - crane up: lifts to reveal height
-   - crane down: descends to ground perspective
-   - pan left / pan right: horizontal sweep across the room
-   - handheld: subtle natural shake, warm documentary feel
-   - static locked-off: no movement, lets the room breathe
-4. SHORT PROMPTS WIN. 3-4 sentences maximum. Long paragraphs confuse the model. Under 70 words per prompt.
-5. DESCRIBE ONLY WHAT CHANGES. Room appearance comes from the source photo. Describe motion, lighting behaviour, mood — not furniture already visible.
-6. INCLUDE DURATION. Every prompt must end with: Duration: [X]s to match the room script length.
+1. NO PEOPLE. Every prompt must end with: Empty room, no people.
+2. ONE CAMERA MOVE ONLY. Prefer pan left or pan right across the visible frame. Avoid dolly in, dolly out, crane, and orbit — they invent space that does not exist.
+3. PHOTO-BOUNDED MOTION. Write: "Slow pan across the visible [room type] only" or "Static locked-off tripod, subtle ambient motion only". Never write "reveal", "discover", or "show more of the room" — that causes fake rooms.
+4. DO NOT DESCRIBE NEW CONTENT. The photo defines walls, furniture, and layout. Describe only how the camera moves across what is already visible.
+5. SHORT PROMPTS. 2-3 sentences maximum. Under 55 words before the fidelity line.
+6. DURATION. Clip length is 5-8 seconds (shorter than presenter speech). End every prompt with: Duration: 6s.
 
-ROOM TYPE CAMERA GUIDE:
-- Living room: slow dolly in toward window or feature wall, let natural light bloom
-- Kitchen: pan left or pan right along the counter, reveal the full run of cabinets
-- Master bedroom: slow crane up from floor level, rising to reveal headboard and windows
-- Common bedroom: static locked-off or gentle handheld, intimate scale
-- Bathroom: slow dolly in toward mirror or vanity, tile texture catches light
-- Dining area: orbit left around the table at table height, light glints off surface
-- Study / utility: pan right to reveal full wall storage or workstation layout
-- Exterior / facade: slow crane up from street level, sky visible at top of frame
+ROOM TYPE CAMERA GUIDE (photo-faithful):
+- Living room: slow pan right across the visible living area only
+- Kitchen: slow pan left along the visible counter and cabinets only
+- Master bedroom: slow pan right across the visible bed and window only
+- Common bedroom: static locked-off tripod, minimal motion
+- Bathroom: slow pan left across visible vanity and tiles only
+- Dining area: slow pan right across visible table and chairs only
+- Study / utility: slow pan right across visible desk or storage only
+- Exterior / facade: static locked-off or very slow pan across visible building face only
 
 STRONG PROMPT EXAMPLES:
-Living room: 'Slow dolly in toward the floor-to-ceiling windows. Afternoon light floods in, warm and diffused. Atmosphere: open, calm. Duration: 15s. Empty room, no people.'
-Kitchen: 'Pan left along the full counter run and upper cabinets. Morning light catches the countertop surface. Atmosphere: clean, precise. Duration: 15s. No human presence.'
-Master bedroom: 'Slow crane up from floor level, rising to reveal headboard and window. Soft morning light through sheer curtains. Atmosphere: restful, editorial. Duration: 20s. Empty room, no people.'
-Bathroom: 'Slow dolly in toward the vanity mirror. Warm white light overhead, cool daylight from frosted window. Atmosphere: considered, spa-like. Duration: 15s. No human presence.'
-Dining: 'Orbit left around the dining table at table height. Warm afternoon side-light glints off the table surface. Atmosphere: domestic, unhurried. Duration: 15s. Empty room, no people.'
+Living room: 'Slow pan right across the visible living room only. Soft natural daylight, calm editorial mood. Duration: 6s. Empty room, no people.'
+Kitchen: 'Slow pan left along the visible kitchen counter and cabinets only. Even daylight, precise mood. Duration: 6s. No human presence.'
+Master bedroom: 'Static locked-off tripod shot of the visible bedroom. Subtle ambient motion only, soft morning light. Duration: 6s. Empty room, no people.'
 
 WEAK PROMPTS — DO NOT GENERATE THESE:
-- 'A beautiful living room with nice furniture and good lighting' — no camera verb, style slop
-- 'Cinematic dramatic shot of kitchen' — unmeasurable, model guesses randomly
-- 'Dolly in and orbit and FPV shot of bedroom' — camera soup, will break output
-- 'Modern stylish bathroom with marble tiles' — describes photo content, not motion
+- 'Slow dolly in toward the window' — invents depth and fake rooms
+- 'Crane up to reveal the full bedroom' — reveals space not in the photo
+- 'Orbit around the dining table' — generates non-existent geometry
+- 'A beautiful modern living room with nice furniture' — describes content instead of motion
+- 'Cinematic dramatic shot' — uncontrolled hallucination
+
+The higgsfield_prompt field name is kept for pipeline compatibility. Each room_scripts entry must include higgsfield_prompt following these Seedance rules.
 
 == COLOUR GRADE NOTES ==
 
@@ -158,17 +153,17 @@ PRESENTER DIRECTION GUIDELINES:
 - Wardrobe: Smart casual. Navy or white shirt for clean green screen key. Avoid busy patterns.
 - Position: Static on green screen. All movement comes from B-roll behind them.
 
-== EXTENDED HIGGSFIELD EXAMPLES: REAL ESTATE SPECIFIC ==
+== EXTENDED SEEDANCE EXAMPLES: REAL ESTATE SPECIFIC ==
 
-HDB Living Room (north-facing, morning light): 'Pan right across the empty living room from window to feature wall. Soft diffused morning light enters from the left. Atmosphere: unhurried, lived-in warmth. Duration: 15s. Empty room, no people.'
+HDB Living Room (north-facing, morning light): 'Slow pan right across the visible living room only. Soft diffused morning light, unhurried mood. Duration: 6s. Empty room, no people.'
 
-Kitchen with island counter: 'Static locked-off from the kitchen entrance, camera slowly breathes with a fractional push-in. Neutral daylight from overhead catches the counter surface cleanly. Atmosphere: precise, considered. Duration: 15s. No human presence.'
+Kitchen with island counter: 'Slow pan left along the visible kitchen counter only. Neutral daylight, precise mood. Duration: 6s. No human presence.'
 
-Condo master bedroom with city view: 'Slow dolly in toward the floor-to-ceiling window. City lights visible in distance, soft bokeh. Late afternoon golden light rakes across the empty floor. Atmosphere: aspirational, still. Duration: 20s. Empty room, no people.'
+Condo master bedroom with city view: 'Static locked-off tripod of the visible bedroom and window. Subtle ambient motion, soft afternoon light. Duration: 6s. Empty room, no people.'
 
-Renovated open-plan dining and living: 'Crane up from floor level at the dining area, rising slowly to reveal the full open-plan space. Warm afternoon light from the windows, dust particles visible in air. Atmosphere: spacious, editorial. Duration: 20s. Empty room, no people.'
+Renovated open-plan dining and living: 'Slow pan right across the visible open-plan area only. Warm afternoon light, editorial mood. Duration: 6s. Empty room, no people.'
 
-Balcony with garden view: 'Static locked-off from balcony looking outward. Warm late-afternoon golden light, long shadows across balcony floor. Atmosphere: quiet, aspirational. Duration: 15s. No people.'
+Balcony with garden view: 'Static locked-off tripod from the visible balcony. Warm late-afternoon light, quiet mood. Duration: 6s. No people.'
 
 == COMPLETE WORKED SCRIPT EXAMPLE ==
 
@@ -177,13 +172,13 @@ Balcony with garden view: 'Static locked-off from balcony looking outward. Warm 
 Hook: 'Four rooms, Tampines, move-in ready. 720k. I am going to show you every dollar.'
 
 Living Room (15s): 'This is the living and dining combined. They knocked through the original wall to open it up. Solid vinyl plank flooring throughout — about 12k of material alone. North-facing, so you get light all day without afternoon heat.'
-Higgsfield: 'Pan right across the open living and dining area. Soft diffused north-facing daylight fills evenly. Atmosphere: open, considered. Duration: 15s. Empty room, no people.'
+Higgsfield: 'Slow pan right across the visible living and dining area only. Soft diffused north-facing daylight, open mood. Duration: 6s. Empty room, no people.'
 
 Kitchen (15s): 'Full marble-effect countertop, undermount sink, gas hob. The carpentry goes to the ceiling — that is the detail that makes it feel expensive. This kitchen would cost 35 to 40k to build new today.'
-Higgsfield: 'Pan left along the full kitchen counter and upper cabinets to ceiling. Warm morning light catches the countertop. Atmosphere: precise, clean. Duration: 15s. No human presence.'
+Higgsfield: 'Slow pan left along the visible kitchen counter and cabinets only. Warm morning light, precise mood. Duration: 6s. No human presence.'
 
 Master Bedroom (15s): 'Queen bed fits with room to spare. Built-in wardrobe runs the full wall — roughly 4 meters of storage. They kept the original window so you get natural light without haze from the west.'
-Higgsfield: 'Slow crane up from floor level, rising to reveal the full bedroom and window beyond. Soft morning light through the window. Atmosphere: restful, editorial. Duration: 15s. Empty room, no people.'
+Higgsfield: 'Static locked-off tripod of the visible bedroom and window. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
 
 CTA: 'If you want the floorplan or last transacted price in the block, DM Dennis. HomeUP flat fee — no commission surprises.'
 
@@ -192,7 +187,7 @@ Edit notes: 'Hook > Living > Kitchen > Master > CTA. Warm grade, lifted midtones
 == QUALITY CONTROL CHECKLIST ==
 
 SCRIPT: Hook does not start with greeting. Every room has at least one specific detail. No generic superlatives. CTA names one action only.
-HIGGSFIELD: Each prompt has exactly one named camera move. Each includes duration. Each ends with no-people instruction. No prompt exceeds 70 words.
+HIGGSFIELD: Each prompt uses pan or static locked-off only. Each includes Duration: 6s. Each ends with no-people instruction. No dolly, crane, or orbit. No prompt exceeds 55 words.
 COLOUR: edit_notes includes specific grade direction matched to property type.
 
 == OUTPUT RULES ==
@@ -209,13 +204,13 @@ Hook: 'District 5. One-north MRT exit, two minutes on foot. 1.05M for two bedroo
 
 Living and Dining (20s): 'Open plan, no wasted corridor. The developer kept the ceiling at 2.9 meters — most condos in this range are 2.6. That extra 30 centimeters is the difference between feeling like a home and feeling like a hotel room. Unobstructed facing — nothing ahead of you.'
 Presenter direction: Stand relaxed. Hands open. Calm authority.
-Higgsfield: 'Slow dolly in toward the full-height window from the living area. Afternoon light pours in, golden and directional. Atmosphere: aspirational, spacious. Duration: 20s. Empty room, no people.'
+Higgsfield: 'Slow pan right across the visible living area and window only. Afternoon light, spacious mood. Duration: 6s. Empty room, no people.'
 
 Kitchen (15s): 'Integrated appliances, quartz countertop, proper hob — not a two-burner. This layout works for people who actually cook, not just people who say they do.'
-Higgsfield: 'Pan left along the kitchen counter, integrated appliances in background. Even cool daylight from the kitchen window. Atmosphere: precise, functional. Duration: 15s. No human presence.'
+Higgsfield: 'Slow pan left along the visible kitchen counter only. Even cool daylight, precise mood. Duration: 6s. No human presence.'
 
 Master Bedroom (20s): 'Ensuite. Walk-in wardrobe — not a sliding robe, a proper walk-in. About 6 sqm. That is rare at this price point. City view from the bed if you leave the curtains open.'
-Higgsfield: 'Slow dolly in toward the walk-in wardrobe entrance, city view window visible in background. Soft warm afternoon light. Atmosphere: considered, private. Duration: 20s. Empty room, no people.'
+Higgsfield: 'Static locked-off tripod of the visible bedroom and wardrobe entrance. Soft warm afternoon light, private mood. Duration: 6s. Empty room, no people.'
 
 CTA: 'Viewing slots available this weekend. DM Tong Boon or check the link in bio. One flat fee. No hidden commissions.'
 

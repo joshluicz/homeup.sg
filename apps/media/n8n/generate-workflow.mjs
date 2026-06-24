@@ -40,13 +40,13 @@ function httpNode(name, position, parameters, extra = {}) {
   });
 }
 
-function codeNode(name, position, fileName) {
+function codeNode(name, position, fileName, extra = {}) {
   let jsCode = readCode(fileName);
   if (fileName === "build-claude-request.js") {
     const prompt = JSON.stringify(readPrompt());
     jsCode = jsCode.replace("__BLUEPRINT_SYSTEM_PROMPT__", prompt);
   }
-  return node(randomUUID(), name, "n8n-nodes-base.code", 2, position, { jsCode });
+  return node(randomUUID(), name, "n8n-nodes-base.code", 2, position, { jsCode }, extra);
 }
 
 const blueprintSystemPrompt = readPrompt();
@@ -213,30 +213,15 @@ const nodes = [
     },
   ),
   codeNode("Split Rooms for Processing", [720, 320], "split-rooms.js"),
-  httpNode(
-    "Generate Room Clip",
-    [960, 320],
-    {
-      method: "POST",
-      url: "https://ixhikkbytusikgjiuvqa.supabase.co/functions/v1/generate-room-clip",
-      sendHeaders: true,
-      headerParameters: {
-        parameters: [{ name: "Content-Type", value: "application/json" }],
-      },
-      sendBody: true,
-      specifyBody: "json",
-      jsonBody:
-        "={{ JSON.stringify({ blueprint_id: $json.blueprint_id, label: $json.label, r2_url: $json.r2_url, higgsfield_prompt: $json.higgsfield_prompt, duration_seconds: $json.duration_seconds }) }}",
-      options: { timeout: 360000 },
-    },
-  ),
+  codeNode("Generate Room Clip", [960, 320], "generate-room-clip.js"),
   codeNode("Parse Clip Response", [1200, 320], "parse-clip-response.js"),
+  codeNode("Archive Clip to R2", [1320, 320], "archive-room-clip.js"),
   node(
     randomUUID(),
     "Save Room Clip to Supabase",
     "n8n-nodes-base.supabase",
     1,
-    [1440, 320],
+    [1560, 320],
     {
       tableId: "media_files",
       fieldsUi: {
@@ -245,6 +230,7 @@ const nodes = [
           { fieldId: "file_name", fieldValue: "={{ $json.file_name }}" },
           { fieldId: "r2_key", fieldValue: "={{ $json.r2_key }}" },
           { fieldId: "r2_url", fieldValue: "={{ $json.video_url || '' }}" },
+          { fieldId: "file_size", fieldValue: "={{ $json.file_size || 0 }}" },
           { fieldId: "duration_seconds", fieldValue: "={{ $json.duration_seconds }}" },
           {
             fieldId: "metadata",
@@ -310,6 +296,9 @@ const connections = {
     main: [[{ node: "Parse Clip Response", type: "main", index: 0 }]],
   },
   "Parse Clip Response": {
+    main: [[{ node: "Archive Clip to R2", type: "main", index: 0 }]],
+  },
+  "Archive Clip to R2": {
     main: [[{ node: "Save Room Clip to Supabase", type: "main", index: 0 }]],
   },
 };

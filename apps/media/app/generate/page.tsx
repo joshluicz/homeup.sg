@@ -70,7 +70,52 @@ type ClipCard = {
   videoUrl?: string;
   errorMessage?: string;
   previewUrl?: string | null;
+  mediaFileId?: string;
+  fileName?: string;
 };
+
+function findMediaFileForLabel(
+  rows: MediaFileRow[],
+  label: string,
+): MediaFileRow | undefined {
+  const slug = labelToFileSlug(label);
+  return rows.find((file) => {
+    const metaLabel = file.metadata?.label;
+    if (metaLabel && metaLabel === label) return true;
+    return file.file_name.toLowerCase().includes(slug);
+  });
+}
+
+function buildClipCardsFromRows(
+  rows: MediaFileRow[],
+  roomLabels: string[],
+): ClipCard[] {
+  const labels =
+    roomLabels.length > 0
+      ? roomLabels
+      : rows
+          .map((row) => row.metadata?.label)
+          .filter((label): label is string => Boolean(label));
+
+  return labels.map((label) => {
+    const row = findMediaFileForLabel(rows, label);
+    if (!row) {
+      return { label, status: "queued" as const };
+    }
+
+    return {
+      label,
+      status: mapFileStatus(row.status),
+      videoUrl: row.status === "done" ? row.r2_url : undefined,
+      errorMessage:
+        row.status === "error"
+          ? (row.error_message ?? "Generation failed")
+          : undefined,
+      mediaFileId: row.id,
+      fileName: row.file_name,
+    };
+  });
+}
 
 function createDefaultRooms(): RoomEntry[] {
   return ["Living Room", "Kitchen", "Master Bedroom"].map((label) => ({
@@ -331,6 +376,8 @@ export default function GeneratePage() {
   const [deletingBlueprintId, setDeletingBlueprintId] = useState<string | null>(
     null,
   );
+  const [creatingUploadJob, setCreatingUploadJob] = useState(false);
+  const [uploadJobId, setUploadJobId] = useState<string | null>(null);
 
   const roomPhotoUrlsRef = useRef<Map<string, string>>(new Map());
 
@@ -348,6 +395,108 @@ export default function GeneratePage() {
   useEffect(() => {
     void refreshSavedBlueprints();
   }, [refreshSavedBlueprints]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const blueprintId = params.get("blueprint");
+    const view = params.get("view");
+    if (blueprintId && view === "clips") {
+      void handleViewClips(blueprintId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleViewClips(blueprintId: string) {
+    setError(null);
+    setLoadingBlueprintId(blueprintId);
+    setUploadJobId(null);
+
+    try {
+      const loaded = await fetchBlueprint(blueprintId);
+      const supabase = createClient();
+      const { data: rows, error: clipsError } = await supabase
+        .from("media_files")
+        .select("*")
+        .eq("job_id", blueprintId);
+
+      if (clipsError) {
+        throw new Error(clipsError.message);
+      }
+
+      setBlueprint(loaded);
+      setClipCards(
+        buildClipCardsFromRows(
+          (rows ?? []) as MediaFileRow[],
+          (loaded.rooms ?? []).map((room) => room.label),
+        ),
+      );
+      setPageState("clips");
+
+      const needsSync = (rows ?? []).some(
+        (row) =>
+          row.status === "done" &&
+          row.r2_url &&
+          row.r2_url.includes("fal.media"),
+      );
+      if (needsSync) {
+        void fetch("/api/clips/sync-storage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ blueprint_id: blueprintId }),
+        })
+          .then(async (res) => {
+            if (!res.ok) return;
+            const { data: refreshed } = await createClient()
+              .from("media_files")
+              .select("*")
+              .eq("job_id", blueprintId);
+            if (refreshed) {
+              setClipCards(
+                buildClipCardsFromRows(
+                  refreshed as MediaFileRow[],
+                  (loaded.rooms ?? []).map((room) => room.label),
+                ),
+              );
+            }
+          })
+          .catch(() => {
+            // Non-fatal — fal URLs still play in the browser
+          });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load clips.");
+    } finally {
+      setLoadingBlueprintId(null);
+    }
+  }
+
+  async function handleCreateUploadJob() {
+    if (!blueprint) return;
+
+    setCreatingUploadJob(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/clips/create-upload-job", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ blueprint_id: blueprint.blueprint_id }),
+      });
+
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          (body as { error?: string }).error ?? "Failed to create upload job",
+        );
+      }
+
+      setUploadJobId((body as { job_id?: string }).job_id ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create upload job.");
+    } finally {
+      setCreatingUploadJob(false);
+    }
+  }
 
   async function handleLoadSavedBlueprint(blueprintId: string) {
     setError(null);
@@ -655,6 +804,7 @@ export default function GeneratePage() {
         return {
           label: room.label,
           status: "queued" as const,
+          fileName: `room_clip_${labelToFileSlug(room.label)}.mp4`,
           previewUrl:
             existing?.previewUrl ??
             roomEntries.find((entry) => entry.label === room.label)?.previewUrl ??
@@ -745,12 +895,7 @@ export default function GeneratePage() {
 
         setClipCards((prev) =>
           prev.map((clip) => {
-            const row = rows.find((file: MediaFileRow) => {
-              const metaLabel = file.metadata?.label;
-              if (metaLabel && metaLabel === clip.label) return true;
-              const slug = labelToFileSlug(clip.label);
-              return file.file_name.toLowerCase().includes(slug);
-            });
+            const row = findMediaFileForLabel(rows as MediaFileRow[], clip.label);
 
             if (!row) return clip;
 
@@ -758,6 +903,8 @@ export default function GeneratePage() {
               ...clip,
               status: mapFileStatus(row.status),
               videoUrl: row.status === "done" ? row.r2_url : clip.videoUrl,
+              mediaFileId: row.id,
+              fileName: row.file_name,
               errorMessage:
                 row.status === "error"
                   ? (row.error_message ?? "Generation failed")
@@ -930,8 +1077,8 @@ export default function GeneratePage() {
               Generate Clips
             </h2>
             <p className="mb-4 text-sm text-neutral-600">
-              Approve this blueprint to generate {blueprintRooms.length} Higgsfield room
-              clips.
+              Approve this blueprint to generate {blueprintRooms.length} room clips
+              with fal Seedance 1.5 Pro.
             </p>
             <button
               type="button"
@@ -953,11 +1100,24 @@ export default function GeneratePage() {
 
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-neutral-900">Generating Clips</h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Room clips are being created from your blueprint.
-          </p>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-neutral-900">
+              {allClipsReady ? "Room Clips" : "Generating Clips"}
+            </h1>
+            <p className="mt-1 text-sm text-neutral-600">
+              {allClipsReady
+                ? "Preview, download, or send clips into the upload pipeline."
+                : "Room clips are being created from your blueprint."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPageState("form")}
+            className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+          >
+            Back
+          </button>
         </div>
 
         {error && (
@@ -968,14 +1128,25 @@ export default function GeneratePage() {
 
         {allClipsReady && (
           <div className="mb-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
-            All clips ready.
+            All clips ready. You can download them below or continue to the upload
+            pipeline for transcription.
+          </div>
+        )}
+
+        {uploadJobId && (
+          <div className="mb-6 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-900">
+            Upload job created. Clips were sent to the Videos pipeline (job{" "}
+            <span className="font-mono">{uploadJobId.slice(0, 8)}…</span>).{" "}
+            <a href="/upload" className="font-medium underline hover:no-underline">
+              Open upload page
+            </a>
           </div>
         )}
 
         {clipsFailed > 0 && (
           <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {clipsFailed} clip{clipsFailed === 1 ? "" : "s"} failed — usually a
-            temporary Higgsfield API timeout. Wait a minute, then retry.
+            temporary API timeout. Wait a minute, then retry.
           </div>
         )}
 
@@ -1006,14 +1177,33 @@ export default function GeneratePage() {
                 </div>
 
                 {clip.status === "ready" && clip.videoUrl && (
-                  <video
-                    src={clip.videoUrl}
-                    controls
-                    autoPlay
-                    muted
-                    loop
-                    className="w-full rounded-lg"
-                  />
+                  <>
+                    <video
+                      src={clip.videoUrl}
+                      controls
+                      muted
+                      playsInline
+                      className="w-full rounded-lg"
+                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {clip.mediaFileId && (
+                        <a
+                          href={`/api/clips/download?id=${clip.mediaFileId}`}
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+                        >
+                          Download
+                        </a>
+                      )}
+                      <a
+                        href={clip.videoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+                      >
+                        Open
+                      </a>
+                    </div>
+                  </>
                 )}
 
                 {clip.status === "failed" && clip.errorMessage && (
@@ -1022,6 +1212,19 @@ export default function GeneratePage() {
               </div>
             ))}
           </div>
+
+          {allClipsReady && (
+            <button
+              type="button"
+              onClick={handleCreateUploadJob}
+              disabled={creatingUploadJob}
+              className={`${SUBMIT_BTN_CLASS} mt-6`}
+            >
+              {creatingUploadJob
+                ? "Creating upload job…"
+                : "Send clips to upload pipeline →"}
+            </button>
+          )}
 
           {clipsFailed > 0 && (
             <button
@@ -1103,6 +1306,18 @@ export default function GeneratePage() {
                     aria-label={`Edit draft for ${item.property_name}`}
                   >
                     Edit
+                  </button>
+                )}
+                {item.status === "ready" && (
+                  <button
+                    type="button"
+                    onClick={() => handleViewClips(item.id)}
+                    disabled={
+                      deletingBlueprintId === item.id || loadingBlueprintId === item.id
+                    }
+                    className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+                  >
+                    Clips
                   </button>
                 )}
                 <button

@@ -1,2 +1,5 @@
-# Minimal config for Edge Function deploys.
-# See https://supabase.com/docs/guides/functions
+# See https://supabase.com/docs/guides/functions/function-configuration
+
+# Called server-to-server from n8n (no user JWT on the request).
+[functions.generate-room-clip]
+verify_jwt = false
