@@ -4,6 +4,8 @@ import { ArrowRight, Clock } from "lucide-react";
 import { PlaybookArticleLink } from "@/components/playbook/PlaybookArticleLink";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import type { PlaybookVideo } from "@/lib/data/playbook";
+import { PlaybookArticleThumbnail } from "@/components/playbook/PlaybookArticleThumbnail";
+import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_TAG: Record<string, { label: string; className: string }> = {
@@ -17,7 +19,7 @@ const CATEGORY_TAG: Record<string, { label: string; className: string }> = {
 type PlaybookArticleCardProps = {
   article: PlaybookVideo;
   isFirst?: boolean;
-  variant?: "compact" | "grid";
+  variant?: "compact" | "grid" | "mockup";
 };
 
 export function PlaybookArticleCard({ article, isFirst, variant = "compact" }: PlaybookArticleCardProps) {
@@ -26,6 +28,33 @@ export function PlaybookArticleCard({ article, isFirst, variant = "compact" }: P
     wordCount > 0 ? `${Math.max(1, Math.round(wordCount / 200))} min read` : "Quick read";
   const teaser = article.description?.trim() || "";
   const tag = CATEGORY_TAG[article.category] ?? CATEGORY_TAG.tips;
+  const thumbnail = resolveArticleThumbnail(article);
+
+  if (variant === "mockup") {
+    return (
+      <PlaybookArticleLink
+        href={`/playbook/${article.slug}`}
+        className="group flex h-full flex-col"
+      >
+        {thumbnail ? (
+          <PlaybookArticleThumbnail
+            src={thumbnail}
+            className="rounded-xl ring-1 ring-neutral-200/80"
+            imgClassName="transition-transform duration-500 group-hover:scale-[1.01]"
+          />
+        ) : (
+          <div className="flex aspect-video items-center justify-center rounded-xl bg-neutral-100 ring-1 ring-neutral-200/80">
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-300">
+              Article
+            </span>
+          </div>
+        )}
+        <h3 className="mt-3 font-display text-sm font-bold leading-snug text-neutral-900 group-hover:text-primary-700 sm:text-base">
+          {article.title}
+        </h3>
+      </PlaybookArticleLink>
+    );
+  }
 
   if (variant === "grid") {
     return (
@@ -33,20 +62,18 @@ export function PlaybookArticleCard({ article, isFirst, variant = "compact" }: P
         href={`/playbook/${article.slug}`}
         className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition hover:border-primary-600/40 hover:shadow-md"
       >
-        <div className="relative aspect-[16/10] bg-neutral-100">
-          {article.thumbnail ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={article.thumbnail}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-neutral-300">
-              <span className="text-xs font-semibold uppercase tracking-wider">Article</span>
-            </div>
-          )}
-        </div>
+        {thumbnail ? (
+          <PlaybookArticleThumbnail
+            src={thumbnail}
+            imgClassName="transition-transform duration-500 group-hover:scale-[1.01]"
+          />
+        ) : (
+          <div className="flex aspect-video items-center justify-center bg-neutral-100">
+            <span className="text-xs font-semibold uppercase tracking-wider text-neutral-300">
+              Article
+            </span>
+          </div>
+        )}
         <div className="flex flex-1 flex-col gap-2 p-5">
           <div className="flex flex-wrap items-center gap-2">
             <span

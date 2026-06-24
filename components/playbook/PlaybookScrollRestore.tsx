@@ -13,10 +13,14 @@ export function PlaybookScrollRestore() {
 
     const restore = () => {
       if (state.hash) {
-        const el = document.querySelector(state.hash);
-        if (el) {
-          el.scrollIntoView({ behavior: "auto", block: "start" });
-          return;
+        try {
+          const el = document.querySelector(state.hash);
+          if (el) {
+            el.scrollIntoView({ behavior: "auto", block: "start" });
+            return;
+          }
+        } catch {
+          // Ignore invalid hash selectors from session storage.
         }
       }
       window.scrollTo({ top: state.scrollY, behavior: "auto" });

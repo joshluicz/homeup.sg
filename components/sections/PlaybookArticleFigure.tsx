@@ -32,8 +32,8 @@ export function PlaybookArticleFigure({
     >
       <div
         className={cn(
-          "w-full overflow-hidden bg-neutral-100",
-          variant === "lead" && "aspect-[3/2] sm:aspect-[16/10]",
+          "w-full overflow-hidden",
+          variant === "lead" ? "aspect-video bg-neutral-950" : "bg-neutral-100",
         )}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -41,8 +41,10 @@ export function PlaybookArticleFigure({
           src={src}
           alt={caption ?? alt ?? ""}
           className={cn(
-            "w-full",
-            variant === "lead" ? "h-full object-cover" : "h-auto object-contain",
+            "w-full object-center",
+            variant === "lead"
+              ? "h-full object-contain"
+              : "h-auto object-contain",
           )}
           loading={variant === "lead" ? "eager" : "lazy"}
         />

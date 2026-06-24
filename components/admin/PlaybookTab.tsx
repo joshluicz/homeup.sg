@@ -795,7 +795,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                     className={inputClass}
                   />
                   {form.thumbnail && (
-                    <img src={form.thumbnail} alt="" className="mt-2 h-36 w-24 rounded-lg border border-neutral-200 object-contain bg-neutral-950" />
+                    <img src={form.thumbnail} alt="" className="mt-2 aspect-video w-full max-w-xs rounded-lg border border-neutral-200 bg-neutral-950 object-contain object-center" />
                   )}
                 </div>
 
@@ -876,14 +876,13 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                   }}
                   className="flex cursor-pointer flex-1 flex-col touch-manipulation"
                 >
-                  <div className={cn("relative bg-neutral-950", isVideoMode ? "aspect-[9/16]" : "aspect-[16/9] bg-neutral-100")}>
+                  <div className={cn("relative bg-neutral-950", isVideoMode ? "aspect-[9/16]" : "aspect-video")}>
                     {v.thumbnail || v.video_url ? (
                       <img
                         src={v.thumbnail || videoThumbnail(v.video_url)}
                         alt=""
                         className={cn(
-                          "h-full w-full transition-transform duration-200 group-hover:scale-[1.02]",
-                          isVideoMode ? "object-contain" : "object-cover",
+                          "h-full w-full object-contain object-center transition-transform duration-200 group-hover:scale-[1.01]",
                         )}
                       />
                     ) : (

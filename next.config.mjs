@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");
+
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["patchright", "patchright-core"],
@@ -34,6 +36,15 @@ const nextConfig = {
         hostname: "homeup.sg",
       },
     ],
+  },
+  async rewrites() {
+    if (!supabaseUrl) return [];
+    return [
+      {
+        source: "/playbook/thumbs/:file",
+        destination: `${supabaseUrl}/storage/v1/object/public/listing-images/playbook/video-thumbnails/:file`,
+      },
+    ];
   },
   async redirects() {
     return [

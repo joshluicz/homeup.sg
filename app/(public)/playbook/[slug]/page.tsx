@@ -12,6 +12,7 @@ import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
+import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   articleSchema,
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: ArticlePageProps) {
       video.description ||
       `${video.title} — a HomeUP property guide for Singapore homeowners.`,
     path: `/playbook/${video.slug}`,
-    ogImage: video.thumbnail || undefined,
+    ogImage: resolveArticleThumbnail(video) || video.thumbnail || undefined,
     ogImageAlt: video.title,
   });
 }

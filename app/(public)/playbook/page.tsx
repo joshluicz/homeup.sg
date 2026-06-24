@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -6,17 +5,20 @@ import { PlaybookScrollRestore } from "@/components/playbook/PlaybookScrollResto
 import { PlaybookHero } from "@/components/sections/PlaybookHero";
 import { PlaybookJourney } from "@/components/sections/PlaybookJourney";
 import { CtaBanner } from "@/components/sections/CtaBanner";
+import { getPlaybookArticlesByTopicServer } from "@/lib/playbook/server-queries";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
-  title: "Property Playbook | Guides & Videos",
+  title: "Property Playbook | Video Tips & Guides",
   description:
-    "The HomeUP Playbook: short-form property videos and in-depth articles covering every stage of buying and selling in Singapore.",
+    "Unlimited video tips for buyers, sellers and investors — plus in-depth HomeUP guides covering every stage of property in Singapore.",
   path: "/playbook",
 });
 
-export default function PlaybookPage() {
+export default async function PlaybookPage() {
+  const initialArticlesByTopic = await getPlaybookArticlesByTopicServer();
+
   return (
     <>
       <JsonLd
@@ -29,9 +31,7 @@ export default function PlaybookPage() {
       <PlaybookScrollRestore />
       <main className="bg-white">
         <PlaybookHero />
-        <Suspense fallback={null}>
-          <PlaybookJourney />
-        </Suspense>
+        <PlaybookJourney initialArticlesByTopic={initialArticlesByTopic} />
         <CtaBanner />
       </main>
       <Footer />
