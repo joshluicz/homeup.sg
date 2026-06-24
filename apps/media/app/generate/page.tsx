@@ -5,7 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import {
   type Blueprint,
   type BlueprintRoom,
+  type SavedBlueprintSummary,
   blueprintFromWebhookPayload,
+  blueprintToDbRow,
 } from "@/lib/blueprint";
 import { EMPTY_WEBHOOK_RESPONSE_MESSAGE, readResponseJson } from "@/lib/read-response-json";
 
@@ -117,6 +119,40 @@ async function fetchBlueprint(blueprintId: string): Promise<Blueprint> {
   return body as Blueprint;
 }
 
+async function saveBlueprintToDatabase(
+  blueprint: Blueprint,
+  meta: { address: string; uploadedBy: string },
+): Promise<void> {
+  const supabase = createClient();
+  const row = blueprintToDbRow(blueprint, meta);
+  const { error } = await supabase.from("blueprints").upsert(row);
+  if (error) {
+    throw new Error(`Failed to save blueprint: ${error.message}`);
+  }
+}
+
+async function fetchSavedBlueprints(): Promise<SavedBlueprintSummary[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("blueprints")
+    .select("id,property_name,status,created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as SavedBlueprintSummary[];
+}
+
+function formatSavedDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 function mapFileStatus(
   status: MediaFileRow["status"],
 ): ClipCard["status"] {
@@ -202,8 +238,45 @@ export default function GeneratePage() {
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [clipCards, setClipCards] = useState<ClipCard[]>([]);
   const [approving, setApproving] = useState(false);
+  const [savedBlueprints, setSavedBlueprints] = useState<SavedBlueprintSummary[]>(
+    [],
+  );
+  const [loadingSaved, setLoadingSaved] = useState(true);
+  const [loadingBlueprintId, setLoadingBlueprintId] = useState<string | null>(
+    null,
+  );
 
   const roomPhotoUrlsRef = useRef<Map<string, string>>(new Map());
+
+  const refreshSavedBlueprints = useCallback(async () => {
+    try {
+      const rows = await fetchSavedBlueprints();
+      setSavedBlueprints(rows);
+    } catch {
+      // Non-fatal — list can be refreshed on next visit
+    } finally {
+      setLoadingSaved(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshSavedBlueprints();
+  }, [refreshSavedBlueprints]);
+
+  async function handleLoadSavedBlueprint(blueprintId: string) {
+    setError(null);
+    setLoadingBlueprintId(blueprintId);
+
+    try {
+      const loaded = await fetchBlueprint(blueprintId);
+      setBlueprint(loaded);
+      setPageState("review");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load blueprint.");
+    } finally {
+      setLoadingBlueprintId(null);
+    }
+  }
 
   const updateRoom = useCallback((id: string, patch: Partial<RoomEntry>) => {
     setRoomEntries((prev) =>
@@ -325,9 +398,21 @@ export default function GeneratePage() {
         throw new Error("Blueprint workflow did not return a blueprint_id.");
       }
 
-      const parsed = await fetchBlueprint(webhookBlueprint.blueprint_id);
+      let fullBlueprint: Blueprint;
+      if (webhookBlueprint.rooms?.length) {
+        fullBlueprint = webhookBlueprint;
+      } else {
+        fullBlueprint = await fetchBlueprint(webhookBlueprint.blueprint_id);
+      }
 
-      setBlueprint(parsed);
+      await saveBlueprintToDatabase(fullBlueprint, {
+        address: address.trim(),
+        uploadedBy: user.id,
+      });
+
+      await refreshSavedBlueprints();
+
+      setBlueprint(fullBlueprint);
       setPageState("review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -519,15 +604,24 @@ export default function GeneratePage() {
                     </div>
 
                     {room.script && (
-                      <p className="mb-2 text-sm italic text-neutral-700">
-                        {room.script}
-                      </p>
+                      <div className="mb-3">
+                        <p className="mb-1 text-sm font-medium text-neutral-900">
+                          Script
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm text-neutral-800">
+                          {room.script}
+                        </p>
+                      </div>
                     )}
                     {room.presenter_direction && (
-                      <p className="mb-2 text-sm text-neutral-600">
-                        <span className="font-medium text-neutral-700">Direction: </span>
-                        {room.presenter_direction}
-                      </p>
+                      <div className="mb-3">
+                        <p className="mb-1 text-sm font-medium text-neutral-900">
+                          Presenter direction
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm text-neutral-600">
+                          {room.presenter_direction}
+                        </p>
+                      </div>
                     )}
                     {room.higgsfield_prompt && (
                       <div className="rounded-lg bg-purple-50 px-3 py-2">
@@ -678,6 +772,46 @@ export default function GeneratePage() {
           {error}
         </div>
       )}
+
+      <section className={`${CARD_CLASS} mb-8`}>
+        <h2 className="mb-1 text-sm font-semibold text-neutral-900">
+          Saved blueprints
+        </h2>
+        <p className="mb-4 text-sm text-neutral-500">
+          Load a previous blueprint to review or generate clips.
+        </p>
+
+        {loadingSaved ? (
+          <p className="text-sm text-neutral-500">Loading…</p>
+        ) : savedBlueprints.length === 0 ? (
+          <p className="text-sm text-neutral-500">No saved blueprints yet.</p>
+        ) : (
+          <ul className="divide-y divide-neutral-100">
+            {savedBlueprints.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  onClick={() => handleLoadSavedBlueprint(item.id)}
+                  disabled={loadingBlueprintId === item.id}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left hover:bg-neutral-50 disabled:opacity-60"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-neutral-900">
+                      {item.property_name}
+                    </p>
+                    <p className="text-sm text-neutral-500">
+                      {formatSavedDate(item.created_at)}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-sm capitalize text-neutral-600">
+                    {loadingBlueprintId === item.id ? "Loading…" : item.status}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <form onSubmit={handleGenerateBlueprint} className="space-y-8">
         <section className={CARD_CLASS}>

@@ -35,6 +35,21 @@ CREATE POLICY "Authenticated users can read blueprints"
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "Authenticated users can insert blueprints" ON public.blueprints;
+CREATE POLICY "Authenticated users can insert blueprints"
+  ON public.blueprints
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can update blueprints" ON public.blueprints;
+CREATE POLICY "Authenticated users can update blueprints"
+  ON public.blueprints
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
 -- 2. media_files: allow blueprint clips (job_id = blueprint_id)
 ALTER TABLE public.media_files
   DROP CONSTRAINT IF EXISTS media_files_job_id_fkey;

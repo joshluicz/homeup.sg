@@ -1,6 +1,8 @@
 const input = $input.first().json;
 
-const userMessage = `Generate a production blueprint for this property tour video.
+const userMessage = `This property is located at: ${input.address}. Do not reference any other location.
+
+Generate a production blueprint for this property tour video.
 
 PROPERTY DETAILS:
 Address: ${input.address}

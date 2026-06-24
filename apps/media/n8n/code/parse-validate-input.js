@@ -26,9 +26,9 @@ for (const photo of body.room_photos) {
   }
 }
 
-const roomList = body.room_photos
+const roomList = `PROPERTY ADDRESS: ${body.address}\n\nROOMS:\n${body.room_photos
   .map((photo) => `- ${photo.label}: ${photo.r2_url}`)
-  .join("\n");
+  .join("\n")}`;
 
 const roomCount = body.room_photos.length;
 const wordsPerRoom =

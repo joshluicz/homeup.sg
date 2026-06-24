@@ -38,10 +38,25 @@ type EditInstructions = {
 
 export type BlueprintRow = {
   id: string;
+  property_name?: string | null;
   script?: string | null;
   shot_list?: ShotListEntry[] | string | null;
   edit_instructions?: EditInstructions | string | null;
   notes?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+};
+
+export type SavedBlueprintSummary = {
+  id: string;
+  property_name: string;
+  status: string;
+  created_at: string;
+};
+
+export type BlueprintSaveMeta = {
+  address: string;
+  uploadedBy: string;
 };
 
 function parseJsonField<T>(value: T | string | null | undefined): T | null {
@@ -94,6 +109,59 @@ export function blueprintFromRow(row: BlueprintRow): Blueprint {
     presentation_guide:
       editInstructions.presentation_guide ?? row.notes ?? undefined,
     colour_grade: editInstructions.colorgrade_notes,
+  };
+}
+
+export function buildFullScript(blueprint: Blueprint): string {
+  const rooms = blueprint.rooms ?? [];
+  return [
+    "=== HOOK ===",
+    blueprint.hook_script ?? "",
+    "",
+    ...rooms.flatMap((room) => [
+      `=== ${room.label.toUpperCase()}${room.duration_seconds != null ? ` (${room.duration_seconds}s)` : ""} ===`,
+      room.script ?? "",
+      room.presenter_direction
+        ? `[Presenter direction: ${room.presenter_direction}]`
+        : "",
+      "",
+    ]),
+    "=== CTA ===",
+    blueprint.cta_script ?? "",
+  ]
+    .filter((line, index, arr) => line !== "" || arr[index + 1] !== "")
+    .join("\n");
+}
+
+export function blueprintToDbRow(
+  blueprint: Blueprint,
+  meta: BlueprintSaveMeta,
+): Record<string, unknown> {
+  const rooms = blueprint.rooms ?? [];
+
+  return {
+    id: blueprint.blueprint_id,
+    property_name: meta.address,
+    uploaded_by: meta.uploadedBy,
+    content_type: "short",
+    category: "house_tour",
+    script: buildFullScript(blueprint),
+    shot_list: rooms.map((room, index) => ({
+      order: index + 1,
+      label: room.label,
+      duration_seconds: room.duration_seconds,
+      script: room.script ?? "",
+      presenter_direction: room.presenter_direction ?? "",
+      higgsfield_prompt: room.higgsfield_prompt ?? "",
+    })),
+    edit_instructions: {
+      edit_notes: blueprint.edit_notes ?? "",
+      colorgrade_notes: blueprint.colour_grade ?? "",
+      presentation_guide: blueprint.presentation_guide ?? "",
+      sequence: ["hook", ...rooms.map((room) => room.label), "cta"],
+    },
+    notes: blueprint.presentation_guide ?? "",
+    status: "draft",
   };
 }
 

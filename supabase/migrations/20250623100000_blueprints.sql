@@ -33,3 +33,18 @@ CREATE POLICY "Authenticated users can read blueprints"
   FOR SELECT
   TO authenticated
   USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can insert blueprints" ON public.blueprints;
+CREATE POLICY "Authenticated users can insert blueprints"
+  ON public.blueprints
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Authenticated users can update blueprints" ON public.blueprints;
+CREATE POLICY "Authenticated users can update blueprints"
+  ON public.blueprints
+  FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
