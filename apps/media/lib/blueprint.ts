@@ -4,6 +4,7 @@ export type BlueprintRoom = {
   script?: string;
   presenter_direction?: string;
   higgsfield_prompt?: string;
+  r2_url?: string;
 };
 
 export type Blueprint = {
@@ -32,6 +33,7 @@ type ShotListEntry = {
   script?: string;
   presenter_direction?: string;
   higgsfield_prompt?: string;
+  r2_url?: string;
 };
 
 type EditInstructions = {
@@ -132,6 +134,7 @@ export function blueprintFromRow(row: BlueprintRow): Blueprint {
     script: entry.script,
     presenter_direction: entry.presenter_direction,
     higgsfield_prompt: entry.higgsfield_prompt,
+    r2_url: entry.r2_url,
   }));
 
   return {
@@ -148,6 +151,94 @@ export function blueprintFromRow(row: BlueprintRow): Blueprint {
     created_at: row.created_at ?? undefined,
     input_data: inputData,
   };
+}
+
+export function normalizeRoomLabel(label: string): string {
+  return label.trim().toLowerCase();
+}
+
+/** Align stored photo URLs with blueprint room labels (Claude may rename rooms). */
+export function remappedRoomPhotos(
+  rooms: BlueprintRoom[],
+  inputPhotos: BlueprintRoomPhotoInput[] | undefined,
+): BlueprintRoomPhotoInput[] {
+  if (!inputPhotos?.length) {
+    return rooms
+      .filter((room) => room.r2_url)
+      .map((room) => ({
+        label: room.label,
+        r2_url: room.r2_url!,
+        duration_seconds: room.duration_seconds,
+      }));
+  }
+
+  return rooms.map((room, index) => {
+    const byLabel = inputPhotos.find(
+      (photo) =>
+        photo.label === room.label ||
+        normalizeRoomLabel(photo.label) === normalizeRoomLabel(room.label),
+    );
+    const byIndex = inputPhotos[index];
+    const source = byLabel ?? byIndex;
+
+    return {
+      label: room.label,
+      r2_url: source?.r2_url ?? room.r2_url ?? "",
+      duration_seconds:
+        room.duration_seconds ?? source?.duration_seconds ?? undefined,
+    };
+  });
+}
+
+export type ApproveRoomPhoto = {
+  label: string;
+  r2_url: string;
+  higgsfield_prompt: string;
+  duration_seconds: number;
+};
+
+export function buildApproveRoomPhotos(
+  blueprint: Blueprint,
+  options: {
+    ref?: Map<string, string>;
+    entries?: Array<{
+      label: string;
+      r2Url?: string | null;
+      durationSeconds?: number;
+    }>;
+    defaultDuration?: number;
+    labels?: string[];
+  } = {},
+): ApproveRoomPhoto[] {
+  const rooms = blueprint.rooms ?? [];
+  const selected = options.labels
+    ? rooms.filter((room) => options.labels!.includes(room.label))
+    : rooms;
+  const remapped = remappedRoomPhotos(rooms, blueprint.input_data?.room_photos);
+  const remappedByLabel = new Map(remapped.map((photo) => [photo.label, photo]));
+
+  return selected.map((room) => {
+    const entry = options.entries?.find((item) => item.label === room.label);
+    const stored = remappedByLabel.get(room.label);
+    const r2_url =
+      options.ref?.get(room.label) ??
+      entry?.r2Url ??
+      room.r2_url ??
+      stored?.r2_url ??
+      "";
+
+    return {
+      label: room.label,
+      r2_url,
+      higgsfield_prompt: room.higgsfield_prompt ?? "",
+      duration_seconds:
+        entry?.durationSeconds ??
+        room.duration_seconds ??
+        stored?.duration_seconds ??
+        options.defaultDuration ??
+        5,
+    };
+  });
 }
 
 export function buildFullScript(blueprint: Blueprint): string {
@@ -176,6 +267,7 @@ export function blueprintToDbRow(
   meta: BlueprintSaveMeta,
 ): Record<string, unknown> {
   const rooms = blueprint.rooms ?? [];
+  const remappedPhotos = remappedRoomPhotos(rooms, meta.inputData?.room_photos);
 
   return {
     id: blueprint.blueprint_id,
@@ -191,6 +283,7 @@ export function blueprintToDbRow(
       script: room.script ?? "",
       presenter_direction: room.presenter_direction ?? "",
       higgsfield_prompt: room.higgsfield_prompt ?? "",
+      r2_url: remappedPhotos[index]?.r2_url ?? room.r2_url ?? "",
     })),
     edit_instructions: {
       edit_notes: blueprint.edit_notes ?? "",
@@ -200,7 +293,12 @@ export function blueprintToDbRow(
     },
     notes: blueprint.presentation_guide ?? "",
     status: "draft",
-    input_data: meta.inputData ?? null,
+    input_data: meta.inputData
+      ? {
+          ...meta.inputData,
+          room_photos: remappedPhotos,
+        }
+      : null,
   };
 }
 

@@ -7,8 +7,10 @@ import {
   type BlueprintInputData,
   type BlueprintRoom,
   type SavedBlueprintSummary,
+  buildApproveRoomPhotos,
   blueprintFromWebhookPayload,
   blueprintToDbRow,
+  remappedRoomPhotos,
 } from "@/lib/blueprint";
 import { EMPTY_WEBHOOK_RESPONSE_MESSAGE, readResponseJson } from "@/lib/read-response-json";
 
@@ -193,6 +195,39 @@ function createRoomEntriesFromInput(
   }));
 }
 
+function syncRoomStateFromBlueprint(
+  blueprint: Blueprint,
+  setRoomEntries: React.Dispatch<React.SetStateAction<RoomEntry[]>>,
+  roomPhotoUrlsRef: React.MutableRefObject<Map<string, string>>,
+) {
+  const remapped = remappedRoomPhotos(
+    blueprint.rooms ?? [],
+    blueprint.input_data?.room_photos,
+  );
+  if (remapped.length === 0) return;
+
+  roomPhotoUrlsRef.current = new Map(
+    remapped.map((room) => [room.label, room.r2_url]),
+  );
+  setRoomEntries(createRoomEntriesFromInput(remapped));
+}
+
+function roomDisplayImageUrl(
+  label: string,
+  roomEntries: RoomEntry[],
+  blueprint: Blueprint | null,
+): string | null {
+  const entry = roomEntries.find((room) => room.label === label);
+  if (entry?.previewUrl) return entry.previewUrl;
+  if (entry?.r2Url) return entry.r2Url;
+
+  const remapped = remappedRoomPhotos(
+    blueprint?.rooms ?? [],
+    blueprint?.input_data?.room_photos,
+  );
+  return remapped.find((room) => room.label === label)?.r2_url ?? null;
+}
+
 function mapFileStatus(
   status: MediaFileRow["status"],
 ): ClipCard["status"] {
@@ -320,12 +355,7 @@ export default function GeneratePage() {
 
     try {
       const loaded = await fetchBlueprint(blueprintId);
-      if (loaded.input_data?.room_photos) {
-        roomPhotoUrlsRef.current = new Map(
-          loaded.input_data.room_photos.map((room) => [room.label, room.r2_url]),
-        );
-        setRoomEntries(createRoomEntriesFromInput(loaded.input_data.room_photos));
-      }
+      syncRoomStateFromBlueprint(loaded, setRoomEntries, roomPhotoUrlsRef);
       setBlueprint(loaded);
       setPageState("review");
     } catch (err) {
@@ -367,10 +397,14 @@ export default function GeneratePage() {
       setSellingPoints(input.selling_points ?? "");
       setAgentNotes(input.agent_notes ?? "");
       setSecondsPerRoom(input.seconds_per_room ?? 5);
-      setRoomEntries(createRoomEntriesFromInput(input.room_photos));
 
+      const remappedPhotos = remappedRoomPhotos(
+        loaded.rooms ?? [],
+        input.room_photos,
+      );
+      setRoomEntries(createRoomEntriesFromInput(remappedPhotos));
       roomPhotoUrlsRef.current = new Map(
-        (input.room_photos ?? []).map((room) => [room.label, room.r2_url]),
+        remappedPhotos.map((room) => [room.label, room.r2_url]),
       );
 
       setBlueprint(loaded);
@@ -545,34 +579,45 @@ export default function GeneratePage() {
         fullBlueprint = await fetchBlueprint(webhookBlueprint.blueprint_id);
       }
 
+      const remappedPhotos = remappedRoomPhotos(
+        fullBlueprint.rooms ?? [],
+        roomPhotos,
+      );
+      const inputData: BlueprintInputData = {
+        address: address.trim(),
+        listing_title: listingTitle.trim(),
+        listing_type: listingType,
+        property_type: propertyType,
+        rooms: rooms.trim(),
+        bedrooms: bedrooms.trim(),
+        bathrooms: bathrooms.trim(),
+        sqft: sqft.trim(),
+        area_sqm: areaSqm.trim(),
+        price_range: priceRange.trim(),
+        price_psf: pricePsf.trim(),
+        tenure: tenure.trim(),
+        condition: condition.trim(),
+        renovation_status: renovationStatus,
+        selling_points: sellingPoints.trim(),
+        agent_notes: agentNotes.trim(),
+        seconds_per_room: secondsPerRoom,
+        room_photos: remappedPhotos,
+      };
+
       await saveBlueprintToDatabase(fullBlueprint, {
         address: address.trim(),
         uploadedBy: user.id,
-        inputData: {
-          address: address.trim(),
-          listing_title: listingTitle.trim(),
-          listing_type: listingType,
-          property_type: propertyType,
-          rooms: rooms.trim(),
-          bedrooms: bedrooms.trim(),
-          bathrooms: bathrooms.trim(),
-          sqft: sqft.trim(),
-          area_sqm: areaSqm.trim(),
-          price_range: priceRange.trim(),
-          price_psf: pricePsf.trim(),
-          tenure: tenure.trim(),
-          condition: condition.trim(),
-          renovation_status: renovationStatus,
-          selling_points: sellingPoints.trim(),
-          agent_notes: agentNotes.trim(),
-          seconds_per_room: secondsPerRoom,
-          room_photos: roomPhotos,
-        },
+        inputData,
       });
 
       await refreshSavedBlueprints();
 
-      setBlueprint(fullBlueprint);
+      syncRoomStateFromBlueprint(
+        { ...fullBlueprint, input_data: inputData },
+        setRoomEntries,
+        roomPhotoUrlsRef,
+      );
+      setBlueprint({ ...fullBlueprint, input_data: inputData });
       setPageState("review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -620,28 +665,14 @@ export default function GeneratePage() {
     setPageState("clips");
   }
 
-  function buildRoomPhotos(
-    rooms: BlueprintRoom[],
-    labels?: string[],
-  ) {
-    const selected = labels
-      ? rooms.filter((room) => labels.includes(room.label))
-      : rooms;
+  function buildRoomPhotos(rooms: BlueprintRoom[], labels?: string[]) {
+    if (!blueprint) return [];
 
-    return selected.map((room) => {
-      const roomEntry = roomEntries.find((entry) => entry.label === room.label);
-      const photoUrl =
-        roomPhotoUrlsRef.current.get(room.label) ??
-        roomEntry?.r2Url ??
-        null;
-
-      return {
-        label: room.label,
-        r2_url: photoUrl ?? "",
-        higgsfield_prompt: room.higgsfield_prompt ?? "",
-        duration_seconds:
-          roomEntry?.durationSeconds ?? room.duration_seconds ?? secondsPerRoom,
-      };
+    return buildApproveRoomPhotos(blueprint, {
+      ref: roomPhotoUrlsRef.current,
+      entries: roomEntries,
+      defaultDuration: secondsPerRoom,
+      labels,
     });
   }
 
@@ -795,9 +826,11 @@ export default function GeneratePage() {
 
             <div className="space-y-4">
               {blueprintRooms.map((room) => {
-                const previewUrl =
-                  roomEntries.find((entry) => entry.label === room.label)
-                    ?.previewUrl ?? null;
+                const previewUrl = roomDisplayImageUrl(
+                  room.label,
+                  roomEntries,
+                  blueprint,
+                );
 
                 return (
                   <div
@@ -1465,9 +1498,9 @@ function RoomPhotoCard({
         onClick={() => inputRef.current?.click()}
         className="cursor-pointer rounded-lg border-2 border-dashed border-neutral-200 px-3 py-6 text-center transition-colors hover:border-neutral-300"
       >
-        {room.previewUrl ? (
+        {room.previewUrl || room.r2Url ? (
           <img
-            src={room.previewUrl}
+            src={room.previewUrl ?? room.r2Url!}
             alt={room.label}
             className="mx-auto max-h-28 rounded object-cover"
           />
