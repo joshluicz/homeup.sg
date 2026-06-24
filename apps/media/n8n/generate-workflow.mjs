@@ -213,7 +213,23 @@ const nodes = [
     },
   ),
   codeNode("Split Rooms for Processing", [720, 320], "split-rooms.js"),
-  codeNode("Generate Room Clip", [960, 320], "generate-room-clip.js"),
+  httpNode(
+    "Generate Room Clip",
+    [960, 320],
+    {
+      method: "POST",
+      url: "https://ixhikkbytusikgjiuvqa.supabase.co/functions/v1/generate-room-clip",
+      sendHeaders: true,
+      headerParameters: {
+        parameters: [{ name: "Content-Type", value: "application/json" }],
+      },
+      sendBody: true,
+      specifyBody: "json",
+      jsonBody:
+        "={{ JSON.stringify({ blueprint_id: $json.blueprint_id, label: $json.label, r2_url: $json.r2_url, higgsfield_prompt: $json.higgsfield_prompt, duration_seconds: $json.duration_seconds }) }}",
+      options: { timeout: 360000 },
+    },
+  ),
   codeNode("Parse Clip Response", [1200, 320], "parse-clip-response.js"),
   node(
     randomUUID(),
