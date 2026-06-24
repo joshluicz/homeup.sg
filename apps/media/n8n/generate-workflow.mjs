@@ -246,7 +246,11 @@ const nodes = [
           { fieldId: "r2_key", fieldValue: "={{ $json.r2_key }}" },
           { fieldId: "r2_url", fieldValue: "={{ $json.video_url || '' }}" },
           { fieldId: "duration_seconds", fieldValue: "={{ $json.duration_seconds }}" },
-          { fieldId: "metadata", fieldValue: '={{ JSON.stringify({ label: $json.label }) }}' },
+          {
+            fieldId: "metadata",
+            fieldValue:
+              "={{ JSON.stringify($json.metadata || { label: $json.label }) }}",
+          },
           { fieldId: "status", fieldValue: "={{ $json.clip_status || 'done' }}" },
           {
             fieldId: "error_message",

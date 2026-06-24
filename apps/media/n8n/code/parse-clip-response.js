@@ -15,6 +15,11 @@ if (response.success === false || (explicitError && !response.video_url)) {
         clip_status: "error",
         error_message: explicitError || "Clip generation failed",
         retryable: response.retryable ?? true,
+        metadata: {
+          label: context.label,
+          diagnostics: response.diagnostics || null,
+          source: "generate-room-clip",
+        },
       },
     },
   ];
@@ -44,7 +49,11 @@ return [
       ...context,
       video_url: videoUrl,
       clip_status: "done",
-      metadata: { label: context.label },
+      metadata: {
+        label: context.label,
+        diagnostics: response.diagnostics || null,
+        source: "generate-room-clip",
+      },
     },
   },
 ];

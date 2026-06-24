@@ -15,6 +15,19 @@ type ClipRequest = {
   duration_seconds: number;
 };
 
+type ClipDiagnostics = {
+  stage:
+    | "auth_smoke_test"
+    | "import_image"
+    | "submit_job"
+    | "poll_job"
+    | "completed";
+  attempt_count: number;
+  used_batch_fallback: boolean;
+  elapsed_ms: number;
+  last_error?: string;
+};
+
 function trimHiggsfieldError(text: string, status: number): string {
   if (
     status === 522 ||
@@ -84,6 +97,48 @@ async function higgsfieldRequest(
   }
 
   throw lastError ?? new Error(`Higgsfield ${path} failed after retries`);
+}
+
+async function runAuthSmokeTest(): Promise<Response> {
+  const startedAt = Date.now();
+  const res = await fetch(`${HIGGSFIELD_BASE}/v1/media/upload/url`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${HIGGSFIELD_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ url: "https://example.invalid/smoke-test.jpg", type: "image" }),
+  });
+
+  const text = await res.text();
+  const elapsedMs = Date.now() - startedAt;
+
+  if (res.status === 401 || res.status === 403) {
+    return jsonResponse(
+      {
+        ok: false,
+        auth_valid: false,
+        status: res.status,
+        elapsed_ms: elapsedMs,
+        message: "Higgsfield authentication failed. Check HIGGSFIELD_API_KEY.",
+        raw: text.slice(0, 300),
+      },
+      200,
+    );
+  }
+
+  return jsonResponse(
+    {
+      ok: true,
+      auth_valid: true,
+      status: res.status,
+      elapsed_ms: elapsedMs,
+      message:
+        "Higgsfield key is accepted (this smoke test may still return 4xx/5xx for the dummy URL).",
+      raw: text.slice(0, 300),
+    },
+    200,
+  );
 }
 
 function extractMediaId(result: Record<string, unknown>): string {
@@ -260,6 +315,11 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  const url = new URL(req.url);
+  if (req.method === "GET" && url.searchParams.get("smoke_test") === "higgsfield") {
+    return await runAuthSmokeTest();
+  }
+
   let body: ClipRequest;
   try {
     body = await req.json();
@@ -277,24 +337,52 @@ Deno.serve(async (req: Request) => {
     }, 400);
   }
 
+  const startedAt = Date.now();
+  let stage: ClipDiagnostics["stage"] = "import_image";
+  let usedBatchFallback = false;
+  let attemptCount = 1;
+
   try {
+
     console.log(`[${label}] Importing image: ${r2_url}`);
-    const mediaId = await importImage(r2_url);
+    let mediaId: string;
+    try {
+      mediaId = await importImageFromUrl(r2_url);
+    } catch (err) {
+      usedBatchFallback = true;
+      console.warn(`[${label}] upload/url failed, switching to batch upload`, err);
+      const imageRes = await fetch(r2_url);
+      if (!imageRes.ok) throw err;
+      const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
+      const bytes = new Uint8Array(await imageRes.arrayBuffer());
+      mediaId = await uploadImageBytes(bytes, contentType);
+    }
     console.log(`[${label}] media_id: ${mediaId}`);
 
+    stage = "submit_job";
     console.log(`[${label}] Submitting Kling 3.0 job`);
     const jobId = await submitJob(mediaId, higgsfield_prompt, duration_seconds ?? 10);
     console.log(`[${label}] job_id: ${jobId}`);
 
+    stage = "poll_job";
     console.log(`[${label}] Polling...`);
     const videoUrl = await pollJob(jobId);
     console.log(`[${label}] Done: ${videoUrl}`);
+
+    stage = "completed";
+    const diagnostics: ClipDiagnostics = {
+      stage,
+      attempt_count: attemptCount,
+      used_batch_fallback: usedBatchFallback,
+      elapsed_ms: Date.now() - startedAt,
+    };
 
     return jsonResponse({
       success: true,
       label,
       higgsfield_job_id: jobId,
       video_url: videoUrl,
+      diagnostics,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -312,6 +400,13 @@ Deno.serve(async (req: Request) => {
       label,
       error: message,
       retryable,
+      diagnostics: {
+        stage,
+        attempt_count: attemptCount,
+        used_batch_fallback: usedBatchFallback,
+        elapsed_ms: Date.now() - startedAt,
+        last_error: message,
+      } satisfies ClipDiagnostics,
     });
   }
 });
