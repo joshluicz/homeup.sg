@@ -6,9 +6,9 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import {
-  getSheetVideoBySlug,
-  PLAYBOOK_SHEET_VIDEOS,
-} from "@/lib/data/playbook-sheet-videos";
+  getAllWatchSlugsServer,
+  getPlaybookVideoForWatchServer,
+} from "@/lib/playbook/server-queries";
 import {
   isDirectVideoFile,
   resolveThumbnail,
@@ -22,11 +22,12 @@ export const dynamicParams = true;
 type WatchPageProps = { params: { slug: string } };
 
 export async function generateStaticParams() {
-  return PLAYBOOK_SHEET_VIDEOS.map((video) => ({ slug: video.slug }));
+  const slugs = await getAllWatchSlugsServer();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: WatchPageProps) {
-  const video = getSheetVideoBySlug(params.slug);
+  const video = await getPlaybookVideoForWatchServer(params.slug);
   if (!video) return { title: "Video Not Found" };
 
   return buildPageMetadata({
@@ -38,8 +39,8 @@ export async function generateMetadata({ params }: WatchPageProps) {
   });
 }
 
-export default function PlaybookWatchPage({ params }: WatchPageProps) {
-  const video = getSheetVideoBySlug(params.slug);
+export default async function PlaybookWatchPage({ params }: WatchPageProps) {
+  const video = await getPlaybookVideoForWatchServer(params.slug);
   if (!video?.videoUrl?.trim()) notFound();
 
   const thumb = resolveThumbnail(video.thumbnail, video.videoUrl);

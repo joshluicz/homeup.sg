@@ -6,13 +6,16 @@
 // Per section: videos rail → featured carousel + article grid (mockup layout)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { isPlaybookArticle } from "@/lib/playbook/content-kind";
+import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import {
+  groupPlaybookVideosByTopic,
+  mergePlaybookVideos,
+} from "@/lib/playbook/public-videos";
 import { PlaybookArticleBlogSection } from "@/components/playbook/PlaybookArticleBlogSection";
 import { PlaybookVideoRail } from "@/components/playbook/PlaybookVideoRail";
-import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import {
   PLAYBOOK_JOURNEY_SECTIONS,
@@ -22,6 +25,12 @@ import {
 } from "@/lib/data/playbook";
 
 const EMPTY_ARTICLES: Record<PlaybookTopic, PlaybookVideo[]> = {
+  upgraders: [],
+  buying_first: [],
+  condo_tips: [],
+};
+
+const EMPTY_VIDEOS: Record<PlaybookTopic, PlaybookVideo[]> = {
   upgraders: [],
   buying_first: [],
   condo_tips: [],
@@ -199,28 +208,23 @@ function PlaybookWhatsAppCTA() {
 
 export function PlaybookJourney({
   initialArticlesByTopic = EMPTY_ARTICLES,
+  initialVideosByTopic = EMPTY_VIDEOS,
 }: {
   initialArticlesByTopic?: Record<PlaybookTopic, PlaybookVideo[]>;
+  initialVideosByTopic?: Record<PlaybookTopic, PlaybookVideo[]>;
 }) {
   const [activeStage, setActiveStage] = useState(STAGES[0].id);
   const [articlesByTopic, setArticlesByTopic] = useState(initialArticlesByTopic);
+  const [videosByTopic, setVideosByTopic] = useState(initialVideosByTopic);
   const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
-
-  const videosByTopic = useMemo(() => {
-    const grouped: Record<PlaybookTopic, PlaybookVideo[]> = {
-      upgraders: [],
-      buying_first: [],
-      condo_tips: [],
-    };
-    for (const video of PLAYBOOK_SHEET_VIDEOS) {
-      if (video.topic) grouped[video.topic].push(video);
-    }
-    return grouped;
-  }, []);
 
   useEffect(() => {
     setArticlesByTopic(initialArticlesByTopic);
   }, [initialArticlesByTopic]);
+
+  useEffect(() => {
+    setVideosByTopic(initialVideosByTopic);
+  }, [initialVideosByTopic]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -230,19 +234,26 @@ export function PlaybookJourney({
       .order("published_at", { ascending: false })
       .then(({ data, error }) => {
         if (error || !data) return;
+
         const articles: Record<PlaybookTopic, PlaybookVideo[]> = {
           upgraders: [],
           buying_first: [],
           condo_tips: [],
         };
+        const dbVideos: PlaybookVideo[] = [];
+
         for (const row of data) {
           const topic = resolveTopic(row);
           const entry = rowToPlaybookVideo(row, topic);
           if (isPlaybookArticle(entry) && entry.article?.trim()) {
             articles[topic].push(entry);
+          } else if (isPlaybookVideo(entry) && entry.videoUrl?.trim()) {
+            dbVideos.push(entry);
           }
         }
+
         setArticlesByTopic(articles);
+        setVideosByTopic(groupPlaybookVideosByTopic(mergePlaybookVideos(dbVideos)));
       });
   }, []);
 
@@ -277,7 +288,7 @@ export function PlaybookJourney({
       window.clearTimeout(retry);
       disconnectAll();
     };
-  }, [articlesByTopic]);
+  }, [articlesByTopic, videosByTopic]);
 
   const setRef = (id: string) => (el: HTMLElement | null) => {
     if (el) sectionRefs.current.set(id, el);

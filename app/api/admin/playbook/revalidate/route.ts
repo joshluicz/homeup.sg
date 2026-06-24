@@ -15,6 +15,7 @@ export async function POST() {
   revalidatePath("/playbook/articles");
   revalidatePath("/playbook/videos");
   revalidatePath("/playbook/[slug]", "page");
+  revalidatePath("/playbook/watch/[slug]", "page");
 
   return NextResponse.json({ ok: true });
 }

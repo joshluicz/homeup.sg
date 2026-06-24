@@ -6,13 +6,22 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link as LinkIcon, Upload, FileText, Layers, Search, ExternalLink, BookOpen } from "lucide-react";
 import { CATEGORY_LABELS, TOPIC_LABELS, PLAYBOOK_TOPICS, inferPlaybookTopicFromCategory } from "@/lib/data/playbook";
-import { videoThumbnail } from "@/lib/playbook/embed";
+import { resolveThumbnail } from "@/lib/playbook/embed";
+import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor";
 import { createClient } from "@/lib/supabase/client";
-import { uploadPlaybookThumbnail, uploadPlaybookVideoFile } from "@/lib/playbook/storage";
+import {
+  uploadPlaybookArticleImage,
+  uploadPlaybookThumbnail,
+  uploadPlaybookVideoFile,
+} from "@/lib/playbook/storage";
 import { PLAYBOOK_ARTICLE_TEMPLATE } from "@/lib/playbook/article-format";
 import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import {
+  isSheetCatalogueAdminId,
+  mergeAdminPlaybookVideos,
+} from "@/lib/playbook/admin-videos";
 import { cn } from "@/lib/utils";
 
 type VideoCategory = "selling" | "buying" | "process" | "market" | "tips";
@@ -83,6 +92,7 @@ type Video = {
   faq?: FaqEntry[];
   meta_description?: string;
   topic?: PlaybookTopic | null;
+  sheetCatalogue?: boolean;
 };
 
 const emptyForm = {
@@ -176,9 +186,20 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
   const [uploadTab, setUploadTab] = useState<"link" | "file">("link");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [topicFilter, setTopicFilter] = useState<TopicFilter>("all");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const thumbFileInputRef = useRef<HTMLInputElement>(null);
+
+  const editingEntry = editId ? videos.find((v) => v.id === editId) : null;
+  const editingSlug = editingEntry?.slug ?? "";
+  const catalogueCount = useMemo(
+    () => videos.filter((v) => v.sheetCatalogue).length,
+    [videos],
+  );
 
   const stats = useMemo(() => {
     const scoped = videos.filter((v) => matchesMode(v, mode));
@@ -212,8 +233,29 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       .from("playbook_videos")
       .select("*")
       .order("published_at", { ascending: false });
-    setVideos((data as Video[]) ?? []);
+    setVideos(mergeAdminPlaybookVideos((data as Video[]) ?? [], mode) as Video[]);
     setLoading(false);
+  }
+
+  async function syncSheetVideos() {
+    const count = catalogueCount || "all live-site";
+    if (!confirm(`Import ${count} video(s) from the live playbook into the database?`)) return;
+
+    setSyncing(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/admin/playbook/sync-sheet-videos", { method: "POST" });
+      const data = (await response.json()) as { error?: string; upserted?: number; total?: number };
+      if (!response.ok) throw new Error(data.error || "Sync failed.");
+
+      await revalidatePlaybook();
+      await loadVideos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not sync live videos.");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   useEffect(() => { loadVideos(); }, []);
@@ -277,6 +319,40 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     setUploadProgress(null);
   }
 
+  async function handleCoverUpload(file: File) {
+    setCoverUploading(true);
+    setUploadProgress("Uploading cover…");
+    setError(null);
+
+    try {
+      const url = await uploadPlaybookArticleImage(file);
+      setForm((f) => ({ ...f, thumbnail: url }));
+      setUploadProgress("✓ Cover uploaded");
+    } catch (err) {
+      setError(`Cover upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+      setUploadProgress(null);
+    } finally {
+      setCoverUploading(false);
+    }
+  }
+
+  async function handleThumbUpload(file: File) {
+    setUploading(true);
+    setUploadProgress("Uploading thumbnail…");
+    setError(null);
+
+    try {
+      const url = await uploadPlaybookThumbnail(file);
+      setForm((f) => ({ ...f, thumbnail: url }));
+      setUploadProgress("✓ Thumbnail uploaded");
+    } catch (err) {
+      setError(`Thumbnail upload failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+      setUploadProgress(null);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleFileUpload(file: File) {
     setUploading(true);
     setUploadProgress("Uploading…");
@@ -326,14 +402,23 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     setSaving(true);
     setError(null);
 
+    const isSheetCatalogue = Boolean(editId && isSheetCatalogueAdminId(editId));
+    const resolvedVideoThumbnail =
+      mode === "video"
+        ? resolveThumbnail(form.thumbnail.trim(), form.video_url.trim())
+        : "";
+
     const payload = {
-      slug: editId ? undefined : slugify(form.title),
+      slug: isSheetCatalogue ? editingSlug : editId ? undefined : slugify(form.title),
       title: form.title.trim(),
       description: form.description.trim(),
       category: form.category,
       topic: form.topic as PlaybookTopic,
       duration: mode === "video" ? form.duration.trim() : "",
-      thumbnail: form.thumbnail.trim(),
+      thumbnail:
+        mode === "video"
+          ? form.thumbnail.trim() || resolvedVideoThumbnail
+          : form.thumbnail.trim(),
       video_url: mode === "video" ? form.video_url.trim() : "",
       featured: form.featured,
       published_at: form.published_at,
@@ -346,7 +431,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       updated_at: new Date().toISOString(),
     };
 
-    if (editId) {
+    if (editId && !isSheetCatalogue) {
       const { error: dbError } = await supabase
         .from("playbook_videos")
         .update(payload)
@@ -355,7 +440,10 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     } else {
       const { error: dbError } = await supabase
         .from("playbook_videos")
-        .insert({ ...payload, created_at: new Date().toISOString() });
+        .insert({
+          ...payload,
+          created_at: new Date().toISOString(),
+        });
       if (dbError) { setError(dbError.message); setSaving(false); return; }
     }
 
@@ -376,6 +464,12 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
   }
 
   async function handleDelete(v: Video) {
+    if (isSheetCatalogueAdminId(v.id)) {
+      setError(
+        "This video is in the live catalogue only. Click “Import live videos” to save it to the database first.",
+      );
+      return;
+    }
     if (!confirm(`Delete "${v.title}"? This cannot be undone.`)) return;
     setDeleting(v.id);
     setError(null);
@@ -418,15 +512,31 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
           </h1>
           <p className="mt-1 text-sm font-normal text-neutral-500">
             {isVideoMode
-              ? "Short-form vertical videos — grouped under their section on /playbook."
+              ? catalogueCount > 0
+                ? `${stats.total} videos shown (${catalogueCount} from live site, not yet in database).`
+                : "Short-form vertical videos — grouped under their section on /playbook."
               : "Long-form written guides — shown on /playbook and /playbook/[slug]."}
           </p>
         </div>
         {!showForm && (
-          <Button onClick={openAdd} className="flex shrink-0 items-center gap-2 self-start">
-            <Plus className="h-4 w-4" />
-            {isVideoMode ? "Add video" : "Add article"}
-          </Button>
+          <div className="flex shrink-0 flex-wrap gap-2 self-start">
+            {isVideoMode && catalogueCount > 0 && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={syncing}
+                onClick={() => void syncSheetVideos()}
+                className="flex items-center gap-2"
+              >
+                {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Import live videos ({catalogueCount})
+              </Button>
+            )}
+            <Button onClick={openAdd} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              {isVideoMode ? "Add video" : "Add article"}
+            </Button>
+          </div>
         )}
       </div>
 
@@ -648,6 +758,61 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
               description="Written guide for search and the public /playbook/[slug] page."
             >
               <div>
+                <FieldLabel>Cover image</FieldLabel>
+                <p className="mb-2 text-xs font-normal text-neutral-500">
+                  16:9 thumbnail for cards and the article hero. Upload a PNG/JPG or paste a URL.
+                </p>
+                <input
+                  ref={coverFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleCoverUpload(file);
+                    e.target.value = "";
+                  }}
+                />
+                <div className="mb-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={coverUploading || saving}
+                    onClick={() => coverFileInputRef.current?.click()}
+                    className="flex items-center gap-2"
+                  >
+                    {coverUploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    Upload cover
+                  </Button>
+                </div>
+                <input
+                  type="url"
+                  value={form.thumbnail}
+                  onChange={(e) => set("thumbnail", e.target.value)}
+                  placeholder="https://… or leave blank to use a designed thumbnail by slug"
+                  className={inputClass}
+                />
+                {(form.thumbnail || form.title) && (
+                  <img
+                    src={
+                      form.thumbnail.trim() ||
+                      resolveArticleThumbnail({
+                        slug: editingSlug || "preview",
+                        title: form.title,
+                        thumbnail: form.thumbnail,
+                      })
+                    }
+                    alt=""
+                    className="mt-3 aspect-video w-full max-w-md rounded-lg border border-neutral-200 bg-neutral-950 object-contain object-center"
+                  />
+                )}
+              </div>
+
+              <div>
                 <FieldLabel>Meta description</FieldLabel>
                 <textarea
                   value={form.meta_description}
@@ -742,10 +907,10 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                     value={form.video_url}
                     onChange={(e) => {
                       const url = e.target.value;
-                      const thumb = videoThumbnail(url);
+                      const thumb = resolveThumbnail("", url);
                       setForm((f) => ({ ...f, video_url: url, thumbnail: f.thumbnail || thumb }));
                     }}
-                    placeholder="https://www.youtube.com/watch?v=... or Vimeo URL"
+                    placeholder="https://www.youtube.com/shorts/…, TikTok, or Vimeo URL"
                     className={inputClass}
                   />
                 ) : (
@@ -786,16 +951,47 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                 )}
 
                 <div>
-                  <FieldLabel>Thumbnail URL</FieldLabel>
+                  <FieldLabel>Thumbnail</FieldLabel>
+                  <input
+                    ref={thumbFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleThumbUpload(file);
+                      e.target.value = "";
+                    }}
+                  />
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading || saving}
+                      onClick={() => thumbFileInputRef.current?.click()}
+                      className="flex items-center gap-2"
+                    >
+                      {uploading && uploadProgress?.includes("thumbnail") ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4" />
+                      )}
+                      Upload image
+                    </Button>
+                  </div>
                   <input
                     type="url"
                     value={form.thumbnail}
                     onChange={(e) => set("thumbnail", e.target.value)}
-                    placeholder="https://img.youtube.com/vi/VIDEO_ID/maxresdefault.jpg"
+                    placeholder="Auto-filled from YouTube/TikTok link, or paste a custom URL"
                     className={inputClass}
                   />
-                  {form.thumbnail && (
-                    <img src={form.thumbnail} alt="" className="mt-2 aspect-video w-full max-w-xs rounded-lg border border-neutral-200 bg-neutral-950 object-contain object-center" />
+                  {(form.thumbnail || form.video_url) && (
+                    <img
+                      src={resolveThumbnail(form.thumbnail, form.video_url)}
+                      alt=""
+                      className="mt-2 aspect-[9/16] w-full max-w-[180px] rounded-lg border border-neutral-200 bg-neutral-950 object-contain object-center"
+                    />
                   )}
                 </div>
 
@@ -854,10 +1050,19 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
           {filteredVideos.map((v) => {
             const slug = v.slug?.trim();
             const previewHref = isVideoMode
-              ? "/playbook"
+              ? slug
+                ? `/playbook/watch/${slug}`
+                : "/playbook"
               : slug
                 ? `/playbook/${slug}`
                 : null;
+            const cardImageSrc = isVideoMode
+              ? resolveThumbnail(v.thumbnail, v.video_url)
+              : resolveArticleThumbnail({
+                  slug: v.slug,
+                  title: v.title,
+                  thumbnail: v.thumbnail,
+                });
 
             return (
               <article
@@ -877,9 +1082,9 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                   className="flex cursor-pointer flex-1 flex-col touch-manipulation"
                 >
                   <div className={cn("relative bg-neutral-950", isVideoMode ? "aspect-[9/16]" : "aspect-video")}>
-                    {v.thumbnail || v.video_url ? (
+                    {cardImageSrc ? (
                       <img
-                        src={v.thumbnail || videoThumbnail(v.video_url)}
+                        src={cardImageSrc}
                         alt=""
                         className={cn(
                           "h-full w-full object-contain object-center transition-transform duration-200 group-hover:scale-[1.01]",
@@ -898,6 +1103,11 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                       <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-amber-400 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-950">
                         <Star className="h-3 w-3 fill-current" />
                         Featured
+                      </span>
+                    )}
+                    {v.sheetCatalogue && (
+                      <span className="absolute right-2 top-2 rounded-md bg-neutral-900/85 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                        Live catalogue
                       </span>
                     )}
                   </div>

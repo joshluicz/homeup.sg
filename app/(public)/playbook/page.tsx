@@ -5,7 +5,7 @@ import { PlaybookScrollRestore } from "@/components/playbook/PlaybookScrollResto
 import { PlaybookHero } from "@/components/sections/PlaybookHero";
 import { PlaybookJourney } from "@/components/sections/PlaybookJourney";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { getPlaybookArticlesByTopicServer } from "@/lib/playbook/server-queries";
+import { getPlaybookArticlesByTopicServer, getPlaybookVideosByTopicServer } from "@/lib/playbook/server-queries";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema } from "@/lib/seo/schema";
 
@@ -17,7 +17,10 @@ export const metadata = buildPageMetadata({
 });
 
 export default async function PlaybookPage() {
-  const initialArticlesByTopic = await getPlaybookArticlesByTopicServer();
+  const [initialArticlesByTopic, initialVideosByTopic] = await Promise.all([
+    getPlaybookArticlesByTopicServer(),
+    getPlaybookVideosByTopicServer(),
+  ]);
 
   return (
     <>
@@ -31,7 +34,10 @@ export default async function PlaybookPage() {
       <PlaybookScrollRestore />
       <main className="bg-white">
         <PlaybookHero />
-        <PlaybookJourney initialArticlesByTopic={initialArticlesByTopic} />
+        <PlaybookJourney
+          initialArticlesByTopic={initialArticlesByTopic}
+          initialVideosByTopic={initialVideosByTopic}
+        />
         <CtaBanner />
       </main>
       <Footer />

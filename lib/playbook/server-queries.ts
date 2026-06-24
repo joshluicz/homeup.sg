@@ -5,7 +5,13 @@ import {
   inferPlaybookTopicFromCategory,
 } from "@/lib/data/playbook";
 import { rowToVideo } from "@/lib/playbook/queries";
-import { isPlaybookArticle } from "@/lib/playbook/content-kind";
+import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import {
+  findPlaybookVideoBySlug,
+  groupPlaybookVideosByTopic,
+  mergePlaybookVideos,
+} from "@/lib/playbook/public-videos";
+import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
 
 function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
   const topic = row.topic as PlaybookTopic | null;
@@ -44,6 +50,54 @@ export async function getPlaybookArticlesByTopicServer(): Promise<
     articles[topic].push({ ...entry, topic });
   }
   return articles;
+}
+
+async function fetchPlaybookRows() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return { data: null, error: null };
+
+  const supabase = createClient(url, key);
+  return supabase.from("playbook_videos").select("*").order("published_at", { ascending: false });
+}
+
+/** Fetch merged sheet + DB videos grouped by journey section. */
+export async function getPlaybookVideosByTopicServer(): Promise<
+  Record<PlaybookTopic, PlaybookVideo[]>
+> {
+  const { data, error } = await fetchPlaybookRows();
+  if (error) {
+    console.warn("getPlaybookVideosByTopicServer:", error.message);
+    return groupPlaybookVideosByTopic(PLAYBOOK_SHEET_VIDEOS);
+  }
+
+  const dbVideos = (data ?? []).map(rowToVideo);
+  return groupPlaybookVideosByTopic(mergePlaybookVideos(dbVideos));
+}
+
+/** Resolve a watch-page video from admin DB entries and the synced sheet catalogue. */
+export async function getPlaybookVideoForWatchServer(
+  slug: string,
+): Promise<PlaybookVideo | null> {
+  const { data, error } = await fetchPlaybookRows();
+  const dbVideos = error || !data ? [] : data.map(rowToVideo);
+  const merged = mergePlaybookVideos(dbVideos);
+  const video = findPlaybookVideoBySlug(slug, merged);
+  if (!video?.videoUrl?.trim()) return null;
+  return video;
+}
+
+export async function getAllWatchSlugsServer(): Promise<string[]> {
+  const sheetSlugs = PLAYBOOK_SHEET_VIDEOS.map((v) => v.slug);
+  const { data, error } = await fetchPlaybookRows();
+  if (error || !data) return sheetSlugs;
+
+  const dbSlugs = data
+    .map(rowToVideo)
+    .filter((v) => isPlaybookVideo(v) && v.videoUrl?.trim())
+    .map((v) => v.slug);
+
+  return [...new Set([...sheetSlugs, ...dbSlugs])];
 }
 
 /** Server/build-time Supabase queries (no cookies). Used by generateStaticParams and the

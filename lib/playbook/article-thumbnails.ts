@@ -86,6 +86,9 @@ export function resolveArticleThumbnail(article: {
   title: string;
   thumbnail?: string;
 }): string {
+  const fromDb = resolveThumbnail(article.thumbnail, "");
+  if (isUsableDbThumbnail(fromDb)) return fromDb;
+
   const bySlug = thumbnailForSlug(article.slug);
   if (bySlug) return bySlug;
 
@@ -93,9 +96,6 @@ export function resolveArticleThumbnail(article: {
   for (const rule of ARTICLE_THUMBNAIL_RULES) {
     if (rule.match.test(haystack)) return thumbnailForSlug(rule.slug);
   }
-
-  const fromDb = resolveThumbnail(article.thumbnail, "");
-  if (isUsableDbThumbnail(fromDb)) return fromDb;
 
   return "";
 }
