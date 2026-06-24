@@ -62,7 +62,38 @@ type MediaFileRow = {
   status: "uploaded" | "processing" | "done" | "error";
   metadata?: { label?: string } | null;
   error_message?: string | null;
+  created_at?: string;
 };
+
+const MEDIA_FILE_STATUS_RANK: Record<MediaFileRow["status"], number> = {
+  done: 4,
+  processing: 3,
+  uploaded: 2,
+  error: 1,
+};
+
+function findMediaFileForLabel(
+  rows: MediaFileRow[],
+  label: string,
+): MediaFileRow | undefined {
+  const slug = labelToFileSlug(label);
+  const matches = rows.filter((file) => {
+    const metaLabel = file.metadata?.label;
+    if (metaLabel && metaLabel === label) return true;
+    return file.file_name.toLowerCase().includes(slug);
+  });
+
+  if (matches.length === 0) return undefined;
+
+  return [...matches].sort((a, b) => {
+    const rankDiff =
+      MEDIA_FILE_STATUS_RANK[b.status] - MEDIA_FILE_STATUS_RANK[a.status];
+    if (rankDiff !== 0) return rankDiff;
+    const aTime = a.created_at ? Date.parse(a.created_at) : 0;
+    const bTime = b.created_at ? Date.parse(b.created_at) : 0;
+    return bTime - aTime;
+  })[0];
+}
 
 type ClipCard = {
   label: string;
@@ -73,18 +104,6 @@ type ClipCard = {
   mediaFileId?: string;
   fileName?: string;
 };
-
-function findMediaFileForLabel(
-  rows: MediaFileRow[],
-  label: string,
-): MediaFileRow | undefined {
-  const slug = labelToFileSlug(label);
-  return rows.find((file) => {
-    const metaLabel = file.metadata?.label;
-    if (metaLabel && metaLabel === label) return true;
-    return file.file_name.toLowerCase().includes(slug);
-  });
-}
 
 function buildClipCardsFromRows(
   rows: MediaFileRow[],
@@ -417,7 +436,8 @@ export default function GeneratePage() {
       const { data: rows, error: clipsError } = await supabase
         .from("media_files")
         .select("*")
-        .eq("job_id", blueprintId);
+        .eq("job_id", blueprintId)
+        .order("created_at", { ascending: false });
 
       if (clipsError) {
         throw new Error(clipsError.message);
@@ -449,7 +469,8 @@ export default function GeneratePage() {
             const { data: refreshed } = await createClient()
               .from("media_files")
               .select("*")
-              .eq("job_id", blueprintId);
+              .eq("job_id", blueprintId)
+              .order("created_at", { ascending: false });
             if (refreshed) {
               setClipCards(
                 buildClipCardsFromRows(
@@ -889,7 +910,8 @@ export default function GeneratePage() {
         const { data: rows, error: pollError } = await supabase
           .from("media_files")
           .select("*")
-          .eq("job_id", blueprintId);
+          .eq("job_id", blueprintId)
+          .order("created_at", { ascending: false });
 
         if (pollError || !rows) return;
 
@@ -1146,7 +1168,8 @@ export default function GeneratePage() {
         {clipsFailed > 0 && (
           <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {clipsFailed} clip{clipsFailed === 1 ? "" : "s"} failed — usually a
-            temporary API timeout. Wait a minute, then retry.
+            temporary timeout. Wait a minute, then retry, or open Clips from your
+            saved blueprint if a later run succeeded.
           </div>
         )}
 
