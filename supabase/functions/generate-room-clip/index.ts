@@ -199,7 +199,7 @@ async function submitJob(
   return jobId;
 }
 
-async function pollJob(jobId: string, maxAttempts = 24): Promise<string> {
+async function pollJob(jobId: string, maxAttempts = 8): Promise<string> {
   for (let i = 0; i < maxAttempts; i++) {
     await sleep(15_000);
 
@@ -235,7 +235,9 @@ async function pollJob(jobId: string, maxAttempts = 24): Promise<string> {
     }
   }
 
-  throw new Error(`Job ${jobId} did not complete after ${maxAttempts} polls`);
+  throw new Error(
+    `Higgsfield job is still processing after ~120s. Please retry this room clip.`,
+  );
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
