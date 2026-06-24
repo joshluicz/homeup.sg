@@ -214,6 +214,41 @@ async function fetchSavedBlueprints(): Promise<SavedBlueprintSummary[]> {
   return (data ?? []) as SavedBlueprintSummary[];
 }
 
+async function fetchRoomClips(
+  blueprintId: string,
+  roomLabels: string[],
+): Promise<ClipCard[]> {
+  const supabase = createClient();
+  const { data: rows, error } = await supabase
+    .from("media_files")
+    .select("*")
+    .eq("job_id", blueprintId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return buildClipCardsFromRows((rows ?? []) as MediaFileRow[], roomLabels);
+}
+
+function clipForLabel(clips: ClipCard[], label: string): ClipCard | undefined {
+  return clips.find((clip) => clip.label === label);
+}
+
+function enrichClipsWithPhotos(
+  clips: ClipCard[],
+  blueprint: Blueprint | null,
+  roomEntries: RoomEntry[] = [],
+): ClipCard[] {
+  return clips.map((clip) => ({
+    ...clip,
+    previewUrl:
+      clip.previewUrl ??
+      roomDisplayImageUrl(clip.label, roomEntries, blueprint),
+  }));
+}
+
 async function deleteBlueprint(blueprintId: string): Promise<void> {
   const supabase = createClient();
 
@@ -425,6 +460,12 @@ export default function GeneratePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function refreshRoomClips(blueprintId: string, roomLabels: string[]) {
+    const clips = await fetchRoomClips(blueprintId, roomLabels);
+    setClipCards(enrichClipsWithPhotos(clips, blueprint, roomEntries));
+    return clips;
+  }
+
   async function handleViewClips(blueprintId: string) {
     setError(null);
     setLoadingBlueprintId(blueprintId);
@@ -432,31 +473,18 @@ export default function GeneratePage() {
 
     try {
       const loaded = await fetchBlueprint(blueprintId);
-      const supabase = createClient();
-      const { data: rows, error: clipsError } = await supabase
-        .from("media_files")
-        .select("*")
-        .eq("job_id", blueprintId)
-        .order("created_at", { ascending: false });
-
-      if (clipsError) {
-        throw new Error(clipsError.message);
-      }
-
+      syncRoomStateFromBlueprint(loaded, setRoomEntries, roomPhotoUrlsRef);
       setBlueprint(loaded);
-      setClipCards(
-        buildClipCardsFromRows(
-          (rows ?? []) as MediaFileRow[],
-          (loaded.rooms ?? []).map((room) => room.label),
-        ),
-      );
+      const roomLabels = (loaded.rooms ?? []).map((room) => room.label);
+      const clips = await fetchRoomClips(blueprintId, roomLabels);
+      setClipCards(enrichClipsWithPhotos(clips, loaded, roomEntries));
       setPageState("clips");
 
-      const needsSync = (rows ?? []).some(
-        (row) =>
-          row.status === "done" &&
-          row.r2_url &&
-          row.r2_url.includes("fal.media"),
+      const needsSync = clips.some(
+        (clip) =>
+          clip.status === "ready" &&
+          clip.videoUrl &&
+          clip.videoUrl.includes("fal.media"),
       );
       if (needsSync) {
         void fetch("/api/clips/sync-storage", {
@@ -466,19 +494,8 @@ export default function GeneratePage() {
         })
           .then(async (res) => {
             if (!res.ok) return;
-            const { data: refreshed } = await createClient()
-              .from("media_files")
-              .select("*")
-              .eq("job_id", blueprintId)
-              .order("created_at", { ascending: false });
-            if (refreshed) {
-              setClipCards(
-                buildClipCardsFromRows(
-                  refreshed as MediaFileRow[],
-                  (loaded.rooms ?? []).map((room) => room.label),
-                ),
-              );
-            }
+            const refreshed = await fetchRoomClips(blueprintId, roomLabels);
+            setClipCards(enrichClipsWithPhotos(refreshed, loaded, roomEntries));
           })
           .catch(() => {
             // Non-fatal — fal URLs still play in the browser
@@ -527,6 +544,13 @@ export default function GeneratePage() {
       const loaded = await fetchBlueprint(blueprintId);
       syncRoomStateFromBlueprint(loaded, setRoomEntries, roomPhotoUrlsRef);
       setBlueprint(loaded);
+      const roomLabels = (loaded.rooms ?? []).map((room) => room.label);
+      if (roomLabels.length > 0) {
+        const clips = await fetchRoomClips(blueprintId, roomLabels);
+        setClipCards(enrichClipsWithPhotos(clips, loaded, roomEntries));
+      } else {
+        setClipCards([]);
+      }
       setPageState("review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load blueprint.");
@@ -904,36 +928,13 @@ export default function GeneratePage() {
   useEffect(() => {
     if (pageState !== "clips" || !blueprintId) return;
 
+    const roomLabels = blueprint?.rooms?.map((room) => room.label) ?? [];
+    if (roomLabels.length === 0) return;
+
     async function pollMediaFiles() {
       try {
-        const supabase = createClient();
-        const { data: rows, error: pollError } = await supabase
-          .from("media_files")
-          .select("*")
-          .eq("job_id", blueprintId)
-          .order("created_at", { ascending: false });
-
-        if (pollError || !rows) return;
-
-        setClipCards((prev) =>
-          prev.map((clip) => {
-            const row = findMediaFileForLabel(rows as MediaFileRow[], clip.label);
-
-            if (!row) return clip;
-
-            return {
-              ...clip,
-              status: mapFileStatus(row.status),
-              videoUrl: row.status === "done" ? row.r2_url : clip.videoUrl,
-              mediaFileId: row.id,
-              fileName: row.file_name,
-              errorMessage:
-                row.status === "error"
-                  ? (row.error_message ?? "Generation failed")
-                  : undefined,
-            };
-          }),
-        );
+        const clips = await fetchRoomClips(blueprintId!, roomLabels);
+        setClipCards(enrichClipsWithPhotos(clips, blueprint, roomEntries));
       } catch {
         // Polling errors are non-fatal; next tick will retry
       }
@@ -942,7 +943,7 @@ export default function GeneratePage() {
     pollMediaFiles();
     const interval = setInterval(pollMediaFiles, 15_000);
     return () => clearInterval(interval);
-  }, [pageState, blueprintId]);
+  }, [pageState, blueprintId, blueprint?.rooms, roomEntries]);
 
   const clipsDone = clipCards.filter((c) => c.status === "ready").length;
   const clipsFailed = clipCards.filter((c) => c.status === "failed").length;
@@ -995,11 +996,12 @@ export default function GeneratePage() {
 
             <div className="space-y-4">
               {blueprintRooms.map((room) => {
-                const previewUrl = roomDisplayImageUrl(
+                const photoUrl = roomDisplayImageUrl(
                   room.label,
                   roomEntries,
                   blueprint,
                 );
+                const clip = clipForLabel(clipCards, room.label);
 
                 return (
                   <div
@@ -1007,26 +1009,26 @@ export default function GeneratePage() {
                     className="rounded-lg border border-neutral-200 p-4"
                   >
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        {previewUrl && (
-                          <img
-                            src={previewUrl}
-                            alt={room.label}
-                            className="h-10 w-10 rounded object-cover"
-                          />
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold text-neutral-900">
-                            {room.label}
+                      <div>
+                        <p className="text-sm font-semibold text-neutral-900">
+                          {room.label}
+                        </p>
+                        {room.duration_seconds != null && (
+                          <p className="text-sm text-neutral-500">
+                            {room.duration_seconds}s script
                           </p>
-                          {room.duration_seconds != null && (
-                            <p className="text-sm text-neutral-500">
-                              {room.duration_seconds}s
-                            </p>
-                          )}
-                        </div>
+                        )}
                       </div>
+                      {clip && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-sm ${statusBadgeClass(clip.status)}`}
+                        >
+                          {statusLabel(clip.status)}
+                        </span>
+                      )}
                     </div>
+
+                    <RoomBlueprintMedia photoUrl={photoUrl} clip={clip} />
 
                     {room.script && (
                       <div className="mb-3">
@@ -1051,7 +1053,7 @@ export default function GeneratePage() {
                     {room.higgsfield_prompt && (
                       <div className="rounded-lg bg-purple-50 px-3 py-2">
                         <p className="mb-1 text-sm font-medium text-purple-900">
-                          Higgsfield prompt
+                          Seedance prompt
                         </p>
                         <p className="font-mono text-sm text-purple-800">
                           {room.higgsfield_prompt}
@@ -1096,20 +1098,48 @@ export default function GeneratePage() {
 
           <section className={CARD_CLASS}>
             <h2 className="mb-2 text-sm font-semibold text-neutral-900">
-              Generate Clips
+              {allClipsReady ? "Room Clips" : "Generate Clips"}
             </h2>
-            <p className="mb-4 text-sm text-neutral-600">
-              Approve this blueprint to generate {blueprintRooms.length} room clips
-              with fal Seedance 1.5 Pro.
-            </p>
-            <button
-              type="button"
-              onClick={handleApproveBlueprint}
-              disabled={approving}
-              className={SUBMIT_BTN_CLASS}
-            >
-              {approving ? "Starting…" : "Approve & generate clips →"}
-            </button>
+            {allClipsReady ? (
+              <>
+                <p className="mb-4 text-sm text-neutral-600">
+                  All room clips are ready. Download below or send them to the
+                  upload pipeline.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCreateUploadJob}
+                  disabled={creatingUploadJob}
+                  className={`${SUBMIT_BTN_CLASS} mb-3`}
+                >
+                  {creatingUploadJob
+                    ? "Creating upload job…"
+                    : "Send clips to upload pipeline →"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPageState("clips")}
+                  className="text-sm font-medium text-neutral-700 underline hover:no-underline"
+                >
+                  Open clips view
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="mb-4 text-sm text-neutral-600">
+                  Approve this blueprint to generate {blueprintRooms.length} room
+                  clips with fal Seedance 1.5 Pro.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleApproveBlueprint}
+                  disabled={approving}
+                  className={SUBMIT_BTN_CLASS}
+                >
+                  {approving ? "Starting…" : "Approve & generate clips →"}
+                </button>
+              </>
+            )}
           </section>
         </div>
       </div>
@@ -1201,6 +1231,13 @@ export default function GeneratePage() {
 
                 {clip.status === "ready" && clip.videoUrl && (
                   <>
+                    {clip.previewUrl && (
+                      <img
+                        src={clip.previewUrl}
+                        alt={`${clip.label} source`}
+                        className="mb-3 w-full rounded-lg object-cover max-h-28"
+                      />
+                    )}
                     <video
                       src={clip.videoUrl}
                       controls
@@ -1677,6 +1714,71 @@ export default function GeneratePage() {
           Generate blueprint →
         </button>
       </form>
+    </div>
+  );
+}
+
+function RoomBlueprintMedia({
+  photoUrl,
+  clip,
+}: {
+  photoUrl: string | null;
+  clip?: ClipCard;
+}) {
+  return (
+    <div className="mb-4 grid gap-3 sm:grid-cols-2">
+      <div>
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Source photo
+        </p>
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt="Room source"
+            className="max-h-44 w-full rounded-lg object-cover"
+          />
+        ) : (
+          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-neutral-200 text-sm text-neutral-400">
+            No photo saved
+          </div>
+        )}
+      </div>
+      <div>
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500">
+          Generated clip
+        </p>
+        {clip?.status === "ready" && clip.videoUrl ? (
+          <>
+            <video
+              src={clip.videoUrl}
+              controls
+              muted
+              playsInline
+              className="max-h-44 w-full rounded-lg"
+            />
+            {clip.mediaFileId && (
+              <a
+                href={`/api/clips/download?id=${clip.mediaFileId}`}
+                className="mt-2 inline-block rounded-lg border border-neutral-200 px-2.5 py-1 text-sm text-neutral-700 hover:bg-neutral-50"
+              >
+                Download
+              </a>
+            )}
+          </>
+        ) : clip?.status === "generating" || clip?.status === "queued" ? (
+          <div className="flex h-28 items-center justify-center rounded-lg bg-neutral-50 text-sm text-neutral-500">
+            Generating…
+          </div>
+        ) : clip?.status === "failed" ? (
+          <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            {clip.errorMessage ?? "Generation failed"}
+          </div>
+        ) : (
+          <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-neutral-200 text-sm text-neutral-400">
+            Not generated yet
+          </div>
+        )}
+      </div>
     </div>
   );
 }
