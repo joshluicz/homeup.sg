@@ -55,6 +55,14 @@ const LOCAL_THUMBNAIL_BY_SLUG: Record<string, string> = {
     "/images/playbook/articles/article-new-launch-vs-resale-best-deal.png",
   "singles-buying-first-condo-singapore-tips":
     "/images/playbook/articles/article-singles-first-condo-checklist.png",
+  "tips-resale-condo-buyers-singapore":
+    "/images/playbook/articles/article-resale-condo-tips-savvy-buyers.png",
+  "single-pr-first-property-singapore-questions":
+    "/images/playbook/articles/article-single-pr-what-can-you-buy.png",
+  "buy-property-near-school-p1-registration":
+    "/images/playbook/articles/article-buy-near-primary-school.png",
+  "tips-buying-older-resale-condo-singapore":
+    "/images/playbook/articles/article-old-resale-condo-checklist.png",
 };
 
 const SUPABASE_THUMBNAIL_BY_SLUG = thumbnailUrls as Record<string, string>;
@@ -86,6 +94,10 @@ const ARTICLE_THUMBNAIL_RULES: Array<{ match: RegExp; slug: string }> = [
   { match: /showroom is designed|showflat.*impress|what to look past/i, slug: "new-launch-condo-showroom-tips-singapore" },
   { match: /new launch may not|best deal|undervalued condo|where to look instead/i, slug: "how-to-spot-undervalued-condo-singapore" },
   { match: /first condo as a single|single.*first condo|3 checklist|3 things first/i, slug: "singles-buying-first-condo-singapore-tips" },
+  { match: /resale condo tips|savvy buyers|resale condo buyers.*overlook/i, slug: "tips-resale-condo-buyers-singapore" },
+  { match: /single pr|what can.*buy.*pr|permanent resident.*buy/i, slug: "single-pr-first-property-singapore-questions" },
+  { match: /primary school|p1 registration|buy near.*school|good school/i, slug: "buy-property-near-school-p1-registration" },
+  { match: /old resale condo|older resale|4 checklist.*resale|buying an old resale/i, slug: "tips-buying-older-resale-condo-singapore" },
 ];
 
 function isBrokenSiteThumbnail(thumbnail?: string): boolean {
