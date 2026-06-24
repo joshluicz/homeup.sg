@@ -8,7 +8,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "4c99cded-3c3e-433c-a16c-fd3c03202da6",
+      "id": "263487a3-1740-4a3e-b8a2-3eea1cff20dd",
       "name": "Blueprint Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -22,7 +22,7 @@
       "parameters": {
         "jsCode": "// Parse and validate payload from media.homeup.sg /api/generate-blueprint\r\nconst raw = $input.first().json;\r\nconst body = raw.body ?? raw;\r\n\r\nconst required = [\r\n  \"address\",\r\n  \"property_type\",\r\n  \"selling_points\",\r\n  \"uploaded_by\",\r\n  \"room_photos\",\r\n];\r\n\r\nfor (const field of required) {\r\n  if (body[field] == null || body[field] === \"\") {\r\n    throw new Error(`Missing required field: ${field}`);\r\n  }\r\n}\r\n\r\nif (!Array.isArray(body.room_photos) || body.room_photos.length === 0) {\r\n  throw new Error(\"room_photos must be a non-empty array\");\r\n}\r\n\r\nfor (const photo of body.room_photos) {\r\n  if (!photo.label || !photo.r2_url) {\r\n    throw new Error(\"Each room_photos entry needs label and r2_url\");\r\n  }\r\n}\r\n\r\nconst roomList = `PROPERTY ADDRESS: ${body.address}\\n\\nROOMS:\\n${body.room_photos\r\n  .map((photo) => `- ${photo.label}: ${photo.r2_url}`)\r\n  .join(\"\\n\")}`;\r\n\r\nconst roomCount = body.room_photos.length;\r\nconst wordsPerRoom =\r\n  Number(body.words_per_room) || Math.max(20, Math.floor(195 / roomCount));\r\nconst secondsPerRoom =\r\n  Number(body.seconds_per_room) ||\r\n  Math.max(10, Math.round((wordsPerRoom / 130) * 60));\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      address: body.address,\r\n      property_type: body.property_type,\r\n      rooms: body.rooms || \"Not specified\",\r\n      sqft: body.sqft || \"Not specified\",\r\n      price_range: body.price_range || \"Not specified\",\r\n      selling_points: body.selling_points,\r\n      renovation_status: body.renovation_status || \"Move-in ready\",\r\n      agent_notes: body.agent_notes || \"None\",\r\n      uploaded_by: body.uploaded_by,\r\n      room_photos: body.room_photos,\r\n      room_list: roomList,\r\n      room_count: roomCount,\r\n      words_per_room: wordsPerRoom,\r\n      seconds_per_room: secondsPerRoom,\r\n    },\r\n  },\r\n];"
       },
-      "id": "7af648f9-d82c-4901-95f2-41e24ab342dc",
+      "id": "ff9162cd-5c47-45a5-b225-0f98b77f3024",
       "name": "Parse & Validate Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -35,7 +35,7 @@
       "parameters": {
         "jsCode": "const input = $input.first().json;\r\n\r\nconst userMessage = `This property is located at: ${input.address}. Do not reference any other location.\r\n\r\nGenerate a production blueprint for this property tour video.\r\n\r\nPROPERTY DETAILS:\r\nAddress: ${input.address}\r\nType: ${input.property_type}\r\nRooms: ${input.rooms}\r\nSize: ${input.sqft} sqft\r\nPrice range: ${input.price_range}\r\nSelling points: ${input.selling_points}\r\nRenovation status: ${input.renovation_status}\r\nAgent notes: ${input.agent_notes || \"None\"}\r\n\r\nROOM PHOTOS (each will become an animated B-roll clip):\r\n${input.room_list}\r\n\r\nTIMING: Each room segment should target ~${input.seconds_per_room} seconds of presenter speech (~${input.words_per_room} words per room).`;\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      ...input,\r\n      anthropic_body: {\r\n        model: \"claude-sonnet-4-6\",\r\n        max_tokens: 3000,\r\n        system: [\r\n          {\r\n            type: \"text\",\r\n            text: \"You are a content director and cinematography consultant for HomeUP, a Singapore fixed-fee real estate agency. Your job is to generate production-ready blueprints for short-form property tour videos (TikTok, IG Reels, YouTube Shorts).\\n\\n== HOMEUP BRAND CONTEXT ==\\n\\nHomeUP charges a single fixed fee regardless of property price. Founders: Dennis and Tong Boon. Tagline: fixed fees, real advice, real estate that is finally fair. The brand is warm, editorial, and trustworthy. Not corporate. Not hype.\\n\\nTarget audience: Singapore HDB upgraders, first-time buyers, young couples, savvy investors aged 28-45. They have done their research. They respect clarity over polish. They scroll fast and stop for specifics.\\n\\nTone: knowledgeable friend, not salesperson. Speak like you know the market. Cite the numbers. Point out what matters. Acknowledge tradeoffs honestly.\\n\\n== SCRIPTWRITING SKILL: SHORT-FORM PROPERTY TOUR ==\\n\\nFUNDAMENTAL RULES:\\n- The hook must land in the first 3 seconds. Lead with the result, the number, or the problem solved. Never with a greeting.\\n- Forbidden hook openers: In today's video / Hey guys / Welcome back / Let's dive in / Today we are looking at / This property / So I wanted to show you\\n- Forbidden closers: I hope you found this helpful / Like and subscribe / Drop a comment below / Make sure to follow\\n- Every sentence must earn its place. Cut anything that does not add information or forward momentum.\\n- Contractions always. Fragments are fine. Short sentences. Read it aloud — if it sounds written, rewrite it.\\n- Show 2-3 strong features per room. Not everything. Curate.\\n- Specific beats generic every time. Not 'nice kitchen' — 'full-height cabinets and a gas hob, which you almost never see in resale HDB.'\\n- CTA: one action, make it easy. DM Dennis for the floorplan. Comment INFO. Link in bio. Never more than one.\\n\\nHOOK FORMULA (pick the strongest for the property):\\n- Price reveal: 'Four rooms, freehold, under a mil — and it is already done.'\\n- Problem-solved: 'Hate renovating? This one is move-in ready. Three years old, never rented.'\\n- Contrast: 'Most HDB kitchens feel like afterthoughts. Not this one.'\\n- Scarcity: 'Only twelve units in the block. This is the only one on the market.'\\n- Aspiration: 'What does a 1.2M condo replacement actually look like? Here.'\\n\\nROOM SCRIPT STRUCTURE (per room, roughly 15-25 seconds each):\\n1. Orientation (1 sentence): What room, what hits first visually\\n2. Key feature (1-2 sentences): The detail that earns a cut to this room\\n3. Practical detail (1 sentence): Size, storage, layout, natural light\\n4. Optional buyer insight (1 sentence): What this solves for the buyer\\n\\nWORD COUNT GUIDE:\\n- 10 seconds = ~25 words\\n- 15 seconds = ~38 words\\n- 20 seconds = ~50 words\\n- 25 seconds = ~62 words\\n- 30 seconds = ~75 words\\n\\nHOOK EXAMPLES (study the rhythm and density):\\n- 'Four rooms, freehold, under a mil. And it is already done.'\\n- 'This is what a million dollars actually looks like in Tampines.'\\n- 'Hate carpentry lead times? Move in January. Everything is built.'\\n- 'Two minutes to the MRT. Top floor. No one above you.'\\n- 'HDB kitchen with an island counter. I know. Keep watching.'\\n- 'Everyone says Queenstown is overpriced. Walk through this and tell me if they are right.'\\n- 'This 5-room sold in 2019 for 580. Today it would go for 820. Here is why.'\\n\\nCTA EXAMPLES:\\n- 'DM Dennis if you want the floorplan. HomeUP charges one flat fee, whatever the price.'\\n- 'Comment INFO and we will send the listing link directly.'\\n- 'Link in bio. Viewing slots are moving fast.'\\n- 'Want to know the PSF? Drop your question below and Dennis will reply.'\\n\\nCOMMON SCRIPT MISTAKES TO AVOID:\\n- Over-describing every room: pick the best 2-3 rooms and make them count\\n- Generic superlatives: beautiful, stunning, amazing, perfect, spacious — cut all of them\\n- Passive voice: 'The kitchen has been renovated' becomes 'They renovated the kitchen two years ago. Look at the tile work.'\\n- Listing features as bullet points read aloud: write in continuous natural speech\\n- Forgetting the buyer: always connect a feature to a benefit or a problem it solves\\n\\n== HIGGSFIELD PROMPTING SKILL: KLING 3.0 ROOM B-ROLL ==\\n\\nYou are generating Higgsfield image-to-video prompts using Kling 3.0. These animate a static room photo into a cinematic clip that plays behind the presenter during their room segment.\\n\\nCORE PRINCIPLE — MCSLA FORMULA:\\nEvery Higgsfield room B-roll prompt must contain these five layers in order:\\nM — Motion: What moves and how (camera movement verb)\\nC — Camera: One named camera preset, never more than one\\nS — Subject: What the camera sees (the room, never a person)\\nL — Lighting: Natural light behaviour, direction, warmth or coolness\\nA — Atmosphere: Mood and texture in one word or short phrase\\n\\nIRONCLAD RULES:\\n1. NO PEOPLE. Every prompt must include: no people, empty room, no human presence. If a person appears, the shot is unusable.\\n2. ONE CAMERA MOVE ONLY. Never stack Dolly In + Orbit + FPV in one prompt. One move per clip. For multiple shots, generate multiple clips.\\n3. USE SPECIFIC CAMERA VERBS. Not 'cinematic movement' or 'dynamic shot.' Named moves the model can execute:\\n   - slow dolly in: pushes toward subject, creates focus and intimacy\\n   - slow dolly out: pulls back, reveals environment and scale\\n   - orbit left / orbit right: circles subject at fixed distance\\n   - crane up: lifts to reveal height\\n   - crane down: descends to ground perspective\\n   - pan left / pan right: horizontal sweep across the room\\n   - handheld: subtle natural shake, warm documentary feel\\n   - static locked-off: no movement, lets the room breathe\\n4. SHORT PROMPTS WIN. 3-4 sentences maximum. Long paragraphs confuse the model. Under 70 words per prompt.\\n5. DESCRIBE ONLY WHAT CHANGES. Room appearance comes from the source photo. Describe motion, lighting behaviour, mood — not furniture already visible.\\n6. INCLUDE DURATION. Every prompt must end with: Duration: [X]s to match the room script length.\\n\\nROOM TYPE CAMERA GUIDE:\\n- Living room: slow dolly in toward window or feature wall, let natural light bloom\\n- Kitchen: pan left or pan right along the counter, reveal the full run of cabinets\\n- Master bedroom: slow crane up from floor level, rising to reveal headboard and windows\\n- Common bedroom: static locked-off or gentle handheld, intimate scale\\n- Bathroom: slow dolly in toward mirror or vanity, tile texture catches light\\n- Dining area: orbit left around the table at table height, light glints off surface\\n- Study / utility: pan right to reveal full wall storage or workstation layout\\n- Exterior / facade: slow crane up from street level, sky visible at top of frame\\n\\nSTRONG PROMPT EXAMPLES:\\nLiving room: 'Slow dolly in toward the floor-to-ceiling windows. Afternoon light floods in, warm and diffused. Atmosphere: open, calm. Duration: 15s. Empty room, no people.'\\nKitchen: 'Pan left along the full counter run and upper cabinets. Morning light catches the countertop surface. Atmosphere: clean, precise. Duration: 15s. No human presence.'\\nMaster bedroom: 'Slow crane up from floor level, rising to reveal headboard and window. Soft morning light through sheer curtains. Atmosphere: restful, editorial. Duration: 20s. Empty room, no people.'\\nBathroom: 'Slow dolly in toward the vanity mirror. Warm white light overhead, cool daylight from frosted window. Atmosphere: considered, spa-like. Duration: 15s. No human presence.'\\nDining: 'Orbit left around the dining table at table height. Warm afternoon side-light glints off the table surface. Atmosphere: domestic, unhurried. Duration: 15s. Empty room, no people.'\\n\\nWEAK PROMPTS — DO NOT GENERATE THESE:\\n- 'A beautiful living room with nice furniture and good lighting' — no camera verb, style slop\\n- 'Cinematic dramatic shot of kitchen' — unmeasurable, model guesses randomly\\n- 'Dolly in and orbit and FPV shot of bedroom' — camera soup, will break output\\n- 'Modern stylish bathroom with marble tiles' — describes photo content, not motion\\n\\n== COLOUR GRADE NOTES ==\\n\\nPhase 1: Dennis and Tong Boon apply colour grade manually in CapCut. Provide specific colour grade direction in edit_notes as a guide for their manual grade.\\n\\nHomeUP default look: warm editorial. Lifted blacks (not crushed). Warm highlights. Slight desaturation on cool tones. Reference: Sunday Times property supplement, not Instagram filter.\\n\\nPer-property variants:\\n- Modern/minimal interior: cooler grade, slightly desaturated, clean whites, no warmth push\\n- Warm/family home: golden hour push, lifted midtones, cream in the shadows\\n- Luxury/high-end: high contrast, deeper blacks, teal-and-orange complementary grade\\n- Older resale HDB: warm grade to compensate, lift the midtones, remove yellow cast from fluorescents\\n\\n== SINGAPORE PROPERTY MARKET CONTEXT ==\\n\\nKey facts that inform script quality:\\n- HDB resale: prices surged 2022-2024, now moderating. Buyers are value-conscious.\\n- Common objections: MOP not met, renovation cost, facing/level, lease remaining years\\n- Condo buyers: often upgraders from HDB, comparing PSF across districts\\n- Lease: 99-year vs 999-year vs freehold — always state if it is a selling point\\n- PSF: include in hook or first 15 seconds when competitive\\n- Popular family areas: Bishan, Ang Mo Kio, Tampines, Punggol, Sengkang\\n- Prestige HDB districts: Queenstown, Tiong Bahru, Tanjong Pagar, Buona Vista\\n- MRT: mention line + station name: 'One stop to Tampines on the East-West line'\\n\\nSINGAPORE-SPECIFIC HOOK EXAMPLES:\\n- 'Queenstown 4-room. Lease still has 70 years. And the kitchen alone would cost 80k to build today.'\\n- 'District 5, 3 minutes to one-north MRT. PSF still under 1,000. This will not last.'\\n- 'Five-room HDB with a second toilet. In Bishan. Under 900k. I know.'\\n- 'This EC just reached MOP. First resale unit in the block. Freehold-equivalent quality at HDB price.'\\n- 'Punggol waterfront. TOP last year. Never rented. Here is what 700k actually buys you.'\\n\\n== PRESENTER COACHING: DENNIS AND TONG BOON ==\\n\\nDennis: Primary listing agent. Measured, knowledgeable tone. Data-forward scripts suit him best. Give him specific numbers and let him deliver with authority. Not performative — write to match his directness.\\n\\nTong Boon: Co-founder. Warmer delivery style. Works well with narrative-driven scripts that tell the buyer's story.\\n\\nPRESENTER DIRECTION GUIDELINES:\\n- Energy: 7 out of 10. Confident and warm, not high-energy sales mode.\\n- Pacing: Slower than instinct. Pause after the hook. Let it breathe.\\n- Hands: Natural gestures are fine. Avoid crossed arms. Avoid pointing at camera.\\n- Eye contact: Into lens for hook and CTA. Eyes can move naturally during room descriptions.\\n- Wardrobe: Smart casual. Navy or white shirt for clean green screen key. Avoid busy patterns.\\n- Position: Static on green screen. All movement comes from B-roll behind them.\\n\\n== EXTENDED HIGGSFIELD EXAMPLES: REAL ESTATE SPECIFIC ==\\n\\nHDB Living Room (north-facing, morning light): 'Pan right across the empty living room from window to feature wall. Soft diffused morning light enters from the left. Atmosphere: unhurried, lived-in warmth. Duration: 15s. Empty room, no people.'\\n\\nKitchen with island counter: 'Static locked-off from the kitchen entrance, camera slowly breathes with a fractional push-in. Neutral daylight from overhead catches the counter surface cleanly. Atmosphere: precise, considered. Duration: 15s. No human presence.'\\n\\nCondo master bedroom with city view: 'Slow dolly in toward the floor-to-ceiling window. City lights visible in distance, soft bokeh. Late afternoon golden light rakes across the empty floor. Atmosphere: aspirational, still. Duration: 20s. Empty room, no people.'\\n\\nRenovated open-plan dining and living: 'Crane up from floor level at the dining area, rising slowly to reveal the full open-plan space. Warm afternoon light from the windows, dust particles visible in air. Atmosphere: spacious, editorial. Duration: 20s. Empty room, no people.'\\n\\nBalcony with garden view: 'Static locked-off from balcony looking outward. Warm late-afternoon golden light, long shadows across balcony floor. Atmosphere: quiet, aspirational. Duration: 15s. No people.'\\n\\n== COMPLETE WORKED SCRIPT EXAMPLE ==\\n\\n4-Room HDB, Tampines, Move-In Ready, $720k:\\n\\nHook: 'Four rooms, Tampines, move-in ready. 720k. I am going to show you every dollar.'\\n\\nLiving Room (15s): 'This is the living and dining combined. They knocked through the original wall to open it up. Solid vinyl plank flooring throughout — about 12k of material alone. North-facing, so you get light all day without afternoon heat.'\\nHiggsfield: 'Pan right across the open living and dining area. Soft diffused north-facing daylight fills evenly. Atmosphere: open, considered. Duration: 15s. Empty room, no people.'\\n\\nKitchen (15s): 'Full marble-effect countertop, undermount sink, gas hob. The carpentry goes to the ceiling — that is the detail that makes it feel expensive. This kitchen would cost 35 to 40k to build new today.'\\nHiggsfield: 'Pan left along the full kitchen counter and upper cabinets to ceiling. Warm morning light catches the countertop. Atmosphere: precise, clean. Duration: 15s. No human presence.'\\n\\nMaster Bedroom (15s): 'Queen bed fits with room to spare. Built-in wardrobe runs the full wall — roughly 4 meters of storage. They kept the original window so you get natural light without haze from the west.'\\nHiggsfield: 'Slow crane up from floor level, rising to reveal the full bedroom and window beyond. Soft morning light through the window. Atmosphere: restful, editorial. Duration: 15s. Empty room, no people.'\\n\\nCTA: 'If you want the floorplan or last transacted price in the block, DM Dennis. HomeUP flat fee — no commission surprises.'\\n\\nEdit notes: 'Hook > Living > Kitchen > Master > CTA. Warm grade, lifted midtones, slight gold push in highlights. No crushed blacks. Target: 55-60s.'\\n\\n== QUALITY CONTROL CHECKLIST ==\\n\\nSCRIPT: Hook does not start with greeting. Every room has at least one specific detail. No generic superlatives. CTA names one action only.\\nHIGGSFIELD: Each prompt has exactly one named camera move. Each includes duration. Each ends with no-people instruction. No prompt exceeds 70 words.\\nCOLOUR: edit_notes includes specific grade direction matched to property type.\\n\\n== OUTPUT RULES ==\\n\\nRespond ONLY with a valid JSON object. No markdown. No backticks. No explanation. No preamble. The JSON must be parseable by JSON.parse() on the first attempt.\\n\\nRequired JSON structure: {\\\"hook_script\\\": \\\"...\\\", \\\"room_scripts\\\": [{\\\"label\\\": \\\"...\\\", \\\"script\\\": \\\"...\\\", \\\"duration_seconds\\\": 15, \\\"presenter_direction\\\": \\\"...\\\", \\\"higgsfield_prompt\\\": \\\"...\\\"}], \\\"cta_script\\\": \\\"...\\\", \\\"edit_notes\\\": \\\"Sequence and cut timing only. Under 200 chars.\\\", \\\"colorgrade_notes\\\": \\\"Specific colour grade direction for CapCut. Warm/cool, blacks, highlights, reference. Under 150 chars.\\\", \\\"presentation_guide\\\": \\\"...\\\"}\\n\\n== ADDITIONAL SCRIPT REFERENCE: CONDO 2BR EXAMPLE ==\\n\\nProperty: 2BR condo, District 5, one-north MRT, $1.05M, unobstructed facing, TOP 2022\\n\\nHook: 'District 5. One-north MRT exit, two minutes on foot. 1.05M for two bedrooms and a study. Here is the walk-through.'\\n\\nLiving and Dining (20s): 'Open plan, no wasted corridor. The developer kept the ceiling at 2.9 meters — most condos in this range are 2.6. That extra 30 centimeters is the difference between feeling like a home and feeling like a hotel room. Unobstructed facing — nothing ahead of you.'\\nPresenter direction: Stand relaxed. Hands open. Calm authority.\\nHiggsfield: 'Slow dolly in toward the full-height window from the living area. Afternoon light pours in, golden and directional. Atmosphere: aspirational, spacious. Duration: 20s. Empty room, no people.'\\n\\nKitchen (15s): 'Integrated appliances, quartz countertop, proper hob — not a two-burner. This layout works for people who actually cook, not just people who say they do.'\\nHiggsfield: 'Pan left along the kitchen counter, integrated appliances in background. Even cool daylight from the kitchen window. Atmosphere: precise, functional. Duration: 15s. No human presence.'\\n\\nMaster Bedroom (20s): 'Ensuite. Walk-in wardrobe — not a sliding robe, a proper walk-in. About 6 sqm. That is rare at this price point. City view from the bed if you leave the curtains open.'\\nHiggsfield: 'Slow dolly in toward the walk-in wardrobe entrance, city view window visible in background. Soft warm afternoon light. Atmosphere: considered, private. Duration: 20s. Empty room, no people.'\\n\\nCTA: 'Viewing slots available this weekend. DM Tong Boon or check the link in bio. One flat fee. No hidden commissions.'\\n\\nEdit notes: 'Hook > Living > Kitchen > Master > CTA. Cool-leaning editorial grade, clean whites, restrained warmth. Target: 65-70s.'\\n\\nPresentation guide: 'Smart casual. Measured pace. Let the numbers land before moving on.'\\n\\n== FINAL NOTE ON JSON OUTPUT ==\\n\\nThe JSON you return is immediately parsed and written to the database. Any syntax error will cause the pipeline to fail silently. Double-check that: all strings use escaped quotes, no trailing commas, all arrays are properly closed, duration_seconds is a number not a string, and the root object contains exactly the required keys.\\n\",\r\n            cache_control: { type: \"ephemeral\" },\r\n          },\r\n        ],\r\n        messages: [{ role: \"user\", content: userMessage }],\r\n      },\r\n    },\r\n  },\r\n];"
       },
-      "id": "8d213b72-379b-4f3f-b01c-17090cf940c8",
+      "id": "9d7479fd-90aa-4c4f-b59d-58c6ef8e10c7",
       "name": "Build Claude Request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -70,7 +70,7 @@
           "timeout": 120000
         }
       },
-      "id": "5425377c-79dc-4755-b8a5-6707e3f6376d",
+      "id": "8d23c652-4f7f-414d-8cc1-00e980c70ff2",
       "name": "Generate Blueprint (Claude)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
@@ -89,7 +89,7 @@
       "parameters": {
         "jsCode": "const raw = $input.first().json.content[0].text.trim();\r\nconst cleaned = raw\r\n  .replace(/^```json/i, \"\")\r\n  .replace(/^```/, \"\")\r\n  .replace(/```$/, \"\")\r\n  .trim();\r\n\r\nlet blueprint;\r\ntry {\r\n  blueprint = JSON.parse(cleaned);\r\n} catch (error) {\r\n  throw new Error(\r\n    \"Failed to parse Claude blueprint JSON. Raw: \" + cleaned.substring(0, 500),\r\n  );\r\n}\r\n\r\nif (!blueprint.hook_script || !blueprint.room_scripts || !blueprint.cta_script) {\r\n  throw new Error(\r\n    \"Blueprint missing required keys: \" + Object.keys(blueprint).join(\", \"),\r\n  );\r\n}\r\n\r\nconst input = $(\"Parse & Validate Input\").first().json;\r\n\r\nconst fullScript = [\r\n  \"=== HOOK ===\",\r\n  blueprint.hook_script,\r\n  \"\",\r\n  ...blueprint.room_scripts.flatMap((room) => [\r\n    `=== ${room.label.toUpperCase()} (${room.duration_seconds}s) ===`,\r\n    room.script,\r\n    `[Presenter direction: ${room.presenter_direction}]`,\r\n    \"\",\r\n  ]),\r\n  \"=== CTA ===\",\r\n  blueprint.cta_script,\r\n].join(\"\\n\");\r\n\r\nconst shotList = blueprint.room_scripts.map((room, index) => ({\r\n  order: index + 1,\r\n  label: room.label,\r\n  duration_seconds: room.duration_seconds,\r\n  script: room.script,\r\n  presenter_direction: room.presenter_direction,\r\n  higgsfield_prompt: room.higgsfield_prompt,\r\n}));\r\n\r\nconst editInstructions = {\r\n  edit_notes: blueprint.edit_notes,\r\n  presentation_guide: blueprint.presentation_guide,\r\n  colorgrade_notes: blueprint.colorgrade_notes || \"\",\r\n  sequence: [\"hook\", ...blueprint.room_scripts.map((room) => room.label), \"cta\"],\r\n};\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      address: input.address,\r\n      property_type: input.property_type,\r\n      uploaded_by: input.uploaded_by,\r\n      room_photos: input.room_photos,\r\n      full_script: fullScript,\r\n      shot_list: shotList,\r\n      edit_instructions: editInstructions,\r\n      hook_script: blueprint.hook_script,\r\n      cta_script: blueprint.cta_script,\r\n      edit_notes: blueprint.edit_notes,\r\n      presentation_guide: blueprint.presentation_guide,\r\n      room_scripts: blueprint.room_scripts,\r\n      colorgrade_notes: blueprint.colorgrade_notes || blueprint.edit_notes || \"\",\r\n    },\r\n  },\r\n];"
       },
-      "id": "b38b1f2d-a9db-434b-9ad3-d6b4bd11f71c",
+      "id": "df5ad9d2-0bc7-4ee8-968d-10b47d88c61a",
       "name": "Parse Blueprint JSON",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -142,7 +142,7 @@
           ]
         }
       },
-      "id": "a3cd9487-1345-4e9f-b4b9-76b4f995de81",
+      "id": "1ab6b76b-93ab-4e02-9735-18ef1a2b4bc9",
       "name": "Save Blueprint to Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -161,7 +161,7 @@
       "parameters": {
         "jsCode": "const supabaseResult = $input.first().json;\r\nconst blueprintId = supabaseResult.id;\r\n\r\nif (!blueprintId) {\r\n  throw new Error(\r\n    \"Supabase did not return a blueprint ID. Response: \" +\r\n      JSON.stringify(supabaseResult).substring(0, 300),\r\n  );\r\n}\r\n\r\nconst parsed = $(\"Parse Blueprint JSON\").first().json;\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      ...parsed,\r\n      blueprint_id: blueprintId,\r\n    },\r\n  },\r\n];"
       },
-      "id": "dabd9263-bb54-48da-983b-26b86c404816",
+      "id": "f8104385-8f74-48a0-9b63-7a99f9bb342f",
       "name": "Capture Blueprint ID",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -176,7 +176,7 @@
         "responseBody": "={{ JSON.stringify({ status: 'success', blueprint_id: $json.blueprint_id, message: 'Blueprint generated and saved.' }) }}",
         "options": {}
       },
-      "id": "7dfffdb2-6e18-4200-8de1-a6fb5304d3b2",
+      "id": "959540ff-910e-4753-91d5-48434e6883e0",
       "name": "Respond to App",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
@@ -192,7 +192,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "0b158370-a133-434e-91b9-cfe43dbcb9f7",
+      "id": "a84b1531-2aa0-4973-ad89-cc27a96c57c7",
       "name": "Approval Trigger",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -206,7 +206,7 @@
       "parameters": {
         "jsCode": "const raw = $input.first().json;\r\nconst body = raw.body ?? raw;\r\n\r\nif (!body.blueprint_id) {\r\n  throw new Error(\"Missing blueprint_id\");\r\n}\r\n\r\nif (!body.room_photos || !Array.isArray(body.room_photos)) {\r\n  throw new Error(\"Missing room_photos array\");\r\n}\r\n\r\nfor (const photo of body.room_photos) {\r\n  if (!photo.label || !photo.r2_url) {\r\n    throw new Error(\"Each room_photos entry needs label and r2_url\");\r\n  }\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      blueprint_id: body.blueprint_id,\r\n      room_photos: body.room_photos,\r\n    },\r\n  },\r\n];"
       },
-      "id": "01a62c2f-66d3-42fd-8c22-deb8fcfd4783",
+      "id": "7c95e7d1-4a44-41ce-be64-3620eba69a40",
       "name": "Parse Approval Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -237,7 +237,7 @@
           ]
         }
       },
-      "id": "1c8fe289-3c06-4227-a0d4-419dac1a37f2",
+      "id": "85c01c86-28d0-4e6e-bf79-fed03d9409c8",
       "name": "Set Blueprint to Ready",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -258,7 +258,7 @@
         "responseBody": "={{ JSON.stringify({ status: 'success', message: 'Blueprint approved. Room clip generation started for ' + $('Parse Approval Input').first().json.room_photos.length + ' rooms.' }) }}",
         "options": {}
       },
-      "id": "8d0a2d07-2d40-42b0-bfe2-d25b6b0ffc3b",
+      "id": "c1109d92-0b14-4930-92d9-4632990a0914",
       "name": "Respond to Approval",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
@@ -271,7 +271,7 @@
       "parameters": {
         "jsCode": "const { blueprint_id, room_photos } = $(\"Parse Approval Input\").first().json;\r\n\r\nreturn room_photos.map((photo) => ({\r\n  json: {\r\n    blueprint_id,\r\n    label: photo.label,\r\n    r2_url: photo.r2_url,\r\n    higgsfield_prompt: photo.higgsfield_prompt,\r\n    duration_seconds: photo.duration_seconds || 20,\r\n    file_name:\r\n      \"room_clip_\" + photo.label.toLowerCase().replace(/ /g, \"_\") + \".mp4\",\r\n    r2_key:\r\n      \"room-clips/\" +\r\n      blueprint_id +\r\n      \"/\" +\r\n      photo.label.toLowerCase().replace(/ /g, \"_\") +\r\n      \".mp4\",\r\n  },\r\n}));"
       },
-      "id": "63d5ed14-b46c-4f01-ab0e-e8381d9ded39",
+      "id": "fd2e0675-7246-4dfe-ae8b-55b9f9b586dd",
       "name": "Split Rooms for Processing",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -300,20 +300,21 @@
           "timeout": 360000
         }
       },
-      "id": "5ec2b7ab-18ff-42c3-9693-c053f12f9f58",
+      "id": "90a89f35-479a-45be-aaa9-db4b4141ed07",
       "name": "Generate Room Clip",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
         960,
         320
-      ]
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const context = $(\"Split Rooms for Processing\").item.json;\r\nconst response = $input.first().json;\r\n\r\nconst videoUrl =\r\n  response.video_url || response.url || response.r2_url || response.clip_url;\r\n\r\nif (!videoUrl) {\r\n  throw new Error(\r\n    \"No video_url in clip response: \" + JSON.stringify(response).substring(0, 300),\r\n  );\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      ...context,\r\n      video_url: videoUrl,\r\n      metadata: { label: context.label },\r\n    },\r\n  },\r\n];"
+        "jsCode": "const context = $(\"Split Rooms for Processing\").item.json;\r\nconst response = $input.first().json;\r\n\r\nconst explicitError =\r\n  response.error_message ||\r\n  (typeof response.error === \"string\" ? response.error : null) ||\r\n  response.error?.message ||\r\n  response.message;\r\n\r\nif (response.success === false || (explicitError && !response.video_url)) {\r\n  return [\r\n    {\r\n      json: {\r\n        ...context,\r\n        clip_status: \"error\",\r\n        error_message: explicitError || \"Clip generation failed\",\r\n        retryable: response.retryable ?? true,\r\n      },\r\n    },\r\n  ];\r\n}\r\n\r\nconst videoUrl =\r\n  response.video_url || response.url || response.r2_url || response.clip_url;\r\n\r\nif (!videoUrl) {\r\n  return [\r\n    {\r\n      json: {\r\n        ...context,\r\n        clip_status: \"error\",\r\n        error_message:\r\n          \"No video_url in clip response: \" +\r\n          JSON.stringify(response).substring(0, 300),\r\n        retryable: true,\r\n      },\r\n    },\r\n  ];\r\n}\r\n\r\nreturn [\r\n  {\r\n    json: {\r\n      ...context,\r\n      video_url: videoUrl,\r\n      clip_status: \"done\",\r\n      metadata: { label: context.label },\r\n    },\r\n  },\r\n];"
       },
-      "id": "32772dfd-7dfe-4411-ae65-762a9a64d8e9",
+      "id": "1dcf5ffe-65db-4c0d-a466-22989765ed2f",
       "name": "Parse Clip Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -341,7 +342,7 @@
             },
             {
               "fieldId": "r2_url",
-              "fieldValue": "={{ $json.video_url }}"
+              "fieldValue": "={{ $json.video_url || '' }}"
             },
             {
               "fieldId": "duration_seconds",
@@ -353,12 +354,16 @@
             },
             {
               "fieldId": "status",
-              "fieldValue": "done"
+              "fieldValue": "={{ $json.clip_status || 'done' }}"
+            },
+            {
+              "fieldId": "error_message",
+              "fieldValue": "={{ $json.error_message || '' }}"
             }
           ]
         }
       },
-      "id": "49898914-5e1f-410e-a74f-b059a00c28ba",
+      "id": "d9e4ba76-d932-4beb-bd86-f9365762ae20",
       "name": "Save Room Clip to Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -530,6 +535,6 @@
   },
   "meta": {
     "templateCredsSetupCompleted": false,
-    "instanceId": "09dba765-4df8-4643-a629-d799f1d968c0"
+    "instanceId": "27fa7066-dc8a-499c-a161-b664c7eb539a"
   }
 }

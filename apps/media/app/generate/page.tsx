@@ -471,6 +471,69 @@ export default function GeneratePage() {
     }
   }
 
+  async function startClipGeneration(
+    roomPhotos: Array<{
+      label: string;
+      r2_url: string;
+      higgsfield_prompt: string;
+      duration_seconds: number;
+    }>,
+  ) {
+    const res = await fetch(WEBHOOK_APPROVE_BLUEPRINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blueprint_id: blueprint!.blueprint_id,
+        room_photos: roomPhotos,
+      }),
+    });
+
+    if (!res.ok) {
+      const detail = await res.json().catch(() => ({}));
+      throw new Error(
+        (detail as { error?: string }).error ?? "Failed to start clip generation",
+      );
+    }
+
+    setClipCards((prev) =>
+      roomPhotos.map((room) => {
+        const existing = prev.find((clip) => clip.label === room.label);
+        return {
+          label: room.label,
+          status: "queued" as const,
+          previewUrl:
+            existing?.previewUrl ??
+            roomEntries.find((entry) => entry.label === room.label)?.previewUrl ??
+            null,
+        };
+      }),
+    );
+    setPageState("clips");
+  }
+
+  function buildRoomPhotos(
+    rooms: BlueprintRoom[],
+    labels?: string[],
+  ) {
+    const selected = labels
+      ? rooms.filter((room) => labels.includes(room.label))
+      : rooms;
+
+    return selected.map((room) => {
+      const photoUrl =
+        roomPhotoUrlsRef.current.get(room.label) ??
+        roomEntries.find((entry) => entry.label === room.label)?.r2Url ??
+        null;
+
+      return {
+        label: room.label,
+        r2_url: photoUrl ?? "",
+        higgsfield_prompt: room.higgsfield_prompt ?? "",
+        duration_seconds: room.duration_seconds ?? secondsPerRoom,
+      };
+    });
+  }
+
   async function handleApproveBlueprint() {
     if (!blueprint) return;
 
@@ -478,49 +541,46 @@ export default function GeneratePage() {
     setError(null);
 
     try {
-      const blueprintRooms = blueprint.rooms ?? [];
-      const roomPhotos = blueprintRooms.map((room) => {
-        const photoUrl =
-          roomPhotoUrlsRef.current.get(room.label) ??
-          roomEntries.find((entry) => entry.label === room.label)?.r2Url ??
-          null;
-
-        return {
-          label: room.label,
-          r2_url: photoUrl ?? "",
-          higgsfield_prompt: room.higgsfield_prompt ?? "",
-          duration_seconds: room.duration_seconds ?? secondsPerRoom,
-        };
-      });
-
-      const res = await fetch(WEBHOOK_APPROVE_BLUEPRINT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          blueprint_id: blueprint.blueprint_id,
-          room_photos: roomPhotos,
-        }),
-      });
-
-      if (!res.ok) {
-        const detail = await res.json().catch(() => ({}));
+      const roomPhotos = buildRoomPhotos(blueprint.rooms ?? []);
+      const missingPhotos = roomPhotos.filter((room) => !room.r2_url);
+      if (missingPhotos.length > 0) {
         throw new Error(
-          (detail as { error?: string }).error ?? "Failed to start clip generation",
+          `Missing room photos for: ${missingPhotos.map((room) => room.label).join(", ")}`,
         );
       }
 
-      const initialClips: ClipCard[] = roomPhotos.map((room) => ({
-        label: room.label,
-        status: "queued",
-        previewUrl:
-          roomEntries.find((entry) => entry.label === room.label)?.previewUrl ??
-          null,
-      }));
-
-      setClipCards(initialClips);
-      setPageState("clips");
+      await startClipGeneration(roomPhotos);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approval failed.");
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  async function handleRetryFailedClips() {
+    if (!blueprint) return;
+
+    const failedLabels = clipCards
+      .filter((clip) => clip.status === "failed")
+      .map((clip) => clip.label);
+
+    if (failedLabels.length === 0) return;
+
+    setApproving(true);
+    setError(null);
+
+    try {
+      const roomPhotos = buildRoomPhotos(blueprint.rooms ?? [], failedLabels);
+      const missingPhotos = roomPhotos.filter((room) => !room.r2_url);
+      if (missingPhotos.length > 0) {
+        throw new Error(
+          `Cannot retry — room photos are missing for: ${missingPhotos.map((room) => room.label).join(", ")}. Generate a new blueprint instead.`,
+        );
+      }
+
+      await startClipGeneration(roomPhotos);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Retry failed.");
     } finally {
       setApproving(false);
     }
@@ -574,6 +634,7 @@ export default function GeneratePage() {
   }, [pageState, blueprintId]);
 
   const clipsDone = clipCards.filter((c) => c.status === "ready").length;
+  const clipsFailed = clipCards.filter((c) => c.status === "failed").length;
   const clipsTotal = clipCards.length;
   const allClipsReady =
     clipsTotal > 0 && clipCards.every((c) => c.status === "ready");
@@ -755,9 +816,22 @@ export default function GeneratePage() {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {allClipsReady && (
           <div className="mb-6 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
             All clips ready.
+          </div>
+        )}
+
+        {clipsFailed > 0 && (
+          <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {clipsFailed} clip{clipsFailed === 1 ? "" : "s"} failed — usually a
+            temporary Higgsfield API timeout. Wait a minute, then retry.
           </div>
         )}
 
@@ -804,6 +878,19 @@ export default function GeneratePage() {
               </div>
             ))}
           </div>
+
+          {clipsFailed > 0 && (
+            <button
+              type="button"
+              onClick={handleRetryFailedClips}
+              disabled={approving}
+              className={`${SUBMIT_BTN_CLASS} mt-6`}
+            >
+              {approving
+                ? "Retrying…"
+                : `Retry ${clipsFailed} failed clip${clipsFailed === 1 ? "" : "s"}`}
+            </button>
+          )}
         </section>
       </div>
     );

@@ -33,6 +33,13 @@ function node(id, name, type, typeVersion, position, parameters, extra = {}) {
   };
 }
 
+function httpNode(name, position, parameters, extra = {}) {
+  return node(randomUUID(), name, "n8n-nodes-base.httpRequest", 4.4, position, parameters, {
+    onError: "continueRegularOutput",
+    ...extra,
+  });
+}
+
 function codeNode(name, position, fileName) {
   let jsCode = readCode(fileName);
   if (fileName === "build-claude-request.js") {
@@ -206,11 +213,8 @@ const nodes = [
     },
   ),
   codeNode("Split Rooms for Processing", [720, 320], "split-rooms.js"),
-  node(
-    randomUUID(),
+  httpNode(
     "Generate Room Clip",
-    "n8n-nodes-base.httpRequest",
-    4.4,
     [960, 320],
     {
       method: "POST",
@@ -240,10 +244,14 @@ const nodes = [
           { fieldId: "job_id", fieldValue: "={{ $json.blueprint_id }}" },
           { fieldId: "file_name", fieldValue: "={{ $json.file_name }}" },
           { fieldId: "r2_key", fieldValue: "={{ $json.r2_key }}" },
-          { fieldId: "r2_url", fieldValue: "={{ $json.video_url }}" },
+          { fieldId: "r2_url", fieldValue: "={{ $json.video_url || '' }}" },
           { fieldId: "duration_seconds", fieldValue: "={{ $json.duration_seconds }}" },
           { fieldId: "metadata", fieldValue: '={{ JSON.stringify({ label: $json.label }) }}' },
-          { fieldId: "status", fieldValue: "done" },
+          { fieldId: "status", fieldValue: "={{ $json.clip_status || 'done' }}" },
+          {
+            fieldId: "error_message",
+            fieldValue: "={{ $json.error_message || '' }}",
+          },
         ],
       },
     },
