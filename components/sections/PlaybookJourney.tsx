@@ -26,13 +26,15 @@ import {
 import { pickRandomFeaturedArticles } from "@/lib/playbook/featured-articles";
 import { PlaybookAutoVideoRail } from "@/components/playbook/PlaybookAutoVideoRail";
 import { PlaybookExclusiveWatch, PlaybookVideoModalOverlay } from "@/components/playbook/PlaybookExclusiveWatch";
-import { PlaybookArticleCard } from "@/components/playbook/PlaybookArticleCard";
+import {
+  countFilteredPlaybookArticles,
+  PlaybookArticleTopicSections,
+} from "@/components/playbook/PlaybookArticleTopicSections";
 import { PlaybookFeaturedCarousel } from "@/components/playbook/PlaybookFeaturedCarousel";
 import { PlaybookJourneyToolbar } from "@/components/playbook/PlaybookJourneyToolbar";
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import {
   PLAYBOOK_TOPICS,
-  TOPIC_LABELS,
   inferPlaybookTopicFromCategory,
 } from "@/lib/data/playbook";
 
@@ -140,12 +142,7 @@ export function PlaybookJourney({
   const [featuredArticles, setFeaturedArticles] = useState<PlaybookVideo[]>([]);
   const featuredInitialized = useRef(false);
 
-  const filteredArticles = useMemo(
-    () => flattenPlaybookArticles(articlesByTopic, filters),
-    [articlesByTopic, filters],
-  );
-
-  const articleCount = filteredArticles.length;
+  const articleCount = countFilteredPlaybookArticles(articlesByTopic, filters);
   const filtersActive = hasActivePlaybookFilters(filters);
 
   useEffect(() => {
@@ -155,7 +152,7 @@ export function PlaybookJourney({
   }, [allArticlesPool]);
 
   const topicLabel =
-    filters.topic === "all" ? "All guides" : TOPIC_LABELS[filters.topic];
+    filters.topic === "all" ? "All topics" : undefined;
 
   const openVideo = useCallback((video: PlaybookVideo) => setActiveVideo(video), []);
   const closeVideo = useCallback(() => setActiveVideo(null), []);
@@ -268,7 +265,7 @@ export function PlaybookJourney({
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-neutral-500 sm:text-base">
                 In-depth guides from the HomeUP team — selling, upgrading, buying, and
-                market commentary. Filter by topic, agent, or search for what you need.
+                market commentary. Browse by topic below, or filter by agent and search.
               </p>
             </div>
 
@@ -276,21 +273,7 @@ export function PlaybookJourney({
           </div>
 
           <div className="mt-14 scroll-mt-36">
-            <div className="mb-6 flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
-                  {filters.topic === "all" ? "All topics" : TOPIC_LABELS[filters.topic]}
-                </p>
-                <h3 className="mt-1 font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
-                  {topicLabel}
-                </h3>
-              </div>
-              <p className="text-sm text-neutral-400">
-                {filteredArticles.length} article{filteredArticles.length === 1 ? "" : "s"}
-              </p>
-            </div>
-
-            {filteredArticles.length === 0 ? (
+            {articleCount === 0 ? (
               <div className="py-16 text-center">
                 <p className="text-sm font-semibold text-neutral-700">No articles found</p>
                 <p className="mt-2 text-sm text-neutral-500">
@@ -309,11 +292,28 @@ export function PlaybookJourney({
                 )}
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredArticles.map((article) => (
-                  <PlaybookArticleCard key={article.id} article={article} variant="mockup" />
-                ))}
-              </div>
+              <>
+                {topicLabel && (
+                  <div className="mb-10 border-b border-neutral-200 pb-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
+                      Browse by topic
+                    </p>
+                    <h3 className="mt-1 font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
+                      {topicLabel}
+                    </h3>
+                    <p className="mt-2 text-sm text-neutral-400">
+                      {articleCount} article{articleCount === 1 ? "" : "s"} across{" "}
+                      {filters.topic === "all" ? "three journey stages" : "this stage"}
+                    </p>
+                  </div>
+                )}
+
+                <PlaybookArticleTopicSections
+                  articlesByTopic={articlesByTopic}
+                  filters={filters}
+                  variant="mockup"
+                />
+              </>
             )}
           </div>
         </div>
