@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Play } from "lucide-react";
-import { resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
+import { getVideoPlatform, resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { cn } from "@/lib/utils";
 
 type PlaybookVideoThumbnailProps = {
@@ -20,12 +20,40 @@ export function PlaybookVideoThumbnail({
   className,
   imgClassName,
 }: PlaybookVideoThumbnailProps) {
-  const candidates = useMemo(
-    () => resolveVideoThumbnailCandidatesForDisplay(thumbnail, videoUrl),
-    [thumbnail, videoUrl],
-  );
+  const [oembedThumb, setOembedThumb] = useState("");
+  const platform = getVideoPlatform(videoUrl);
+
+  useEffect(() => {
+    if (thumbnail?.trim() || !videoUrl?.trim()) return;
+    if (platform === "youtube") return;
+
+    let cancelled = false;
+    fetch(`/api/video-oembed?url=${encodeURIComponent(videoUrl)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && typeof data?.thumbnail_url === "string" && data.thumbnail_url) {
+          setOembedThumb(data.thumbnail_url);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [thumbnail, videoUrl, platform]);
+
+  const candidates = useMemo(() => {
+    const base = resolveVideoThumbnailCandidatesForDisplay(thumbnail, videoUrl);
+    if (oembedThumb && !base.includes(oembedThumb)) return [oembedThumb, ...base];
+    return base;
+  }, [thumbnail, videoUrl, oembedThumb]);
+
   const [index, setIndex] = useState(0);
   const src = candidates[index];
+
+  useEffect(() => {
+    setIndex(0);
+  }, [candidates.join("|")]);
 
   if (!src) {
     return (
@@ -47,7 +75,7 @@ export function PlaybookVideoThumbnail({
       <img
         key={src}
         src={src}
-        alt=""
+        alt={title}
         loading="lazy"
         decoding="async"
         className={cn("block h-full w-full object-cover", imgClassName)}

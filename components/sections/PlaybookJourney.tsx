@@ -1,13 +1,14 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PLAYBOOK JOURNEY — Dennis revamp layout
-// 3 tabs (Sell/Upgrade · Buy Tips · Commentary)
-// Per section: videos rail → featured carousel + article grid (mockup layout)
+// PLAYBOOK JOURNEY — Dennis revamp (Jun)
+// Top ~1/3: black hero + Display A auto-scrolling videos (all videos, no categories)
+// Bottom ~2/3: white blog hero, featured carousel, filtered article grid
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { createClient } from "@/lib/supabase/client";
 import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 import {
@@ -15,18 +16,21 @@ import {
   mergePlaybookVideos,
 } from "@/lib/playbook/public-videos";
 import {
-  countPlaybookMatches,
   DEFAULT_PLAYBOOK_JOURNEY_FILTERS,
-  filterPlaybookByTopic,
+  filterDisplayAVideos,
+  flattenPlaybookArticles,
+  flattenPlaybookVideos,
   hasActivePlaybookFilters,
   type PlaybookJourneyFilters,
 } from "@/lib/playbook/playbook-filters";
-import { PlaybookArticleBlogSection } from "@/components/playbook/PlaybookArticleBlogSection";
+import { pickRandomFeaturedArticles } from "@/lib/playbook/featured-articles";
+import { PlaybookAutoVideoRail } from "@/components/playbook/PlaybookAutoVideoRail";
+import { PlaybookExclusiveWatch, PlaybookVideoModalOverlay } from "@/components/playbook/PlaybookExclusiveWatch";
+import { PlaybookArticleCard } from "@/components/playbook/PlaybookArticleCard";
+import { PlaybookFeaturedCarousel } from "@/components/playbook/PlaybookFeaturedCarousel";
 import { PlaybookJourneyToolbar } from "@/components/playbook/PlaybookJourneyToolbar";
-import { PlaybookVideoRail } from "@/components/playbook/PlaybookVideoRail";
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import {
-  PLAYBOOK_JOURNEY_SECTIONS,
   PLAYBOOK_TOPICS,
   TOPIC_LABELS,
   inferPlaybookTopicFromCategory,
@@ -46,8 +50,6 @@ const EMPTY_VIDEOS: Record<PlaybookTopic, PlaybookVideo[]> = {
 
 const WA_URL =
   "https://wa.me/6580877015?text=Hi%2C%20I%20found%20the%20HomeUP%20Playbook%20and%20would%20like%20a%20planning%20call.";
-
-const STAGES = PLAYBOOK_JOURNEY_SECTIONS;
 
 function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
   const topic = row.topic as PlaybookTopic | null;
@@ -73,126 +75,8 @@ function rowToPlaybookVideo(row: Record<string, unknown>, topic: PlaybookTopic):
     metaDescription: (row.meta_description as string) ?? "",
     topic,
     contentKind: (row.content_kind as PlaybookVideo["contentKind"]) ?? undefined,
+    displayA: row.display_a as boolean | undefined,
   };
-}
-
-function StageSection({
-  stage,
-  videos,
-  articles,
-  sectionRef,
-  filtersActive,
-}: {
-  stage: (typeof STAGES)[number];
-  videos: PlaybookVideo[];
-  articles: PlaybookVideo[];
-  sectionRef: (el: HTMLElement | null) => void;
-  filtersActive: boolean;
-}) {
-  const articleCards = articles.filter((a) => a.slug && a.article?.trim());
-  const stageVideos = videos.filter((v) => v.videoUrl?.trim());
-  const hasContent = stageVideos.length > 0 || articleCards.length > 0;
-
-  return (
-    <section
-      id={stage.id}
-      ref={sectionRef}
-      className="scroll-mt-28 border-t border-neutral-100"
-    >
-      <div className="border-b border-neutral-100 bg-neutral-50/80 py-5">
-        <div className="container-page">
-          <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
-            Category
-          </p>
-          <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
-            {TOPIC_LABELS[stage.topic]}
-          </h2>
-        </div>
-      </div>
-
-      <div className="container-page py-14 sm:py-16">
-        <p className="mb-8 max-w-2xl text-sm leading-relaxed text-neutral-500 sm:text-base">
-          {stage.description}
-        </p>
-
-        <PlaybookVideoRail videos={stageVideos} label="Watch" />
-
-        <PlaybookArticleBlogSection
-          stageId={stage.id}
-          categoryLabel={TOPIC_LABELS[stage.topic]}
-          description={stage.description}
-          articles={articleCards}
-        />
-
-        {!hasContent && (
-          <p className="text-sm text-neutral-400">
-            {filtersActive ? "No videos or articles match your filters." : "Content coming soon."}
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function StageNavigator({
-  activeStage,
-  videosByTopic,
-  articlesByTopic,
-  stages,
-}: {
-  activeStage: string;
-  videosByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
-  articlesByTopic: Record<PlaybookTopic, PlaybookVideo[]>;
-  stages: typeof STAGES;
-}) {
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  return (
-    <div className="sticky top-0 z-30 border-b border-neutral-200 bg-white/95 shadow-sm backdrop-blur-sm">
-      <div className="container-page py-3">
-        <nav
-          aria-label="Playbook categories"
-          className="flex flex-wrap items-center gap-2 sm:gap-3"
-        >
-          {stages.map((stage) => {
-            const isActive = activeStage === stage.id;
-            const count =
-              videosByTopic[stage.topic].length + articlesByTopic[stage.topic].length;
-
-            return (
-              <button
-                key={stage.id}
-                type="button"
-                onClick={() => scrollTo(stage.id)}
-                className={cn(
-                  "rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-200 sm:px-5 sm:text-sm",
-                  isActive
-                    ? "bg-primary-600 text-white shadow-sm"
-                    : "text-primary-600 hover:bg-primary-50",
-                )}
-                aria-current={isActive ? "step" : undefined}
-              >
-                {TOPIC_LABELS[stage.topic]}
-                {count > 0 && (
-                  <span
-                    className={cn(
-                      "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px]",
-                      isActive ? "bg-white/20 text-white" : "bg-primary-100 text-primary-700",
-                    )}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
-  );
 }
 
 function PlaybookWhatsAppCTA() {
@@ -227,29 +111,54 @@ export function PlaybookJourney({
   initialArticlesByTopic?: Record<PlaybookTopic, PlaybookVideo[]>;
   initialVideosByTopic?: Record<PlaybookTopic, PlaybookVideo[]>;
 }) {
-  const [activeStage, setActiveStage] = useState(STAGES[0].id);
   const [filters, setFilters] = useState<PlaybookJourneyFilters>(DEFAULT_PLAYBOOK_JOURNEY_FILTERS);
   const [articlesByTopic, setArticlesByTopic] = useState(initialArticlesByTopic);
   const [videosByTopic, setVideosByTopic] = useState(initialVideosByTopic);
-  const sectionRefs = useRef<Map<string, HTMLElement>>(new Map());
+  const [activeVideo, setActiveVideo] = useState<PlaybookVideo | null>(null);
 
-  const filteredVideosByTopic = useMemo(
-    () => filterPlaybookByTopic(videosByTopic, filters),
-    [videosByTopic, filters],
+  const allVideos = useMemo(() => flattenPlaybookVideos(videosByTopic), [videosByTopic]);
+  const displayAVideos = useMemo(
+    () => filterDisplayAVideos(allVideos, filters),
+    [allVideos, filters],
   );
-  const filteredArticlesByTopic = useMemo(
-    () => filterPlaybookByTopic(articlesByTopic, filters),
+  const displayARailItems = useMemo(
+    () =>
+      displayAVideos.map((video) => ({
+        id: video.id,
+        slug: video.slug,
+        title: video.title,
+        videoUrl: video.videoUrl,
+        thumbnail: video.thumbnail,
+        duration: video.duration,
+      })),
+    [displayAVideos],
+  );
+  const allArticlesPool = useMemo(
+    () => flattenPlaybookArticles(articlesByTopic, DEFAULT_PLAYBOOK_JOURNEY_FILTERS),
+    [articlesByTopic],
+  );
+  const [featuredArticles, setFeaturedArticles] = useState<PlaybookVideo[]>([]);
+  const featuredInitialized = useRef(false);
+
+  const filteredArticles = useMemo(
+    () => flattenPlaybookArticles(articlesByTopic, filters),
     [articlesByTopic, filters],
   );
-  const visibleStages = useMemo(
-    () => STAGES.filter((stage) => filters.topic === "all" || stage.topic === filters.topic),
-    [filters.topic],
-  );
-  const resultCount = useMemo(
-    () => countPlaybookMatches(videosByTopic, articlesByTopic, filters),
-    [videosByTopic, articlesByTopic, filters],
-  );
+
+  const articleCount = filteredArticles.length;
   const filtersActive = hasActivePlaybookFilters(filters);
+
+  useEffect(() => {
+    if (featuredInitialized.current || allArticlesPool.length === 0) return;
+    featuredInitialized.current = true;
+    setFeaturedArticles(pickRandomFeaturedArticles(allArticlesPool, 5));
+  }, [allArticlesPool]);
+
+  const topicLabel =
+    filters.topic === "all" ? "All guides" : TOPIC_LABELS[filters.topic];
+
+  const openVideo = useCallback((video: PlaybookVideo) => setActiveVideo(video), []);
+  const closeVideo = useCallback(() => setActiveVideo(null), []);
 
   useEffect(() => {
     setArticlesByTopic(initialArticlesByTopic);
@@ -290,99 +199,154 @@ export function PlaybookJourney({
       });
   }, []);
 
-  useEffect(() => {
-    if (filters.topic === "all") return;
-    const stage = STAGES.find((item) => item.topic === filters.topic);
-    if (!stage) return;
-    setActiveStage(stage.id);
-    const el = document.getElementById(stage.id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [filters.topic]);
-
-  useEffect(() => {
-    let observers: IntersectionObserver[] = [];
-
-    const disconnectAll = () => {
-      observers.forEach((obs) => obs.disconnect());
-      observers = [];
-    };
-
-    const observeSections = () => {
-      disconnectAll();
-      STAGES.forEach((stage) => {
-        if (!visibleStages.some((item) => item.id === stage.id)) return;
-        const el = sectionRefs.current.get(stage.id);
-        if (!el) return;
-        const obs = new IntersectionObserver(
-          ([entry]) => {
-            if (entry.isIntersecting) setActiveStage(stage.id);
-          },
-          { rootMargin: "-40% 0px -55% 0px" },
-        );
-        obs.observe(el);
-        observers.push(obs);
-      });
-    };
-
-    observeSections();
-    const retry = window.setTimeout(observeSections, 100);
-
-    return () => {
-      window.clearTimeout(retry);
-      disconnectAll();
-    };
-  }, [articlesByTopic, videosByTopic, visibleStages]);
-
-  const setRef = (id: string) => (el: HTMLElement | null) => {
-    if (el) sectionRefs.current.set(id, el);
-    else sectionRefs.current.delete(id);
-  };
-
   return (
     <>
-      <PlaybookJourneyToolbar
-        filters={filters}
-        onChange={setFilters}
-        resultCount={resultCount}
-      />
+      {/* TOP ~1/3 — black hero + Display A video strip */}
+      <section className="relative min-h-[34dvh] overflow-hidden bg-neutral-950 pb-10 pt-14 text-white sm:pb-12 sm:pt-16">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(0,154,68,0.25),transparent)]"
+        />
 
-      <StageNavigator
-        activeStage={activeStage}
-        videosByTopic={filteredVideosByTopic}
-        articlesByTopic={filteredArticlesByTopic}
-        stages={visibleStages}
-      />
-
-      <div className="bg-white pb-20 lg:pb-0">
-        {resultCount === 0 && filtersActive ? (
-          <div className="container-page py-16 text-center">
-            <p className="text-sm font-semibold text-neutral-700">No results found</p>
-            <p className="mt-2 text-sm text-neutral-500">
-              Try a different topic, agent, or search term.
-            </p>
-            <button
-              type="button"
-              onClick={() => setFilters(DEFAULT_PLAYBOOK_JOURNEY_FILTERS)}
-              className="mt-4 text-sm font-semibold text-primary-600 hover:underline"
-            >
-              Clear all filters
-            </button>
+        <div className="container-page relative">
+          <div className="mx-auto max-w-3xl text-center">
+            <Eyebrow className="text-primary-300">Playbook</Eyebrow>
+            <h1 className="mt-4 font-display text-display-sm font-extrabold tracking-tight sm:text-display-md">
+              Unlimited Tips
+              <span className="mt-3 block text-lg font-semibold leading-relaxed text-neutral-300 sm:mt-4 sm:text-xl">
+                <span className="block">for</span>
+                <span className="mt-1 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-4">
+                  <span>Buyers</span>
+                  <span aria-hidden="true" className="text-neutral-500">
+                    ·
+                  </span>
+                  <span>Sellers</span>
+                  <span aria-hidden="true" className="text-neutral-500">
+                    ·
+                  </span>
+                  <span>Investors</span>
+                </span>
+              </span>
+            </h1>
           </div>
-        ) : (
-          visibleStages.map((stage) => (
-            <StageSection
-              key={stage.id}
-              stage={stage}
-              videos={filteredVideosByTopic[stage.topic]}
-              articles={filteredArticlesByTopic[stage.topic]}
-              sectionRef={setRef(stage.id)}
-              filtersActive={filtersActive}
-            />
-          ))
-        )}
-      </div>
+
+          <PlaybookAutoVideoRail
+            inverted
+            videos={displayARailItems}
+            className="mt-8 sm:mt-10"
+            onVideoSelect={(item) => {
+              const match = displayAVideos.find(
+                (video) => video.id === item.id || video.slug === item.slug,
+              );
+              if (match) openVideo(match);
+            }}
+          />
+
+          {displayAVideos.length === 0 && (
+            <p className="mt-8 text-center text-sm text-neutral-500">
+              {filtersActive
+                ? "No videos in this topic yet — try another filter or browse the articles below."
+                : "Exclusive video tips coming soon."}
+            </p>
+          )}
+        </div>
+      </section>
+
+      {/* BOTTOM ~2/3 — blogs hero on white */}
+      <section className="bg-white pb-20 lg:pb-0">
+        <PlaybookJourneyToolbar
+          filters={filters}
+          onChange={setFilters}
+          resultCount={articleCount}
+        />
+
+        <div className="container-page py-14 sm:py-16">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center lg:gap-10">
+            <div>
+              <h2 className="font-display text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
+                Blogs
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-neutral-500 sm:text-base">
+                In-depth guides from the HomeUP team — selling, upgrading, buying, and
+                market commentary. Filter by topic or search for what you need.
+              </p>
+            </div>
+
+            <PlaybookFeaturedCarousel articles={featuredArticles} curated />
+          </div>
+
+          <div className="mt-14 scroll-mt-36">
+            <div className="mb-6 flex flex-col gap-1 border-b border-neutral-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-primary-600">
+                  {filters.topic === "all" ? "All topics" : TOPIC_LABELS[filters.topic]}
+                </p>
+                <h3 className="mt-1 font-display text-xl font-extrabold tracking-tight text-neutral-900 sm:text-2xl">
+                  {topicLabel}
+                </h3>
+              </div>
+              <p className="text-sm text-neutral-400">
+                {filteredArticles.length} article{filteredArticles.length === 1 ? "" : "s"}
+              </p>
+            </div>
+
+            {filteredArticles.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="text-sm font-semibold text-neutral-700">No articles found</p>
+                <p className="mt-2 text-sm text-neutral-500">
+                  {filtersActive
+                    ? "Try a different topic or search term."
+                    : "Guides coming soon."}
+                </p>
+                {filtersActive && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters(DEFAULT_PLAYBOOK_JOURNEY_FILTERS)}
+                    className="mt-4 text-sm font-semibold text-primary-600 hover:underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredArticles.map((article) => (
+                  <PlaybookArticleCard key={article.id} article={article} variant="mockup" />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
       <PlaybookWhatsAppCTA />
+
+      <AnimatePresence>
+        {activeVideo && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <PlaybookVideoModalOverlay onClose={closeVideo}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 16 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              >
+                <PlaybookExclusiveWatch
+                  videoUrl={activeVideo.videoUrl}
+                  title={activeVideo.title}
+                  thumbnail={activeVideo.thumbnail}
+                  tags={activeVideo.tags}
+                  topic={activeVideo.topic}
+                  autoplay
+                  aspect="portrait"
+                  variant="modal"
+                  onClose={closeVideo}
+                  closeLabel="Close"
+                />
+              </motion.div>
+            </PlaybookVideoModalOverlay>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

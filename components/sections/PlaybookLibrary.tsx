@@ -6,7 +6,8 @@ import { X, Star, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VideoCard } from "@/components/ui/VideoCard";
 import { ArticleBody } from "@/components/sections/ArticleBody";
-import { PlaybookEmbeddedVideoPlayer, PlaybookExternalWatchButton } from "@/components/playbook/PlaybookEmbeddedVideoPlayer";
+import { PlaybookExclusiveWatch, PlaybookVideoModalOverlay } from "@/components/playbook/PlaybookExclusiveWatch";
+import { getVideoPlatform } from "@/lib/playbook/embed";
 import type { PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import { createClient } from "@/lib/supabase/client";
@@ -176,63 +177,34 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
       {/* ── Video Modal ─────────────────────────────────────────────────── */}
       <AnimatePresence>
         {activeVideo && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/85 px-4 py-8 backdrop-blur-sm"
-            onClick={closeModal}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-neutral-950 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Close button */}
-              <button
-                onClick={closeModal}
-                aria-label="Close video"
-                className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800/80 text-white backdrop-blur-sm transition-colors hover:bg-neutral-700"
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <PlaybookVideoModalOverlay onClose={closeModal}>
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
-                <X className="h-4 w-4" />
-              </button>
-
-              {/* Video player */}
-              <div className="bg-neutral-950 p-1">
-                <PlaybookEmbeddedVideoPlayer
+                <PlaybookExclusiveWatch
                   videoUrl={activeVideo.videoUrl}
                   title={activeVideo.title}
                   thumbnail={activeVideo.thumbnail}
+                  tags={activeVideo.tags}
+                  topic={activeVideo.topic}
                   autoplay
-                  aspect="landscape"
-                  showExternalLink={false}
-                  playerClassName="rounded-xl"
+                  aspect={
+                    getVideoPlatform(activeVideo.videoUrl) === "youtube" &&
+                    !/\/shorts\//i.test(activeVideo.videoUrl)
+                      ? "landscape"
+                      : "portrait"
+                  }
+                  variant="modal"
+                  badgeLabel={CATEGORY_LABELS[activeVideo.category]}
+                  onClose={closeModal}
+                  closeLabel="Close"
                 />
-              </div>
-
-              {/* Video info */}
-              <div className="space-y-4 px-5 py-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary-400">
-                    {CATEGORY_LABELS[activeVideo.category]}
-                  </p>
-                  <h3 className="mt-1 font-display text-sm font-bold text-white">
-                    {activeVideo.title}
-                  </h3>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-neutral-400">
-                    {activeVideo.description}
-                  </p>
-                </div>
-                <PlaybookExternalWatchButton
-                  videoUrl={activeVideo.videoUrl}
-                  className="border-neutral-700 bg-neutral-900 text-neutral-200 hover:border-neutral-500 hover:bg-neutral-800 hover:text-white"
-                />
-              </div>
-            </motion.div>
+              </motion.div>
+            </PlaybookVideoModalOverlay>
           </motion.div>
         )}
       </AnimatePresence>

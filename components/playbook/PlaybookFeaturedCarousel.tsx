@@ -13,14 +13,20 @@ const ROTATE_MS = 3200;
 
 type PlaybookFeaturedCarouselProps = {
   articles: PlaybookVideo[];
+  /** When true, use the provided list as-is (e.g. pre-shuffled cross-category picks). */
+  curated?: boolean;
 };
 
 function slideKey(slide: PlaybookVideo, index: number): string {
   return slide.id || slide.slug || `slide-${index}`;
 }
 
-export function PlaybookFeaturedCarousel({ articles }: PlaybookFeaturedCarouselProps) {
-  const slides = useMemo(() => pickFeaturedArticles(articles, 5), [articles]);
+export function PlaybookFeaturedCarousel({ articles, curated = false }: PlaybookFeaturedCarouselProps) {
+  const slides = useMemo(() => {
+    const pool = articles.filter((a) => a.slug && a.article?.trim());
+    if (curated) return pool.slice(0, 5);
+    return pickFeaturedArticles(pool, 5);
+  }, [articles, curated]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 

@@ -6,7 +6,18 @@ import { CATEGORY_LABELS } from "@/lib/data/playbook";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { PlaybookArticleThumbnail } from "@/components/playbook/PlaybookArticleThumbnail";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
+import { getPlaybookAgentName } from "@/lib/playbook/agent-attribution";
 import { cn } from "@/lib/utils";
+
+function formatPublishedDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString("en-SG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 const CATEGORY_TAG: Record<string, { label: string; className: string }> = {
   selling: { label: "Selling", className: "bg-amber-50 text-amber-700 ring-amber-200" },
@@ -29,6 +40,8 @@ export function PlaybookArticleCard({ article, isFirst, variant = "compact" }: P
   const teaser = article.description?.trim() || "";
   const tag = CATEGORY_TAG[article.category] ?? CATEGORY_TAG.tips;
   const thumbnail = resolveArticleThumbnail(article);
+  const agentName = getPlaybookAgentName(article);
+  const published = formatPublishedDate(article.publishedAt);
 
   if (variant === "mockup") {
     return (
@@ -52,6 +65,13 @@ export function PlaybookArticleCard({ article, isFirst, variant = "compact" }: P
         <h3 className="mt-3 font-display text-sm font-bold leading-snug text-neutral-900 group-hover:text-primary-700 sm:text-base">
           {article.title}
         </h3>
+        <p className="mt-2 text-xs text-neutral-500">
+          <span className="font-semibold text-neutral-700">{agentName}</span>
+          <span className="mx-1.5 text-neutral-300" aria-hidden>
+            ·
+          </span>
+          <span>{published}</span>
+        </p>
       </PlaybookArticleLink>
     );
   }

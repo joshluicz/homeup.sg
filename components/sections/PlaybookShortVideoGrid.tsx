@@ -8,6 +8,7 @@ import { mergePlaybookVideos } from "@/lib/playbook/public-videos";
 import { isPlaybookVideo } from "@/lib/playbook/content-kind";
 import { trackVideoPlay } from "@/lib/analytics";
 import { PlaybookVideoCard, PlaybookVideoModalFrame } from "@/components/playbook/PlaybookVideoCard";
+import { PlaybookVideoModalOverlay } from "@/components/playbook/PlaybookExclusiveWatch";
 
 function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
   return {
@@ -78,26 +79,21 @@ export function PlaybookShortVideoGrid({ limit }: PlaybookShortVideoGridProps) {
 
       <AnimatePresence>
         {activeVideo && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/85 px-4 py-8 backdrop-blur-sm"
-            onClick={closeVideo}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-[min(100%,22rem)]"
-            >
-              <PlaybookVideoModalFrame
-                videoUrl={activeVideo.videoUrl}
-                title={activeVideo.title}
-                thumbnail={activeVideo.thumbnail}
-                onClose={closeVideo}
-              />
-            </motion.div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <PlaybookVideoModalOverlay onClose={closeVideo}>
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+              >
+                <PlaybookVideoModalFrame
+                  videoUrl={activeVideo.videoUrl}
+                  title={activeVideo.title}
+                  thumbnail={activeVideo.thumbnail}
+                  onClose={closeVideo}
+                />
+              </motion.div>
+            </PlaybookVideoModalOverlay>
           </motion.div>
         )}
       </AnimatePresence>

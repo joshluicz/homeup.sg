@@ -15,6 +15,7 @@ function mergeVideoFields(sheet: PlaybookVideo, db: PlaybookVideo): PlaybookVide
     thumbnail: dbThumb || sheetThumb,
     duration: db.duration?.trim() ? db.duration : sheet.duration,
     topic: db.topic ?? sheet.topic,
+    displayA: db.displayA ?? sheet.displayA,
   };
 }
 

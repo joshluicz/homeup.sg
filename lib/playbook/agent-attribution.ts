@@ -108,3 +108,10 @@ export function inferPlaybookAgentSlug(
 export function getPlaybookAgentOptions(): Array<{ slug: string; name: string }> {
   return AGENTS.map((agent) => ({ slug: agent.slug, name: agent.name }));
 }
+
+export function getPlaybookAgentName(
+  item: Pick<PlaybookVideo, "videoUrl" | "title" | "description" | "article" | "tags">,
+): string {
+  const slug = inferPlaybookAgentSlug(item);
+  return AGENTS.find((agent) => agent.slug === slug)?.name ?? "HomeUP";
+}

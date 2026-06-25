@@ -1,0 +1,131 @@
+import { requireAuth } from "@/lib/supabase/auth";
+import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { AGENTS, getAgentBySlug } from "@/lib/data/agents";
+import { fetchOEmbedThumbnail } from "@/lib/playbook/oembed";
+
+function revalidateAgent(agentSlug: string) {
+  revalidatePath("/agents");
+  revalidatePath(`/agents/${agentSlug}`);
+}
+
+export async function GET(request: Request) {
+  const { supabase, error } = await requireAuth();
+  if (error) return error;
+
+  const agentSlug = new URL(request.url).searchParams.get("agent_slug")?.trim();
+  if (!agentSlug) {
+    return NextResponse.json({ error: "agent_slug is required" }, { status: 400 });
+  }
+
+  const { data, error: dbError } = await supabase
+    .from("agent_profile_videos")
+    .select("*")
+    .eq("agent_slug", agentSlug)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+  return NextResponse.json(data ?? []);
+}
+
+export async function POST(request: Request) {
+  const { supabase, error } = await requireAuth();
+  if (error) return error;
+
+  const body = await request.json();
+  const agentSlug = String(body.agentSlug ?? "").trim();
+  const title = String(body.title ?? "").trim();
+  const videoUrl = String(body.videoUrl ?? "").trim();
+  const thumbnail = String(body.thumbnail ?? "").trim();
+  const featuredInDisplayA = Boolean(body.featuredInDisplayA);
+  const sortOrder = Number.isFinite(body.sortOrder) ? Number(body.sortOrder) : 0;
+
+  if (!agentSlug || !getAgentBySlug(agentSlug)) {
+    return NextResponse.json({ error: "Choose a valid agent." }, { status: 400 });
+  }
+  if (!title) {
+    return NextResponse.json({ error: "Title is required." }, { status: 400 });
+  }
+  if (!videoUrl) {
+    return NextResponse.json({ error: "Video URL is required." }, { status: 400 });
+  }
+
+  const resolvedThumbnail = thumbnail || (await fetchOEmbedThumbnail(videoUrl));
+
+  const { data, error: dbError } = await supabase
+    .from("agent_profile_videos")
+    .insert({
+      agent_slug: agentSlug,
+      title,
+      video_url: videoUrl,
+      thumbnail: resolvedThumbnail,
+      featured_in_display_a: featuredInDisplayA,
+      sort_order: sortOrder,
+      updated_at: new Date().toISOString(),
+    })
+    .select("*")
+    .single();
+
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  revalidateAgent(agentSlug);
+  return NextResponse.json(data);
+}
+
+export async function PATCH(request: Request) {
+  const { supabase, error } = await requireAuth();
+  if (error) return error;
+
+  const body = await request.json();
+  const id = String(body.id ?? "").trim();
+  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (body.title !== undefined) updates.title = String(body.title).trim();
+  if (body.videoUrl !== undefined) updates.video_url = String(body.videoUrl).trim();
+  if (body.thumbnail !== undefined) updates.thumbnail = String(body.thumbnail).trim();
+  if (body.featuredInDisplayA !== undefined) {
+    updates.featured_in_display_a = Boolean(body.featuredInDisplayA);
+  }
+  if (body.sortOrder !== undefined && Number.isFinite(body.sortOrder)) {
+    updates.sort_order = Number(body.sortOrder);
+  }
+
+  if (body.videoUrl !== undefined && body.thumbnail === undefined) {
+    const thumb = await fetchOEmbedThumbnail(String(body.videoUrl).trim());
+    if (thumb) updates.thumbnail = thumb;
+  }
+
+  const { data, error: dbError } = await supabase
+    .from("agent_profile_videos")
+    .update(updates)
+    .eq("id", id)
+    .select("*")
+    .single();
+
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  revalidateAgent(data.agent_slug);
+  return NextResponse.json(data);
+}
+
+export async function DELETE(request: Request) {
+  const { supabase, error } = await requireAuth();
+  if (error) return error;
+
+  const id = new URL(request.url).searchParams.get("id")?.trim();
+  if (!id) return NextResponse.json({ error: "id is required" }, { status: 400 });
+
+  const { data: existing } = await supabase
+    .from("agent_profile_videos")
+    .select("agent_slug")
+    .eq("id", id)
+    .maybeSingle();
+
+  const { error: dbError } = await supabase.from("agent_profile_videos").delete().eq("id", id);
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+
+  if (existing?.agent_slug) revalidateAgent(existing.agent_slug);
+  return NextResponse.json({ ok: true });
+}

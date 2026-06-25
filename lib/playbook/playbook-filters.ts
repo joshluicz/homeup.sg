@@ -1,19 +1,15 @@
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import { PLAYBOOK_TOPICS } from "@/lib/data/playbook";
-import { inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
 
 export type PlaybookTopicFilter = PlaybookTopic | "all";
-export type PlaybookAgentFilter = string | "all";
 
 export type PlaybookJourneyFilters = {
   topic: PlaybookTopicFilter;
-  agent: PlaybookAgentFilter;
   query: string;
 };
 
 export const DEFAULT_PLAYBOOK_JOURNEY_FILTERS: PlaybookJourneyFilters = {
   topic: "all",
-  agent: "all",
   query: "",
 };
 
@@ -44,7 +40,6 @@ export function filterPlaybookItem(
   filters: PlaybookJourneyFilters,
 ): boolean {
   if (filters.topic !== "all" && item.topic !== filters.topic) return false;
-  if (filters.agent !== "all" && inferPlaybookAgentSlug(item) !== filters.agent) return false;
   if (!matchesSearch(item, filters.query)) return false;
   return true;
 }
@@ -63,22 +58,44 @@ export function filterPlaybookByTopic(
   return result;
 }
 
+export function flattenPlaybookArticles(
+  grouped: Record<PlaybookTopic, PlaybookVideo[]>,
+  filters: PlaybookJourneyFilters,
+): PlaybookVideo[] {
+  const filtered = filterPlaybookByTopic(grouped, filters);
+  return PLAYBOOK_TOPICS.flatMap((topic) => filtered[topic]).filter(
+    (item) => item.slug && item.article?.trim(),
+  );
+}
+
+export function flattenPlaybookVideos(
+  grouped: Record<PlaybookTopic, PlaybookVideo[]>,
+): PlaybookVideo[] {
+  return PLAYBOOK_TOPICS.flatMap((topic) => grouped[topic]).filter((item) =>
+    Boolean(item.videoUrl?.trim()),
+  );
+}
+
+/** Display A rail — sheet-flagged videos, optionally filtered by topic/search. */
+export function filterDisplayAVideos(
+  videos: PlaybookVideo[],
+  filters: PlaybookJourneyFilters,
+): PlaybookVideo[] {
+  return videos
+    .filter((item) => item.displayA === true && item.videoUrl?.trim())
+    .filter((item) => filterPlaybookItem(item, filters));
+}
+
 export function countPlaybookMatches(
   videosByTopic: Record<PlaybookTopic, PlaybookVideo[]>,
   articlesByTopic: Record<PlaybookTopic, PlaybookVideo[]>,
   filters: PlaybookJourneyFilters,
 ): number {
-  const videos = filterPlaybookByTopic(videosByTopic, filters);
-  const articles = filterPlaybookByTopic(articlesByTopic, filters);
-  return (
-    PLAYBOOK_TOPICS.reduce((sum, topic) => sum + videos[topic].length + articles[topic].length, 0)
-  );
+  const videos = flattenPlaybookVideos(videosByTopic);
+  const articles = flattenPlaybookArticles(articlesByTopic, filters);
+  return videos.length + articles.length;
 }
 
 export function hasActivePlaybookFilters(filters: PlaybookJourneyFilters): boolean {
-  return (
-    filters.topic !== "all" ||
-    filters.agent !== "all" ||
-    Boolean(filters.query.trim())
-  );
+  return filters.topic !== "all" || Boolean(filters.query.trim());
 }

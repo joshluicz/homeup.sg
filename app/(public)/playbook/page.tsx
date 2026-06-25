@@ -2,7 +2,6 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PlaybookScrollRestore } from "@/components/playbook/PlaybookScrollRestore";
-import { PlaybookHero } from "@/components/sections/PlaybookHero";
 import { PlaybookJourney } from "@/components/sections/PlaybookJourney";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { getPlaybookArticlesByTopicServer, getPlaybookVideosByTopicServer } from "@/lib/playbook/server-queries";
@@ -32,8 +31,7 @@ export default async function PlaybookPage() {
       />
       <Navbar />
       <PlaybookScrollRestore />
-      <main className="bg-white">
-        <PlaybookHero />
+      <main>
         <PlaybookJourney
           initialArticlesByTopic={initialArticlesByTopic}
           initialVideosByTopic={initialVideosByTopic}

@@ -93,13 +93,27 @@ export function isDirectVideoFile(url?: string): boolean {
 
 /** Extract a TikTok video ID from a TikTok URL, or "" if not TikTok. */
 export function tiktokVideoId(url?: string): string {
-  if (!url) return "";
+  if (!url?.trim()) return "";
+
+  const patterns = [
+    /tiktok\.com\/@[^/]+\/video\/(\d+)/i,
+    /tiktok\.com\/embed\/v2\/(\d+)/i,
+    /tiktok\.com\/player\/v1\/(\d+)/i,
+    /tiktok\.com\/video\/(\d+)/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
   try {
     const u = new URL(url);
     if (!u.hostname.includes("tiktok.com")) return "";
-    const match = u.pathname.match(/\/video\/(\d+)/);
-    return match?.[1] ?? "";
+    const pathMatch = u.pathname.match(/\/(\d{10,})(?:\/|$)/);
+    return pathMatch?.[1] ?? "";
   } catch {}
+
   return "";
 }
 
@@ -108,6 +122,7 @@ export type VideoPlatform = "youtube" | "tiktok" | "vimeo" | "file" | "unknown";
 export function getVideoPlatform(url?: string): VideoPlatform {
   if (!url?.trim()) return "unknown";
   if (isDirectVideoFile(url)) return "file";
+  if (/tiktok\.com|vm\.tiktok\.com/i.test(url)) return "tiktok";
   try {
     const host = new URL(url).hostname;
     if (host.includes("tiktok.com")) return "tiktok";
@@ -123,28 +138,56 @@ export function tiktokHandle(url?: string): string | null {
   return match?.[1] ?? null;
 }
 
-/** Canonical watch URL on TikTok / YouTube / Vimeo (no tracking junk). */
+/** Canonical watch URL on TikTok / YouTube / Vimeo (opens the exact clip). */
 export function externalVideoWatchUrl(url: string): string {
+  const trimmed = url.trim();
+
   try {
-    const platform = getVideoPlatform(url);
+    const platform = getVideoPlatform(trimmed);
     if (platform === "tiktok") {
-      const handle = tiktokHandle(url);
-      const id = tiktokVideoId(url);
-      if (handle && id) return `https://www.tiktok.com/@${handle}/video/${id}`;
-      return url.split("?")[0];
+      // Always prefer the stored @handle/video/{id} URL — never use /video/{id} alone (redirects elsewhere).
+      if (/tiktok\.com\/@[^/]+\/video\/\d+/i.test(trimmed)) {
+        const parsed = new URL(trimmed);
+        return `${parsed.origin}${parsed.pathname}`;
+      }
+
+      const id = tiktokVideoId(trimmed);
+      const handle = tiktokHandle(trimmed);
+      if (handle && id) {
+        return `https://www.tiktok.com/@${handle}/video/${id}`;
+      }
+
+      return trimmed.split(/[?#]/)[0];
     }
     if (platform === "youtube") {
-      const id = youtubeId(url);
-      if (!id) return url.split("?")[0];
-      if (/\/shorts\//i.test(url)) return `https://www.youtube.com/shorts/${id}`;
+      const id = youtubeId(trimmed);
+      if (!id) return trimmed.split("?")[0];
+      if (/\/shorts\//i.test(trimmed)) return `https://www.youtube.com/shorts/${id}`;
       return `https://www.youtube.com/watch?v=${id}`;
     }
     if (platform === "vimeo") {
-      const path = new URL(url).pathname.replace(/\/$/, "");
+      const path = new URL(trimmed).pathname.replace(/\/$/, "");
       return `https://vimeo.com${path}`;
     }
   } catch {}
-  return url.trim();
+
+  return trimmed;
+}
+
+/** TikTok on-site player — avoids embed/v2 “Watch now” linking to the wrong place. */
+export function toTikTokPlayerEmbedUrl(url: string, autoplay = false): string {
+  const id = tiktokVideoId(url);
+  if (!id) return url;
+
+  const params = new URLSearchParams({
+    loop: "1",
+    music_info: "0",
+    description: "0",
+    rel: "0",
+  });
+  if (autoplay) params.set("autoplay", "1");
+
+  return `https://www.tiktok.com/player/v1/${id}?${params.toString()}`;
 }
 
 export function tiktokProfileUrlFromVideo(url: string): string | null {
@@ -152,17 +195,8 @@ export function tiktokProfileUrlFromVideo(url: string): string | null {
   return handle ? `https://www.tiktok.com/@${handle}` : null;
 }
 
-export function externalWatchLabel(url?: string): string {
-  switch (getVideoPlatform(url)) {
-    case "tiktok":
-      return "Watch on TikTok";
-    case "youtube":
-      return "Watch on YouTube";
-    case "vimeo":
-      return "Watch on Vimeo";
-    default:
-      return "Watch video";
-  }
+export function externalWatchLabel(_url?: string): string {
+  return "Watch now";
 }
 
 /** @deprecated All supported platforms now embed on-site; use supportsExternalWatchLink for outbound CTAs. */
@@ -199,8 +233,7 @@ export function toEmbedUrl(url: string): string {
       return `https://player.vimeo.com/video${u.pathname}`;
     }
     if (u.hostname.includes("tiktok.com")) {
-      const id = tiktokVideoId(url);
-      return id ? `https://www.tiktok.com/embed/v2/${id}` : url;
+      return toTikTokPlayerEmbedUrl(url, false);
     }
   } catch {}
   return url;

@@ -8,6 +8,7 @@ type SheetRow = {
   tag2: string;
   topic: PlaybookTopic;
   thumbnail?: string;
+  displayA?: boolean;
 };
 
 /** Curated YouTube / TikTok shorts from Dennis's content sheet (synced via scripts/sync-playbook-sheet-videos.mjs). */
@@ -78,6 +79,7 @@ export function buildSheetPlaybookVideos(): PlaybookVideo[] {
     publishedAt: "2026-01-01",
     tags: buildTags(row.tag1, row.tag2),
     topic: row.topic,
+    displayA: row.displayA === true,
     contentKind: "video" as const,
   }));
 }
@@ -90,4 +92,8 @@ export function getSheetVideoBySlug(slug: string): PlaybookVideo | undefined {
 
 export function getSheetVideosByTopic(topic: PlaybookTopic): PlaybookVideo[] {
   return PLAYBOOK_SHEET_VIDEOS.filter((v) => v.topic === topic);
+}
+
+export function getSheetDisplayAVideos(): PlaybookVideo[] {
+  return PLAYBOOK_SHEET_VIDEOS.filter((v) => v.displayA === true);
 }

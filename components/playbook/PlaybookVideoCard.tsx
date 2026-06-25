@@ -1,11 +1,7 @@
 "use client";
 
-import { X } from "lucide-react";
 import { PlaybookVideoBrowseTile } from "@/components/playbook/PlaybookVideoBrowseTile";
-import {
-  PlaybookEmbeddedVideoPlayer,
-  PlaybookExternalWatchButton,
-} from "@/components/playbook/PlaybookEmbeddedVideoPlayer";
+import { PlaybookExclusiveWatch } from "@/components/playbook/PlaybookExclusiveWatch";
 import { cn } from "@/lib/utils";
 
 type PlaybookVideoCardProps = {
@@ -56,6 +52,7 @@ type PlaybookVideoModalFrameProps = {
   aspect?: "portrait" | "landscape";
 };
 
+/** Shared modal shell — title above video, Watch now at bottom. */
 export function PlaybookVideoModalFrame({
   videoUrl,
   title,
@@ -64,44 +61,15 @@ export function PlaybookVideoModalFrame({
   aspect = "portrait",
 }: PlaybookVideoModalFrameProps) {
   return (
-    <div
-      className="relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Close video"
-        className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-800/80 text-white backdrop-blur-sm transition-colors hover:bg-neutral-700"
-      >
-        <X className="h-4 w-4" />
-      </button>
-
-      <div className="flex min-h-0 flex-1 flex-col bg-neutral-950 p-1">
-        <div
-          className={cn(
-            "mx-auto w-full",
-            aspect === "portrait"
-              ? "aspect-[9/16] max-h-[min(75vh,640px)]"
-              : "aspect-video max-h-[min(75vh,640px)]",
-          )}
-        >
-          <PlaybookEmbeddedVideoPlayer
-            videoUrl={videoUrl}
-            title={title}
-            thumbnail={thumbnail}
-            autoplay
-            aspect={aspect}
-            showExternalLink={false}
-            playerClassName="h-full rounded-xl"
-          />
-        </div>
-      </div>
-
-      <div className="shrink-0 space-y-3 px-5 py-4">
-        <p className="text-sm font-bold leading-snug text-neutral-900">{title}</p>
-        <PlaybookExternalWatchButton videoUrl={videoUrl} />
-      </div>
-    </div>
+    <PlaybookExclusiveWatch
+      videoUrl={videoUrl}
+      title={title}
+      thumbnail={thumbnail}
+      autoplay
+      aspect={aspect}
+      variant="modal"
+      onClose={onClose}
+      closeLabel="Close"
+    />
   );
 }

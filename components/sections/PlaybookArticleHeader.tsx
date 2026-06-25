@@ -1,6 +1,7 @@
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
 import type { PlaybookVideo } from "@/lib/data/playbook";
+import { getPlaybookAgentName } from "@/lib/playbook/agent-attribution";
 
 function formatPublishedDate(iso: string): string {
   const date = new Date(iso);
@@ -27,6 +28,7 @@ export function PlaybookArticleHeader({
   const topicLabel = video.topic ? TOPIC_LABELS[video.topic] : null;
   const readTime = readTimeMinutes(video.article ?? "");
   const published = formatPublishedDate(video.publishedAt);
+  const agentName = getPlaybookAgentName(video);
 
   return (
     <header>
@@ -59,7 +61,7 @@ export function PlaybookArticleHeader({
       )}
 
       <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-neutral-200 pb-6 text-sm text-neutral-600">
-        <span className="font-semibold text-neutral-900">HomeUP</span>
+        <span className="font-semibold text-neutral-900">{agentName}</span>
         <span className="text-neutral-300" aria-hidden>
           ·
         </span>

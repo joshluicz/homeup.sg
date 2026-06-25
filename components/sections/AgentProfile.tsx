@@ -2,24 +2,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import type { Agent } from "@/lib/data/agents";
-import type { AgentVideo } from "@/lib/data/agents";
+import type { AgentProfileVideo } from "@/lib/agents/profile-videos";
+import { AgentProfileVideos } from "@/components/agents/AgentProfileVideos";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { TikTokEmbed } from "@/components/ui/TikTokEmbed";
 import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
-import { youtubeWatchUrl, youtubeThumbnail } from "@/lib/youtube";
 
 interface AgentProfileProps {
   agent: Agent;
-  videos: AgentVideo[];
+  profileVideos: AgentProfileVideo[];
 }
 
-export function AgentProfile({ agent, videos }: AgentProfileProps) {
-  const featured = videos[0];
-  const moreVideos = videos.slice(1);
-  const tikTokVideos = agent.featuredTikTokVideos ?? [];
-  const showTikTok = tikTokVideos.length > 0;
-  const showYoutube = !showTikTok && !agent.quoteThirdPerson && featured;
+export function AgentProfile({ agent, profileVideos }: AgentProfileProps) {
+  const hasProfileVideos = profileVideos.length > 0;
   const firstName = agent.name.split(" ")[0];
   const hasIntroVideo = Boolean(agent.introYoutubeVideoId);
 
@@ -27,7 +22,7 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
     <>
       <section
         aria-label={`${agent.name} profile`}
-        className={`bg-white section-padding${showTikTok ? " max-lg:pb-0" : ""}`}
+        className={`bg-white section-padding${hasProfileVideos ? " max-lg:pb-0" : ""}`}
       >
         <div className="container-page">
           <Link
@@ -114,7 +109,7 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
 
             {hasIntroVideo && (
               <div
-                className={`w-full min-w-0 lg:sticky lg:top-24${showTikTok ? " max-lg:mb-0.5" : ""}`}
+                className={`w-full min-w-0 lg:sticky lg:top-24${hasProfileVideos ? " max-lg:mb-0.5" : ""}`}
               >
                 <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-md">
                   <div className="relative aspect-video">
@@ -160,79 +155,12 @@ export function AgentProfile({ agent, videos }: AgentProfileProps) {
         </section>
       )}
 
-      {showTikTok && (
-        <section aria-label={`${agent.name} on TikTok`} className="section-padding bg-white max-lg:pt-0">
-          <div className="container-page">
-            <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
-              Property insights on TikTok
-            </h2>
-            <p className="mt-2 text-sm font-normal text-neutral-600">
-              Short-form tips and real-world property advice from {firstName}.
-            </p>
-            <TikTokEmbed videos={tikTokVideos} />
-          </div>
-        </section>
-      )}
-
-      {showYoutube && (
-        <section aria-label={`${agent.name} videos`} className="section-padding bg-white">
-          <div className="container-page">
-            <h2 className="font-display text-2xl font-bold tracking-tight text-neutral-900">
-              Latest from {firstName}
-            </h2>
-            <p className="mt-2 text-sm font-normal text-neutral-600">
-              Property insights and updates from {firstName}&apos;s channel.
-            </p>
-
-            <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-              <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-sm">
-                <div className="relative aspect-video">
-                  <YoutubeEmbed
-                    videoId={featured.id}
-                    title={featured.title}
-                    className="absolute inset-0 h-full w-full"
-                  />
-                </div>
-                <div className="bg-white px-5 py-4">
-                  <p className="text-sm font-bold text-neutral-900">{featured.title}</p>
-                  <a
-                    href={youtubeWatchUrl(featured.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block text-sm font-medium text-primary-600 hover:text-primary-700"
-                  >
-                    Watch on YouTube →
-                  </a>
-                </div>
-              </div>
-
-              {moreVideos.length > 0 && (
-                <div className="flex flex-col gap-3">
-                  <p className="text-sm font-semibold text-neutral-500">More videos</p>
-                  {moreVideos.map((video) => (
-                    <a
-                      key={video.id}
-                      href={youtubeWatchUrl(video.id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 transition hover:border-primary-600/40 hover:bg-white"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={youtubeThumbnail(video.id)}
-                        alt=""
-                        className="h-16 w-28 shrink-0 rounded-lg object-cover"
-                      />
-                      <span className="text-sm font-medium leading-snug text-neutral-800 group-hover:text-primary-700">
-                        {video.title}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
+      {hasProfileVideos && (
+        <AgentProfileVideos
+          agentSlug={agent.slug}
+          agentFirstName={firstName}
+          initialVideos={profileVideos}
+        />
       )}
     </>
   );
