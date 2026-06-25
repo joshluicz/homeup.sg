@@ -1,16 +1,20 @@
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import { PLAYBOOK_TOPICS } from "@/lib/data/playbook";
+import { inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
 
 export type PlaybookTopicFilter = PlaybookTopic | "all";
+export type PlaybookAgentFilter = "all" | string;
 
 export type PlaybookJourneyFilters = {
   topic: PlaybookTopicFilter;
   query: string;
+  agent: PlaybookAgentFilter;
 };
 
 export const DEFAULT_PLAYBOOK_JOURNEY_FILTERS: PlaybookJourneyFilters = {
   topic: "all",
   query: "",
+  agent: "all",
 };
 
 function emptyByTopic(): Record<PlaybookTopic, PlaybookVideo[]> {
@@ -40,6 +44,7 @@ export function filterPlaybookItem(
   filters: PlaybookJourneyFilters,
 ): boolean {
   if (filters.topic !== "all" && item.topic !== filters.topic) return false;
+  if (filters.agent !== "all" && inferPlaybookAgentSlug(item) !== filters.agent) return false;
   if (!matchesSearch(item, filters.query)) return false;
   return true;
 }
@@ -97,5 +102,9 @@ export function countPlaybookMatches(
 }
 
 export function hasActivePlaybookFilters(filters: PlaybookJourneyFilters): boolean {
-  return filters.topic !== "all" || Boolean(filters.query.trim());
+  return (
+    filters.topic !== "all" ||
+    filters.agent !== "all" ||
+    Boolean(filters.query.trim())
+  );
 }

@@ -245,7 +245,7 @@ export function PlaybookJourney({
           {displayAVideos.length === 0 && (
             <p className="mt-8 text-center text-sm text-neutral-500">
               {filtersActive
-                ? "No videos in this topic yet — try another filter or browse the articles below."
+                ? "No videos match these filters yet — try another topic or agent, or browse the articles below."
                 : "Exclusive video tips coming soon."}
             </p>
           )}
@@ -268,7 +268,7 @@ export function PlaybookJourney({
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-neutral-500 sm:text-base">
                 In-depth guides from the HomeUP team — selling, upgrading, buying, and
-                market commentary. Filter by topic or search for what you need.
+                market commentary. Filter by topic, agent, or search for what you need.
               </p>
             </div>
 
@@ -295,7 +295,7 @@ export function PlaybookJourney({
                 <p className="text-sm font-semibold text-neutral-700">No articles found</p>
                 <p className="mt-2 text-sm text-neutral-500">
                   {filtersActive
-                    ? "Try a different topic or search term."
+                    ? "Try a different topic, agent, or search term."
                     : "Guides coming soon."}
                 </p>
                 {filtersActive && (

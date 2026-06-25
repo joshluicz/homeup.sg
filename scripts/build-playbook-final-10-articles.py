@@ -261,30 +261,70 @@ def convert_article(body_paras: list[str], fallback_quick: str | None = None) ->
     return "\n\n".join(parts).strip(), faq_items
 
 
-def read_docx_paragraphs(path: Path) -> list[str]:
+W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+def escape_table_cell(value: str) -> str:
+    return value.replace("|", "\\|")
+
+
+def table_to_gfm(rows: list[list[str]]) -> str:
+    if not rows:
+        return ""
+
+    width = max(len(row) for row in rows)
+    padded = [row + [""] * (width - len(row)) for row in rows]
+    header = padded[0]
+    lines = [
+        "| " + " | ".join(escape_table_cell(cell) for cell in header) + " |",
+        "| " + " | ".join("---" for _ in header) + " |",
+    ]
+    for row in padded[1:]:
+        lines.append("| " + " | ".join(escape_table_cell(cell) for cell in row) + " |")
+    return "\n".join(lines)
+
+
+def read_docx_blocks(path: Path) -> list[str]:
+    """Read document body in order, preserving Word tables as GFM markdown blocks."""
     with zipfile.ZipFile(path) as z:
         xml = z.read("word/document.xml")
     root = ET.fromstring(xml)
-    paras: list[str] = []
-    for p in root.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p"):
-        texts = [
-            t.text or ""
-            for t in p.iter("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}t")
-        ]
-        paras.append("".join(texts).strip())
-    return paras
+    body = root.find(f".//{W}body")
+    if body is None:
+        return []
+
+    blocks: list[str] = []
+    for child in body:
+        tag = child.tag.split("}")[-1]
+        if tag == "p":
+            texts = [node.text or "" for node in child.iter(f"{W}t")]
+            text = "".join(texts).strip()
+            if text:
+                blocks.append(text)
+        elif tag == "tbl":
+            rows: list[list[str]] = []
+            for tr in child.iter(f"{W}tr"):
+                cells = []
+                for tc in tr.iter(f"{W}tc"):
+                    cell_text = "".join(node.text or "" for node in tc.iter(f"{W}t")).strip()
+                    cells.append(cell_text)
+                if any(cells):
+                    rows.append(cells)
+            if rows:
+                blocks.append(table_to_gfm(rows))
+    return blocks
 
 
 def main() -> None:
-    paras = read_docx_paragraphs(DOCX)
-    starts = [i for i, p in enumerate(paras) if re.match(r"^Article \d+:", p)]
+    blocks = read_docx_blocks(DOCX)
+    starts = [i for i, block in enumerate(blocks) if re.match(r"^Article \d+:", block)]
     articles_out: list[dict] = []
 
     for meta in META:
         idx = meta["num"] - 1
         start = starts[idx]
-        end = starts[idx + 1] if idx + 1 < len(starts) else len(paras)
-        body = [p for p in paras[start + 1 : end] if p and not re.match(r"^#\d+ Edited by", p)]
+        end = starts[idx + 1] if idx + 1 < len(starts) else len(blocks)
+        body = [block for block in blocks[start + 1 : end] if block and not re.match(r"^#\d+ Edited by", block)]
         article, faq = convert_article(body, meta.get("quick_answer"))
         desc_match = re.search(r"Introduction:\n\n(.{80,220}?[\.\!])", article, re.S)
         if not desc_match:
