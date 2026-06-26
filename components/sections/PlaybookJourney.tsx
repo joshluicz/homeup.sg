@@ -263,10 +263,6 @@ export function PlaybookJourney({
               <h2 className="font-display text-3xl font-extrabold tracking-tight text-neutral-900 sm:text-4xl">
                 Blogs
               </h2>
-              <p className="mt-4 text-sm leading-relaxed text-neutral-500 sm:text-base">
-                In-depth guides from the HomeUP team — selling, upgrading, buying, and
-                market commentary. Browse by topic below, or filter by agent and search.
-              </p>
             </div>
 
             <PlaybookFeaturedCarousel articles={featuredArticles} curated />
