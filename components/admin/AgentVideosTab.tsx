@@ -21,15 +21,109 @@ import { getVideoPlatform } from "@/lib/playbook/embed";
 import { resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { cn } from "@/lib/utils";
 
-const inputClass =
-  "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
-
 type VideoRow = AgentProfileVideoRow;
+
+function DisplayBadge({ variant }: { variant: "a" | "b" }) {
+  if (variant === "b") {
+    return (
+      <span className="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-900 ring-1 ring-sky-300">
+        Display B
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900 ring-1 ring-amber-300">
+      Display A
+    </span>
+  );
+}
+
+function DisplayPlacementPicker({
+  featuredInDisplayA,
+  featuredInDisplayB,
+  onChangeA,
+  onChangeB,
+  disabled,
+}: {
+  featuredInDisplayA: boolean;
+  featuredInDisplayB: boolean;
+  onChangeA: (value: boolean) => void;
+  onChangeB: (value: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="mt-4 rounded-xl border-2 border-neutral-200 bg-neutral-50 p-4">
+      <p className="text-sm font-bold text-neutral-900">Where should this video appear?</p>
+      <p className="mt-1 text-xs text-neutral-600">
+        Both are optional — pick <strong>Display B</strong> to show it on this agent&apos;s
+        profile, <strong>Display A</strong> to also include it in the Playbook top strip, either,
+        neither, or both.
+      </p>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onChangeB(!featuredInDisplayB)}
+          className={cn(
+            "flex items-center gap-3 rounded-lg border-2 px-3 py-3 text-left transition",
+            featuredInDisplayB
+              ? "border-sky-400 bg-sky-50 ring-2 ring-sky-200"
+              : "border-neutral-200 bg-white hover:border-sky-300 hover:bg-sky-50/60",
+          )}
+        >
+          <Star
+            className={cn(
+              "h-5 w-5 shrink-0",
+              featuredInDisplayB ? "fill-sky-500 text-sky-600" : "text-neutral-400",
+            )}
+          />
+          <div>
+            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-neutral-900">
+              Agent profile
+              {featuredInDisplayB ? <DisplayBadge variant="b" /> : null}
+            </p>
+            <p className="text-xs text-neutral-600">
+              {featuredInDisplayB ? "Display B is ON — click to turn off" : "Display B off — click to turn on"}
+            </p>
+          </div>
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => onChangeA(!featuredInDisplayA)}
+          className={cn(
+            "flex items-center gap-3 rounded-lg border-2 px-3 py-3 text-left transition",
+            featuredInDisplayA
+              ? "border-amber-400 bg-amber-50 ring-2 ring-amber-200"
+              : "border-neutral-200 bg-white hover:border-amber-300 hover:bg-amber-50/60",
+          )}
+        >
+          <Star
+            className={cn(
+              "h-5 w-5 shrink-0",
+              featuredInDisplayA ? "fill-amber-500 text-amber-600" : "text-neutral-400",
+            )}
+          />
+          <div>
+            <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-neutral-900">
+              Playbook top strip
+              {featuredInDisplayA ? <DisplayBadge variant="a" /> : null}
+            </p>
+            <p className="text-xs text-neutral-600">
+              {featuredInDisplayA ? "Display A is ON — click to turn off" : "Display A off — click to turn on"}
+            </p>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const emptyForm = {
   title: "",
   videoUrl: "",
-  featuredInDisplayA: true,
+  featuredInDisplayA: false,
+  featuredInDisplayB: false,
 };
 
 function validateVideoUrl(url: string): string | null {
@@ -77,6 +171,7 @@ export function AgentVideosTab() {
     title: "",
     videoUrl: "",
     featuredInDisplayA: false,
+    featuredInDisplayB: false,
   });
 
   const agent = useMemo(
@@ -150,13 +245,14 @@ export function AgentVideosTab() {
           title: form.title.trim(),
           videoUrl: form.videoUrl.trim(),
           featuredInDisplayA: form.featuredInDisplayA,
+          featuredInDisplayB: form.featuredInDisplayB,
           sortOrder: videos.length,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to add video");
       setForm(emptyForm);
-      setSuccess(`Added to ${agentFirstName}'s profile. Changes are live on the website.`);
+      setSuccess(`Added for ${agentFirstName}. Changes are live on the website.`);
       await loadVideos();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add video");
@@ -171,6 +267,7 @@ export function AgentVideosTab() {
       title: video.title,
       videoUrl: video.video_url,
       featuredInDisplayA: video.featured_in_display_a,
+      featuredInDisplayB: video.featured_in_display_b,
     });
     setError(null);
   }
@@ -200,6 +297,7 @@ export function AgentVideosTab() {
           title: editForm.title.trim(),
           videoUrl: editForm.videoUrl.trim(),
           featuredInDisplayA: editForm.featuredInDisplayA,
+          featuredInDisplayB: editForm.featuredInDisplayB,
         }),
       });
       const data = await res.json();
@@ -223,6 +321,27 @@ export function AgentVideosTab() {
         body: JSON.stringify({
           id: video.id,
           featuredInDisplayA: !video.featured_in_display_a,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to update video");
+      setVideos((rows) =>
+        rows.map((row) => (row.id === video.id ? (data as VideoRow) : row)),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update video");
+    }
+  }
+
+  async function toggleDisplayB(video: VideoRow) {
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/agent-videos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: video.id,
+          featuredInDisplayB: !video.featured_in_display_b,
         }),
       });
       const data = await res.json();
@@ -290,9 +409,9 @@ export function AgentVideosTab() {
             Agent profile videos
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-neutral-600">
-            Add video links to <strong>Display B</strong> (the video rail on each agent&apos;s
-            profile page). Toggle <strong>Display A</strong> to also include selected clips in
-            the Playbook top auto-scrolling strip.
+            Add a video and choose where it shows: <strong>Display B</strong> (the video rail on
+            that agent&apos;s profile page), <strong>Display A</strong> (the Playbook top
+            auto-scrolling strip), either, neither, or both.
           </p>
         </div>
         <a
@@ -304,6 +423,26 @@ export function AgentVideosTab() {
           Preview {agentFirstName}&apos;s profile
           <ExternalLink className="h-4 w-4" />
         </a>
+      </div>
+
+      <div className="rounded-xl border-2 border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
+        <p className="text-sm font-bold text-neutral-900">Display A vs Display B</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
+            <DisplayBadge variant="b" />
+            <p className="mt-2 text-sm font-semibold text-neutral-900">Display B — agent profile</p>
+            <p className="mt-1 text-xs text-neutral-600">
+              Optional. Turn this on to show the video on that agent&apos;s public profile page.
+            </p>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <DisplayBadge variant="a" />
+            <p className="mt-2 text-sm font-semibold text-neutral-900">Display A — Playbook top rail</p>
+            <p className="mt-1 text-xs text-neutral-600">
+              Optional. Turn this on to include the video in the Playbook auto-scrolling strip.
+            </p>
+          </div>
+        </div>
       </div>
 
       <FormSection
@@ -344,8 +483,8 @@ export function AgentVideosTab() {
 
       <form onSubmit={handleAdd}>
         <FormSection
-          title={`Add to Display B — ${agentName}`}
-          description="Paste a TikTok or YouTube URL. All new videos appear on the agent profile (Display B)."
+          title={`Add a video — ${agentName}`}
+          description="Paste a TikTok or YouTube URL, then choose Display A and/or Display B below."
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -372,19 +511,13 @@ export function AgentVideosTab() {
             </div>
           </div>
 
-          <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-neutral-700">
-            <input
-              type="checkbox"
-              checked={form.featuredInDisplayA}
-              onChange={(e) =>
-                setForm((current) => ({ ...current, featuredInDisplayA: e.target.checked }))
-              }
-              className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-            />
-            <span>
-              Also feature in <strong>Display A</strong> (Playbook top auto-scrolling strip)
-            </span>
-          </label>
+          <DisplayPlacementPicker
+            featuredInDisplayA={form.featuredInDisplayA}
+            featuredInDisplayB={form.featuredInDisplayB}
+            onChangeA={(value) => setForm((current) => ({ ...current, featuredInDisplayA: value }))}
+            onChangeB={(value) => setForm((current) => ({ ...current, featuredInDisplayB: value }))}
+            disabled={saving}
+          />
 
           <div className="mt-5">
             <Button type="submit" disabled={saving}>
@@ -396,7 +529,7 @@ export function AgentVideosTab() {
               ) : (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add to profile
+                  Add video
                 </>
               )}
             </Button>
@@ -422,9 +555,9 @@ export function AgentVideosTab() {
             {agentName}&apos;s profile videos ({videos.length})
           </h2>
           <p className="mt-1 text-xs text-neutral-500">
-            <strong>Display B:</strong> all videos below show on the agent profile.{" "}
-            <strong>Display A:</strong> starred items also appear in the Playbook top rail. Use
-            the arrows to change order.
+            <strong>Display B:</strong> shown on this agent&apos;s profile page.{" "}
+            <strong>Display A:</strong> shown in the Playbook top rail. Toggle either
+            independently per video. Use the arrows to change order.
           </p>
         </div>
 
@@ -435,8 +568,9 @@ export function AgentVideosTab() {
           </div>
         ) : videos.length === 0 ? (
           <p className="px-5 py-12 text-center text-sm text-neutral-500">
-            No videos yet for {agentFirstName}. Add a TikTok or YouTube link above — it will
-            appear in the Property insights section on their profile.
+            No videos yet for {agentFirstName}. Add a TikTok or YouTube link above, then choose
+            whether it shows on their profile (<strong>Display B</strong>), the Playbook top
+            strip (<strong>Display A</strong>), either, or both.
           </p>
         ) : (
           <ul className="divide-y divide-neutral-100">
@@ -476,20 +610,17 @@ export function AgentVideosTab() {
                           />
                         </div>
                       </div>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-700">
-                        <input
-                          type="checkbox"
-                          checked={editForm.featuredInDisplayA}
-                          onChange={(e) =>
-                            setEditForm((current) => ({
-                              ...current,
-                              featuredInDisplayA: e.target.checked,
-                            }))
-                          }
-                          className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                        />
-                        Feature in Display A
-                      </label>
+                      <DisplayPlacementPicker
+                        featuredInDisplayA={editForm.featuredInDisplayA}
+                        featuredInDisplayB={editForm.featuredInDisplayB}
+                        onChangeA={(value) =>
+                          setEditForm((current) => ({ ...current, featuredInDisplayA: value }))
+                        }
+                        onChangeB={(value) =>
+                          setEditForm((current) => ({ ...current, featuredInDisplayB: value }))
+                        }
+                        disabled={saving}
+                      />
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" size="sm" disabled={saving} onClick={() => saveEdit(video.id)}>
                           Save changes
@@ -528,18 +659,67 @@ export function AgentVideosTab() {
                             {video.video_url}
                             <ExternalLink className="h-3 w-3 shrink-0" />
                           </a>
-                          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                            <span className="rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-sky-800 ring-1 ring-sky-200">
-                              Display B
-                            </span>
-                            {video.featured_in_display_a ? (
-                              <span className="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 ring-1 ring-amber-200">
-                                Display A
-                              </span>
+                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                            {video.featured_in_display_b ? (
+                              <DisplayBadge variant="b" />
                             ) : (
-                              <span className="text-neutral-500">Display A off</span>
+                              <span className="text-xs font-medium text-neutral-500">Display B off</span>
                             )}
+                            {video.featured_in_display_a ? (
+                              <DisplayBadge variant="a" />
+                            ) : (
+                              <span className="text-xs font-medium text-neutral-500">Display A off</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:min-w-[280px]">
+                        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                            Agent profile
                           </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleDisplayB(video)}
+                            className={cn(
+                              "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold ring-1 transition",
+                              video.featured_in_display_b
+                                ? "bg-sky-100 text-sky-950 ring-sky-300 hover:bg-sky-200"
+                                : "bg-white text-neutral-700 ring-neutral-300 hover:bg-neutral-100",
+                            )}
+                          >
+                            <Star
+                              className={cn(
+                                "h-4 w-4",
+                                video.featured_in_display_b && "fill-sky-500 text-sky-600",
+                              )}
+                            />
+                            {video.featured_in_display_b ? "Display B on" : "Display B off"}
+                          </button>
+                        </div>
+                        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                          <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                            Playbook strip
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => toggleDisplayA(video)}
+                            className={cn(
+                              "flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold ring-1 transition",
+                              video.featured_in_display_a
+                                ? "bg-amber-100 text-amber-950 ring-amber-300 hover:bg-amber-200"
+                                : "bg-white text-neutral-700 ring-neutral-300 hover:bg-neutral-100",
+                            )}
+                          >
+                            <Star
+                              className={cn(
+                                "h-4 w-4",
+                                video.featured_in_display_a && "fill-amber-500 text-amber-600",
+                              )}
+                            />
+                            {video.featured_in_display_a ? "Display A on" : "Display A off"}
+                          </button>
                         </div>
                       </div>
 
@@ -564,24 +744,6 @@ export function AgentVideosTab() {
                             <ChevronDown className="h-4 w-4" />
                           </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => toggleDisplayA(video)}
-                          className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition",
-                            video.featured_in_display_a
-                              ? "bg-amber-50 text-amber-800 ring-amber-200"
-                              : "bg-neutral-50 text-neutral-600 ring-neutral-200 hover:bg-neutral-100",
-                          )}
-                        >
-                          <Star
-                            className={cn(
-                              "h-3.5 w-3.5",
-                              video.featured_in_display_a && "fill-amber-500 text-amber-500",
-                            )}
-                          />
-                          {video.featured_in_display_a ? "In Display A" : "Display B only"}
-                        </button>
                         <Button
                           type="button"
                           variant="outline"

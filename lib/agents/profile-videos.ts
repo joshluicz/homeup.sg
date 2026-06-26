@@ -12,6 +12,7 @@ export type AgentProfileVideo = {
   videoUrl: string;
   thumbnail: string;
   featuredInDisplayA: boolean;
+  featuredInDisplayB: boolean;
   sortOrder: number;
 };
 
@@ -22,6 +23,7 @@ export type AgentProfileVideoRow = {
   video_url: string;
   thumbnail: string;
   featured_in_display_a: boolean;
+  featured_in_display_b: boolean;
   sort_order: number;
 };
 
@@ -36,6 +38,7 @@ export function rowToAgentProfileVideo(row: AgentProfileVideoRow): AgentProfileV
     videoUrl,
     thumbnail,
     featuredInDisplayA: row.featured_in_display_a,
+    featuredInDisplayB: row.featured_in_display_b,
     sortOrder: row.sort_order,
   };
 }
@@ -49,10 +52,12 @@ export function staticAgentProfileVideos(agent: Agent): AgentProfileVideo[] {
     videoUrl: video.url,
     thumbnail: "",
     featuredInDisplayA: true,
+    featuredInDisplayB: true,
     sortOrder: index,
   }));
 }
 
+/** Videos shown on the agent's own profile page (Display B) — opt-in per video. */
 export async function getAgentProfileVideosServer(agentSlug: string): Promise<AgentProfileVideo[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -63,6 +68,7 @@ export async function getAgentProfileVideosServer(agentSlug: string): Promise<Ag
     .from("agent_profile_videos")
     .select("*")
     .eq("agent_slug", agentSlug)
+    .eq("featured_in_display_b", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
@@ -101,6 +107,7 @@ export function youtubeVideosToProfileVideos(
     videoUrl: youtubeWatchUrl(video.id),
     thumbnail: youtubeThumbnail(video.id),
     featuredInDisplayA: true,
+    featuredInDisplayB: true,
     sortOrder: index,
   }));
 }

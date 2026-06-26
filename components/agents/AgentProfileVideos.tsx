@@ -43,6 +43,7 @@ export function AgentProfileVideos({
       .from("agent_profile_videos")
       .select("*")
       .eq("agent_slug", agentSlug)
+      .eq("featured_in_display_b", true)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {

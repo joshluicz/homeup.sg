@@ -12,9 +12,11 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { createClient } from "@/lib/supabase/client";
 import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 import {
+  agentProfileVideoToPlaybookVideo,
   groupPlaybookVideosByTopic,
   mergePlaybookVideos,
 } from "@/lib/playbook/public-videos";
+import { rowToAgentProfileVideo, type AgentProfileVideoRow } from "@/lib/agents/profile-videos";
 import {
   DEFAULT_PLAYBOOK_JOURNEY_FILTERS,
   filterDisplayAVideos,
@@ -167,33 +169,38 @@ export function PlaybookJourney({
 
   useEffect(() => {
     const supabase = createClient();
-    supabase
-      .from("playbook_videos")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error || !data) return;
 
-        const articles: Record<PlaybookTopic, PlaybookVideo[]> = {
-          upgraders: [],
-          buying_first: [],
-          condo_tips: [],
-        };
-        const dbVideos: PlaybookVideo[] = [];
+    Promise.all([
+      supabase.from("playbook_videos").select("*").order("published_at", { ascending: false }),
+      supabase.from("agent_profile_videos").select("*").eq("featured_in_display_a", true),
+    ]).then(([playbookRes, agentRes]) => {
+      if (playbookRes.error || !playbookRes.data) return;
 
-        for (const row of data) {
-          const topic = resolveTopic(row);
-          const entry = rowToPlaybookVideo(row, topic);
-          if (isPlaybookArticle(entry) && entry.article?.trim()) {
-            articles[topic].push(entry);
-          } else if (isPlaybookVideo(entry) && entry.videoUrl?.trim()) {
-            dbVideos.push(entry);
-          }
+      const articles: Record<PlaybookTopic, PlaybookVideo[]> = {
+        upgraders: [],
+        buying_first: [],
+        condo_tips: [],
+      };
+      const dbVideos: PlaybookVideo[] = [];
+
+      for (const row of playbookRes.data) {
+        const topic = resolveTopic(row);
+        const entry = rowToPlaybookVideo(row, topic);
+        if (isPlaybookArticle(entry) && entry.article?.trim()) {
+          articles[topic].push(entry);
+        } else if (isPlaybookVideo(entry) && entry.videoUrl?.trim()) {
+          dbVideos.push(entry);
         }
+      }
 
-        setArticlesByTopic(articles);
-        setVideosByTopic(groupPlaybookVideosByTopic(mergePlaybookVideos(dbVideos)));
-      });
+      const agentVideos = (agentRes.error || !agentRes.data ? [] : agentRes.data)
+        .map((row) => rowToAgentProfileVideo(row as AgentProfileVideoRow))
+        .filter((v) => v.videoUrl?.trim())
+        .map(agentProfileVideoToPlaybookVideo);
+
+      setArticlesByTopic(articles);
+      setVideosByTopic(groupPlaybookVideosByTopic(mergePlaybookVideos(dbVideos, agentVideos)));
+    });
   }, []);
 
   return (

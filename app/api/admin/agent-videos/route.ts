@@ -39,6 +39,7 @@ export async function POST(request: Request) {
   const videoUrl = String(body.videoUrl ?? "").trim();
   const thumbnail = String(body.thumbnail ?? "").trim();
   const featuredInDisplayA = Boolean(body.featuredInDisplayA);
+  const featuredInDisplayB = Boolean(body.featuredInDisplayB);
   const sortOrder = Number.isFinite(body.sortOrder) ? Number(body.sortOrder) : 0;
 
   if (!agentSlug || !getAgentBySlug(agentSlug)) {
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
       video_url: videoUrl,
       thumbnail: resolvedThumbnail,
       featured_in_display_a: featuredInDisplayA,
+      featured_in_display_b: featuredInDisplayB,
       sort_order: sortOrder,
       updated_at: new Date().toISOString(),
     })
@@ -87,6 +89,9 @@ export async function PATCH(request: Request) {
   if (body.thumbnail !== undefined) updates.thumbnail = String(body.thumbnail).trim();
   if (body.featuredInDisplayA !== undefined) {
     updates.featured_in_display_a = Boolean(body.featuredInDisplayA);
+  }
+  if (body.featuredInDisplayB !== undefined) {
+    updates.featured_in_display_b = Boolean(body.featuredInDisplayB);
   }
   if (body.sortOrder !== undefined && Number.isFinite(body.sortOrder)) {
     updates.sort_order = Number(body.sortOrder);

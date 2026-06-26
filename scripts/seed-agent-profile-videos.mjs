@@ -56,6 +56,7 @@ async function upsertVideo(entry) {
     title: entry.title,
     video_url: entry.video_url,
     featured_in_display_a: true,
+    featured_in_display_b: true,
     sort_order: entry.sort_order,
     updated_at: new Date().toISOString(),
   };

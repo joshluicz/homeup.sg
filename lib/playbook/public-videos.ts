@@ -1,9 +1,29 @@
 import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import { isPlaybookVideo } from "@/lib/playbook/content-kind";
+import type { AgentProfileVideo } from "@/lib/agents/profile-videos";
 
 function videoKey(v: PlaybookVideo): string {
   return (v.videoUrl || "").trim().toLowerCase();
+}
+
+/** Agent profile video flagged for Display A — shown on the main Playbook rail too. */
+export function agentProfileVideoToPlaybookVideo(video: AgentProfileVideo): PlaybookVideo {
+  return {
+    id: `agent-${video.id}`,
+    slug: `agent-${video.id}`,
+    title: video.title,
+    description: video.title,
+    category: "tips",
+    duration: "",
+    thumbnail: video.thumbnail,
+    videoUrl: video.videoUrl,
+    publishedAt: "2026-01-01",
+    tags: [],
+    topic: "condo_tips",
+    contentKind: "video",
+    displayA: video.featuredInDisplayA,
+  };
 }
 
 /** Prefer DB metadata but keep sheet thumbnail when DB has none. */
@@ -19,9 +39,14 @@ function mergeVideoFields(sheet: PlaybookVideo, db: PlaybookVideo): PlaybookVide
   };
 }
 
-/** Sheet catalogue + admin DB videos (DB wins when the same URL exists in both). */
+/**
+ * Sheet catalogue + admin DB videos + agent-profile videos.
+ * Later sources win when the same URL exists in more than one — agent-profile
+ * videos are the newest source of truth, so they take priority over both.
+ */
 export function mergePlaybookVideos(
   dbVideos: PlaybookVideo[],
+  agentVideos: PlaybookVideo[] = [],
   sheetVideos: PlaybookVideo[] = PLAYBOOK_SHEET_VIDEOS,
 ): PlaybookVideo[] {
   const merged = new Map<string, PlaybookVideo>();
@@ -34,6 +59,13 @@ export function mergePlaybookVideos(
 
   for (const v of dbVideos) {
     if (!isPlaybookVideo(v)) continue;
+    const key = videoKey(v);
+    if (!key) continue;
+    const existing = merged.get(key);
+    merged.set(key, existing ? mergeVideoFields(existing, v) : v);
+  }
+
+  for (const v of agentVideos) {
     const key = videoKey(v);
     if (!key) continue;
     const existing = merged.get(key);

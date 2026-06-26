@@ -29,6 +29,7 @@ type PlaybookAutoVideoRailProps = {
 
 const PX_PER_MS = 0.045;
 const DRAG_CLICK_THRESHOLD = 6;
+const DIRECTION_LOCK_PX = 8;
 
 /**
  * Display A — slow auto-scrolling horizontal video strip.
@@ -37,6 +38,13 @@ const DRAG_CLICK_THRESHOLD = 6;
  * smooth on mobile WebKit, where JS-driven `scrollLeft` fights the browser's
  * own touch/momentum compositor. Manual swiping is reimplemented on top of
  * Pointer Events so mouse drag, touch, and pen all behave identically.
+ *
+ * `touch-action: pan-y` lets the browser keep handling vertical page
+ * scrolling natively. The first ~8px of movement decides gesture intent in
+ * JS: horizontal calls `preventDefault()` and claims the gesture as a rail
+ * drag; vertical backs off immediately and leaves the still-permitted native
+ * pan to the browser, so a swipe that starts on the rail but is mostly
+ * vertical scrolls the page exactly as if the rail weren't there.
  */
 export function PlaybookAutoVideoRail({
   videos,
@@ -51,8 +59,11 @@ export function PlaybookAutoVideoRail({
   const pausedRef = useRef(false);
   const draggingRef = useRef(false);
   const dragStartXRef = useRef(0);
+  const dragStartYRef = useRef(0);
   const dragStartOffsetRef = useRef(0);
   const draggedDistanceRef = useRef(0);
+  const lockRef = useRef<"none" | "horizontal" | "vertical">("none");
+  const activePointerIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
 
   const loopItems = useMemo(() => {
@@ -114,16 +125,39 @@ export function PlaybookAutoVideoRail({
     draggingRef.current = true;
     pausedRef.current = true;
     dragStartXRef.current = e.clientX;
+    dragStartYRef.current = e.clientY;
     dragStartOffsetRef.current = offsetRef.current;
     draggedDistanceRef.current = 0;
-    e.currentTarget.setPointerCapture?.(e.pointerId);
+    activePointerIdRef.current = e.pointerId;
+    // Mouse drags have no competing native scroll gesture to disambiguate.
+    lockRef.current = e.pointerType === "mouse" ? "horizontal" : "none";
+    if (lockRef.current === "horizontal") {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
   }
 
   function handlePointerMove(e: ReactPointerEvent<HTMLDivElement>) {
-    if (!draggingRef.current) return;
-    const delta = e.clientX - dragStartXRef.current;
-    draggedDistanceRef.current = Math.abs(delta);
-    offsetRef.current = dragStartOffsetRef.current + delta;
+    if (!draggingRef.current || e.pointerId !== activePointerIdRef.current) return;
+
+    const dx = e.clientX - dragStartXRef.current;
+    const dy = e.clientY - dragStartYRef.current;
+
+    if (lockRef.current === "none") {
+      if (Math.abs(dx) < DIRECTION_LOCK_PX && Math.abs(dy) < DIRECTION_LOCK_PX) return;
+      lockRef.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
+      if (lockRef.current === "vertical") {
+        // Back off entirely — touch-action: pan-y already permits the
+        // browser to handle the rest of this gesture as a normal page scroll.
+        draggingRef.current = false;
+        pausedRef.current = false;
+        return;
+      }
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
+
+    e.preventDefault();
+    draggedDistanceRef.current = Math.abs(dx);
+    offsetRef.current = dragStartOffsetRef.current + dx;
     if (trackRef.current) {
       trackRef.current.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
     }
@@ -133,7 +167,10 @@ export function PlaybookAutoVideoRail({
     if (!draggingRef.current) return;
     draggingRef.current = false;
     pausedRef.current = false;
-    normalizeOffsetAfterDrag();
+    activePointerIdRef.current = null;
+    const wasHorizontal = lockRef.current === "horizontal";
+    lockRef.current = "none";
+    if (wasHorizontal) normalizeOffsetAfterDrag();
   }
 
   function guardClick<E extends { preventDefault: () => void }>(e: E) {
@@ -156,7 +193,7 @@ export function PlaybookAutoVideoRail({
       </p>
 
       <div
-        className="-mx-4 cursor-grab touch-pan-y overflow-hidden px-4 pb-2 active:cursor-grabbing sm:-mx-0 sm:px-0"
+        className="-mx-4 cursor-grab touch-pan-y select-none overflow-hidden px-4 pb-2 active:cursor-grabbing sm:-mx-0 sm:px-0"
         onMouseEnter={() => {
           pausedRef.current = true;
         }}
@@ -170,6 +207,7 @@ export function PlaybookAutoVideoRail({
         onPointerLeave={() => {
           if (draggingRef.current) endDrag();
         }}
+        onDragStart={(e) => e.preventDefault()}
       >
         <div ref={trackRef} className="flex w-max gap-4 will-change-transform">
           {loopItems.map((video, index) => {
