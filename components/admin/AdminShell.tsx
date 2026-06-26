@@ -13,7 +13,7 @@ const NAV_ITEMS = [
   { href: "/admin/listings/pg-sources", label: "Listings Sync" },
   { href: "/admin/listings?tab=playbook&view=articles", label: "Articles" },
   { href: "/admin/listings?tab=playbook&view=videos", label: "Videos" },
-  { href: "/admin/agent-profiles", label: "Agent Profiles" },
+  { href: "/admin/agent-profiles", label: "Agent Videos" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
 ];
 

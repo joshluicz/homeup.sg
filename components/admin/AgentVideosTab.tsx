@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ChevronDown,
   ChevronUp,
@@ -297,11 +298,12 @@ export function AgentVideosTab() {
                     : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50",
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={entry.photo}
-                  alt=""
-                  className="h-12 w-12 rounded-full object-cover ring-2 ring-white"
+                  alt={entry.name}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12 shrink-0 rounded-full object-cover object-[center_5px] ring-2 ring-white"
                 />
                 <div className="min-w-0">
                   <p className="font-semibold text-neutral-900">{entry.name}</p>

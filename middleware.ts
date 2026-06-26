@@ -51,6 +51,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (pathname === "/admin/listings" && request.nextUrl.searchParams.get("tab") === "agent-videos") {
+    return NextResponse.redirect(new URL("/admin/agent-profiles", request.url));
+  }
+
   return supabaseResponse;
 }
 
