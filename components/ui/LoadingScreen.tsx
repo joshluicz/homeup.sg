@@ -19,6 +19,8 @@ export function LoadingScreen() {
       if (dismissed) return;
       dismissed = true;
       setFading(true);
+      (window as unknown as Record<string, unknown>).__homeupLoaded = true;
+      window.dispatchEvent(new CustomEvent("homeup:loaded"));
       setTimeout(() => setGone(true), FADE_MS);
     }
 
