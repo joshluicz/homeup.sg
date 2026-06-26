@@ -31,16 +31,22 @@ type PlaybookAutoVideoRailProps = {
 const PX_PER_MS = 0.045;
 /** How long to stay paused after the user stops interacting before auto-scroll resumes. */
 const RESUME_DELAY_MS = 900;
+/** Cap DOM writes to ~30fps — the drift is slow enough that this looks identical
+ *  to 60fps but roughly halves the layout/paint work, which matters on phones. */
+const WRITE_INTERVAL_MS = 1000 / 30;
 
 /**
  * Display A — slow auto-scrolling horizontal video strip.
  *
  * Manual scrolling is plain native `overflow-x: auto` — touch swipe,
  * trackpad, mouse wheel, and a scrollbar drag all just work, on every
- * device, for free. The only custom logic is the auto-scroll: it nudges
- * `scrollLeft` every frame, and pauses for `RESUME_DELAY_MS` after any
- * *user-initiated* scroll (detected via the native `scroll` event, filtering
- * out the ticks the auto-scroll itself causes) so it never fights a swipe,
+ * device, for free. The only custom logic is the auto-scroll: it tracks
+ * position every frame but only writes `scrollLeft` at ~30fps (capped via
+ * WRITE_INTERVAL_MS — the drift is slow enough that this is visually
+ * identical to 60fps, and roughly halves layout/paint cost on phones), and
+ * pauses for `RESUME_DELAY_MS` after any *user-initiated* scroll (detected
+ * via the native `scroll` event, filtering out the ticks the auto-scroll
+ * itself causes) so it never fights a swipe,
  * a trackpad gesture, or momentum scrolling.
  */
 export function PlaybookAutoVideoRail({
@@ -56,6 +62,7 @@ export function PlaybookAutoVideoRail({
   const pausedRef = useRef(false);
   const resumeTimerRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+  const writeAccumRef = useRef(0);
 
   const loopItems = useMemo(() => {
     if (videos.length === 0) return [];
@@ -110,7 +117,13 @@ export function PlaybookAutoVideoRail({
         if (loopWidth > 0 && virtualOffsetRef.current >= loopWidth) {
           virtualOffsetRef.current -= loopWidth;
         }
-        el.scrollLeft = Math.round(virtualOffsetRef.current);
+
+        writeAccumRef.current += delta;
+        if (writeAccumRef.current >= WRITE_INTERVAL_MS) {
+          writeAccumRef.current = 0;
+          const next = Math.round(virtualOffsetRef.current);
+          if (next !== el.scrollLeft) el.scrollLeft = next;
+        }
       }
 
       raf = window.requestAnimationFrame(tick);
@@ -180,6 +193,7 @@ export function PlaybookAutoVideoRail({
         <div
           ref={scrollRef}
           className="-mx-4 flex gap-4 overflow-x-auto scroll-auto px-4 pb-2 scrollbar-none sm:-mx-0 sm:px-0"
+          style={{ contain: "layout paint", willChange: "scroll-position" }}
           onWheel={handleWheel}
           onMouseEnter={pauseNow}
           onMouseLeave={() => scheduleResume(300)}
