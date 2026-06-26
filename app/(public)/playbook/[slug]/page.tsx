@@ -78,7 +78,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
         ]}
       />
       <Navbar />
-      <main className="bg-white">
+      <main className="playbook-article-theme">
         <article className="container-page py-8 sm:py-12">
           <div className="mx-auto max-w-[680px]">
             <PlaybookArticleHeader
@@ -92,7 +92,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             </div>
 
             {showDbFaq && (
-              <section className="mt-14 border-t border-neutral-200 pt-10">
+              <section className="playbook-article-body mt-14 border-t border-neutral-200 pt-10">
                 <h2 className="font-display text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">
                   Frequently asked questions
                 </h2>
