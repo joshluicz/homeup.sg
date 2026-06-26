@@ -5,6 +5,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
 import { ScrollToTopButton } from "@/components/ui/ScrollToTopButton";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
@@ -92,6 +93,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body>
+        <LoadingScreen />
         {GA_ID && (
           <Script id="ga4-loader" strategy="lazyOnload">{`
             try {
