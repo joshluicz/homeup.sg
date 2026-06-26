@@ -80,6 +80,7 @@ function rowToPlaybookVideo(row: Record<string, unknown>, topic: PlaybookTopic):
     topic,
     contentKind: (row.content_kind as PlaybookVideo["contentKind"]) ?? undefined,
     displayA: row.display_a as boolean | undefined,
+    agentSlug: (row.agent_slug as string | null) ?? null,
   };
 }
 

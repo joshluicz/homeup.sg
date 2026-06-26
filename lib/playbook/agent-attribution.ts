@@ -88,10 +88,17 @@ function agentFromVideoUrl(videoUrl?: string): string | null {
   return null;
 }
 
-/** Best-effort agent attribution for playbook videos and articles. */
-export function inferPlaybookAgentSlug(
-  item: Pick<PlaybookVideo, "videoUrl" | "title" | "description" | "article" | "tags">,
-): string {
+type AttributableItem = Pick<
+  PlaybookVideo,
+  "videoUrl" | "title" | "description" | "article" | "tags"
+> & { agentSlug?: string | null };
+
+const AGENT_SLUGS = new Set(AGENTS.map((agent) => agent.slug));
+
+/** Explicit author override, when set in the admin panel and valid, wins over inference. */
+export function inferPlaybookAgentSlug(item: AttributableItem): string {
+  if (item.agentSlug && AGENT_SLUGS.has(item.agentSlug)) return item.agentSlug;
+
   const fromUrl = agentFromVideoUrl(item.videoUrl);
   if (fromUrl) return fromUrl;
 
@@ -109,9 +116,7 @@ export function getPlaybookAgentOptions(): Array<{ slug: string; name: string }>
   return AGENTS.map((agent) => ({ slug: agent.slug, name: agent.name }));
 }
 
-export function getPlaybookAgentName(
-  item: Pick<PlaybookVideo, "videoUrl" | "title" | "description" | "article" | "tags">,
-): string {
+export function getPlaybookAgentName(item: AttributableItem): string {
   const slug = inferPlaybookAgentSlug(item);
   return AGENTS.find((agent) => agent.slug === slug)?.name ?? "HomeUP";
 }

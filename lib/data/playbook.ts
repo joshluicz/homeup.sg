@@ -103,6 +103,8 @@ export interface PlaybookVideo {
   metaDescription?: string;  // SEO meta description for the article page
   topic?: PlaybookTopic | null; // Which journey stage this article/video belongs to
   contentKind?: "article" | "video";
+  /** Explicit author override (agent slug). Falls back to inference when unset. */
+  agentSlug?: string | null;
 }
 
 export const CATEGORY_LABELS: Record<VideoCategory, string> = {

@@ -13,6 +13,7 @@ import {
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
+import { getPlaybookAgentName } from "@/lib/playbook/agent-attribution";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   articleSchema,
@@ -114,7 +115,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             <footer className="mt-14 border-t border-neutral-200 pt-8">
               <p className="text-sm font-medium text-neutral-500">
                 Written by{" "}
-                <span className="font-semibold text-neutral-800">HomeUP</span>
+                <span className="font-semibold text-neutral-800">{getPlaybookAgentName(video)}</span>
                 {" · "}
                 Singapore property guides for buyers, sellers, and upgraders.
               </p>

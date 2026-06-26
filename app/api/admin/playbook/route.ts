@@ -95,6 +95,7 @@ export async function POST(request: Request) {
       : [],
     meta_description: contentKind === "article" ? (fields.metaDescription ?? "") : "",
     topic: fields.topic ?? null,
+    agent_slug: fields.agentSlug || null,
     updated_at: new Date().toISOString(),
   };
 

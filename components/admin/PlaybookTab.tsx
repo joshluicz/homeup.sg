@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, Plus, Star, Trash2, X, ChevronUp, Link as LinkIcon, Upload, FileText, Layers, Search, ExternalLink, BookOpen } from "lucide-react";
 import { CATEGORY_LABELS, TOPIC_LABELS, PLAYBOOK_TOPICS, inferPlaybookTopicFromCategory } from "@/lib/data/playbook";
+import { getPlaybookAgentOptions } from "@/lib/playbook/agent-attribution";
 import { resolveThumbnail, resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import type { PlaybookTopic } from "@/lib/data/playbook";
@@ -41,6 +42,7 @@ const TOPIC_BADGE: Record<PlaybookTopic, string> = {
 };
 
 type TopicFilter = "all" | PlaybookTopic | "none";
+const AGENT_OPTIONS = getPlaybookAgentOptions();
 
 function FormSection({
   title,
@@ -93,6 +95,7 @@ type Video = {
   meta_description?: string;
   topic?: PlaybookTopic | null;
   sheetCatalogue?: boolean;
+  agent_slug?: string | null;
 };
 
 const emptyForm = {
@@ -108,6 +111,7 @@ const emptyForm = {
   tags: "",
   article: "",
   meta_description: "",
+  agentSlug: "",
 };
 
 // Grab a poster frame from an uploaded video file, entirely in the browser (no server/ffmpeg).
@@ -303,6 +307,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       tags: v.tags?.join(", ") ?? "",
       article: isVideoMode ? "" : (v.article ?? ""),
       meta_description: isVideoMode ? "" : (v.meta_description ?? ""),
+      agentSlug: v.agent_slug ?? "",
     });
     setFaq(isVideoMode ? [] : (v.faq ?? []));
     setError(null);
@@ -428,6 +433,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       faq: mode === "article"
         ? faq.map((item) => ({ q: item.q.trim(), a: item.a.trim() })).filter((item) => item.q && item.a)
         : [],
+      agent_slug: form.agentSlug || null,
       updated_at: new Date().toISOString(),
     };
 
@@ -713,6 +719,27 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                 ))}
               </select>
             </div>
+
+            {/* Author */}
+            {!isVideoMode && (
+              <div>
+                <FieldLabel>Author</FieldLabel>
+                <select
+                  value={form.agentSlug}
+                  onChange={(e) => set("agentSlug", e.target.value)}
+                  className={inputClass}
+                >
+                  <option value="">Auto-detect from video/title</option>
+                  {AGENT_OPTIONS.map((agent) => (
+                    <option key={agent.slug} value={agent.slug}>{agent.name}</option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-xs font-normal text-neutral-500">
+                  Shown as the byline on the article page. Leave on auto-detect to keep guessing
+                  from the video link, title, and tags.
+                </p>
+              </div>
+            )}
 
             {/* Tags + Published */}
             <div className="grid gap-4 sm:grid-cols-2">

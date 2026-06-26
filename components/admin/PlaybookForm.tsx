@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { Loader2, X, Sparkles, Link, Upload } from "lucide-react";
 import type { FaqEntry, PlaybookVideo, VideoCategory } from "@/lib/data/playbook";
 import { CATEGORY_LABELS } from "@/lib/data/playbook";
+import { getPlaybookAgentOptions } from "@/lib/playbook/agent-attribution";
 
 const CATEGORIES: Exclude<VideoCategory, "all">[] = ["selling", "buying", "process", "market", "tips"];
+const AGENT_OPTIONS = getPlaybookAgentOptions();
 
 type FormState = {
   title: string;
@@ -22,6 +24,7 @@ type FormState = {
   article: string;
   metaDescription: string;
   faq: FaqEntry[];
+  agentSlug: string;
 };
 
 function toFormState(v?: PlaybookVideo): FormState {
@@ -38,6 +41,7 @@ function toFormState(v?: PlaybookVideo): FormState {
     article: v?.article ?? "",
     metaDescription: v?.metaDescription ?? "",
     faq: v?.faq ?? [],
+    agentSlug: v?.agentSlug ?? "",
   };
 }
 
@@ -131,6 +135,7 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       article: form.article,
       metaDescription: form.metaDescription.trim(),
+      agentSlug: form.agentSlug || null,
       faq: form.faq
         .map((item) => ({ q: item.q.trim(), a: item.a.trim() }))
         .filter((item) => item.q && item.a),
@@ -315,6 +320,25 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
             className="mt-2 h-24 w-44 rounded-lg object-cover border border-neutral-200"
           />
         )}
+      </div>
+
+      {/* Author */}
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-neutral-900">Author</label>
+        <select
+          value={form.agentSlug}
+          onChange={(e) => set("agentSlug", e.target.value)}
+          className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+        >
+          <option value="">Auto-detect from video/title</option>
+          {AGENT_OPTIONS.map((agent) => (
+            <option key={agent.slug} value={agent.slug}>{agent.name}</option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-neutral-400">
+          Shown as the byline on the article page. Leave on auto-detect to keep guessing from
+          the video link, title, and tags.
+        </p>
       </div>
 
       {/* Tags */}
