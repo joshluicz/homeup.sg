@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import {
   ChevronDown,
@@ -10,6 +9,7 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Star,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -29,6 +29,7 @@ type VideoRow = AgentProfileVideoRow;
 const emptyForm = {
   title: "",
   videoUrl: "",
+  featuredInDisplayA: true,
 };
 
 function validateVideoUrl(url: string): string | null {
@@ -72,7 +73,11 @@ export function AgentVideosTab() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ title: "", videoUrl: "" });
+  const [editForm, setEditForm] = useState({
+    title: "",
+    videoUrl: "",
+    featuredInDisplayA: false,
+  });
 
   const agent = useMemo(
     () => AGENTS.find((entry) => entry.slug === agentSlug),
@@ -144,7 +149,7 @@ export function AgentVideosTab() {
           agentSlug,
           title: form.title.trim(),
           videoUrl: form.videoUrl.trim(),
-          featuredInDisplayA: true,
+          featuredInDisplayA: form.featuredInDisplayA,
           sortOrder: videos.length,
         }),
       });
@@ -165,6 +170,7 @@ export function AgentVideosTab() {
     setEditForm({
       title: video.title,
       videoUrl: video.video_url,
+      featuredInDisplayA: video.featured_in_display_a,
     });
     setError(null);
   }
@@ -193,6 +199,7 @@ export function AgentVideosTab() {
           id,
           title: editForm.title.trim(),
           videoUrl: editForm.videoUrl.trim(),
+          featuredInDisplayA: editForm.featuredInDisplayA,
         }),
       });
       const data = await res.json();
@@ -204,6 +211,27 @@ export function AgentVideosTab() {
       setError(err instanceof Error ? err.message : "Failed to update video");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function toggleDisplayA(video: VideoRow) {
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/agent-videos", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: video.id,
+          featuredInDisplayA: !video.featured_in_display_a,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to update video");
+      setVideos((rows) =>
+        rows.map((row) => (row.id === video.id ? (data as VideoRow) : row)),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update video");
     }
   }
 
@@ -262,10 +290,9 @@ export function AgentVideosTab() {
             Agent profile videos
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-neutral-600">
-            Add TikTok or YouTube links for each agent. They appear in the{" "}
-            <strong>Property insights — Tips from [Agent]</strong> section on that
-            agent&apos;s public profile page. Saves go live immediately — no separate publish
-            step.
+            Add video links to <strong>Display B</strong> (the video rail on each agent&apos;s
+            profile page). Toggle <strong>Display A</strong> to also include selected clips in
+            the Playbook top auto-scrolling strip.
           </p>
         </div>
         <a
@@ -317,8 +344,8 @@ export function AgentVideosTab() {
 
       <form onSubmit={handleAdd}>
         <FormSection
-          title={`Add video — ${agentName}`}
-          description="Paste a TikTok or YouTube URL. The title shows on the profile video rail."
+          title={`Add to Display B — ${agentName}`}
+          description="Paste a TikTok or YouTube URL. All new videos appear on the agent profile (Display B)."
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -344,6 +371,20 @@ export function AgentVideosTab() {
               />
             </div>
           </div>
+
+          <label className="mt-4 flex cursor-pointer items-start gap-2 text-sm text-neutral-700">
+            <input
+              type="checkbox"
+              checked={form.featuredInDisplayA}
+              onChange={(e) =>
+                setForm((current) => ({ ...current, featuredInDisplayA: e.target.checked }))
+              }
+              className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+            />
+            <span>
+              Also feature in <strong>Display A</strong> (Playbook top auto-scrolling strip)
+            </span>
+          </label>
 
           <div className="mt-5">
             <Button type="submit" disabled={saving}>
@@ -381,11 +422,9 @@ export function AgentVideosTab() {
             {agentName}&apos;s profile videos ({videos.length})
           </h2>
           <p className="mt-1 text-xs text-neutral-500">
-            These appear on{" "}
-            <Link href={profileUrl} target="_blank" className="font-semibold text-primary-600 hover:underline">
-              {profileUrl.replace("https://", "")}
-            </Link>
-            . Use the arrows to change order.
+            <strong>Display B:</strong> all videos below show on the agent profile.{" "}
+            <strong>Display A:</strong> starred items also appear in the Playbook top rail. Use
+            the arrows to change order.
           </p>
         </div>
 
@@ -437,6 +476,20 @@ export function AgentVideosTab() {
                           />
                         </div>
                       </div>
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={editForm.featuredInDisplayA}
+                          onChange={(e) =>
+                            setEditForm((current) => ({
+                              ...current,
+                              featuredInDisplayA: e.target.checked,
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        Feature in Display A
+                      </label>
                       <div className="flex flex-wrap gap-2">
                         <Button type="button" size="sm" disabled={saving} onClick={() => saveEdit(video.id)}>
                           Save changes
@@ -475,7 +528,18 @@ export function AgentVideosTab() {
                             {video.video_url}
                             <ExternalLink className="h-3 w-3 shrink-0" />
                           </a>
-                          <p className="mt-2 text-xs capitalize text-neutral-500">{platform}</p>
+                          <p className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                            <span className="rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-sky-800 ring-1 ring-sky-200">
+                              Display B
+                            </span>
+                            {video.featured_in_display_a ? (
+                              <span className="rounded-full bg-amber-50 px-2 py-0.5 font-semibold text-amber-800 ring-1 ring-amber-200">
+                                Display A
+                              </span>
+                            ) : (
+                              <span className="text-neutral-500">Display A off</span>
+                            )}
+                          </p>
                         </div>
                       </div>
 
@@ -500,6 +564,24 @@ export function AgentVideosTab() {
                             <ChevronDown className="h-4 w-4" />
                           </button>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => toggleDisplayA(video)}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 transition",
+                            video.featured_in_display_a
+                              ? "bg-amber-50 text-amber-800 ring-amber-200"
+                              : "bg-neutral-50 text-neutral-600 ring-neutral-200 hover:bg-neutral-100",
+                          )}
+                        >
+                          <Star
+                            className={cn(
+                              "h-3.5 w-3.5",
+                              video.featured_in_display_a && "fill-amber-500 text-amber-500",
+                            )}
+                          />
+                          {video.featured_in_display_a ? "In Display A" : "Display B only"}
+                        </button>
                         <Button
                           type="button"
                           variant="outline"
