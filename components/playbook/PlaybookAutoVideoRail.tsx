@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, type ReactNode, type WheelEvent as ReactWheelEvent } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { playbookVideoHref } from "@/lib/playbook/embed";
 import { PlaybookVideoBrowseTile } from "@/components/playbook/PlaybookVideoBrowseTile";
 import { cn } from "@/lib/utils";
@@ -28,23 +29,19 @@ type PlaybookAutoVideoRailProps = {
 };
 
 const PX_PER_MS = 0.045;
-const DRAG_CLICK_THRESHOLD = 6;
-const DIRECTION_LOCK_PX = 8;
+/** How long to stay paused after the user stops interacting before auto-scroll resumes. */
+const RESUME_DELAY_MS = 900;
 
 /**
  * Display A — slow auto-scrolling horizontal video strip.
  *
- * Driven by a CSS transform (not native `scrollLeft`) so the motion stays
- * smooth on mobile WebKit, where JS-driven `scrollLeft` fights the browser's
- * own touch/momentum compositor. Manual swiping is reimplemented on top of
- * Pointer Events so mouse drag, touch, and pen all behave identically.
- *
- * `touch-action: pan-y` lets the browser keep handling vertical page
- * scrolling natively. The first ~8px of movement decides gesture intent in
- * JS: horizontal calls `preventDefault()` and claims the gesture as a rail
- * drag; vertical backs off immediately and leaves the still-permitted native
- * pan to the browser, so a swipe that starts on the rail but is mostly
- * vertical scrolls the page exactly as if the rail weren't there.
+ * Manual scrolling is plain native `overflow-x: auto` — touch swipe,
+ * trackpad, mouse wheel, and a scrollbar drag all just work, on every
+ * device, for free. The only custom logic is the auto-scroll: it nudges
+ * `scrollLeft` every frame, and pauses for `RESUME_DELAY_MS` after any
+ * *user-initiated* scroll (detected via the native `scroll` event, filtering
+ * out the ticks the auto-scroll itself causes) so it never fights a swipe,
+ * a trackpad gesture, or momentum scrolling.
  */
 export function PlaybookAutoVideoRail({
   videos,
@@ -54,16 +51,10 @@ export function PlaybookAutoVideoRail({
   inverted = false,
   intro,
 }: PlaybookAutoVideoRailProps) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const offsetRef = useRef(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const virtualOffsetRef = useRef(0);
   const pausedRef = useRef(false);
-  const draggingRef = useRef(false);
-  const dragStartXRef = useRef(0);
-  const dragStartYRef = useRef(0);
-  const dragStartOffsetRef = useRef(0);
-  const draggedDistanceRef = useRef(0);
-  const lockRef = useRef<"none" | "horizontal" | "vertical">("none");
-  const activePointerIdRef = useRef<number | null>(null);
+  const resumeTimerRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
 
   const loopItems = useMemo(() => {
@@ -72,13 +63,38 @@ export function PlaybookAutoVideoRail({
   }, [videos]);
 
   useEffect(() => {
-    offsetRef.current = 0;
-    if (trackRef.current) trackRef.current.style.transform = "translate3d(0,0,0)";
+    virtualOffsetRef.current = 0;
+    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
   }, [videos]);
 
+  const clearResumeTimer = useCallback(() => {
+    if (resumeTimerRef.current !== null) {
+      window.clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = null;
+    }
+  }, []);
+
+  const pauseNow = useCallback(() => {
+    clearResumeTimer();
+    pausedRef.current = true;
+  }, [clearResumeTimer]);
+
+  const scheduleResume = useCallback(
+    (delayMs: number) => {
+      clearResumeTimer();
+      resumeTimerRef.current = window.setTimeout(() => {
+        const el = scrollRef.current;
+        if (el) virtualOffsetRef.current = el.scrollLeft;
+        pausedRef.current = false;
+        resumeTimerRef.current = null;
+      }, delayMs);
+    },
+    [clearResumeTimer],
+  );
+
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track || videos.length < 2) return;
+    const el = scrollRef.current;
+    if (!el || videos.length < 2) return;
 
     let raf = 0;
     lastTimeRef.current = null;
@@ -88,21 +104,42 @@ export function PlaybookAutoVideoRail({
       const delta = time - lastTimeRef.current;
       lastTimeRef.current = time;
 
-      if (!pausedRef.current && !draggingRef.current) {
-        offsetRef.current -= PX_PER_MS * delta;
-        const loopWidth = track.scrollWidth / 2;
-        if (loopWidth > 0 && Math.abs(offsetRef.current) >= loopWidth) {
-          offsetRef.current += loopWidth;
+      if (!pausedRef.current) {
+        virtualOffsetRef.current += PX_PER_MS * delta;
+        const loopWidth = el.scrollWidth / 2;
+        if (loopWidth > 0 && virtualOffsetRef.current >= loopWidth) {
+          virtualOffsetRef.current -= loopWidth;
         }
-        track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
+        el.scrollLeft = Math.round(virtualOffsetRef.current);
       }
 
       raf = window.requestAnimationFrame(tick);
     };
 
     raf = window.requestAnimationFrame(tick);
-    return () => window.cancelAnimationFrame(raf);
-  }, [videos.length]);
+
+    // `scroll` doesn't bubble, and React's onScroll prop has proven unreliable
+    // here in testing — attach directly so user-scroll detection always fires.
+    const handleScroll = () => {
+      // A flag-based "was this scroll caused by our own tick()?" check is racy —
+      // the native `scroll` event is async, so a newer tick can re-arm the flag
+      // before an older write's event fires. Comparing against where the
+      // auto-scroll itself last put scrollLeft is reliable regardless of timing.
+      if (Math.abs(el.scrollLeft - Math.round(virtualOffsetRef.current)) <= 2) return;
+
+      // A genuine user scroll (touch, trackpad, wheel, scrollbar) — pause and
+      // let it settle before resuming the auto-scroll from wherever it ended up.
+      pauseNow();
+      scheduleResume(RESUME_DELAY_MS);
+    };
+    el.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      clearResumeTimer();
+      el.removeEventListener("scroll", handleScroll);
+    };
+  }, [videos.length, pauseNow, scheduleResume, clearResumeTimer]);
 
   if (videos.length === 0) return null;
 
@@ -111,74 +148,21 @@ export function PlaybookAutoVideoRail({
     return playbookVideoHref({ slug: video.slug ?? "", videoUrl: video.videoUrl }).href;
   }
 
-  function normalizeOffsetAfterDrag() {
-    const track = trackRef.current;
-    if (!track) return;
-    const loopWidth = track.scrollWidth / 2;
-    if (loopWidth <= 0) return;
-    while (offsetRef.current <= -loopWidth) offsetRef.current += loopWidth;
-    while (offsetRef.current > 0) offsetRef.current -= loopWidth;
-  }
-
-  function handlePointerDown(e: ReactPointerEvent<HTMLDivElement>) {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    draggingRef.current = true;
-    pausedRef.current = true;
-    dragStartXRef.current = e.clientX;
-    dragStartYRef.current = e.clientY;
-    dragStartOffsetRef.current = offsetRef.current;
-    draggedDistanceRef.current = 0;
-    activePointerIdRef.current = e.pointerId;
-    // Mouse drags have no competing native scroll gesture to disambiguate.
-    lockRef.current = e.pointerType === "mouse" ? "horizontal" : "none";
-    if (lockRef.current === "horizontal") {
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    }
-  }
-
-  function handlePointerMove(e: ReactPointerEvent<HTMLDivElement>) {
-    if (!draggingRef.current || e.pointerId !== activePointerIdRef.current) return;
-
-    const dx = e.clientX - dragStartXRef.current;
-    const dy = e.clientY - dragStartYRef.current;
-
-    if (lockRef.current === "none") {
-      if (Math.abs(dx) < DIRECTION_LOCK_PX && Math.abs(dy) < DIRECTION_LOCK_PX) return;
-      lockRef.current = Math.abs(dx) > Math.abs(dy) ? "horizontal" : "vertical";
-      if (lockRef.current === "vertical") {
-        // Back off entirely — touch-action: pan-y already permits the
-        // browser to handle the rest of this gesture as a normal page scroll.
-        draggingRef.current = false;
-        pausedRef.current = false;
-        return;
-      }
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    }
-
+  function handleWheel(e: ReactWheelEvent<HTMLDivElement>) {
+    const el = scrollRef.current;
+    if (!el) return;
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (delta === 0) return;
     e.preventDefault();
-    draggedDistanceRef.current = Math.abs(dx);
-    offsetRef.current = dragStartOffsetRef.current + dx;
-    if (trackRef.current) {
-      trackRef.current.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
-    }
+    el.scrollLeft += delta;
   }
 
-  function endDrag() {
-    if (!draggingRef.current) return;
-    draggingRef.current = false;
-    pausedRef.current = false;
-    activePointerIdRef.current = null;
-    const wasHorizontal = lockRef.current === "horizontal";
-    lockRef.current = "none";
-    if (wasHorizontal) normalizeOffsetAfterDrag();
-  }
-
-  function guardClick<E extends { preventDefault: () => void }>(e: E) {
-    if (draggedDistanceRef.current > DRAG_CLICK_THRESHOLD) {
-      e.preventDefault();
-      return true;
-    }
-    return false;
+  function scrollByDirection(direction: -1 | 1) {
+    const el = scrollRef.current;
+    if (!el) return;
+    pauseNow();
+    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
+    scheduleResume(RESUME_DELAY_MS);
   }
 
   return (
@@ -192,24 +176,16 @@ export function PlaybookAutoVideoRail({
         </span>
       </p>
 
-      <div
-        className="-mx-4 cursor-grab touch-pan-y select-none overflow-hidden px-4 pb-2 active:cursor-grabbing sm:-mx-0 sm:px-0"
-        onMouseEnter={() => {
-          pausedRef.current = true;
-        }}
-        onMouseLeave={() => {
-          if (!draggingRef.current) pausedRef.current = false;
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={endDrag}
-        onPointerCancel={endDrag}
-        onPointerLeave={() => {
-          if (draggingRef.current) endDrag();
-        }}
-        onDragStart={(e) => e.preventDefault()}
-      >
-        <div ref={trackRef} className="flex w-max gap-4 will-change-transform">
+      <div className="group/rail relative">
+        <div
+          ref={scrollRef}
+          className="-mx-4 flex gap-4 overflow-x-auto scroll-auto px-4 pb-2 scrollbar-none sm:-mx-0 sm:px-0"
+          onWheel={handleWheel}
+          onMouseEnter={pauseNow}
+          onMouseLeave={() => scheduleResume(300)}
+          onTouchStart={pauseNow}
+          onTouchEnd={() => scheduleResume(RESUME_DELAY_MS)}
+        >
           {loopItems.map((video, index) => {
             const tile = (
               <PlaybookVideoBrowseTile
@@ -227,10 +203,7 @@ export function PlaybookAutoVideoRail({
                 {onVideoSelect ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (draggedDistanceRef.current > DRAG_CLICK_THRESHOLD) return;
-                      onVideoSelect(video);
-                    }}
+                    onClick={() => onVideoSelect(video)}
                     className="group/tile block w-[148px] text-left transition duration-200 sm:w-[168px] hover:-translate-y-0.5"
                     aria-label={`Watch ${video.title}`}
                   >
@@ -239,7 +212,6 @@ export function PlaybookAutoVideoRail({
                 ) : (
                   <Link
                     href={hrefFor(video)}
-                    onClick={guardClick}
                     className="group/tile block w-[148px] transition duration-200 sm:w-[168px] hover:-translate-y-0.5"
                     aria-label={`Watch ${video.title}`}
                   >
@@ -250,6 +222,23 @@ export function PlaybookAutoVideoRail({
             );
           })}
         </div>
+
+        <button
+          type="button"
+          aria-label="Scroll left"
+          onClick={() => scrollByDirection(-1)}
+          className="absolute left-1 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white/90 p-2 text-neutral-800 shadow-md ring-1 ring-neutral-200 transition hover:bg-white sm:flex"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Scroll right"
+          onClick={() => scrollByDirection(1)}
+          className="absolute right-1 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-white/90 p-2 text-neutral-800 shadow-md ring-1 ring-neutral-200 transition hover:bg-white sm:flex"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
     </div>
   );
