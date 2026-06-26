@@ -18,7 +18,9 @@
     "pg:sheet": "npx tsx scripts/run-pg-sheet-sync.ts",
     "pg:automation": "npx tsx scripts/run-pg-automation.ts",
     "pg:watch": "npx tsx scripts/run-pg-watch.ts",
-    "dns-aid:publish": "node scripts/publish-dns-aid.mjs"
+    "dns-aid:publish": "node scripts/publish-dns-aid.mjs",
+    "agent-videos:setup": "node scripts/setup-agent-profile-videos.mjs",
+    "agent-videos:seed": "node scripts/seed-agent-profile-videos.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -64,6 +66,7 @@
     "critters": "^0.0.23",
     "eslint": "^8",
     "eslint-config-next": "14",
+    "pg": "^8.22.0",
     "postcss": "latest",
     "tailwindcss": "^3.4.19",
     "typescript": "latest"

@@ -1,0 +1,107 @@
+[
+  {
+    "agent_slug": "dennis-lim",
+    "agent_name": "Dennis Lim",
+    "videos": [
+      {
+        "title": "Should you sell before you buy?",
+        "video_url": "https://www.tiktok.com/@homeup_dennis/video/7638950012826799380",
+        "sort_order": 0
+      },
+      {
+        "title": "Upgrade planning for HDB owners",
+        "video_url": "https://www.tiktok.com/@homeup_dennis/video/7631940560378465557",
+        "sort_order": 1
+      },
+      {
+        "title": "Private property upgrade tips",
+        "video_url": "https://www.tiktok.com/@homeup_dennis/video/7638994457123360021",
+        "sort_order": 2
+      }
+    ]
+  },
+  {
+    "agent_slug": "yeo-tong-boon",
+    "agent_name": "Yeo Tong Boon",
+    "videos": [
+      {
+        "title": "Property tip from Tong Boon",
+        "video_url": "https://www.tiktok.com/@homeup_tongboon/video/7631845291800481032",
+        "sort_order": 0
+      },
+      {
+        "title": "Property tip from Tong Boon",
+        "video_url": "https://www.tiktok.com/@homeup_tongboon/video/7620785028812836103",
+        "sort_order": 1
+      },
+      {
+        "title": "Property tip from Tong Boon",
+        "video_url": "https://www.tiktok.com/@homeup_tongboon/video/7642310615293316370",
+        "sort_order": 2
+      }
+    ]
+  },
+  {
+    "agent_slug": "edmund-lee",
+    "agent_name": "Edmund Lee",
+    "videos": [
+      {
+        "title": "Property tip from Edmund",
+        "video_url": "https://www.tiktok.com/@edmundleesiewwah/video/7649749005693406482",
+        "sort_order": 0
+      },
+      {
+        "title": "Property tip from Edmund",
+        "video_url": "https://www.tiktok.com/@edmundleesiewwah/video/7639603282712792328",
+        "sort_order": 1
+      },
+      {
+        "title": "Property tip from Edmund",
+        "video_url": "https://www.tiktok.com/@edmundleesiewwah/video/7651599442377706760",
+        "sort_order": 2
+      }
+    ]
+  },
+  {
+    "agent_slug": "kenji-ching",
+    "agent_name": "Kenji Ching",
+    "videos": [
+      {
+        "title": "Property tip from Kenji",
+        "video_url": "https://www.tiktok.com/@homeup_kenji/video/7625629127298616594",
+        "sort_order": 0
+      },
+      {
+        "title": "Property tip from Kenji",
+        "video_url": "https://www.tiktok.com/@homeup_kenji/video/7634066326482341128",
+        "sort_order": 1
+      },
+      {
+        "title": "Property tip from Kenji",
+        "video_url": "https://www.tiktok.com/@homeup_kenji/video/7593327782197759240",
+        "sort_order": 2
+      }
+    ]
+  },
+  {
+    "agent_slug": "olivia-neo",
+    "agent_name": "Olivia Neo",
+    "videos": [
+      {
+        "title": "Property tip from Olivia",
+        "video_url": "https://www.tiktok.com/@homeup_olivia/video/7647084977745612039",
+        "sort_order": 0
+      },
+      {
+        "title": "Property tip from Olivia",
+        "video_url": "https://www.tiktok.com/@homeup_olivia/video/7637547101282389256",
+        "sort_order": 1
+      },
+      {
+        "title": "Property tip from Olivia",
+        "video_url": "https://www.tiktok.com/@homeup_olivia/video/7638154827150757138",
+        "sort_order": 2
+      }
+    ]
+  }
+]
