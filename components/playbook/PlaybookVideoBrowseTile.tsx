@@ -32,7 +32,10 @@ export function PlaybookVideoBrowseTile({
         title={title}
         size={isGrid ? "md" : "sm"}
         inverted={titleInverted}
-        className={cn("mb-2", isGrid ? "line-clamp-3" : "line-clamp-2 px-0.5")}
+        className={cn(
+          "mb-2",
+          isGrid ? "line-clamp-3 min-h-[4.125em]" : "line-clamp-2 px-0.5 min-h-[2.75em]",
+        )}
       />
 
       <div

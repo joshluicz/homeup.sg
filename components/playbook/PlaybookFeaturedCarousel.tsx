@@ -59,6 +59,7 @@ export function PlaybookFeaturedCarousel({ articles, curated = false }: Playbook
   if (slides.length === 0) return null;
 
   const safeIndex = Math.min(index, slides.length - 1);
+  const nextIndex = (safeIndex + 1) % slides.length;
   const current = slides[safeIndex];
   if (!current?.slug) return null;
 
@@ -69,6 +70,8 @@ export function PlaybookFeaturedCarousel({ articles, curated = false }: Playbook
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
+      onTouchStart={() => setPaused(true)}
+      onTouchEnd={() => setPaused(false)}
     >
       <div className="relative aspect-video overflow-hidden rounded-2xl bg-neutral-950 shadow-md ring-1 ring-neutral-200/80">
         {slides.map((slide, i) => {
@@ -92,7 +95,7 @@ export function PlaybookFeaturedCarousel({ articles, curated = false }: Playbook
                   <PlaybookArticleThumbnail
                     src={slideThumb}
                     fill
-                    loading="eager"
+                    loading={isActive || i === nextIndex ? "eager" : "lazy"}
                     imgClassName="transition-transform duration-700 group-hover:scale-[1.01]"
                   />
                 ) : (
