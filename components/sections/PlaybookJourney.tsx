@@ -256,8 +256,8 @@ export function PlaybookJourney({
         </div>
       </section>
 
-      {/* BOTTOM ~2/3 — blogs hero on white */}
-      <section className="bg-white pb-20 lg:pb-0">
+      {/* BOTTOM ~2/3 — blogs hero on warm cream, matching article reading pages */}
+      <section className="bg-[#faf9f5] pb-20 lg:pb-0">
         <PlaybookJourneyToolbar
           filters={filters}
           onChange={setFilters}

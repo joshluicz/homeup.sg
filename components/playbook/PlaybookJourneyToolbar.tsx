@@ -28,7 +28,7 @@ export function PlaybookJourneyToolbar({
     onChange({ ...filters, ...partial });
 
   return (
-    <div className={cn("border-b border-neutral-200 bg-white", className)}>
+    <div className={cn("border-b border-neutral-200 bg-[#faf9f5]", className)}>
       <div className="container-page py-4 sm:py-5">
         <p className="mb-3 text-sm leading-relaxed text-neutral-500 sm:text-base">
           In-depth guides from the HomeUP team — selling, upgrading, buying, and market

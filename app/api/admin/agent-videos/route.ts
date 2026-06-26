@@ -3,10 +3,34 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { AGENTS, getAgentBySlug } from "@/lib/data/agents";
 import { fetchOEmbedThumbnail } from "@/lib/playbook/oembed";
+import { slugify, uniqueSlug } from "@/lib/playbook/slugify";
+import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 function revalidateAgent(agentSlug: string) {
   revalidatePath("/agents");
   revalidatePath(`/agents/${agentSlug}`);
+  revalidatePath("/playbook", "layout");
+}
+
+/** Collisions across every place a /playbook/watch/[slug] page can come from. */
+async function takenSlugs(
+  supabase: SupabaseClient,
+  excludeId?: string,
+): Promise<Set<string>> {
+  const [{ data: agentRows }, { data: playbookRows }] = await Promise.all([
+    supabase.from("agent_profile_videos").select("id, slug"),
+    supabase.from("playbook_videos").select("slug"),
+  ]);
+
+  const taken = new Set<string>(PLAYBOOK_SHEET_VIDEOS.map((v) => v.slug));
+  for (const row of playbookRows ?? []) {
+    if (row.slug) taken.add(row.slug as string);
+  }
+  for (const row of agentRows ?? []) {
+    if (row.slug && row.id !== excludeId) taken.add(row.slug as string);
+  }
+  return taken;
 }
 
 export async function GET(request: Request) {
@@ -54,6 +78,10 @@ export async function POST(request: Request) {
 
   const resolvedThumbnail = thumbnail || (await fetchOEmbedThumbnail(videoUrl));
 
+  const requestedSlug = slugify(String(body.slug ?? "").trim());
+  const taken = await takenSlugs(supabase);
+  const slug = uniqueSlug(requestedSlug || slugify(title) || "video", taken);
+
   const { data, error: dbError } = await supabase
     .from("agent_profile_videos")
     .insert({
@@ -64,6 +92,7 @@ export async function POST(request: Request) {
       featured_in_display_a: featuredInDisplayA,
       featured_in_display_b: featuredInDisplayB,
       sort_order: sortOrder,
+      slug,
       updated_at: new Date().toISOString(),
     })
     .select("*")
@@ -95,6 +124,20 @@ export async function PATCH(request: Request) {
   }
   if (body.sortOrder !== undefined && Number.isFinite(body.sortOrder)) {
     updates.sort_order = Number(body.sortOrder);
+  }
+  if (body.slug !== undefined) {
+    const requested = slugify(String(body.slug).trim());
+    if (!requested) {
+      return NextResponse.json({ error: "Link can't be empty." }, { status: 400 });
+    }
+    const taken = await takenSlugs(supabase, id);
+    if (taken.has(requested)) {
+      return NextResponse.json(
+        { error: "That link is already in use — try something else." },
+        { status: 400 },
+      );
+    }
+    updates.slug = requested;
   }
 
   if (body.videoUrl !== undefined && body.thumbnail === undefined) {

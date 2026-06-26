@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
+  Check,
   ChevronDown,
   ChevronUp,
+  Copy,
   ExternalLink,
   Loader2,
   Pencil,
@@ -122,9 +124,14 @@ function DisplayPlacementPicker({
 const emptyForm = {
   title: "",
   videoUrl: "",
+  slug: "",
   featuredInDisplayA: false,
   featuredInDisplayB: false,
 };
+
+function watchUrl(slug: string): string {
+  return `${SITE_URL}/playbook/watch/${slug}`;
+}
 
 function validateVideoUrl(url: string): string | null {
   const trimmed = url.trim();
@@ -170,9 +177,11 @@ export function AgentVideosTab() {
   const [editForm, setEditForm] = useState({
     title: "",
     videoUrl: "",
+    slug: "",
     featuredInDisplayA: false,
     featuredInDisplayB: false,
   });
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const agent = useMemo(
     () => AGENTS.find((entry) => entry.slug === agentSlug),
@@ -244,6 +253,7 @@ export function AgentVideosTab() {
           agentSlug,
           title: form.title.trim(),
           videoUrl: form.videoUrl.trim(),
+          slug: form.slug.trim(),
           featuredInDisplayA: form.featuredInDisplayA,
           featuredInDisplayB: form.featuredInDisplayB,
           sortOrder: videos.length,
@@ -266,10 +276,22 @@ export function AgentVideosTab() {
     setEditForm({
       title: video.title,
       videoUrl: video.video_url,
+      slug: video.slug ?? "",
       featuredInDisplayA: video.featured_in_display_a,
       featuredInDisplayB: video.featured_in_display_b,
     });
     setError(null);
+  }
+
+  async function copyLink(video: VideoRow) {
+    if (!video.slug) return;
+    try {
+      await navigator.clipboard.writeText(watchUrl(video.slug));
+      setCopiedId(video.id);
+      window.setTimeout(() => setCopiedId((current) => (current === video.id ? null : current)), 1800);
+    } catch {
+      setError("Couldn't copy the link — copy it manually from the field below.");
+    }
   }
 
   async function saveEdit(id: string) {
@@ -296,6 +318,7 @@ export function AgentVideosTab() {
           id,
           title: editForm.title.trim(),
           videoUrl: editForm.videoUrl.trim(),
+          slug: editForm.slug.trim(),
           featuredInDisplayA: editForm.featuredInDisplayA,
           featuredInDisplayB: editForm.featuredInDisplayB,
         }),
@@ -511,6 +534,24 @@ export function AgentVideosTab() {
             </div>
           </div>
 
+          <div className="mt-4">
+            <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
+              Custom link <span className="font-normal text-neutral-500">(optional)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="shrink-0 text-sm text-neutral-500">{SITE_URL}/playbook/watch/</span>
+              <Input
+                value={form.slug}
+                onChange={(e) => setForm((current) => ({ ...current, slug: e.target.value }))}
+                placeholder="why-pay-3k-for-condo"
+              />
+            </div>
+            <p className="mt-1.5 text-xs text-neutral-500">
+              Leave blank to generate one from the title. This is the link you can send to
+              clients instead of the TikTok/YouTube one.
+            </p>
+          </div>
+
           <DisplayPlacementPicker
             featuredInDisplayA={form.featuredInDisplayA}
             featuredInDisplayB={form.featuredInDisplayB}
@@ -610,6 +651,25 @@ export function AgentVideosTab() {
                           />
                         </div>
                       </div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
+                          Custom link
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <span className="shrink-0 text-sm text-neutral-500">
+                            {SITE_URL}/playbook/watch/
+                          </span>
+                          <Input
+                            value={editForm.slug}
+                            onChange={(e) =>
+                              setEditForm((current) => ({ ...current, slug: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <p className="mt-1.5 text-xs text-neutral-500">
+                          Changing this breaks any copy of the old link you&apos;ve already sent out.
+                        </p>
+                      </div>
                       <DisplayPlacementPicker
                         featuredInDisplayA={editForm.featuredInDisplayA}
                         featuredInDisplayB={editForm.featuredInDisplayB}
@@ -659,6 +719,31 @@ export function AgentVideosTab() {
                             {video.video_url}
                             <ExternalLink className="h-3 w-3 shrink-0" />
                           </a>
+                          {video.slug && (
+                            <button
+                              type="button"
+                              onClick={() => copyLink(video)}
+                              className={cn(
+                                "mt-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-semibold transition",
+                                copiedId === video.id
+                                  ? "text-primary-700"
+                                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+                              )}
+                              title={watchUrl(video.slug)}
+                            >
+                              {copiedId === video.id ? (
+                                <>
+                                  <Check className="h-3.5 w-3.5" />
+                                  Copied!
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3.5 w-3.5" />
+                                  Copy shareable link
+                                </>
+                              )}
+                            </button>
+                          )}
                           <div className="mt-3 flex flex-wrap items-center gap-2">
                             {video.featured_in_display_b ? (
                               <DisplayBadge variant="b" />

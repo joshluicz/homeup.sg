@@ -11,7 +11,7 @@ function videoKey(v: PlaybookVideo): string {
 export function agentProfileVideoToPlaybookVideo(video: AgentProfileVideo): PlaybookVideo {
   return {
     id: `agent-${video.id}`,
-    slug: `agent-${video.id}`,
+    slug: video.slug,
     title: video.title,
     description: video.title,
     category: "tips",

@@ -4,6 +4,7 @@ import type { AgentVideo } from "@/lib/data/agents";
 import { youtubeThumbnail, youtubeWatchUrl } from "@/lib/youtube";
 import { resolveThumbnail } from "@/lib/playbook/embed";
 import { enrichVideoThumbnails } from "@/lib/playbook/oembed";
+import { slugify, uniqueSlug } from "@/lib/playbook/slugify";
 
 export type AgentProfileVideo = {
   id: string;
@@ -14,6 +15,8 @@ export type AgentProfileVideo = {
   featuredInDisplayA: boolean;
   featuredInDisplayB: boolean;
   sortOrder: number;
+  /** Powers the shareable /playbook/watch/[slug] page for this video. */
+  slug: string;
 };
 
 export type AgentProfileVideoRow = {
@@ -25,6 +28,7 @@ export type AgentProfileVideoRow = {
   featured_in_display_a: boolean;
   featured_in_display_b: boolean;
   sort_order: number;
+  slug: string | null;
 };
 
 export function rowToAgentProfileVideo(row: AgentProfileVideoRow): AgentProfileVideo {
@@ -40,6 +44,7 @@ export function rowToAgentProfileVideo(row: AgentProfileVideoRow): AgentProfileV
     featuredInDisplayA: row.featured_in_display_a,
     featuredInDisplayB: row.featured_in_display_b,
     sortOrder: row.sort_order,
+    slug: row.slug?.trim() || `agent-${row.id}`,
   };
 }
 
@@ -54,7 +59,45 @@ export function staticAgentProfileVideos(agent: Agent): AgentProfileVideo[] {
     featuredInDisplayA: true,
     featuredInDisplayB: true,
     sortOrder: index,
+    slug: `agent-${video.id}`,
   }));
+}
+
+/** Look up a single agent profile video by its shareable slug. */
+export async function getAgentProfileVideoBySlugServer(
+  slug: string,
+): Promise<AgentProfileVideo | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+
+  const supabase = createClient(url, key);
+  const { data, error } = await supabase
+    .from("agent_profile_videos")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return rowToAgentProfileVideo(data as AgentProfileVideoRow);
+}
+
+/** All agent profile video slugs, for static generation of watch pages. */
+export async function getAllAgentProfileVideoSlugsServer(): Promise<string[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  const supabase = createClient(url, key);
+  const { data, error } = await supabase.from("agent_profile_videos").select("slug");
+  if (error || !data) return [];
+
+  return data.map((row) => (row.slug as string | null)?.trim()).filter((s): s is string => !!s);
+}
+
+/** Slugify a title for a new agent profile video, avoiding collisions with `taken`. */
+export function slugifyAgentVideoTitle(title: string, taken: Set<string>): string {
+  return uniqueSlug(slugify(title) || "video", taken);
 }
 
 /** Videos shown on the agent's own profile page (Display B) — opt-in per video. */
@@ -109,6 +152,7 @@ export function youtubeVideosToProfileVideos(
     featuredInDisplayA: true,
     featuredInDisplayB: true,
     sortOrder: index,
+    slug: `agent-${video.id}`,
   }));
 }
 

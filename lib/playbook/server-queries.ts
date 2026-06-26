@@ -12,6 +12,11 @@ import {
   mergePlaybookVideos,
 } from "@/lib/playbook/public-videos";
 import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
+import {
+  getAgentProfileVideoBySlugServer,
+  getAllAgentProfileVideoSlugsServer,
+} from "@/lib/agents/profile-videos";
+import { agentProfileVideoToPlaybookVideo } from "@/lib/playbook/public-videos";
 
 function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
   const topic = row.topic as PlaybookTopic | null;
@@ -75,7 +80,8 @@ export async function getPlaybookVideosByTopicServer(): Promise<
   return groupPlaybookVideosByTopic(mergePlaybookVideos(dbVideos));
 }
 
-/** Resolve a watch-page video from admin DB entries and the synced sheet catalogue. */
+/** Resolve a watch-page video from admin DB entries, the synced sheet catalogue,
+ *  and agent profile videos (Display A/B) — in that order. */
 export async function getPlaybookVideoForWatchServer(
   slug: string,
 ): Promise<PlaybookVideo | null> {
@@ -83,21 +89,28 @@ export async function getPlaybookVideoForWatchServer(
   const dbVideos = error || !data ? [] : data.map(rowToVideo);
   const merged = mergePlaybookVideos(dbVideos);
   const video = findPlaybookVideoBySlug(slug, merged);
-  if (!video?.videoUrl?.trim()) return null;
-  return video;
+  if (video?.videoUrl?.trim()) return video;
+
+  const agentVideo = await getAgentProfileVideoBySlugServer(slug);
+  if (agentVideo?.videoUrl?.trim()) return agentProfileVideoToPlaybookVideo(agentVideo);
+
+  return null;
 }
 
 export async function getAllWatchSlugsServer(): Promise<string[]> {
   const sheetSlugs = PLAYBOOK_SHEET_VIDEOS.map((v) => v.slug);
   const { data, error } = await fetchPlaybookRows();
-  if (error || !data) return sheetSlugs;
+  const dbSlugs =
+    error || !data
+      ? []
+      : data
+          .map(rowToVideo)
+          .filter((v) => isPlaybookVideo(v) && v.videoUrl?.trim())
+          .map((v) => v.slug);
 
-  const dbSlugs = data
-    .map(rowToVideo)
-    .filter((v) => isPlaybookVideo(v) && v.videoUrl?.trim())
-    .map((v) => v.slug);
+  const agentSlugs = await getAllAgentProfileVideoSlugsServer();
 
-  return [...new Set([...sheetSlugs, ...dbSlugs])];
+  return [...new Set([...sheetSlugs, ...dbSlugs, ...agentSlugs])];
 }
 
 /** Server/build-time Supabase queries (no cookies). Used by generateStaticParams and the
