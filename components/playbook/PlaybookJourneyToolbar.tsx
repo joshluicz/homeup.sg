@@ -32,7 +32,7 @@ export function PlaybookJourneyToolbar({
       <div className="container-page py-4 sm:py-5">
         <p className="mb-3 text-sm leading-relaxed text-neutral-500 sm:text-base">
           In-depth guides from the HomeUP team — selling, upgrading, buying, and market
-          commentary. Browse by topic below, or filter by agent and search.
+          insights. Browse by topic below, or filter by agent and search.
         </p>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
           <div className="relative flex-1">

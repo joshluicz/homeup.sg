@@ -33,7 +33,7 @@ export type PlaybookTopic = "upgraders" | "buying_first" | "condo_tips";
 export const TOPIC_LABELS: Record<PlaybookTopic, string> = {
   upgraders:    "Sell / Upgrade",
   buying_first: "Buy Tips",
-  condo_tips:   "Commentary",
+  condo_tips:   "Insights",
 };
 
 export interface PlaybookJourneySection {

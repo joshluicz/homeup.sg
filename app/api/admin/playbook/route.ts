@@ -73,7 +73,7 @@ export async function POST(request: Request) {
   const validTopics = ["upgraders", "buying_first", "condo_tips"] as const;
   if (!fields.topic || !validTopics.includes(fields.topic)) {
     return NextResponse.json(
-      { error: "Choose a playbook section (Sell/Upgrade, Buy Tips, or Commentary)." },
+      { error: "Choose a playbook section (Sell/Upgrade, Buy Tips, or Insights)." },
       { status: 400 },
     );
   }

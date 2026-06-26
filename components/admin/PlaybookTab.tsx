@@ -395,7 +395,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       return;
     }
     if (!form.topic || !PLAYBOOK_TOPICS.includes(form.topic as PlaybookTopic)) {
-      setError("Choose a playbook section (Sell/Upgrade, Buy Tips, or Commentary).");
+      setError("Choose a playbook section (Sell/Upgrade, Buy Tips, or Insights).");
       return;
     }
 
