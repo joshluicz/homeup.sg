@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/listings/pg-sources", label: "Listings Sync" },
   { href: "/admin/listings?tab=playbook&view=articles", label: "Articles" },
-  { href: "/admin/agent-profiles", label: "Agent Videos" },
+  { href: "/admin/listings?tab=playbook&view=videos", label: "Videos" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
 ];
 
@@ -27,9 +27,6 @@ function AdminNav() {
     }
     if (item.href === "/admin/listings?tab=playbook&view=videos") {
       return pathname === "/admin/listings" && tab === "playbook" && searchParams.get("view") === "videos";
-    }
-    if (item.href === "/admin/agent-profiles") {
-      return pathname.startsWith("/admin/agent-profiles");
     }
     if (item.href === "/admin/listings?tab=analytics") {
       return pathname === "/admin/listings" && tab === "analytics";

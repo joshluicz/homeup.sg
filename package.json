@@ -18,13 +18,12 @@
     "pg:sheet": "npx tsx scripts/run-pg-sheet-sync.ts",
     "pg:automation": "npx tsx scripts/run-pg-automation.ts",
     "pg:watch": "npx tsx scripts/run-pg-watch.ts",
-    "dns-aid:publish": "node scripts/publish-dns-aid.mjs",
-    "agent-videos:setup": "node scripts/setup-agent-profile-videos.mjs",
-    "agent-videos:seed": "node scripts/seed-agent-profile-videos.mjs"
+    "dns-aid:publish": "node scripts/publish-dns-aid.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
     "@ark-ui/react": "^5.37.0",
+    "@aws-sdk/client-s3": "^3.1073.0",
     "@number-flow/react": "^0.6.0",
     "@radix-ui/react-accordion": "^1.2.13",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -66,7 +65,6 @@
     "critters": "^0.0.23",
     "eslint": "^8",
     "eslint-config-next": "14",
-    "pg": "^8.22.0",
     "postcss": "latest",
     "tailwindcss": "^3.4.19",
     "typescript": "latest"

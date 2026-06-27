@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
-import { Plus_Jakarta_Sans, Fraunces, Source_Serif_4 } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
 import { ScrollToTopButton } from "@/components/ui/ScrollToTopButton";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
@@ -23,24 +22,6 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
   adjustFontFallback: true,
   preload: true,
-});
-
-// Playbook article reading theme only — see .playbook-article-theme in
-// globals.css for where these are applied. Rest of the site stays on Jakarta.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-fraunces",
-  display: "swap",
-  preload: false,
-});
-
-const sourceSerif = Source_Serif_4({
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  variable: "--font-source-serif",
-  display: "swap",
-  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -98,7 +79,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${fraunces.variable} ${sourceSerif.variable}`}>
+    <html lang="en" className={jakarta.variable}>
       <head>
         <style id="critical-css" dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
         {SUPABASE_URL && (
@@ -111,7 +92,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body>
-        <LoadingScreen />
         {GA_ID && (
           <Script id="ga4-loader" strategy="lazyOnload">{`
             try {
