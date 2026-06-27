@@ -52,26 +52,40 @@ function StatsCard() {
   const [showPlus, setShowPlus] = useState(false);
 
   useEffect(() => {
-    setShowPlus(false);
-    const controls = [
-      animate(0, 1000, {
-        duration: COUNT_DURATION,
-        ease: "linear",
-        onUpdate: (v) => setTotal(Math.round(v)),
-        onComplete: () => setShowPlus(true),
-      }),
-      animate(0, 860, {
-        duration: COUNT_DURATION,
-        ease: "linear",
-        onUpdate: (v) => setHdb(Math.round(v)),
-      }),
-      animate(0, 260, {
-        duration: COUNT_DURATION,
-        ease: "linear",
-        onUpdate: (v) => setCondo(Math.round(v)),
-      }),
-    ];
-    return () => controls.forEach((c) => c.stop());
+    let controls: ReturnType<typeof animate>[] = [];
+
+    function startCount() {
+      setShowPlus(false);
+      controls = [
+        animate(0, 1000, {
+          duration: COUNT_DURATION,
+          ease: "linear",
+          onUpdate: (v) => setTotal(Math.round(v)),
+          onComplete: () => setShowPlus(true),
+        }),
+        animate(0, 860, {
+          duration: COUNT_DURATION,
+          ease: "linear",
+          onUpdate: (v) => setHdb(Math.round(v)),
+        }),
+        animate(0, 260, {
+          duration: COUNT_DURATION,
+          ease: "linear",
+          onUpdate: (v) => setCondo(Math.round(v)),
+        }),
+      ];
+    }
+
+    if ((window as unknown as Record<string, unknown>).__homeupLoaded) {
+      startCount();
+    } else {
+      window.addEventListener("homeup:loaded", startCount, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener("homeup:loaded", startCount);
+      controls.forEach((c) => c.stop());
+    };
   }, []);
 
   const breakdownValues = { hdb, condo };
