@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const r2Client = new S3Client({
@@ -34,6 +34,20 @@ export async function getPresignedReadUrl(key: string): Promise<string> {
   });
 
   return getSignedUrl(r2Client, command, { expiresIn: 3600 });
+}
+
+export async function r2ObjectExists(key: string): Promise<boolean> {
+  try {
+    await r2Client.send(
+      new HeadObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: key,
+      }),
+    );
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getPublicR2Url(key: string): string {
