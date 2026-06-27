@@ -12,19 +12,18 @@ export function PlaybookHero() {
 
       <div className="container-page relative">
         <div className="mx-auto max-w-3xl text-center">
-          <Eyebrow className="text-primary-300">Playbook</Eyebrow>
+          <Eyebrow className="text-white">Playbook</Eyebrow>
 
           <h1 className="mt-4 font-display text-display-sm font-extrabold tracking-tight sm:text-display-md">
             Unlimited Tips
-            <span className="mt-3 block text-lg font-semibold leading-relaxed text-neutral-300 sm:mt-4 sm:text-xl">
-              <span className="block">for</span>
+            <span className="mt-3 block text-lg font-semibold leading-relaxed text-white sm:mt-4 sm:text-xl">
               <span className="mt-1 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-4">
                 <span>Buyers</span>
-                <span aria-hidden="true" className="text-neutral-500">
+                <span aria-hidden="true" className="text-white">
                   ·
                 </span>
                 <span>Sellers</span>
-                <span aria-hidden="true" className="text-neutral-500">
+                <span aria-hidden="true" className="text-white">
                   ·
                 </span>
                 <span>Investors</span>

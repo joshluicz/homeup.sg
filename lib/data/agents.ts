@@ -235,12 +235,12 @@ export const AGENTS: Agent[] = [
   },
   {
     slug: "isaac-tay",
-    name: "Isaac Tay",
+    name: "Isaac Teh",
     cea: "R068575G",
     bio: "Dedicated to exceptional service, honest advice, and maximum value through HOMEUP's transparent fixed fee approach.",
     photo: "/images/agent-isaac.png",
     quote:
-      "Isaac Tay is dedicated to exceptional service, honest advice, and maximum value through HOMEUP's transparent fixed fee approach. He champions client-first advice at every stage, with experience across HDB and private property sales and purchases and responsive follow-through from listing through completion.",
+      "Isaac Teh is dedicated to exceptional service, honest advice, and maximum value through HOMEUP's transparent fixed fee approach. He champions client-first advice at every stage, with experience across HDB and private property sales and purchases and responsive follow-through from listing through completion.",
     quoteThirdPerson: true,
     about: [],
     specialties: ["Fixed-fee sales", "Honest advisory", "HDB & private property"],

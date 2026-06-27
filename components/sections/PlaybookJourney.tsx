@@ -8,7 +8,6 @@
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Eyebrow } from "@/components/ui/Eyebrow";
 import { createClient } from "@/lib/supabase/client";
 import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 import {
@@ -207,34 +206,8 @@ export function PlaybookJourney({
   return (
     <>
       {/* TOP ~1/3 — black hero + Display A video strip */}
-      <section className="relative min-h-[34dvh] overflow-hidden bg-neutral-950 pb-10 pt-14 text-white sm:pb-12 sm:pt-16">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,rgba(0,154,68,0.25),transparent)]"
-        />
-
+      <section className="relative overflow-hidden bg-neutral-950 pb-10 pt-2 text-white sm:pb-12">
         <div className="container-page relative">
-          <div className="mx-auto max-w-3xl text-center">
-            <Eyebrow className="text-primary-300">Playbook</Eyebrow>
-            <h1 className="mt-4 font-display text-display-sm font-extrabold tracking-tight sm:text-display-md">
-              Unlimited Tips
-              <span className="mt-3 block text-lg font-semibold leading-relaxed text-neutral-300 sm:mt-4 sm:text-xl">
-                <span className="block">for</span>
-                <span className="mt-1 inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:gap-x-4">
-                  <span>Buyers</span>
-                  <span aria-hidden="true" className="text-neutral-500">
-                    ·
-                  </span>
-                  <span>Sellers</span>
-                  <span aria-hidden="true" className="text-neutral-500">
-                    ·
-                  </span>
-                  <span>Investors</span>
-                </span>
-              </span>
-            </h1>
-          </div>
-
           <PlaybookAutoVideoRail
             inverted
             videos={displayARailItems}
