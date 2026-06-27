@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import { isPlaybookArticle } from "@/lib/playbook/content-kind";
 import {
   agentProfileVideoToPlaybookVideo,
   groupPlaybookVideosByTopic,
@@ -176,30 +176,29 @@ export function PlaybookJourney({
     ]).then(([playbookRes, agentRes]) => {
       if (playbookRes.error || !playbookRes.data) return;
 
+      // playbook_videos feeds articles only — not Display A
       const articles: Record<PlaybookTopic, PlaybookVideo[]> = {
         upgraders: [],
         buying_first: [],
         condo_tips: [],
       };
-      const dbVideos: PlaybookVideo[] = [];
 
       for (const row of playbookRes.data) {
         const topic = resolveTopic(row);
         const entry = rowToPlaybookVideo(row, topic);
         if (isPlaybookArticle(entry) && entry.article?.trim()) {
           articles[topic].push(entry);
-        } else if (isPlaybookVideo(entry) && entry.videoUrl?.trim()) {
-          dbVideos.push(entry);
         }
       }
 
+      // Display A exclusively uses agent_profile_videos (admin panel is source of truth)
       const agentVideos = (agentRes.error || !agentRes.data ? [] : agentRes.data)
         .map((row) => rowToAgentProfileVideo(row as AgentProfileVideoRow))
         .filter((v) => v.videoUrl?.trim())
         .map(agentProfileVideoToPlaybookVideo);
 
       setArticlesByTopic(articles);
-      setVideosByTopic(groupPlaybookVideosByTopic(mergePlaybookVideos(dbVideos, agentVideos)));
+      setVideosByTopic(groupPlaybookVideosByTopic(mergePlaybookVideos([], agentVideos)));
     });
   }, []);
 
