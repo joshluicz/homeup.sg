@@ -12,19 +12,43 @@ export type SheetListingRow = {
   status: string;
 };
 
+export type SheetFormatFix = {
+  pg_listing_id: string;
+  client_name: string;
+  /** Agent name currently in Months Since Listing (or LO) — move to Agent column B. */
+  misplaced_agent_label: string;
+  remarks: string;
+};
+
 export type FetchSheetListingsResult = {
   active: SheetListingRow[];
+  /** Rent listings (PropertyGuru for-rent URL). */
+  rent_on_sheet: number;
+  /** Active sale listings (not for-rent URL). */
+  sell_on_sheet: number;
+  /** Rows to fix on the sheet (agent not in column B). */
+  sheet_format_fixes: SheetFormatFix[];
   skipped: {
     sold: number;
     delisted: number;
     held_off_website: number;
+    /** PG row active but Agent column B is empty. */
+    missing_agent_column: number;
+    /** Agent name is in Months Since Listing (or LO) instead of column B — fix the sheet row. */
+    agent_in_wrong_column: number;
     no_url: number;
     invalid_url: number;
     unknown_agent: number;
     duplicate_id: number;
   };
+  /** Non-empty cells in Agent column B (matches sheet COUNTA(B3:B220) intent). */
+  sheet_agent_column_count: number;
   sheet_total_rows: number;
 };
+
+function isRentListingUrl(url: string): boolean {
+  return /\/listing\/for-rent-/i.test(url) || /\/for-rent-/i.test(url);
+}
 
 /** Exact SOLD / DELISTED — off the sheet's active set. */
 function isInactiveStatus(raw: string): boolean {
@@ -132,15 +156,21 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
   const col = headerIndexMap(rows[headerRowIdx]);
   const result: FetchSheetListingsResult = {
     active: [],
+    rent_on_sheet: 0,
+    sell_on_sheet: 0,
+    sheet_format_fixes: [],
     skipped: {
       sold: 0,
       delisted: 0,
       held_off_website: 0,
+      missing_agent_column: 0,
+      agent_in_wrong_column: 0,
       no_url: 0,
       invalid_url: 0,
       unknown_agent: 0,
       duplicate_id: 0,
     },
+    sheet_agent_column_count: 0,
     sheet_total_rows: 0,
   };
 
@@ -152,6 +182,9 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
     if (!pgListingId || !/^\d+$/.test(pgListingId)) continue;
 
     result.sheet_total_rows++;
+
+    const agentColumn = cell(row, col, "agent");
+    if (agentColumn) result.sheet_agent_column_count++;
 
     const remarksStatus = cell(row, col, "remarks");
     const unitStatus = cell(row, col, "unit status");
@@ -185,11 +218,25 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
     }
     seenIds.add(parsed.pg_listing_id);
 
-    const agentSlug = agentSlugFromSheetLabels(
-      cell(row, col, "agent"),
-      cell(row, col, "months since listing"),
-      cell(row, col, "lo"),
-    );
+    if (!agentColumn) {
+      const monthsLabel = cell(row, col, "months since listing");
+      const loLabel = cell(row, col, "lo");
+      const misplaced = agentSlugFromSheetLabels(monthsLabel, loLabel);
+      if (misplaced) {
+        result.skipped.agent_in_wrong_column++;
+        result.sheet_format_fixes.push({
+          pg_listing_id: parsed.pg_listing_id,
+          client_name: cell(row, col, "client name"),
+          misplaced_agent_label: monthsLabel || loLabel,
+          remarks: remarksStatus || unitStatus,
+        });
+      } else {
+        result.skipped.missing_agent_column++;
+      }
+      continue;
+    }
+
+    const agentSlug = agentSlugFromSheetLabels(agentColumn);
 
     if (!agentSlug) {
       result.skipped.unknown_agent++;
@@ -197,6 +244,7 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
     }
 
     const agent = AGENTS.find((a) => a.slug === agentSlug);
+    const isRent = isRentListingUrl(parsed.pg_url);
 
     result.active.push({
       pg_url: parsed.pg_url,
@@ -206,6 +254,9 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
       client_name: cell(row, col, "client name"),
       status: remarksStatus || unitStatus,
     });
+
+    if (isRent) result.rent_on_sheet++;
+    else result.sell_on_sheet++;
   }
 
   return result;

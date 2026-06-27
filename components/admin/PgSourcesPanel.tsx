@@ -37,13 +37,24 @@ type SheetRefreshResponse = {
     sold: number;
     delisted: number;
     held_off_website: number;
+    missing_agent_column?: number;
+    agent_in_wrong_column?: number;
     no_url: number;
     invalid_url: number;
     unknown_agent: number;
     duplicate_id: number;
   };
+  sheet_agent_column_count?: number;
+  sheet_format_fixes?: Array<{
+    pg_listing_id: string;
+    client_name: string;
+    misplaced_agent_label: string;
+    remarks: string;
+  }>;
   by_agent?: Record<string, number>;
   sheet_total_rows?: number;
+  sell_on_sheet?: number;
+  rent_on_sheet?: number;
 };
 
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${LISTINGS_SHEET_ID}/edit`;
@@ -113,8 +124,10 @@ export function PgSourcesPanel() {
       }
 
       setSheetResult(json);
+      const sell = json.sell_on_sheet ?? json.saved ?? 0;
+      const rent = json.rent_on_sheet ?? 0;
       setStatusMessage(
-        `Loaded ${json.saved ?? 0} active listing(s) from Google Sheet. Review changes below before syncing to HomeUP.`,
+        `Loaded ${json.saved ?? 0} active listing(s) for sync (${sell} sale + ${rent} rent).`,
       );
       await refreshPreview();
     } catch (err) {
@@ -290,10 +303,13 @@ export function PgSourcesPanel() {
           Step 1 — Refresh from Google Sheet
         </h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Reads the team&apos;s listings tracker (PropertyGuru links, agent, status). Rows with{" "}
-          <strong>Remarks</strong> exactly <strong>SOLD</strong> or <strong>DELISTED</strong> are
-          skipped (e.g. &quot;DELISTED, RELIST LATER&quot; still counts as active). Remove sold
-          listings from the sheet when they should leave the site.
+          Reads the team&apos;s listings tracker. Each active row must have the agent in{" "}
+          <strong>Agent column B</strong> (not Months Since Listing). Rows with{" "}
+          <strong>Remarks</strong> or <strong>Unit Status</strong> exactly <strong>SOLD</strong> or{" "}
+          <strong>DELISTED</strong> are skipped. Held statuses like{" "}
+          <strong>DELISTED, RELIST LATER</strong> are skipped too. Rent vs sale is detected from the
+          PropertyGuru URL (<code className="text-xs">for-rent</code> vs{" "}
+          <code className="text-xs">for-sale</code>).
         </p>
         <a
           href={SHEET_URL}
@@ -310,16 +326,48 @@ export function PgSourcesPanel() {
             Refresh from Google Sheet
           </Button>
         </div>
-        {sheetResult?.by_agent && (
-          <ul className="mt-4 space-y-1 text-sm text-neutral-700">
-            {Object.entries(sheetResult.by_agent)
-              .sort(([a], [b]) => a.localeCompare(b))
-              .map(([name, count]) => (
-                <li key={name}>
-                  <strong>{name}:</strong> {count} active
-                </li>
-              ))}
-          </ul>
+        {sheetResult && (
+          <>
+            <p className="mt-3 text-sm text-neutral-700">
+              <strong>{sheetResult.saved ?? 0}</strong> active for HomeUP sync
+              {(sheetResult.sell_on_sheet != null || sheetResult.rent_on_sheet != null) && (
+                <> — {sheetResult.sell_on_sheet ?? 0} sale + {sheetResult.rent_on_sheet ?? 0} rent</>
+              )}
+              {sheetResult.sheet_total_rows != null && (
+                <>
+                  {" "}
+                  · {sheetResult.sheet_total_rows} PG rows on sheet ({sheetResult.skipped?.sold ?? 0}{" "}
+                  sold, {sheetResult.skipped?.delisted ?? 0} delisted excluded)
+                </>
+              )}
+            </p>
+            {(sheetResult.sheet_format_fixes?.length ?? 0) > 0 && (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+                <p className="font-medium">
+                  {sheetResult.sheet_format_fixes!.length} row(s): move agent name into column B
+                </p>
+                <ul className="mt-2 space-y-1 text-xs">
+                  {sheetResult.sheet_format_fixes!.map((fix) => (
+                    <li key={fix.pg_listing_id}>
+                      <strong>{fix.pg_listing_id}</strong> — put &quot;{fix.misplaced_agent_label}
+                      &quot; in Agent B · {fix.client_name.slice(0, 50)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {sheetResult.by_agent && (
+              <ul className="mt-4 space-y-1 text-sm text-neutral-700">
+                {Object.entries(sheetResult.by_agent)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([name, count]) => (
+                    <li key={name}>
+                      <strong>{name}:</strong> {count} active
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </>
         )}
         {sheetResult?.skipped && (
           <p className="mt-2 text-xs text-neutral-500">
@@ -327,6 +375,12 @@ export function PgSourcesPanel() {
             delisted
             {(sheetResult.skipped.held_off_website ?? 0) > 0
               ? `, ${sheetResult.skipped.held_off_website} held off website (relist later)`
+              : ""}
+            {(sheetResult.skipped.agent_in_wrong_column ?? 0) > 0
+              ? `, ${sheetResult.skipped.agent_in_wrong_column} agent in wrong column (move to Agent B)`
+              : ""}
+            {(sheetResult.skipped.missing_agent_column ?? 0) > 0
+              ? `, ${sheetResult.skipped.missing_agent_column} missing Agent column`
               : ""}
             {sheetResult.skipped.unknown_agent > 0
               ? `, ${sheetResult.skipped.unknown_agent} unknown agent`

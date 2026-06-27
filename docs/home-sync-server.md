@@ -40,12 +40,18 @@ Supabase listings  →  public site (homeup.sg / Vercel)
 | Tab gid | `550958788` |
 | Constants in code | `lib/listings/google-sheet-constants.ts` |
 
+**Active count (source of truth for sync):** rows with PG ID + Agent column B filled + not SOLD/DELISTED + not held + valid PG URL. Currently **129** (127 sale + 2 rent by PG URL). This is **not** the same as cell B1 `COUNTA` — ignore B1 for sync.
+
 **Sheet rules (enforced in code):**
 
-- **Skipped:** `Remarks` exactly `SOLD` or `DELISTED`
+- **Required:** `PrtyGuru ID`, `Propertygutu Link`, **`Agent` column B** (must be filled — not Months Since Listing)
+- **Skipped:** `Remarks` or `Unit Status` exactly `SOLD` or `DELISTED`
 - **Held off website:** e.g. `DELISTED, RELIST LATER`, `Will relist again` (on sheet for ops, not synced)
-- **Required columns:** `PrtyGuru ID`, `Propertygutu Link`, `Agent` (or `Months Since Listing` for agent name)
+- **Wrong format:** agent name only in `Months Since Listing` → skipped as `agent_in_wrong_column` (move name to column B)
+- **Rent vs sale:** detected from PG URL (`for-rent` vs `for-sale`), not Unit Status
 - Sheet must stay **publicly readable** (CSV export) or sync will fail
+
+**Sheet B1:** `=COUNTA(B3:B220)` is a rough legacy headcount — it includes sold/delisted rows and ignores PG URL status. Do not use it for HomeUP sync. Fix rows flagged as `agent_in_wrong_column` instead.
 
 ### Key npm scripts
 

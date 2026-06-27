@@ -34,8 +34,16 @@ async function main() {
   const supabase = createClient(url, key);
   const result = await refreshPgSourcesFromGoogleSheet(supabase);
   console.log("Saved:", result.saved);
+  console.log("Sell:", result.sell_on_sheet, "Rent:", result.rent_on_sheet);
+  console.log("Agent column B filled:", result.sheet_agent_column_count);
   console.log("By agent:", result.by_agent);
   console.log("Skipped:", result.skipped);
+  if (result.sheet_format_fixes.length > 0) {
+    console.log("\nSheet format fixes (move agent to column B):");
+    for (const f of result.sheet_format_fixes) {
+      console.log(`  ${f.pg_listing_id} → "${f.misplaced_agent_label}" · ${f.client_name.slice(0, 50)}`);
+    }
+  }
 }
 
 main().catch((err) => {
