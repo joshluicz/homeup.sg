@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { ExternalLink, Sparkles } from "lucide-react";
 import {
   PlaybookEmbeddedVideoPlayer,
   PlaybookExternalWatchButton,
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 type PlaybookExclusiveWatchProps = {
   videoUrl: string;
+  slug?: string;
   title: string;
   thumbnail?: string;
   tags?: string[];
@@ -31,6 +32,7 @@ type PlaybookExclusiveWatchProps = {
 
 export function PlaybookExclusiveWatch({
   videoUrl,
+  slug,
   title,
   thumbnail,
   tags = [],
@@ -47,6 +49,7 @@ export function PlaybookExclusiveWatch({
   subtitle,
 }: PlaybookExclusiveWatchProps) {
   const isModal = variant === "modal";
+  const shareableUrl = slug ? `https://homeup.sg/playbook/watch/${slug}` : null;
 
   if (!isModal) {
     return (
@@ -160,6 +163,19 @@ export function PlaybookExclusiveWatch({
             <p className="mx-auto max-w-md text-center text-xs text-neutral-500">{subtitle}</p>
           ) : null}
 
+          {isModal && shareableUrl && (
+            <a
+              href={shareableUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex shrink-0 items-center gap-1.5 truncate text-xs text-neutral-400 transition hover:text-white"
+            >
+              <ExternalLink className="h-3 w-3 shrink-0" />
+              <span className="truncate">{shareableUrl}</span>
+            </a>
+          )}
+
           <div
             className={cn(
               "mx-auto w-full overflow-hidden rounded-2xl shadow-[0_0_40px_rgba(0,154,68,0.12)] ring-1 ring-primary-500/20",
@@ -177,10 +193,6 @@ export function PlaybookExclusiveWatch({
               titlePosition="none"
               playerClassName="rounded-2xl"
             />
-          </div>
-
-          <div className={cn(isModal && "shrink-0")}>
-            <PlaybookExternalWatchButton videoUrl={videoUrl} variant="primary" />
           </div>
 
           {tags.length > 0 && (

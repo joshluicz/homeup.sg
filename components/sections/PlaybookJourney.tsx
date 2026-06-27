@@ -308,6 +308,7 @@ export function PlaybookJourney({
               >
                 <PlaybookExclusiveWatch
                   videoUrl={activeVideo.videoUrl}
+                  slug={activeVideo.slug}
                   title={activeVideo.title}
                   thumbnail={activeVideo.thumbnail}
                   tags={activeVideo.tags}
