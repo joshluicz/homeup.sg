@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, type ReactNode, type WheelEvent as ReactWheelEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { playbookVideoHref } from "@/lib/playbook/embed";
@@ -19,36 +25,16 @@ export type AutoVideoRailItem = {
 type PlaybookAutoVideoRailProps = {
   videos: AutoVideoRailItem[];
   className?: string;
-  /** When set, tiles open the modal handler instead of navigating away. */
   onVideoSelect?: (video: AutoVideoRailItem) => void;
   resolveHref?: (video: AutoVideoRailItem) => string;
-  /** Light title text for dark section backgrounds. */
   inverted?: boolean;
-  /** Optional content above the “Swipe to explore” label. */
   intro?: ReactNode;
 };
 
-const PX_PER_MS = 0.045;
-/** How long to stay paused after the user stops interacting before auto-scroll resumes. */
-const RESUME_DELAY_MS = 900;
-/** Cap DOM writes to ~30fps — the drift is slow enough that this looks identical
- *  to 60fps but roughly halves the layout/paint work, which matters on phones. */
-const WRITE_INTERVAL_MS = 1000 / 30;
+const TILE_W_PX = 164; // 148px tile + 16px gap (mobile)
+const ADVANCE_INTERVAL_MS = 3000;
+const RESUME_DELAY_MS = 4000;
 
-/**
- * Display A — slow auto-scrolling horizontal video strip.
- *
- * Manual scrolling is plain native `overflow-x: auto` — touch swipe,
- * trackpad, mouse wheel, and a scrollbar drag all just work, on every
- * device, for free. The only custom logic is the auto-scroll: it tracks
- * position every frame but only writes `scrollLeft` at ~30fps (capped via
- * WRITE_INTERVAL_MS — the drift is slow enough that this is visually
- * identical to 60fps, and roughly halves layout/paint cost on phones), and
- * pauses for `RESUME_DELAY_MS` after any *user-initiated* scroll (detected
- * via the native `scroll` event, filtering out the ticks the auto-scroll
- * itself causes) so it never fights a swipe,
- * a trackpad gesture, or momentum scrolling.
- */
 export function PlaybookAutoVideoRail({
   videos,
   className,
@@ -58,101 +44,70 @@ export function PlaybookAutoVideoRail({
   intro,
 }: PlaybookAutoVideoRailProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const virtualOffsetRef = useRef(0);
   const pausedRef = useRef(false);
-  const resumeTimerRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number | null>(null);
-  const writeAccumRef = useRef(0);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isAutoScrollingRef = useRef(false);
 
   const loopItems = useMemo(() => {
     if (videos.length === 0) return [];
     return [...videos, ...videos];
   }, [videos]);
 
-  useEffect(() => {
-    virtualOffsetRef.current = 0;
-    if (scrollRef.current) scrollRef.current.scrollLeft = 0;
-  }, [videos]);
-
-  const clearResumeTimer = useCallback(() => {
+  const clearResume = useCallback(() => {
     if (resumeTimerRef.current !== null) {
-      window.clearTimeout(resumeTimerRef.current);
+      clearTimeout(resumeTimerRef.current);
       resumeTimerRef.current = null;
     }
   }, []);
 
   const pauseNow = useCallback(() => {
-    clearResumeTimer();
     pausedRef.current = true;
-  }, [clearResumeTimer]);
+    clearResume();
+  }, [clearResume]);
 
   const scheduleResume = useCallback(
-    (delayMs: number) => {
-      clearResumeTimer();
-      resumeTimerRef.current = window.setTimeout(() => {
-        const el = scrollRef.current;
-        if (el) virtualOffsetRef.current = el.scrollLeft;
+    (delayMs = RESUME_DELAY_MS) => {
+      clearResume();
+      resumeTimerRef.current = setTimeout(() => {
         pausedRef.current = false;
-        resumeTimerRef.current = null;
       }, delayMs);
     },
-    [clearResumeTimer],
+    [clearResume],
   );
 
+  // Auto-advance one tile every 3 s via smooth scrollBy.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || videos.length < 2) return;
 
-    let raf = 0;
-    lastTimeRef.current = null;
-
-    const tick = (time: number) => {
-      if (lastTimeRef.current === null) lastTimeRef.current = time;
-      const delta = time - lastTimeRef.current;
-      lastTimeRef.current = time;
-
-      if (!pausedRef.current) {
-        virtualOffsetRef.current += PX_PER_MS * delta;
-        const loopWidth = el.scrollWidth / 2;
-        if (loopWidth > 0 && virtualOffsetRef.current >= loopWidth) {
-          virtualOffsetRef.current -= loopWidth;
-        }
-
-        writeAccumRef.current += delta;
-        if (writeAccumRef.current >= WRITE_INTERVAL_MS) {
-          writeAccumRef.current = 0;
-          const next = Math.round(virtualOffsetRef.current);
-          if (next !== el.scrollLeft) el.scrollLeft = next;
-        }
+    const interval = setInterval(() => {
+      if (pausedRef.current) return;
+      const loopWidth = el.scrollWidth / 2;
+      // Silently reset to first copy when we reach the end of it.
+      if (el.scrollLeft >= loopWidth - TILE_W_PX) {
+        el.scrollLeft = el.scrollLeft - loopWidth;
       }
+      isAutoScrollingRef.current = true;
+      el.scrollBy({ left: TILE_W_PX, behavior: "smooth" });
+      // Clear the flag after the smooth scroll animation (~400ms).
+      setTimeout(() => { isAutoScrollingRef.current = false; }, 500);
+    }, ADVANCE_INTERVAL_MS);
 
-      raf = window.requestAnimationFrame(tick);
-    };
+    return () => clearInterval(interval);
+  }, [videos.length]);
 
-    raf = window.requestAnimationFrame(tick);
-
-    // `scroll` doesn't bubble, and React's onScroll prop has proven unreliable
-    // here in testing — attach directly so user-scroll detection always fires.
+  // Detect genuine user scrolls (not ones we triggered) and pause.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
     const handleScroll = () => {
-      // A flag-based "was this scroll caused by our own tick()?" check is racy —
-      // the native `scroll` event is async, so a newer tick can re-arm the flag
-      // before an older write's event fires. Comparing against where the
-      // auto-scroll itself last put scrollLeft is reliable regardless of timing.
-      if (Math.abs(el.scrollLeft - Math.round(virtualOffsetRef.current)) <= 2) return;
-
-      // A genuine user scroll (touch, trackpad, wheel, scrollbar) — pause and
-      // let it settle before resuming the auto-scroll from wherever it ended up.
+      if (isAutoScrollingRef.current) return; // ignore our own scrollBy
       pauseNow();
-      scheduleResume(RESUME_DELAY_MS);
+      scheduleResume();
     };
     el.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.cancelAnimationFrame(raf);
-      clearResumeTimer();
-      el.removeEventListener("scroll", handleScroll);
-    };
-  }, [videos.length, pauseNow, scheduleResume, clearResumeTimer]);
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, [pauseNow, scheduleResume]);
 
   if (videos.length === 0) return null;
 
@@ -161,21 +116,12 @@ export function PlaybookAutoVideoRail({
     return playbookVideoHref({ slug: video.slug ?? "", videoUrl: video.videoUrl }).href;
   }
 
-  function handleWheel(e: ReactWheelEvent<HTMLDivElement>) {
-    const el = scrollRef.current;
-    if (!el) return;
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (delta === 0) return;
-    e.preventDefault();
-    el.scrollLeft += delta;
-  }
-
   function scrollByDirection(direction: -1 | 1) {
     const el = scrollRef.current;
     if (!el) return;
     pauseNow();
-    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: "smooth" });
-    scheduleResume(RESUME_DELAY_MS);
+    el.scrollBy({ left: direction * TILE_W_PX * 3, behavior: "smooth" });
+    scheduleResume();
   }
 
   return (
@@ -192,9 +138,7 @@ export function PlaybookAutoVideoRail({
       <div className="group/rail relative">
         <div
           ref={scrollRef}
-          className="-mx-4 flex gap-4 overflow-x-auto scroll-auto px-4 pb-2 scrollbar-none sm:-mx-0 sm:px-0"
-          style={{ contain: "layout paint", willChange: "scroll-position" }}
-          onWheel={handleWheel}
+          className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-none sm:-mx-0 sm:px-0"
           onMouseEnter={pauseNow}
           onMouseLeave={() => scheduleResume(300)}
           onTouchStart={pauseNow}
