@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
+import { getAllPlaybookSlugs } from "@/lib/playbook/server-queries";
 import { SITE_URL } from "@/lib/seo/constants";
 
 /** Refresh listing URLs hourly so new inventory appears without a full redeploy. */
@@ -28,26 +29,44 @@ function coreSitemapEntries(now: Date): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/agents`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
     ...agentPages,
     { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
+    { url: `${SITE_URL}/playbook`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/privacy-policy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
+}
+
+function playbookSitemapEntries(now: Date, slugs: string[]): MetadataRoute.Sitemap {
+  return slugs.map((slug) => ({
+    url: `${SITE_URL}/playbook/${slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const core = coreSitemapEntries(now);
+  let listingPages: MetadataRoute.Sitemap = [];
+  let playbookPages: MetadataRoute.Sitemap = [];
 
   try {
     const listingSlugs = (await getAllListingSlugsServer()).filter(Boolean);
-    const listingPages = listingSlugs.map((slug) => ({
+    listingPages = listingSlugs.map((slug) => ({
       url: `${SITE_URL}/listings/${slug}`,
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.75,
     }));
-
-    return [...core, ...listingPages];
   } catch (error) {
     console.error("sitemap: listing slug fetch failed, serving core URLs only", error);
-    return core;
   }
+
+  try {
+    const playbookSlugs = (await getAllPlaybookSlugs()).filter(Boolean);
+    playbookPages = playbookSitemapEntries(now, playbookSlugs);
+  } catch (error) {
+    console.error("sitemap: playbook slug fetch failed", error);
+  }
+
+  return [...core, ...listingPages, ...playbookPages];
 }

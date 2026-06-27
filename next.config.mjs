@@ -60,8 +60,8 @@ const nextConfig = {
       },
       {
         source: "/blog/:path*",
-        destination: "/playbook",
-        permanent: false,
+        destination: "/playbook/:path*",
+        permanent: true,
       },
       {
         source: "/playbook/articles",

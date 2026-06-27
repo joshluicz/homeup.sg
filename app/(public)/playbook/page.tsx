@@ -6,8 +6,9 @@ import { PlaybookHero } from "@/components/sections/PlaybookHero";
 import { PlaybookJourney } from "@/components/sections/PlaybookJourney";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { getPlaybookArticlesByTopicServer, getPlaybookVideosByTopicServer } from "@/lib/playbook/server-queries";
+import { PLAYBOOK_TOPICS } from "@/lib/data/playbook";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbSchema } from "@/lib/seo/schema";
+import { breadcrumbSchema, collectionPageSchema } from "@/lib/seo/schema";
 
 export const metadata = buildPageMetadata({
   title: "Property Playbook | Video Tips & Guides",
@@ -22,13 +23,26 @@ export default async function PlaybookPage() {
     getPlaybookVideosByTopicServer(),
   ]);
 
+  const articleItems = PLAYBOOK_TOPICS.flatMap((topic) => initialArticlesByTopic[topic])
+    .filter((video) => video.article?.trim())
+    .map((video) => ({ name: video.title, path: `/playbook/${video.slug}` }));
+
   return (
     <>
       <JsonLd
-        data={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Playbook", path: "/playbook" },
-        ])}
+        data={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Playbook", path: "/playbook" },
+          ]),
+          collectionPageSchema({
+            name: "Property Playbook | Video Tips & Guides",
+            description:
+              "Unlimited tips for buyers, sellers and investors — plus in-depth HomeUP guides covering every stage of property in Singapore.",
+            path: "/playbook",
+            items: articleItems,
+          }),
+        ]}
       />
       <Navbar />
       <PlaybookScrollRestore />

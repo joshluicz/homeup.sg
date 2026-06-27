@@ -263,6 +263,38 @@ export function websiteSchema() {
   };
 }
 
+export function collectionPageSchema({
+  name,
+  description,
+  path,
+  items,
+}: {
+  name: string;
+  description: string;
+  path: string;
+  items: Array<{ name: string; path: string }>;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${SITE_URL}${path}#webpage`,
+    url: `${SITE_URL}${path}`,
+    name,
+    description,
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: items.length,
+      itemListElement: items.slice(0, 50).map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        url: `${SITE_URL}${item.path}`,
+      })),
+    },
+  };
+}
+
 /** CSS selectors for voice-friendly answer blocks (SpeakableSpecification). */
 export const SPEAKABLE_HOMEPAGE_SELECTORS = [
   ".speakable-fixed-fee-definition",

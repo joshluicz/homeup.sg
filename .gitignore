@@ -35,5 +35,7 @@ Thumbs.db
 .chrome-pg-manual/
 .pg-profile/
 .pg-profile-test/
+__pycache__/
+*.pyc
 .vercel
 .gstack/

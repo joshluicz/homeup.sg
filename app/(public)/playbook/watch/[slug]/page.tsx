@@ -7,6 +7,7 @@ import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import {
   getAllWatchSlugsServer,
+  getPlaybookVideoBySlugServer,
   getPlaybookVideoForWatchServer,
 } from "@/lib/playbook/server-queries";
 import { resolveThumbnail } from "@/lib/playbook/embed";
@@ -26,12 +27,19 @@ export async function generateMetadata({ params }: WatchPageProps) {
   const video = await getPlaybookVideoForWatchServer(params.slug);
   if (!video) return { title: "Video Not Found" };
 
+  const article = await getPlaybookVideoBySlugServer(params.slug);
+  const hasArticle = Boolean(article?.article?.trim());
+
   return buildPageMetadata({
     title: video.title,
     description: `${video.title} — HomeUP Playbook exclusive property tip.`,
     path: `/playbook/watch/${video.slug}`,
     ogImage: resolveThumbnail(video.thumbnail, video.videoUrl) || undefined,
     ogImageAlt: video.title,
+    ...(hasArticle && {
+      canonicalPath: `/playbook/${video.slug}`,
+      robots: { index: false, follow: true },
+    }),
   });
 }
 

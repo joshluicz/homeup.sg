@@ -5,9 +5,16 @@
 - `Home -> https://homeup.sg/`: Fixed-fee selling and buying overview, pricing comparison, FAQs, and savings calculator.
 - `About -> https://homeup.sg/about`: Company details, office address, CEA licence, parent company Haus Plus Pte. Ltd. (UEN 202538756D).
 - `Sell -> https://homeup.sg/sell`: Sell HDB, condo, or landed at a transparent flat fee.
-- `Sell HDB -> https://homeup.sg/sell-hdb`: HDB resale process, CPF, valuation, and HDB Portal support.
+- `Sell HDB -> https://homeup.sg/sell-hdb`: HDB resale selling process, CPF, valuation, and fixed $1,999 fee.
+- `Sell condo -> https://homeup.sg/sell-condo`: Condo and EC resale at a fixed $4,999 fee.
+- `Sell landed -> https://homeup.sg/sell-landed`: Landed property resale at a fixed $9,999 fee.
 - `Buy -> https://homeup.sg/buy`: Buyer representation packages and complimentary private-property service.
+- `Buy HDB -> https://homeup.sg/buy-hdb`: HDB resale buying guide and $1,999 buyer representation.
+- `Buy condo / landed -> https://homeup.sg/buy-condo-landed`: Private resale buying with complimentary representation.
+- `Buy new launch -> https://homeup.sg/buy-new-launch`: New launch condo buying with complimentary representation.
 - `Listings -> https://homeup.sg/listings`: Active HDB, condo, and landed listings across Singapore.
+- `Playbook -> https://homeup.sg/playbook`: Property guides and video tips for buyers, sellers, and upgraders in Singapore.
+- `Agents -> https://homeup.sg/agents`: CEA-licensed HomeUP advisors with credentials and contact details.
 
 ## APIs and authentication
 - `API catalog -> https://homeup.sg/.well-known/api-catalog`: Machine-readable index of public JSON APIs.
