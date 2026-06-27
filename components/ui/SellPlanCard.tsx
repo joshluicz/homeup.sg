@@ -22,6 +22,7 @@ interface SellPlanCardProps {
   showLearnMore?: boolean;
   learnMoreHref?: string;
   className?: string;
+  reserveFootnoteSpace?: boolean;
 }
 
 export function SellPlanCard({
@@ -29,6 +30,7 @@ export function SellPlanCard({
   showLearnMore = false,
   learnMoreHref,
   className,
+  reserveFootnoteSpace = false,
 }: SellPlanCardProps) {
   const plan = SELL_PLANS.find((p) => p.type === filterType);
   if (!plan) return null;
@@ -55,6 +57,9 @@ export function SellPlanCard({
           <span className={cn("font-display text-4xl font-bold tracking-tight", t.price)}>
             $
             <HydrationSafeNumberFlow format={{ style: "decimal" }} value={plan.price} />
+            {plan.footnote && (
+              <sup className="ml-0.5 align-super text-xl font-bold">*</sup>
+            )}
           </span>
           <span className="text-sm font-medium text-neutral-500">+ GST</span>
         </div>
@@ -103,6 +108,20 @@ export function SellPlanCard({
             </a>
           )}
         </div>
+        {(plan.footnote || reserveFootnoteSpace) && (
+          <p
+            className={cn(
+              "mt-4 text-[11px] font-normal leading-snug text-neutral-500",
+              reserveFootnoteSpace && "min-h-8",
+            )}
+          >
+            {plan.footnote && (
+              <>
+                <span aria-hidden="true">*</span> {plan.footnote}
+              </>
+            )}
+          </p>
+        )}
       </div>
     </div>
   );

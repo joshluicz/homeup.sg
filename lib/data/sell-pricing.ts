@@ -10,6 +10,7 @@ export interface SellPlan {
   price: number;
   learnMoreHref: string;
   buttonText: string;
+  footnote?: string;
 }
 
 export const SELL_PLANS: SellPlan[] = [
@@ -30,6 +31,7 @@ export const SELL_PLANS: SellPlan[] = [
     price: 4999,
     learnMoreHref: "/sell-condo",
     buttonText: "Connect with HOMEUP agent",
+    footnote: "Additional 0.5% (sale price) applies if buyer has a co-broke agent",
   },
   {
     name: "Landed Seller",
@@ -39,6 +41,7 @@ export const SELL_PLANS: SellPlan[] = [
     price: 9999,
     learnMoreHref: "/sell-landed",
     buttonText: "Connect with HOMEUP agent",
+    footnote: "Additional 0.5% (sale price) applies if buyer has a co-broke agent",
   },
 ];
 

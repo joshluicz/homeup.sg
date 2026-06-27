@@ -194,6 +194,9 @@ export default function PricingSection4({
   const gridClass =
     plans.length === 1 ? "mt-6 max-w-md mx-auto" : "mt-6 grid gap-6 md:grid-cols-3";
 
+  const reserveFootnoteSpace =
+    plans.length > 1 && plans.some((p) => p.footnote);
+
   const highlightRow = filterType ? rowForType(filterType) : COMPARISON_ROWS[0];
 
   return (
@@ -237,6 +240,7 @@ export default function PricingSection4({
                   filterType={plan.type}
                   showLearnMore={showLearnMore}
                   learnMoreHref={plan.learnMoreHref}
+                  reserveFootnoteSpace={reserveFootnoteSpace}
                 />
               </motion.div>
             </StaggerItem>
