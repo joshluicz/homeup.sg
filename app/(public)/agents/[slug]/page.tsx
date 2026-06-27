@@ -12,8 +12,7 @@ import {
   personSchema,
   realEstateAgentSchema,
 } from "@/lib/seo/schema";
-import { resolveAgentProfileVideos, getAgentProfileVideosWithThumbnailsServer } from "@/lib/agents/profile-videos";
-import { getAgentYoutubeVideos } from "@/lib/youtube";
+import { getAgentProfileVideosWithThumbnailsServer } from "@/lib/agents/profile-videos";
 
 interface AgentPageProps {
   params: { slug: string };
@@ -42,15 +41,7 @@ export default async function AgentPage({ params }: AgentPageProps) {
   const agent = getAgentBySlug(params.slug);
   if (!agent) notFound();
 
-  const [youtubeVideos, profileVideosFromDb] = await Promise.all([
-    getAgentYoutubeVideos(agent),
-    getAgentProfileVideosWithThumbnailsServer(agent.slug),
-  ]);
-  const profileVideos = await resolveAgentProfileVideos(
-    agent,
-    profileVideosFromDb,
-    youtubeVideos,
-  );
+  const profileVideos = await getAgentProfileVideosWithThumbnailsServer(agent.slug);
 
   return (
     <>

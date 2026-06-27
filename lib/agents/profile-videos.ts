@@ -156,22 +156,14 @@ export function youtubeVideosToProfileVideos(
   }));
 }
 
-/** Resolve the best available video list for an agent profile page. */
+/** Resolve the best available video list for an agent profile page.
+ *  The admin panel (DB) is the single source of truth — no fallbacks. */
 export async function resolveAgentProfileVideos(
   agent: Agent,
   dbVideos: AgentProfileVideo[],
-  youtubeVideos: AgentVideo[],
+  _youtubeVideos: AgentVideo[],
 ): Promise<AgentProfileVideo[]> {
-  if (dbVideos.length > 0) return dbVideos;
-
-  const staticVideos = await enrichStaticAgentProfileVideos(agent);
-  if (staticVideos.length > 0) return staticVideos;
-
-  if (youtubeVideos.length > 0) {
-    return enrichVideoThumbnails(youtubeVideosToProfileVideos(agent, youtubeVideos));
-  }
-
-  return [];
+  return dbVideos;
 }
 
 export function displayAVideos(videos: AgentProfileVideo[]): AgentProfileVideo[] {
