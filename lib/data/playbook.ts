@@ -64,7 +64,7 @@ export const PLAYBOOK_JOURNEY_SECTIONS: PlaybookJourneySection[] = [
     step: 3,
     topic: "condo_tips",
     description:
-      "Market myths, investment strategies that backfire, and how to spot a genuinely undervalued unit. Straight talk from Dennis.",
+      "Market myths, investment strategies that backfire, and how to spot a genuinely undervalued unit.",
   },
 ];
 
