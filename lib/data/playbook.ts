@@ -94,6 +94,8 @@ export interface PlaybookVideo {
   thumbnail: string;    // absolute image URL
   videoUrl: string;     // YouTube / Vimeo URL — empty string if not yet published
   featured?: boolean;
+  /** When true, show in Playbook top Display A auto-rail (from content sheet). */
+  displayA?: boolean;
   publishedAt: string;  // ISO date string "YYYY-MM-DD"
   tags: string[];
   article?: string;          // Markdown article body shown on /playbook/[slug]
@@ -101,6 +103,8 @@ export interface PlaybookVideo {
   metaDescription?: string;  // SEO meta description for the article page
   topic?: PlaybookTopic | null; // Which journey stage this article/video belongs to
   contentKind?: "article" | "video";
+  /** Explicit author override (agent slug). Falls back to inference when unset. */
+  agentSlug?: string | null;
 }
 
 export const CATEGORY_LABELS: Record<VideoCategory, string> = {
