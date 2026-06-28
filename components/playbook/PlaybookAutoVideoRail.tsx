@@ -31,9 +31,9 @@ type PlaybookAutoVideoRailProps = {
   intro?: ReactNode;
 };
 
-const TILE_W_PX = 164; // 148px tile + 16px gap (mobile)
-const ADVANCE_INTERVAL_MS = 3000;
-const RESUME_DELAY_MS = 4000;
+const TILE_W_PX = 164;
+const SCROLL_SPEED = 0.5; // px per frame (~30px/s at 60fps)
+const RESUME_DELAY_MS = 2000;
 
 export function PlaybookAutoVideoRail({
   videos,
@@ -45,12 +45,13 @@ export function PlaybookAutoVideoRail({
 }: PlaybookAutoVideoRailProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isAutoScrollingRef = useRef(false);
+  const lastScrollRef = useRef<number>(0);
 
   const loopItems = useMemo(() => {
     if (videos.length === 0) return [];
-    return [...videos, ...videos];
+    return [...videos, ...videos, ...videos];
   }, [videos]);
 
   const clearResume = useCallback(() => {
@@ -75,35 +76,41 @@ export function PlaybookAutoVideoRail({
     [clearResume],
   );
 
-  // Auto-advance one tile every 3 s via smooth scrollBy.
+  // Continuous RAF scroll loop.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || videos.length < 2) return;
 
-    const interval = setInterval(() => {
-      if (pausedRef.current) return;
-      const loopWidth = el.scrollWidth / 2;
-      // Silently reset to first copy when we reach the end of it.
-      if (el.scrollLeft >= loopWidth - TILE_W_PX) {
-        el.scrollLeft = el.scrollLeft - loopWidth;
+    const tick = () => {
+      if (!pausedRef.current) {
+        const loopWidth = el.scrollWidth / 3;
+        // Seamless reset: jump back one copy when we reach the end of the first.
+        if (el.scrollLeft >= loopWidth * 2) {
+          el.scrollLeft -= loopWidth;
+        }
+        el.scrollLeft += SCROLL_SPEED;
+        lastScrollRef.current = el.scrollLeft;
       }
-      isAutoScrollingRef.current = true;
-      el.scrollBy({ left: TILE_W_PX, behavior: "smooth" });
-      // Clear the flag after the smooth scroll animation (~400ms).
-      setTimeout(() => { isAutoScrollingRef.current = false; }, 500);
-    }, ADVANCE_INTERVAL_MS);
+      rafRef.current = requestAnimationFrame(tick);
+    };
 
-    return () => clearInterval(interval);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+    };
   }, [videos.length]);
 
-  // Detect genuine user scrolls (not ones we triggered) and pause.
+  // Detect genuine user scroll and pause temporarily.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
     const handleScroll = () => {
-      if (isAutoScrollingRef.current) return; // ignore our own scrollBy
-      pauseNow();
-      scheduleResume();
+      const delta = Math.abs(el.scrollLeft - lastScrollRef.current);
+      if (delta > 2) {
+        // User-initiated scroll (our RAF moves by 0.5px, not >2px at once).
+        pauseNow();
+        scheduleResume();
+      }
     };
     el.addEventListener("scroll", handleScroll, { passive: true });
     return () => el.removeEventListener("scroll", handleScroll);
