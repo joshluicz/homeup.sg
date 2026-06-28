@@ -72,14 +72,28 @@ export async function getAgentProfileVideoBySlugServer(
   if (!url || !key) return null;
 
   const supabase = createClient(url, key);
+
+  // Try slug column first.
   const { data, error } = await supabase
     .from("agent_profile_videos")
     .select("*")
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error || !data) return null;
-  return rowToAgentProfileVideo(data as AgentProfileVideoRow);
+  if (!error && data) return rowToAgentProfileVideo(data as AgentProfileVideoRow);
+
+  // Fallback: videos with slug=null use "agent-{id}" as their display slug.
+  const idMatch = slug.match(/^agent-(.+)$/);
+  if (idMatch) {
+    const { data: byId, error: idErr } = await supabase
+      .from("agent_profile_videos")
+      .select("*")
+      .eq("id", idMatch[1])
+      .maybeSingle();
+    if (!idErr && byId) return rowToAgentProfileVideo(byId as AgentProfileVideoRow);
+  }
+
+  return null;
 }
 
 /** All agent profile video slugs, for static generation of watch pages. */
