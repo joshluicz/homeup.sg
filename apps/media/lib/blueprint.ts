@@ -5,6 +5,8 @@ export type BlueprintRoom = {
   presenter_direction?: string;
   higgsfield_prompt?: string;
   r2_url?: string;
+  image_urls?: string[];
+  cleaned_image_urls?: string[];
 };
 
 export type Blueprint = {
@@ -34,6 +36,8 @@ type ShotListEntry = {
   presenter_direction?: string;
   higgsfield_prompt?: string;
   r2_url?: string;
+  image_urls?: string[];
+  cleaned_image_urls?: string[];
 };
 
 type EditInstructions = {
@@ -65,6 +69,8 @@ export type BlueprintRoomPhotoInput = {
   label: string;
   r2_url: string;
   duration_seconds?: number;
+  image_urls?: string[];
+  cleaned_image_urls?: string[];
 };
 
 export type BlueprintInputData = {
@@ -135,6 +141,14 @@ export function blueprintFromRow(row: BlueprintRow): Blueprint {
     presenter_direction: entry.presenter_direction,
     higgsfield_prompt: entry.higgsfield_prompt,
     r2_url: entry.r2_url,
+    image_urls: entry.image_urls?.length
+      ? entry.image_urls
+      : entry.r2_url
+        ? [entry.r2_url]
+        : undefined,
+    cleaned_image_urls: entry.cleaned_image_urls?.length
+      ? entry.cleaned_image_urls
+      : undefined,
   }));
 
   return {
@@ -157,6 +171,41 @@ export function normalizeRoomLabel(label: string): string {
   return label.trim().toLowerCase();
 }
 
+/** Resolve ordered source image URLs; legacy single `r2_url` becomes a one-element array. */
+export function roomImageUrls(input: {
+  r2_url?: string;
+  image_urls?: string[];
+}): string[] {
+  if (input.image_urls?.length) {
+    return input.image_urls;
+  }
+  if (input.r2_url) {
+    return [input.r2_url];
+  }
+  return [];
+}
+
+function resolveRoomPhotoFields(source: {
+  r2_url?: string;
+  image_urls?: string[];
+  cleaned_image_urls?: string[];
+}): {
+  r2_url: string;
+  image_urls: string[];
+  cleaned_image_urls?: string[];
+} {
+  const image_urls = roomImageUrls(source);
+  const cleaned_image_urls = source.cleaned_image_urls?.length
+    ? source.cleaned_image_urls
+    : undefined;
+
+  return {
+    r2_url: image_urls[0] ?? source.r2_url ?? "",
+    image_urls,
+    ...(cleaned_image_urls ? { cleaned_image_urls } : {}),
+  };
+}
+
 /** Align stored photo URLs with blueprint room labels (Claude may rename rooms). */
 export function remappedRoomPhotos(
   rooms: BlueprintRoom[],
@@ -164,12 +213,19 @@ export function remappedRoomPhotos(
 ): BlueprintRoomPhotoInput[] {
   if (!inputPhotos?.length) {
     return rooms
-      .filter((room) => room.r2_url)
-      .map((room) => ({
-        label: room.label,
-        r2_url: room.r2_url!,
-        duration_seconds: room.duration_seconds,
-      }));
+      .filter((room) => room.r2_url || room.image_urls?.length)
+      .map((room) => {
+        const resolved = resolveRoomPhotoFields(room);
+        return {
+          label: room.label,
+          r2_url: resolved.r2_url,
+          duration_seconds: room.duration_seconds,
+          image_urls: resolved.image_urls,
+          ...(resolved.cleaned_image_urls
+            ? { cleaned_image_urls: resolved.cleaned_image_urls }
+            : {}),
+        };
+      });
   }
 
   return rooms.map((room, index) => {
@@ -181,11 +237,22 @@ export function remappedRoomPhotos(
     const byIndex = inputPhotos[index];
     const source = byLabel ?? byIndex;
 
+    const merged = resolveRoomPhotoFields({
+      r2_url: source?.r2_url ?? room.r2_url,
+      image_urls: source?.image_urls ?? room.image_urls,
+      cleaned_image_urls:
+        source?.cleaned_image_urls ?? room.cleaned_image_urls,
+    });
+
     return {
       label: room.label,
-      r2_url: source?.r2_url ?? room.r2_url ?? "",
+      r2_url: merged.r2_url,
       duration_seconds:
         room.duration_seconds ?? source?.duration_seconds ?? undefined,
+      image_urls: merged.image_urls,
+      ...(merged.cleaned_image_urls
+        ? { cleaned_image_urls: merged.cleaned_image_urls }
+        : {}),
     };
   });
 }
@@ -195,6 +262,7 @@ export type ApproveRoomPhoto = {
   r2_url: string;
   higgsfield_prompt: string;
   duration_seconds: number;
+  image_urls?: string[];
 };
 
 export function buildApproveRoomPhotos(
@@ -204,6 +272,7 @@ export function buildApproveRoomPhotos(
     entries?: Array<{
       label: string;
       r2Url?: string | null;
+      imageUrls?: string[];
       durationSeconds?: number;
     }>;
     defaultDuration?: number;
@@ -227,9 +296,16 @@ export function buildApproveRoomPhotos(
       stored?.r2_url ??
       "";
 
+    const image_urls = roomImageUrls({
+      r2_url,
+      image_urls:
+        entry?.imageUrls ?? room.image_urls ?? stored?.image_urls ?? undefined,
+    });
+
     return {
       label: room.label,
-      r2_url,
+      r2_url: image_urls[0] ?? r2_url,
+      image_urls,
       higgsfield_prompt: room.higgsfield_prompt ?? "",
       duration_seconds:
         entry?.durationSeconds ??
@@ -276,15 +352,29 @@ export function blueprintToDbRow(
     content_type: "short",
     category: "house_tour",
     script: buildFullScript(blueprint),
-    shot_list: rooms.map((room, index) => ({
-      order: index + 1,
-      label: room.label,
-      duration_seconds: room.duration_seconds,
-      script: room.script ?? "",
-      presenter_direction: room.presenter_direction ?? "",
-      higgsfield_prompt: room.higgsfield_prompt ?? "",
-      r2_url: remappedPhotos[index]?.r2_url ?? room.r2_url ?? "",
-    })),
+    shot_list: rooms.map((room, index) => {
+      const photo = remappedPhotos[index];
+      const resolved = resolveRoomPhotoFields({
+        r2_url: photo?.r2_url ?? room.r2_url,
+        image_urls: photo?.image_urls ?? room.image_urls,
+        cleaned_image_urls:
+          photo?.cleaned_image_urls ?? room.cleaned_image_urls,
+      });
+
+      return {
+        order: index + 1,
+        label: room.label,
+        duration_seconds: room.duration_seconds,
+        script: room.script ?? "",
+        presenter_direction: room.presenter_direction ?? "",
+        higgsfield_prompt: room.higgsfield_prompt ?? "",
+        r2_url: resolved.r2_url,
+        image_urls: resolved.image_urls,
+        ...(resolved.cleaned_image_urls
+          ? { cleaned_image_urls: resolved.cleaned_image_urls }
+          : {}),
+      };
+    }),
     edit_instructions: {
       edit_notes: blueprint.edit_notes ?? "",
       colorgrade_notes: blueprint.colour_grade ?? "",
@@ -313,6 +403,14 @@ export function blueprintFromWebhookPayload(
     const rooms: BlueprintRoom[] = Array.isArray(roomsRaw)
       ? roomsRaw.map((room) => {
           const r = room as Record<string, unknown>;
+          const r2_url = r.r2_url != null ? String(r.r2_url) : undefined;
+          const image_urls = Array.isArray(r.image_urls)
+            ? r.image_urls.map(String).filter(Boolean)
+            : undefined;
+          const cleaned_image_urls = Array.isArray(r.cleaned_image_urls)
+            ? r.cleaned_image_urls.map(String).filter(Boolean)
+            : undefined;
+
           return {
             label: String(r.label ?? r.room ?? ""),
             duration_seconds:
@@ -324,6 +422,15 @@ export function blueprintFromWebhookPayload(
             higgsfield_prompt: String(
               r.higgsfield_prompt ?? r.prompt ?? "",
             ),
+            r2_url,
+            image_urls: image_urls?.length
+              ? image_urls
+              : r2_url
+                ? [r2_url]
+                : undefined,
+            cleaned_image_urls: cleaned_image_urls?.length
+              ? cleaned_image_urls
+              : undefined,
           };
         })
       : [];

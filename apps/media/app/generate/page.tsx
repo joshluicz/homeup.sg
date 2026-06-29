@@ -11,6 +11,7 @@ import {
   blueprintFromWebhookPayload,
   blueprintToDbRow,
   remappedRoomPhotos,
+  roomImageUrls,
 } from "@/lib/blueprint";
 import { EMPTY_WEBHOOK_RESPONSE_MESSAGE, readResponseJson } from "@/lib/read-response-json";
 
@@ -45,13 +46,20 @@ type RenovationStatus =
   | "Partially renovated"
   | "Original condition";
 
+type RoomPhoto = {
+  id: string;
+  file: File | null;
+  previewUrl: string | null;
+  r2Url: string | null;
+  cleanedR2Url?: string | null;
+};
+
 type RoomEntry = {
   id: string;
   label: string;
   durationSeconds: number;
-  file: File | null;
-  previewUrl: string | null;
-  r2Url: string | null;
+  photos: RoomPhoto[];
+  useDeclutteredForVideo?: boolean;
 };
 
 type MediaFileRow = {
@@ -136,15 +144,55 @@ function buildClipCardsFromRows(
   });
 }
 
+function createEmptyRoomPhoto(): RoomPhoto {
+  return {
+    id: crypto.randomUUID(),
+    file: null,
+    previewUrl: null,
+    r2Url: null,
+    cleanedR2Url: null,
+  };
+}
+
 function createDefaultRooms(): RoomEntry[] {
   return ["Living Room", "Kitchen", "Master Bedroom"].map((label) => ({
     id: crypto.randomUUID(),
     label,
     durationSeconds: 5,
-    file: null,
-    previewUrl: null,
-    r2Url: null,
+    photos: [createEmptyRoomPhoto()],
+    useDeclutteredForVideo: false,
   }));
+}
+
+function roomHasPhotos(room: RoomEntry): boolean {
+  return room.photos.some((photo) => photo.file || photo.r2Url);
+}
+
+function roomSourceUrls(room: RoomEntry): string[] {
+  return room.photos.map((photo) => photo.r2Url).filter((url): url is string => Boolean(url));
+}
+
+function roomCleanedUrls(room: RoomEntry): string[] {
+  return room.photos
+    .map((photo) => photo.cleanedR2Url)
+    .filter((url): url is string => Boolean(url));
+}
+
+function roomUrlsForVideo(room: RoomEntry): string[] {
+  const useCleaned =
+    room.useDeclutteredForVideo ?? roomCleanedUrls(room).length > 0;
+  if (useCleaned) {
+    return room.photos
+      .map((photo) => photo.cleanedR2Url ?? photo.r2Url)
+      .filter((url): url is string => Boolean(url));
+  }
+  return roomSourceUrls(room);
+}
+
+function roomPrimaryPreviewUrl(room: RoomEntry): string | null {
+  const photo = room.photos[0];
+  if (!photo) return null;
+  return photo.previewUrl ?? photo.cleanedR2Url ?? photo.r2Url;
 }
 
 function fileExtension(file: File): string {
@@ -163,8 +211,8 @@ function slugifyLabel(label: string): string {
     .replace(/^-|-$/g, "") || "room";
 }
 
-function buildPhotoKey(label: string, file: File): string {
-  return `room-photos/${Date.now()}-${slugifyLabel(label)}.${fileExtension(file)}`;
+function buildPhotoKey(label: string, file: File, index = 0): string {
+  return `room-photos/${Date.now()}-${slugifyLabel(label)}-${index}.${fileExtension(file)}`;
 }
 
 function labelToFileSlug(label: string): string {
@@ -284,14 +332,28 @@ function createRoomEntriesFromInput(
 ): RoomEntry[] {
   if (!roomPhotos || roomPhotos.length === 0) return createDefaultRooms();
 
-  return roomPhotos.map((room) => ({
-    id: crypto.randomUUID(),
-    label: room.label,
-    durationSeconds: room.duration_seconds ?? 5,
-    file: null,
-    previewUrl: null,
-    r2Url: room.r2_url,
-  }));
+  return roomPhotos.map((room) => {
+    const urls = roomImageUrls(room);
+    const cleaned = room.cleaned_image_urls ?? [];
+    const photos: RoomPhoto[] =
+      urls.length > 0
+        ? urls.map((url, index) => ({
+            id: crypto.randomUUID(),
+            file: null,
+            previewUrl: null,
+            r2Url: url,
+            cleanedR2Url: cleaned[index] ?? null,
+          }))
+        : [createEmptyRoomPhoto()];
+
+    return {
+      id: crypto.randomUUID(),
+      label: room.label,
+      durationSeconds: room.duration_seconds ?? 5,
+      photos,
+      useDeclutteredForVideo: cleaned.length > 0,
+    };
+  });
 }
 
 function syncRoomStateFromBlueprint(
@@ -306,9 +368,32 @@ function syncRoomStateFromBlueprint(
   if (remapped.length === 0) return;
 
   roomPhotoUrlsRef.current = new Map(
-    remapped.map((room) => [room.label, room.r2_url]),
+    remapped.map((room) => [room.label, roomImageUrls(room)[0] ?? room.r2_url]),
   );
   setRoomEntries(createRoomEntriesFromInput(remapped));
+}
+
+function roomDisplayImageUrls(
+  label: string,
+  roomEntries: RoomEntry[],
+  blueprint: Blueprint | null,
+): string[] {
+  const entry = roomEntries.find((room) => room.label === label);
+  if (entry) {
+    const fromEntry = entry.photos
+      .map((photo) => photo.previewUrl ?? photo.cleanedR2Url ?? photo.r2Url)
+      .filter((url): url is string => Boolean(url));
+    if (fromEntry.length > 0) return fromEntry;
+  }
+
+  const remapped = remappedRoomPhotos(
+    blueprint?.rooms ?? [],
+    blueprint?.input_data?.room_photos,
+  );
+  const stored = remapped.find((room) => room.label === label);
+  if (!stored) return [];
+
+  return roomImageUrls(stored);
 }
 
 function roomDisplayImageUrl(
@@ -316,15 +401,7 @@ function roomDisplayImageUrl(
   roomEntries: RoomEntry[],
   blueprint: Blueprint | null,
 ): string | null {
-  const entry = roomEntries.find((room) => room.label === label);
-  if (entry?.previewUrl) return entry.previewUrl;
-  if (entry?.r2Url) return entry.r2Url;
-
-  const remapped = remappedRoomPhotos(
-    blueprint?.rooms ?? [],
-    blueprint?.input_data?.room_photos,
-  );
-  return remapped.find((room) => room.label === label)?.r2_url ?? null;
+  return roomDisplayImageUrls(label, roomEntries, blueprint)[0] ?? null;
 }
 
 function mapFileStatus(
@@ -432,8 +509,10 @@ export default function GeneratePage() {
   );
   const [creatingUploadJob, setCreatingUploadJob] = useState(false);
   const [uploadJobId, setUploadJobId] = useState<string | null>(null);
+  const [declutteringRoomId, setDeclutteringRoomId] = useState<string | null>(null);
 
   const roomPhotoUrlsRef = useRef<Map<string, string>>(new Map());
+  const declutterSessionRef = useRef(crypto.randomUUID());
 
   const refreshSavedBlueprints = useCallback(async () => {
     try {
@@ -598,7 +677,10 @@ export default function GeneratePage() {
       );
       setRoomEntries(createRoomEntriesFromInput(remappedPhotos));
       roomPhotoUrlsRef.current = new Map(
-        remappedPhotos.map((room) => [room.label, room.r2_url]),
+        remappedPhotos.map((room) => [
+          room.label,
+          roomImageUrls(room)[0] ?? room.r2_url,
+        ]),
       );
 
       setBlueprint(loaded);
@@ -648,9 +730,8 @@ export default function GeneratePage() {
         id: crypto.randomUUID(),
         label: "New Room",
         durationSeconds: 5,
-        file: null,
-        previewUrl: null,
-        r2Url: null,
+        photos: [createEmptyRoomPhoto()],
+        useDeclutteredForVideo: false,
       },
     ]);
   }
@@ -659,9 +740,137 @@ export default function GeneratePage() {
     setRoomEntries((prev) => prev.filter((room) => room.id !== id));
   }
 
-  function handleRoomFile(id: string, file: File) {
-    const previewUrl = URL.createObjectURL(file);
-    updateRoom(id, { file, previewUrl, r2Url: null });
+  function addRoomPhotos(roomId: string, files: File[]) {
+    if (files.length === 0) return;
+
+    setRoomEntries((prev) =>
+      prev.map((room) => {
+        if (room.id !== roomId) return room;
+
+        const newPhotos = files.map((file) => ({
+          id: crypto.randomUUID(),
+          file,
+          previewUrl: URL.createObjectURL(file),
+          r2Url: null,
+          cleanedR2Url: null,
+        }));
+
+        const existing = room.photos.filter(
+          (photo) => photo.file || photo.previewUrl || photo.r2Url,
+        );
+
+        return {
+          ...room,
+          photos: [...existing, ...newPhotos],
+        };
+      }),
+    );
+  }
+
+  function removeRoomPhoto(roomId: string, photoId: string) {
+    setRoomEntries((prev) =>
+      prev.map((room) => {
+        if (room.id !== roomId) return room;
+
+        const nextPhotos = room.photos.filter((photo) => photo.id !== photoId);
+        return {
+          ...room,
+          photos: nextPhotos.length > 0 ? nextPhotos : [createEmptyRoomPhoto()],
+        };
+      }),
+    );
+  }
+
+  async function ensureRoomPhotosUploaded(room: RoomEntry): Promise<RoomEntry> {
+    const uploadedPhotos: RoomPhoto[] = [];
+
+    for (let index = 0; index < room.photos.length; index += 1) {
+      const photo = room.photos[index]!;
+      if (!photo.file) {
+        uploadedPhotos.push(photo);
+        continue;
+      }
+
+      const key = buildPhotoKey(room.label, photo.file, index);
+      const r2Url = await uploadRoomPhoto(photo.file, key);
+      uploadedPhotos.push({ ...photo, r2Url, file: null });
+    }
+
+    const urls = uploadedPhotos
+      .map((photo) => photo.r2Url)
+      .filter((url): url is string => Boolean(url));
+    if (urls[0]) {
+      roomPhotoUrlsRef.current.set(room.label, urls[0]);
+    }
+
+    return { ...room, photos: uploadedPhotos };
+  }
+
+  async function handleDeclutterRoom(roomId: string) {
+    const room = roomEntries.find((entry) => entry.id === roomId);
+    if (!room) return;
+
+    setDeclutteringRoomId(roomId);
+    setError(null);
+
+    try {
+      const uploadedRoom = await ensureRoomPhotosUploaded(room);
+      const photosWithSource = uploadedRoom.photos.filter((photo) => photo.r2Url);
+      if (photosWithSource.length === 0) {
+        throw new Error("Upload room photos before decluttering.");
+      }
+
+      const blueprintId = blueprint?.blueprint_id ?? null;
+      const sessionId = blueprintId ?? declutterSessionRef.current;
+      const cleanedPhotos: RoomPhoto[] = [];
+
+      for (let index = 0; index < uploadedRoom.photos.length; index += 1) {
+        const photo = uploadedRoom.photos[index]!;
+        if (!photo.r2Url) {
+          cleanedPhotos.push(photo);
+          continue;
+        }
+
+        const res = await fetch("/api/images/declutter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            source_url: photo.r2Url,
+            room_label: uploadedRoom.label,
+            blueprint_id: sessionId,
+            index,
+          }),
+        });
+
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(
+            (body as { error?: string }).error ?? "Declutter failed",
+          );
+        }
+
+        cleanedPhotos.push({
+          ...photo,
+          cleanedR2Url: (body as { cleaned_r2_url?: string }).cleaned_r2_url ?? null,
+        });
+      }
+
+      setRoomEntries((prev) =>
+        prev.map((entry) =>
+          entry.id === roomId
+            ? {
+                ...uploadedRoom,
+                photos: cleanedPhotos,
+                useDeclutteredForVideo: true,
+              }
+            : entry,
+        ),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Declutter failed.");
+    } finally {
+      setDeclutteringRoomId(null);
+    }
   }
 
   async function handleGenerateBlueprint(e: React.FormEvent) {
@@ -677,7 +886,7 @@ export default function GeneratePage() {
       return;
     }
 
-    const roomsWithPhotos = roomEntries.filter((room) => room.file || room.r2Url);
+    const roomsWithPhotos = roomEntries.filter(roomHasPhotos);
     if (roomsWithPhotos.length === 0) {
       setError("Please add at least one room photo.");
       return;
@@ -698,26 +907,32 @@ export default function GeneratePage() {
       const uploadedRooms: RoomEntry[] = [];
 
       for (const room of roomEntries) {
-        if (!room.file) {
+        if (!roomHasPhotos(room)) {
           uploadedRooms.push(room);
           continue;
         }
-
-        const key = buildPhotoKey(room.label, room.file);
-        const r2Url = await uploadRoomPhoto(room.file, key);
-        roomPhotoUrlsRef.current.set(room.label, r2Url);
-        uploadedRooms.push({ ...room, r2Url });
+        uploadedRooms.push(await ensureRoomPhotosUploaded(room));
       }
 
       setRoomEntries(uploadedRooms);
 
       const roomPhotos = uploadedRooms
-        .filter((room) => room.r2Url)
-        .map((room) => ({
-          label: room.label,
-          r2_url: room.r2Url!,
-          duration_seconds: room.durationSeconds,
-        }));
+        .filter(roomHasPhotos)
+        .map((room) => {
+          const sourceUrls = roomSourceUrls(room);
+          const cleanedUrls = roomCleanedUrls(room);
+          const videoUrls = roomUrlsForVideo(room);
+
+          return {
+            label: room.label,
+            r2_url: videoUrls[0] ?? sourceUrls[0]!,
+            image_urls: videoUrls,
+            ...(cleanedUrls.length > 0
+              ? { cleaned_image_urls: cleanedUrls }
+              : {}),
+            duration_seconds: room.durationSeconds,
+          };
+        });
 
       const webhookRes = await fetch(WEBHOOK_GENERATE_BLUEPRINT, {
         method: "POST",
@@ -823,6 +1038,7 @@ export default function GeneratePage() {
     roomPhotos: Array<{
       label: string;
       r2_url: string;
+      image_urls?: string[];
       higgsfield_prompt: string;
       duration_seconds: number;
     }>,
@@ -852,7 +1068,14 @@ export default function GeneratePage() {
           fileName: `room_clip_${labelToFileSlug(room.label)}.mp4`,
           previewUrl:
             existing?.previewUrl ??
-            roomEntries.find((entry) => entry.label === room.label)?.previewUrl ??
+            roomPrimaryPreviewUrl(
+              roomEntries.find((entry) => entry.label === room.label) ?? {
+                id: "",
+                label: room.label,
+                durationSeconds: 5,
+                photos: [],
+              },
+            ) ??
             null,
         };
       }),
@@ -865,7 +1088,12 @@ export default function GeneratePage() {
 
     return buildApproveRoomPhotos(blueprint, {
       ref: roomPhotoUrlsRef.current,
-      entries: roomEntries,
+      entries: roomEntries.map((room) => ({
+        label: room.label,
+        r2Url: roomUrlsForVideo(room)[0] ?? roomSourceUrls(room)[0] ?? null,
+        imageUrls: roomUrlsForVideo(room),
+        durationSeconds: room.durationSeconds,
+      })),
       defaultDuration: secondsPerRoom,
       labels,
     });
@@ -996,11 +1224,17 @@ export default function GeneratePage() {
 
             <div className="space-y-4">
               {blueprintRooms.map((room) => {
-                const photoUrl = roomDisplayImageUrl(
+                const photoUrls = roomDisplayImageUrls(
                   room.label,
                   roomEntries,
                   blueprint,
                 );
+                const cleanedUrls =
+                  remappedRoomPhotos(
+                    blueprint.rooms ?? [],
+                    blueprint.input_data?.room_photos,
+                  ).find((photo) => photo.label === room.label)
+                    ?.cleaned_image_urls ?? [];
                 const clip = clipForLabel(clipCards, room.label);
 
                 return (
@@ -1028,7 +1262,11 @@ export default function GeneratePage() {
                       )}
                     </div>
 
-                    <RoomBlueprintMedia photoUrl={photoUrl} clip={clip} />
+                    <RoomBlueprintMedia
+                      photoUrls={photoUrls}
+                      cleanedUrls={cleanedUrls}
+                      clip={clip}
+                    />
 
                     {room.script && (
                       <div className="mb-3">
@@ -1684,7 +1922,7 @@ export default function GeneratePage() {
             </button>
           </div>
           <p className="mb-4 text-sm text-neutral-500">
-            Each photo becomes an animated B-roll clip
+            Add one or more photos per room. Each room becomes an animated B-roll clip.
           </p>
 
           <datalist id="room-suggestions">
@@ -1698,11 +1936,17 @@ export default function GeneratePage() {
               <RoomPhotoCard
                 key={room.id}
                 room={room}
+                decluttering={declutteringRoomId === room.id}
                 onLabelChange={(label) => updateRoom(room.id, { label })}
                 onDurationChange={(durationSeconds) =>
                   updateRoom(room.id, { durationSeconds })
                 }
-                onFileSelect={(file) => handleRoomFile(room.id, file)}
+                onAddPhotos={(files) => addRoomPhotos(room.id, files)}
+                onRemovePhoto={(photoId) => removeRoomPhoto(room.id, photoId)}
+                onUseDeclutteredChange={(useDeclutteredForVideo) =>
+                  updateRoom(room.id, { useDeclutteredForVideo })
+                }
+                onDeclutter={() => void handleDeclutterRoom(room.id)}
                 onRemove={() => removeRoom(room.id)}
                 canRemove={roomEntries.length > 1}
               />
@@ -1719,27 +1963,59 @@ export default function GeneratePage() {
 }
 
 function RoomBlueprintMedia({
-  photoUrl,
+  photoUrls,
+  cleanedUrls = [],
   clip,
 }: {
-  photoUrl: string | null;
+  photoUrls: string[];
+  cleanedUrls?: string[];
   clip?: ClipCard;
 }) {
   return (
     <div className="mb-4 grid gap-3 sm:grid-cols-2">
       <div>
         <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500">
-          Source photo
+          Source photos
         </p>
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt="Room source"
-            className="max-h-44 w-full rounded-lg object-cover"
-          />
+        {photoUrls.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2">
+            {photoUrls.map((url, index) => (
+              <img
+                key={`${url}-${index}`}
+                src={url}
+                alt={`Room source ${index + 1}`}
+                className="max-h-28 w-full rounded-lg object-cover"
+              />
+            ))}
+          </div>
         ) : (
           <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-neutral-200 text-sm text-neutral-400">
-            No photo saved
+            No photos saved
+          </div>
+        )}
+        {cleanedUrls.length > 0 && (
+          <div className="mt-3">
+            <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-neutral-500">
+              Decluttered photos
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {cleanedUrls.map((url, index) => (
+                <div key={`${url}-${index}`} className="space-y-1">
+                  <img
+                    src={url}
+                    alt={`Decluttered ${index + 1}`}
+                    className="max-h-28 w-full rounded-lg object-cover"
+                  />
+                  <a
+                    href={url}
+                    download
+                    className="inline-block text-sm text-neutral-600 underline hover:no-underline"
+                  >
+                    Download
+                  </a>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -1785,20 +2061,32 @@ function RoomBlueprintMedia({
 
 function RoomPhotoCard({
   room,
+  decluttering,
   onLabelChange,
   onDurationChange,
-  onFileSelect,
+  onAddPhotos,
+  onRemovePhoto,
+  onUseDeclutteredChange,
+  onDeclutter,
   onRemove,
   canRemove,
 }: {
   room: RoomEntry;
+  decluttering: boolean;
   onLabelChange: (label: string) => void;
   onDurationChange: (durationSeconds: number) => void;
-  onFileSelect: (file: File) => void;
+  onAddPhotos: (files: File[]) => void;
+  onRemovePhoto: (photoId: string) => void;
+  onUseDeclutteredChange: (use: boolean) => void;
+  onDeclutter: () => void;
   onRemove: () => void;
   canRemove: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const hasUploadedPhotos = room.photos.some((photo) => photo.r2Url || photo.file);
+  const hasCleanedPhotos = room.photos.some((photo) => photo.cleanedR2Url);
+  const useDecluttered =
+    room.useDeclutteredForVideo ?? (hasCleanedPhotos && hasUploadedPhotos);
 
   return (
     <div className="rounded-lg border border-neutral-200 p-4">
@@ -1834,30 +2122,102 @@ function RoomPhotoCard({
         )}
       </div>
 
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        {room.photos
+          .filter((photo) => photo.previewUrl || photo.r2Url)
+          .map((photo, index) => (
+            <div key={photo.id} className="relative">
+              <img
+                src={photo.previewUrl ?? photo.r2Url!}
+                alt={`${room.label} ${index + 1}`}
+                className="h-24 w-full rounded-lg object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => onRemovePhoto(photo.id)}
+                className="absolute right-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-xs text-white hover:bg-black/80"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+      </div>
+
+      {hasCleanedPhotos && (
+        <div className="mb-3">
+          <p className="mb-1.5 text-sm font-medium text-neutral-700">
+            Decluttered
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {room.photos
+              .filter((photo) => photo.cleanedR2Url)
+              .map((photo, index) => (
+                <div key={`cleaned-${photo.id}`} className="space-y-1">
+                  <img
+                    src={photo.cleanedR2Url!}
+                    alt={`${room.label} cleaned ${index + 1}`}
+                    className="h-24 w-full rounded-lg object-cover ring-2 ring-green-200"
+                  />
+                  <a
+                    href={photo.cleanedR2Url!}
+                    download
+                    className="inline-block text-sm text-neutral-600 underline hover:no-underline"
+                  >
+                    Download
+                  </a>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+        >
+          + Add photo
+        </button>
+        <button
+          type="button"
+          onClick={onDeclutter}
+          disabled={decluttering || !hasUploadedPhotos}
+          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+        >
+          {decluttering ? "Decluttering…" : "Declutter photos"}
+        </button>
+      </div>
+
+      {hasCleanedPhotos && (
+        <label className="mb-3 flex items-center gap-2 text-sm text-neutral-700">
+          <input
+            type="checkbox"
+            checked={useDecluttered}
+            onChange={(e) => onUseDeclutteredChange(e.target.checked)}
+            className="rounded border-neutral-300"
+          />
+          Use decluttered photos for video
+        </label>
+      )}
+
       <div
         onClick={() => inputRef.current?.click()}
-        className="cursor-pointer rounded-lg border-2 border-dashed border-neutral-200 px-3 py-6 text-center transition-colors hover:border-neutral-300"
+        className="cursor-pointer rounded-lg border-2 border-dashed border-neutral-200 px-3 py-4 text-center transition-colors hover:border-neutral-300"
       >
-        {room.previewUrl || room.r2Url ? (
-          <img
-            src={room.previewUrl ?? room.r2Url!}
-            alt={room.label}
-            className="mx-auto max-h-28 rounded object-cover"
-          />
-        ) : (
-          <>
-            <p className="text-sm font-medium text-neutral-700">Click to browse</p>
-            <p className="mt-1 text-sm text-neutral-500">JPEG, PNG, WebP</p>
-          </>
-        )}
+        <p className="text-sm font-medium text-neutral-700">
+          {hasUploadedPhotos ? "Add more photos" : "Click to browse"}
+        </p>
+        <p className="mt-1 text-sm text-neutral-500">JPEG, PNG, WebP</p>
         <input
           ref={inputRef}
           type="file"
           accept="image/*"
+          multiple
           className="hidden"
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onFileSelect(file);
+            const files = Array.from(e.target.files ?? []);
+            if (files.length > 0) onAddPhotos(files);
             e.target.value = "";
           }}
         />

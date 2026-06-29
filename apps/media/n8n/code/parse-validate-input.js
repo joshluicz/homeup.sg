@@ -20,17 +20,48 @@ if (!Array.isArray(body.room_photos) || body.room_photos.length === 0) {
   throw new Error("room_photos must be a non-empty array");
 }
 
+function resolvePhotoImageUrls(photo) {
+  if (Array.isArray(photo.image_urls) && photo.image_urls.length > 0) {
+    return photo.image_urls.filter(
+      (url) => typeof url === "string" && url.trim() !== "",
+    );
+  }
+  if (photo.r2_url) {
+    return [photo.r2_url];
+  }
+  return [];
+}
+
 for (const photo of body.room_photos) {
-  if (!photo.label || !photo.r2_url) {
-    throw new Error("Each room_photos entry needs label and r2_url");
+  if (!photo.label) {
+    throw new Error("Each room_photos entry needs label");
+  }
+
+  const imageUrls = resolvePhotoImageUrls(photo);
+  if (imageUrls.length === 0) {
+    throw new Error(
+      "Each room_photos entry needs at least one image (r2_url or image_urls)",
+    );
+  }
+
+  if (!photo.r2_url) {
+    photo.r2_url = imageUrls[0];
   }
 }
 
 const roomList = `PROPERTY ADDRESS: ${body.address}\n\nROOMS:\n${body.room_photos
-  .map(
-    (photo) =>
-      `- ${photo.label} (${photo.duration_seconds || body.seconds_per_room || 5}s): ${photo.r2_url}`,
-  )
+  .map((photo) => {
+    const urls = resolvePhotoImageUrls(photo);
+    const duration = photo.duration_seconds || body.seconds_per_room || 5;
+    const urlLines = urls
+      .map((url, index) => `  - @Image${index + 1}: ${url}`)
+      .join("\n");
+    const multiNote =
+      urls.length > 1
+        ? `\n  (${urls.length} reference photos — write higgsfield_prompt using @Image1, @Image2, etc.)`
+        : "";
+    return `- ${photo.label} (${duration}s):\n${urlLines}${multiNote}`;
+  })
   .join("\n")}`;
 
 const roomCount = body.room_photos.length;

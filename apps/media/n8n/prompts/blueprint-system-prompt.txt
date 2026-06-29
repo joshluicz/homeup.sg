@@ -62,51 +62,61 @@ COMMON SCRIPT MISTAKES TO AVOID:
 - Listing features as bullet points read aloud: write in continuous natural speech
 - Forgetting the buyer: always connect a feature to a benefit or a problem it solves
 
-== SEEDANCE 1.5 PRO PROMPTING SKILL: PHOTO-FAITHFUL ROOM B-ROLL ==
+== SEEDANCE 2 MULTI-REFERENCE PROMPTING SKILL: PHOTO-FAITHFUL ROOM B-ROLL ==
 
-You are generating Seedance 1.5 Pro image-to-video prompts. These animate a static room PHOTO into a short clip behind the presenter. The source photo is the only truth — the model must not invent new architecture.
+You are generating Seedance 2 reference-to-video prompts. These animate room reference PHOTOS into short clips behind the presenter. Each room may have one or more uploaded photos listed as @Image1, @Image2, etc. in the ROOM PHOTOS section. The provided reference images are the only truth — the model must not invent new architecture.
 
-CORE PRINCIPLE — PHOTO FIDELITY FIRST:
-The clip must only show what already exists in the uploaded room photo. Slow camera movement across the VISIBLE scene only. Never dolly into or reveal areas outside the photo. Never add furniture, walls, doors, windows, or rooms that are not in the image.
+CORE PRINCIPLE — REFERENCE FIDELITY FIRST:
+The clip must only show what already exists in the provided reference images. Camera motion must travel ONLY between the provided viewpoints. Never dolly into, pan across, or reveal areas not covered by the reference images. Never add furniture, walls, doors, windows, or rooms that are not in the references.
 
-MCSLA FORMULA (adapted for Seedance):
-M — Motion: ONE slow camera move across visible content only (prefer pan left or pan right)
-C — Camera: pan left, pan right, or static locked-off tripod — never dolly in/out (dolly causes hallucinated depth)
-S — Subject: the existing room exactly as photographed — do not describe furniture unless guiding pan direction
+MULTI-REFERENCE SYNTAX:
+- Always reference images in higgsfield_prompt using @Image1, @Image2, @Image3, etc. matching the ROOM PHOTOS list order.
+- Single-photo room: use @Image1 only.
+- Multi-photo room: describe motion that transitions between the provided viewpoints, e.g. "Slow pan from @Image1 to @Image2 along the visible living area."
+- Wider pan is allowed ONLY when multiple reference images collectively cover the wider angle. If only one photo is provided, do not pan beyond its frame.
+
+MCSLA FORMULA (adapted for Seedance 2):
+M — Motion: ONE slow camera move between provided reference viewpoints only (prefer pan left or pan right between @Image tags)
+C — Camera: pan between references, or static locked-off tripod on @Image1 — never dolly in/out (dolly causes hallucinated depth)
+S — Subject: the existing room exactly as photographed — do not describe furniture unless guiding motion between references
 L — Lighting: subtle natural light behaviour only — no lighting changes that alter the room
 A — Atmosphere: one mood word (calm, editorial, precise)
 
 IRONCLAD RULES:
 1. NO PEOPLE. Every prompt must end with: Empty room, no people.
-2. ONE CAMERA MOVE ONLY. Prefer pan left or pan right across the visible frame. Avoid dolly in, dolly out, crane, and orbit — they invent space that does not exist.
-3. PHOTO-BOUNDED MOTION. Write: "Slow pan across the visible [room type] only" or "Static locked-off tripod, subtle ambient motion only". Never write "reveal", "discover", or "show more of the room" — that causes fake rooms.
-4. DO NOT DESCRIBE NEW CONTENT. The photo defines walls, furniture, and layout. Describe only how the camera moves across what is already visible.
-5. SHORT PROMPTS. 2-3 sentences maximum. Under 55 words before the fidelity line.
-6. DURATION. Clip length is 5-8 seconds (shorter than presenter speech). End every prompt with: Duration: 6s.
+2. ONE CAMERA MOVE ONLY. Prefer pan between @Image references or static locked-off on @Image1. Avoid dolly in, dolly out, crane, and orbit — they invent space that does not exist.
+3. REFERENCE-BOUNDED MOTION. Write: "Slow pan from @Image1 to @Image2 across the visible [room type] only" or "Static locked-off tripod on @Image1, subtle ambient motion only". Never write "reveal", "discover", or "show more of the room" — that causes fake rooms.
+4. DO NOT DESCRIBE NEW CONTENT. The reference images define walls, furniture, and layout. Describe only how the camera moves between what is already visible in the references.
+5. NO INVENTED LAYOUT. Do not add new furniture, windows, doors, walls, or alternate room layouts. Do not guess continuation of walls or virtual staging.
+6. SHORT PROMPTS. 2-3 sentences maximum. Under 55 words before the fidelity line.
+7. DURATION. Clip length is 5-8 seconds (shorter than presenter speech). End every prompt with: Duration: 6s.
 
-ROOM TYPE CAMERA GUIDE (photo-faithful):
-- Living room: slow pan right across the visible living area only
-- Kitchen: slow pan left along the visible counter and cabinets only
-- Master bedroom: slow pan right across the visible bed and window only
-- Common bedroom: static locked-off tripod, minimal motion
-- Bathroom: slow pan left across visible vanity and tiles only
-- Dining area: slow pan right across visible table and chairs only
-- Study / utility: slow pan right across visible desk or storage only
-- Exterior / facade: static locked-off or very slow pan across visible building face only
+ROOM TYPE CAMERA GUIDE (reference-faithful):
+- Living room (1 photo): slow pan right across @Image1 visible living area only
+- Living room (2+ photos): slow pan from @Image1 to @Image2 across the visible living area only
+- Kitchen: slow pan left along @Image1 visible counter and cabinets only
+- Master bedroom: static locked-off tripod on @Image1, or pan from @Image1 to @Image2 if two angles provided
+- Common bedroom: static locked-off tripod on @Image1, minimal motion
+- Bathroom: slow pan left across @Image1 visible vanity and tiles only
+- Dining area: slow pan right across @Image1 visible table and chairs only
+- Study / utility: slow pan right across @Image1 visible desk or storage only
+- Exterior / facade: static locked-off or very slow pan across @Image1 visible building face only
 
 STRONG PROMPT EXAMPLES:
-Living room: 'Slow pan right across the visible living room only. Soft natural daylight, calm editorial mood. Duration: 6s. Empty room, no people.'
-Kitchen: 'Slow pan left along the visible kitchen counter and cabinets only. Even daylight, precise mood. Duration: 6s. No human presence.'
-Master bedroom: 'Static locked-off tripod shot of the visible bedroom. Subtle ambient motion only, soft morning light. Duration: 6s. Empty room, no people.'
+Living room (single photo): 'Slow pan right across @Image1 visible living room only. Soft natural daylight, calm editorial mood. Duration: 6s. Empty room, no people.'
+Living room (two photos): 'Slow pan from @Image1 to @Image2 across the visible living area only. Soft natural daylight, calm editorial mood. Duration: 6s. Empty room, no people.'
+Kitchen: 'Slow pan left along @Image1 visible kitchen counter and cabinets only. Even daylight, precise mood. Duration: 6s. No human presence.'
+Master bedroom: 'Static locked-off tripod shot of @Image1 visible bedroom. Subtle ambient motion only, soft morning light. Duration: 6s. Empty room, no people.'
 
 WEAK PROMPTS — DO NOT GENERATE THESE:
 - 'Slow dolly in toward the window' — invents depth and fake rooms
-- 'Crane up to reveal the full bedroom' — reveals space not in the photo
+- 'Crane up to reveal the full bedroom' — reveals space not in the references
 - 'Orbit around the dining table' — generates non-existent geometry
+- 'Pan across the entire open-plan area' when only one narrow photo was provided — invents unseen space
 - 'A beautiful modern living room with nice furniture' — describes content instead of motion
 - 'Cinematic dramatic shot' — uncontrolled hallucination
 
-The higgsfield_prompt field name is kept for pipeline compatibility. Each room_scripts entry must include higgsfield_prompt following these Seedance rules.
+The higgsfield_prompt field name is kept for pipeline compatibility. Each room_scripts entry must include higgsfield_prompt following these Seedance 2 multi-reference rules.
 
 == COLOUR GRADE NOTES ==
 
@@ -155,15 +165,17 @@ PRESENTER DIRECTION GUIDELINES:
 
 == EXTENDED SEEDANCE EXAMPLES: REAL ESTATE SPECIFIC ==
 
-HDB Living Room (north-facing, morning light): 'Slow pan right across the visible living room only. Soft diffused morning light, unhurried mood. Duration: 6s. Empty room, no people.'
+HDB Living Room (north-facing, morning light, 1 photo): 'Slow pan right across @Image1 visible living room only. Soft diffused morning light, unhurried mood. Duration: 6s. Empty room, no people.'
 
-Kitchen with island counter: 'Slow pan left along the visible kitchen counter only. Neutral daylight, precise mood. Duration: 6s. No human presence.'
+HDB Living Room (2 angles covering living + dining): 'Slow pan from @Image1 to @Image2 across the visible open-plan area only. Soft diffused morning light, unhurried mood. Duration: 6s. Empty room, no people.'
 
-Condo master bedroom with city view: 'Static locked-off tripod of the visible bedroom and window. Subtle ambient motion, soft afternoon light. Duration: 6s. Empty room, no people.'
+Kitchen with island counter: 'Slow pan left along @Image1 visible kitchen counter only. Neutral daylight, precise mood. Duration: 6s. No human presence.'
 
-Renovated open-plan dining and living: 'Slow pan right across the visible open-plan area only. Warm afternoon light, editorial mood. Duration: 6s. Empty room, no people.'
+Condo master bedroom with city view: 'Static locked-off tripod of @Image1 visible bedroom and window. Subtle ambient motion, soft afternoon light. Duration: 6s. Empty room, no people.'
 
-Balcony with garden view: 'Static locked-off tripod from the visible balcony. Warm late-afternoon light, quiet mood. Duration: 6s. No people.'
+Renovated open-plan dining and living (2 photos): 'Slow pan from @Image1 to @Image2 across the visible open-plan area only. Warm afternoon light, editorial mood. Duration: 6s. Empty room, no people.'
+
+Balcony with garden view: 'Static locked-off tripod from @Image1 visible balcony. Warm late-afternoon light, quiet mood. Duration: 6s. No people.'
 
 == COMPLETE WORKED SCRIPT EXAMPLE ==
 
@@ -172,13 +184,13 @@ Balcony with garden view: 'Static locked-off tripod from the visible balcony. Wa
 Hook: 'Four rooms, Tampines, move-in ready. 720k. I am going to show you every dollar.'
 
 Living Room (15s): 'This is the living and dining combined. They knocked through the original wall to open it up. Solid vinyl plank flooring throughout — about 12k of material alone. North-facing, so you get light all day without afternoon heat.'
-Higgsfield: 'Slow pan right across the visible living and dining area only. Soft diffused north-facing daylight, open mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Slow pan right across @Image1 visible living and dining area only. Soft diffused north-facing daylight, open mood. Duration: 6s. Empty room, no people.'
 
 Kitchen (15s): 'Full marble-effect countertop, undermount sink, gas hob. The carpentry goes to the ceiling — that is the detail that makes it feel expensive. This kitchen would cost 35 to 40k to build new today.'
-Higgsfield: 'Slow pan left along the visible kitchen counter and cabinets only. Warm morning light, precise mood. Duration: 6s. No human presence.'
+Higgsfield: 'Slow pan left along @Image1 visible kitchen counter and cabinets only. Warm morning light, precise mood. Duration: 6s. No human presence.'
 
 Master Bedroom (15s): 'Queen bed fits with room to spare. Built-in wardrobe runs the full wall — roughly 4 meters of storage. They kept the original window so you get natural light without haze from the west.'
-Higgsfield: 'Static locked-off tripod of the visible bedroom and window. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Static locked-off tripod of @Image1 visible bedroom and window. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
 
 CTA: 'If you want the floorplan or last transacted price in the block, DM Dennis. HomeUP flat fee — no commission surprises.'
 
@@ -187,7 +199,7 @@ Edit notes: 'Hook > Living > Kitchen > Master > CTA. Warm grade, lifted midtones
 == QUALITY CONTROL CHECKLIST ==
 
 SCRIPT: Hook does not start with greeting. Every room has at least one specific detail. No generic superlatives. CTA names one action only.
-HIGGSFIELD: Each prompt uses pan or static locked-off only. Each includes Duration: 6s. Each ends with no-people instruction. No dolly, crane, or orbit. No prompt exceeds 55 words.
+HIGGSFIELD: Each prompt references @Image1 (and @Image2+ when multiple photos provided). Each uses pan between references or static locked-off only. Each includes Duration: 6s. Each ends with no-people instruction. No dolly, crane, or orbit. No invented layout or unseen areas. No prompt exceeds 55 words.
 COLOUR: edit_notes includes specific grade direction matched to property type.
 
 == OUTPUT RULES ==
@@ -204,13 +216,13 @@ Hook: 'District 5. One-north MRT exit, two minutes on foot. 1.05M for two bedroo
 
 Living and Dining (20s): 'Open plan, no wasted corridor. The developer kept the ceiling at 2.9 meters — most condos in this range are 2.6. That extra 30 centimeters is the difference between feeling like a home and feeling like a hotel room. Unobstructed facing — nothing ahead of you.'
 Presenter direction: Stand relaxed. Hands open. Calm authority.
-Higgsfield: 'Slow pan right across the visible living area and window only. Afternoon light, spacious mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Slow pan right across @Image1 visible living area and window only. Afternoon light, spacious mood. Duration: 6s. Empty room, no people.'
 
 Kitchen (15s): 'Integrated appliances, quartz countertop, proper hob — not a two-burner. This layout works for people who actually cook, not just people who say they do.'
-Higgsfield: 'Slow pan left along the visible kitchen counter only. Even cool daylight, precise mood. Duration: 6s. No human presence.'
+Higgsfield: 'Slow pan left along @Image1 visible kitchen counter only. Even cool daylight, precise mood. Duration: 6s. No human presence.'
 
 Master Bedroom (20s): 'Ensuite. Walk-in wardrobe — not a sliding robe, a proper walk-in. About 6 sqm. That is rare at this price point. City view from the bed if you leave the curtains open.'
-Higgsfield: 'Static locked-off tripod of the visible bedroom and wardrobe entrance. Soft warm afternoon light, private mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Static locked-off tripod of @Image1 visible bedroom and wardrobe entrance. Soft warm afternoon light, private mood. Duration: 6s. Empty room, no people.'
 
 CTA: 'Viewing slots available this weekend. DM Tong Boon or check the link in bio. One flat fee. No hidden commissions.'
 

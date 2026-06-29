@@ -22,6 +22,7 @@ async function processRoom(item) {
         blueprint_id: item.blueprint_id,
         label: item.label,
         r2_url: item.r2_url,
+        image_urls: item.image_urls,
         higgsfield_prompt: item.higgsfield_prompt,
         duration_seconds: item.duration_seconds,
       },
@@ -36,6 +37,7 @@ async function processRoom(item) {
   }
 
   const jobId = startRes?.job_id ?? startRes?.higgsfield_job_id;
+  const falModel = startRes?.diagnostics?.fal_model;
   if (!startRes?.success || !jobId) {
     return {
       ...item,
@@ -57,7 +59,12 @@ async function processRoom(item) {
     try {
       statusRes = await postClip.call(
         this,
-        { action: "status", job_id: jobId, label: item.label },
+        {
+          action: "status",
+          job_id: jobId,
+          label: item.label,
+          fal_model: falModel,
+        },
         20000,
       );
     } catch (error) {
@@ -93,7 +100,12 @@ async function processRoom(item) {
       try {
         resultRes = await postClip.call(
           this,
-          { action: "result", job_id: jobId, label: item.label },
+          {
+            action: "result",
+            job_id: jobId,
+            label: item.label,
+            fal_model: falModel,
+          },
           45000,
         );
       } catch (error) {

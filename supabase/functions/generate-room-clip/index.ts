@@ -1,7 +1,9 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { fal } from "npm:@fal-ai/client";
 
-const FAL_MODEL = "fal-ai/bytedance/seedance/v1.5/pro/image-to-video";
+const FAL_MODEL_SEEDANCE_2 = "bytedance/seedance-2.0/reference-to-video";
+const FAL_MODEL_SEEDANCE_15 =
+  "fal-ai/bytedance/seedance/v1.5/pro/image-to-video";
 const SUBMIT_TIMEOUT_MS = 30_000;
 const STATUS_TIMEOUT_MS = 12_000;
 const RESULT_TIMEOUT_MS = 30_000;
@@ -13,10 +15,12 @@ type ClipRequest = {
   blueprint_id?: string;
   label?: string;
   r2_url?: string;
+  image_urls?: string[];
   higgsfield_prompt?: string;
   duration_seconds?: number;
   job_id?: string;
   request_id?: string;
+  fal_model?: string;
 };
 
 type ClipDiagnostics = {
@@ -25,6 +29,8 @@ type ClipDiagnostics = {
   last_error?: string;
   fal_request_id?: string;
   fal_status?: string;
+  fal_model?: string;
+  image_count?: number;
 };
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -59,12 +65,80 @@ function configureFal(): void {
   fal.config({ credentials: getFalApiKey() });
 }
 
-function buildFalInput(
+function resolveImageUrls(body: ClipRequest): string[] {
+  const fromArray = body.image_urls?.filter(
+    (url) => typeof url === "string" && url.trim() !== "",
+  );
+  if (fromArray?.length) {
+    return fromArray;
+  }
+  if (body.r2_url?.trim()) {
+    return [body.r2_url.trim()];
+  }
+  return [];
+}
+
+function resolveFalModel(body: ClipRequest, imageUrls: string[]): string {
+  if (body.fal_model === FAL_MODEL_SEEDANCE_2 || body.fal_model === FAL_MODEL_SEEDANCE_15) {
+    return body.fal_model;
+  }
+  if (imageUrls.length >= 1) {
+    return FAL_MODEL_SEEDANCE_2;
+  }
+  return FAL_MODEL_SEEDANCE_2;
+}
+
+function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
+  const trimmed = roomPrompt.trim();
+  const isMultiRef = imageCount > 1;
+  const fidelitySuffix = isMultiRef
+    ? "Reference-faithful animation only: move the camera only between the provided reference viewpoints. " +
+      "Use @Image1 through @Image" +
+      String(imageCount) +
+      " as the only factual sources. " +
+      "Do not invent walls, doors, windows, furniture, or rooms not shown in the reference images. " +
+      "Keep architecture, layout, colours, and objects identical to the references. " +
+      "Empty room, no people."
+    : "Photo-faithful animation only: slow camera movement across the visible scene in @Image1. " +
+      "Do not invent new walls, doors, windows, furniture, or rooms. " +
+      "Keep architecture, layout, colours, and objects identical to the reference image. " +
+      "Empty room, no people.";
+
+  if (
+    /photo-faithful|reference image|reference viewpoints|source photo|@Image\d/i.test(
+      trimmed,
+    )
+  ) {
+    return trimmed;
+  }
+
+  return `${trimmed} ${fidelitySuffix}`;
+}
+
+function buildSeedance2Input(
+  image_urls: string[],
+  higgsfield_prompt: string,
+  duration_seconds?: number,
+) {
+  const prompt = buildSeedancePrompt(higgsfield_prompt, image_urls.length);
+  const clipDuration = Math.min(Math.max(duration_seconds ?? 6, 4), 8);
+
+  return {
+    image_urls,
+    prompt,
+    duration: String(clipDuration),
+    aspect_ratio: "9:16",
+    resolution: "720p",
+    generate_audio: false,
+  };
+}
+
+function buildSeedance15Input(
   r2_url: string,
   higgsfield_prompt: string,
   duration_seconds?: number,
 ) {
-  const prompt = buildSeedancePrompt(higgsfield_prompt);
+  const prompt = buildSeedancePrompt(higgsfield_prompt, 1);
   const clipDuration = Math.min(Math.max(duration_seconds ?? 6, 4), 8);
   const wantsPan = /\bpan\b/i.test(higgsfield_prompt);
   const wantsStatic =
@@ -79,21 +153,6 @@ function buildFalInput(
     generate_audio: false,
     camera_fixed: wantsStatic || !wantsPan,
   };
-}
-
-function buildSeedancePrompt(roomPrompt: string): string {
-  const trimmed = roomPrompt.trim();
-  const fidelitySuffix =
-    "Photo-faithful animation only: slow camera movement across the visible scene in the reference image. " +
-    "Do not invent new walls, doors, windows, furniture, or rooms. " +
-    "Keep architecture, layout, colours, and objects identical to the source photo. " +
-    "Empty room, no people.";
-
-  if (/photo-faithful|reference image|source photo/i.test(trimmed)) {
-    return trimmed;
-  }
-
-  return `${trimmed} ${fidelitySuffix}`;
 }
 
 function resolveAction(body: ClipRequest): ClipAction {
@@ -125,30 +184,51 @@ function extractVideoUrl(data: Record<string, unknown> | undefined): string | nu
 }
 
 async function handleStart(body: ClipRequest): Promise<Response> {
-  const { blueprint_id, label, r2_url, higgsfield_prompt, duration_seconds } =
-    body;
+  const { blueprint_id, label, higgsfield_prompt, duration_seconds } = body;
+  const image_urls = resolveImageUrls(body);
 
-  if (!blueprint_id || !label || !r2_url || !higgsfield_prompt) {
+  if (!blueprint_id || !label || !higgsfield_prompt) {
     return jsonResponse(
       {
         success: false,
         error:
-          "Missing required fields: blueprint_id, label, r2_url, higgsfield_prompt",
+          "Missing required fields: blueprint_id, label, higgsfield_prompt",
       },
       400,
     );
   }
 
+  if (image_urls.length === 0) {
+    return jsonResponse(
+      {
+        success: false,
+        error:
+          "Missing required image: provide image_urls or r2_url with at least one URL",
+      },
+      400,
+    );
+  }
+
+  const falModel = resolveFalModel(body, image_urls);
   const startedAt = Date.now();
 
   try {
     configureFal();
 
-    console.log(`[${label}] Submitting fal Seedance 1.5 Pro job`);
+    const input =
+      falModel === FAL_MODEL_SEEDANCE_2
+        ? buildSeedance2Input(image_urls, higgsfield_prompt, duration_seconds)
+        : buildSeedance15Input(
+            image_urls[0],
+            higgsfield_prompt,
+            duration_seconds,
+          );
+
+    console.log(
+      `[${label}] Submitting fal ${falModel} job (${image_urls.length} image(s))`,
+    );
     const submitted = await Promise.race([
-      fal.queue.submit(FAL_MODEL, {
-        input: buildFalInput(r2_url, higgsfield_prompt, duration_seconds),
-      }),
+      fal.queue.submit(falModel, { input }),
       new Promise<never>((_, reject) => {
         setTimeout(
           () => reject(new Error("fal submit timed out after 30s")),
@@ -170,6 +250,8 @@ async function handleStart(body: ClipRequest): Promise<Response> {
         stage: "submit",
         elapsed_ms: Date.now() - startedAt,
         fal_request_id: request_id,
+        fal_model: falModel,
+        image_count: image_urls.length,
       } satisfies ClipDiagnostics,
     });
   } catch (err) {
@@ -185,6 +267,8 @@ async function handleStart(body: ClipRequest): Promise<Response> {
         stage: "submit",
         elapsed_ms: Date.now() - startedAt,
         last_error: message,
+        fal_model: falModel,
+        image_count: image_urls.length,
       } satisfies ClipDiagnostics,
     });
   }
@@ -193,6 +277,7 @@ async function handleStart(body: ClipRequest): Promise<Response> {
 async function handleStatus(body: ClipRequest): Promise<Response> {
   const requestId = body.job_id ?? body.request_id;
   const label = body.label ?? "room";
+  const falModel = resolveFalModel(body, resolveImageUrls(body));
 
   if (!requestId) {
     return jsonResponse({ success: false, error: "Missing job_id" }, 400);
@@ -204,12 +289,12 @@ async function handleStatus(body: ClipRequest): Promise<Response> {
     configureFal();
 
     const status = await withTimeout(
-      fal.queue.status(FAL_MODEL, { requestId, logs: false }),
+      fal.queue.status(falModel, { requestId, logs: false }),
       STATUS_TIMEOUT_MS,
       "fal status",
     );
     const falStatus = normalizeFalStatus(status.status);
-    console.log(`[${label}] Status: ${falStatus}`);
+    console.log(`[${label}] Status (${falModel}): ${falStatus}`);
 
     if (falStatus === "FAILED") {
       return jsonResponse({
@@ -224,6 +309,7 @@ async function handleStatus(body: ClipRequest): Promise<Response> {
           elapsed_ms: Date.now() - startedAt,
           fal_request_id: requestId,
           fal_status: falStatus,
+          fal_model: falModel,
         } satisfies ClipDiagnostics,
       });
     }
@@ -240,6 +326,7 @@ async function handleStatus(body: ClipRequest): Promise<Response> {
           elapsed_ms: Date.now() - startedAt,
           fal_request_id: requestId,
           fal_status: falStatus,
+          fal_model: falModel,
         } satisfies ClipDiagnostics,
       });
     }
@@ -254,6 +341,7 @@ async function handleStatus(body: ClipRequest): Promise<Response> {
         elapsed_ms: Date.now() - startedAt,
         fal_request_id: requestId,
         fal_status: falStatus || "IN_PROGRESS",
+        fal_model: falModel,
       } satisfies ClipDiagnostics,
     });
   } catch (err) {
@@ -272,6 +360,7 @@ async function handleStatus(body: ClipRequest): Promise<Response> {
         elapsed_ms: Date.now() - startedAt,
         fal_request_id: requestId,
         last_error: message,
+        fal_model: falModel,
       } satisfies ClipDiagnostics,
     });
   }
@@ -280,6 +369,7 @@ async function handleStatus(body: ClipRequest): Promise<Response> {
 async function handleResult(body: ClipRequest): Promise<Response> {
   const requestId = body.job_id ?? body.request_id;
   const label = body.label ?? "room";
+  const falModel = resolveFalModel(body, resolveImageUrls(body));
 
   if (!requestId) {
     return jsonResponse({ success: false, error: "Missing job_id" }, 400);
@@ -291,7 +381,7 @@ async function handleResult(body: ClipRequest): Promise<Response> {
     configureFal();
 
     const result = await withTimeout(
-      fal.queue.result(FAL_MODEL, { requestId }),
+      fal.queue.result(falModel, { requestId }),
       RESULT_TIMEOUT_MS,
       "fal result",
     );
@@ -315,6 +405,7 @@ async function handleResult(body: ClipRequest): Promise<Response> {
         stage: "completed",
         elapsed_ms: Date.now() - startedAt,
         fal_request_id: requestId,
+        fal_model: falModel,
       } satisfies ClipDiagnostics,
     });
   } catch (err) {
@@ -332,6 +423,7 @@ async function handleResult(body: ClipRequest): Promise<Response> {
         elapsed_ms: Date.now() - startedAt,
         fal_request_id: requestId,
         last_error: message,
+        fal_model: falModel,
       } satisfies ClipDiagnostics,
     });
   }
