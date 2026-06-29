@@ -547,6 +547,9 @@ export default function GeneratePage() {
   const [creatingUploadJob, setCreatingUploadJob] = useState(false);
   const [uploadJobId, setUploadJobId] = useState<string | null>(null);
   const [declutteringRoomId, setDeclutteringRoomId] = useState<string | null>(null);
+  const [declutterErrors, setDeclutterErrors] = useState<Record<string, string>>(
+    {},
+  );
 
   const roomPhotoUrlsRef = useRef<Map<string, string>>(new Map());
   const declutterSessionRef = useRef(crypto.randomUUID());
@@ -851,6 +854,11 @@ export default function GeneratePage() {
 
     setDeclutteringRoomId(roomId);
     setError(null);
+    setDeclutterErrors((prev) => {
+      const next = { ...prev };
+      delete next[roomId];
+      return next;
+    });
 
     try {
       const uploadedRoom = await ensureRoomPhotosUploaded(room);
@@ -906,7 +914,9 @@ export default function GeneratePage() {
         ),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Declutter failed.");
+      const message = err instanceof Error ? err.message : "Declutter failed.";
+      setError(message);
+      setDeclutterErrors((prev) => ({ ...prev, [roomId]: message }));
     } finally {
       setDeclutteringRoomId(null);
     }
@@ -2032,6 +2042,7 @@ export default function GeneratePage() {
                 key={room.id}
                 room={room}
                 decluttering={declutteringRoomId === room.id}
+                declutterError={declutterErrors[room.id] ?? null}
                 onLabelChange={(label) => updateRoom(room.id, { label })}
                 onDurationChange={(durationSeconds) =>
                   updateRoom(room.id, { durationSeconds })
@@ -2157,6 +2168,7 @@ function RoomBlueprintMedia({
 function RoomPhotoCard({
   room,
   decluttering,
+  declutterError,
   onLabelChange,
   onDurationChange,
   onAddPhotos,
@@ -2168,6 +2180,7 @@ function RoomPhotoCard({
 }: {
   room: RoomEntry;
   decluttering: boolean;
+  declutterError: string | null;
   onLabelChange: (label: string) => void;
   onDurationChange: (durationSeconds: number) => void;
   onAddPhotos: (files: File[]) => void;
@@ -2283,6 +2296,12 @@ function RoomPhotoCard({
           {decluttering ? "Decluttering…" : "Declutter photos"}
         </button>
       </div>
+
+      {declutterError && (
+        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          {declutterError}
+        </p>
+      )}
 
       {hasCleanedPhotos && (
         <label className="mb-3 flex items-center gap-2 text-sm text-neutral-700">

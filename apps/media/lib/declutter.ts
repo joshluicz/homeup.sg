@@ -10,6 +10,7 @@ export const DEFAULT_DECLUTTER_INSTRUCTIONS =
   "Do not add new furniture. Do not redesign or restyle the room.";
 
 const FAL_MODEL = "fal-ai/finegrain-eraser";
+type DeclutterMode = "express" | "standard" | "premium";
 
 function slugifyLabel(label: string): string {
   return label
@@ -57,16 +58,33 @@ export async function declutterImageToR2(options: {
   sourceUrl: string;
   r2Key: string;
   prompt?: string;
+  mode?: DeclutterMode;
 }): Promise<{ cleaned_r2_url: string; r2_key: string }> {
   fal.config({ credentials: getFalApiKey() });
 
-  const result = await fal.subscribe(FAL_MODEL, {
-    input: {
-      image_url: options.sourceUrl,
-      prompt: options.prompt ?? DEFAULT_DECLUTTER_ERASE_PROMPT,
-      mode: "standard",
-    },
-  });
+  const prompt = options.prompt ?? DEFAULT_DECLUTTER_ERASE_PROMPT;
+  const primaryMode = options.mode ?? "express";
+  const fallbackMode: DeclutterMode = primaryMode === "express" ? "standard" : "express";
+
+  const runDeclutter = (mode: DeclutterMode) =>
+    fal.subscribe(FAL_MODEL, {
+      input: {
+        image_url: options.sourceUrl,
+        prompt,
+        mode,
+      },
+    });
+
+  let result: Awaited<ReturnType<typeof fal.subscribe>>;
+  try {
+    result = await runDeclutter(primaryMode);
+  } catch (err) {
+    if (!isSegmentationTimeout(err)) {
+      throw err;
+    }
+
+    result = await runDeclutter(fallbackMode);
+  }
 
   const outputUrl = extractOutputUrl(result.data);
   const archived = await archiveRemoteFileToR2(outputUrl, options.r2Key);
@@ -75,4 +93,13 @@ export async function declutterImageToR2(options: {
     cleaned_r2_url: archived.r2_url,
     r2_key: options.r2Key,
   };
+}
+
+function isSegmentationTimeout(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const record = err as { body?: { detail?: unknown }; message?: unknown };
+  const detail =
+    typeof record.body?.detail === "string" ? record.body.detail : "";
+  const message = typeof record.message === "string" ? record.message : "";
+  return /segmentation mask|timeout/i.test(`${detail} ${message}`);
 }
