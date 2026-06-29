@@ -88,22 +88,50 @@ function resolveFalModel(body: ClipRequest, imageUrls: string[]): string {
   return FAL_MODEL_SEEDANCE_2;
 }
 
+/** Count how many distinct @Image{n} tokens (e.g. @Image1, @Image2) a prompt already contains. */
+function countImageReferences(prompt: string): number {
+  const matches = prompt.match(/@Image(\d+)/gi);
+  if (!matches) return 0;
+  const distinct = new Set(
+    matches.map((token) => token.toLowerCase().replace(/[^0-9]/g, "")),
+  );
+  return distinct.size;
+}
+
+/** "@Image1, @Image2, @Image3" for the given count. */
+function buildImageReferenceList(imageCount: number): string {
+  return Array.from(
+    { length: imageCount },
+    (_, index) => `@Image${index + 1}`,
+  ).join(", ");
+}
+
 function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
   const trimmed = roomPrompt.trim();
-  const isMultiRef = imageCount > 1;
-  const fidelitySuffix = isMultiRef
-    ? "Reference-faithful animation only: move the camera only between the provided reference viewpoints. " +
-      "Use @Image1 through @Image" +
-      String(imageCount) +
-      " as the only factual sources. " +
-      "Do not invent walls, doors, windows, furniture, or rooms not shown in the reference images. " +
-      "Keep architecture, layout, colours, and objects identical to the references. " +
-      "Empty room, no people."
-    : "Photo-faithful animation only: slow camera movement across the visible scene in @Image1. " +
-      "Do not invent new walls, doors, windows, furniture, or rooms. " +
-      "Keep architecture, layout, colours, and objects identical to the reference image. " +
-      "Empty room, no people.";
+  const refsPresent = countImageReferences(trimmed);
 
+  // Multi-reference rooms: Seedance only conditions on an image if the prompt
+  // names it. If Claude did not reference every image, append an explicit
+  // instruction so all reference photos are used and the camera traverses them.
+  if (imageCount > 1) {
+    if (refsPresent >= imageCount) {
+      return trimmed;
+    }
+
+    const refList = buildImageReferenceList(imageCount);
+    const multiRefSuffix =
+      `Use all reference images (${refList}) as equally weighted factual sources — ` +
+      `they are different angles of the same room. ` +
+      `Move the camera smoothly across the viewpoints shown in ${refList}, ` +
+      `treating them as one continuous space. ` +
+      `Do not invent walls, doors, windows, furniture, or rooms not shown in ${refList}. ` +
+      `Keep architecture, layout, colours, and objects identical to the references. ` +
+      `Empty room, no people.`;
+
+    return `${trimmed} ${multiRefSuffix}`;
+  }
+
+  // Single-reference rooms keep the existing photo-faithful behaviour.
   if (
     /photo-faithful|reference image|reference viewpoints|source photo|@Image\d/i.test(
       trimmed,
@@ -112,7 +140,13 @@ function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
     return trimmed;
   }
 
-  return `${trimmed} ${fidelitySuffix}`;
+  const singleRefSuffix =
+    "Photo-faithful animation only: slow camera movement across the visible scene in @Image1. " +
+    "Do not invent new walls, doors, windows, furniture, or rooms. " +
+    "Keep architecture, layout, colours, and objects identical to the reference image. " +
+    "Empty room, no people.";
+
+  return `${trimmed} ${singleRefSuffix}`;
 }
 
 function buildSeedance2Input(
