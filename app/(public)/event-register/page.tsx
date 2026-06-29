@@ -10,11 +10,12 @@ export const metadata: Metadata = {
 
 // ── Paste your Google Form published URL here once the form is created ──────
 // It looks like: https://docs.google.com/forms/d/e/<long-id>/viewform?embedded=true
-const GOOGLE_FORM_EMBED_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeCqQ33BT2QKF2kLfIM7iiKFKziehASRYbUT79qSW-EzNI_PQ/viewform?embedded=true";
+const GOOGLE_FORM_EMBED_URL =
+  "https://docs.google.com/forms/d/e/1FAIpQLSeCqQ33BT2QKF2kLfIM7iiKFKziehASRYbUT79qSW-EzNI_PQ/viewform?embedded=true";
 // ────────────────────────────────────────────────────────────────────────────
 
 export default function EventRegisterPage() {
-  const formReady = GOOGLE_FORM_EMBED_URL !== "PASTE_YOUR_GOOGLE_FORM_EMBED_URL_HERE";
+  const formReady = GOOGLE_FORM_EMBED_URL.includes("/forms/d/");
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] font-sans">
@@ -46,8 +47,8 @@ export default function EventRegisterPage() {
             HomeUP July 2026<br />Property Event
           </h1>
           <p className="text-blue-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Whether you're buying your first home, upgrading, or looking to invest —
-            join us for an exclusive evening with Singapore's top fixed-fee property
+            Whether you are buying your first home, upgrading, or looking to invest —
+            join us for an exclusive evening with Singapore&apos;s top fixed-fee property
             advisors. Get personalised advice, market insights, and exclusive deals,
             all under one roof.
           </p>
@@ -92,8 +93,8 @@ export default function EventRegisterPage() {
               About HomeUP
             </p>
             <p className="text-sm text-gray-600 leading-relaxed">
-              HomeUP is Singapore's fixed-fee property agency operated by C&amp;H Properties
-              Pte Ltd. We've closed 1,000+ transactions with transparent pricing from&nbsp;$1,999
+              HomeUP is Singapore&apos;s fixed-fee property agency operated by C&amp;H Properties
+              Pte Ltd. We have closed 1,000+ transactions with transparent pricing from&nbsp;$1,999
               — no hidden fees, no percentage commissions.
             </p>
           </div>
