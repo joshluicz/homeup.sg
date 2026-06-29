@@ -68,12 +68,118 @@ function resolveTenureValue(preset: TenurePreset | "", other: string): string {
 }
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200";
+  "w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none transition-colors duration-200 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200";
 const CARD_CLASS = "rounded-xl border border-neutral-200 bg-white p-6 shadow-sm";
 const SUBMIT_BTN_CLASS =
-  "w-full rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60 sm:w-auto sm:px-8";
+  "inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:px-8";
+const SECONDARY_BTN_CLASS =
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 transition-colors duration-200 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 disabled:cursor-not-allowed disabled:opacity-60";
+const TERTIARY_BTN_CLASS =
+  "inline-flex cursor-pointer items-center gap-1 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 transition-colors duration-200 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 disabled:cursor-not-allowed disabled:opacity-60";
 
 type PageState = "form" | "generating_blueprint" | "review" | "clips";
+
+type WizardStep = "form" | "review" | "clips";
+
+const WIZARD_STEPS: { id: WizardStep; label: string }[] = [
+  { id: "form", label: "Details" },
+  { id: "review", label: "Review" },
+  { id: "clips", label: "Clips" },
+];
+
+function wizardStep(state: PageState): WizardStep {
+  if (state === "review") return "review";
+  if (state === "clips") return "clips";
+  return "form";
+}
+
+function ChevronLeftIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M15 18l-6-6 6-6" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M20 6L9 17l-5-5" />
+    </svg>
+  );
+}
+
+function StepIndicator({ current }: { current: WizardStep }) {
+  const currentIndex = WIZARD_STEPS.findIndex((step) => step.id === current);
+
+  return (
+    <nav aria-label="Progress" className="mb-6">
+      <ol className="flex items-center">
+        {WIZARD_STEPS.map((step, index) => {
+          const isComplete = index < currentIndex;
+          const isCurrent = index === currentIndex;
+
+          return (
+            <li
+              key={step.id}
+              className={index === WIZARD_STEPS.length - 1 ? "flex items-center" : "flex flex-1 items-center"}
+            >
+              <span
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-200 ${
+                  isComplete
+                    ? "bg-neutral-900 text-white"
+                    : isCurrent
+                      ? "bg-neutral-900 text-white"
+                      : "bg-neutral-100 text-neutral-400"
+                }`}
+                aria-current={isCurrent ? "step" : undefined}
+              >
+                {isComplete ? <CheckIcon className="h-3.5 w-3.5" /> : index + 1}
+              </span>
+              <span
+                className={`ml-2 text-sm font-medium ${
+                  isCurrent
+                    ? "text-neutral-900"
+                    : isComplete
+                      ? "text-neutral-700"
+                      : "text-neutral-400"
+                }`}
+              >
+                {step.label}
+              </span>
+              {index < WIZARD_STEPS.length - 1 && (
+                <span
+                  className={`mx-3 h-px flex-1 transition-colors duration-200 ${
+                    isComplete ? "bg-neutral-300" : "bg-neutral-200"
+                  }`}
+                  aria-hidden
+                />
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
 
 type PropertyType = "HDB Flat" | "Condo" | "Landed" | "EC";
 type RenovationStatus =
@@ -508,7 +614,36 @@ async function uploadRoomPhoto(file: File, key: string): Promise<string> {
 
 export default function GeneratePage() {
   const [pageState, setPageState] = useState<PageState>("form");
+  const fromPopStateRef = useRef(false);
+  const didMountRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Keep the wizard (form → review → clips) in sync with browser history so the
+  // browser back button steps back through the flow instead of leaving /generate.
+  useEffect(() => {
+    window.history.replaceState({ step: "form" }, "");
+    const onPopState = (event: PopStateEvent) => {
+      const step = (event.state as { step?: WizardStep } | null)?.step ?? "form";
+      fromPopStateRef.current = true;
+      setPageState(step);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+
+  useEffect(() => {
+    if (pageState === "generating_blueprint") return;
+    if (fromPopStateRef.current) {
+      fromPopStateRef.current = false;
+      return;
+    }
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    const step = wizardStep(pageState);
+    window.history.pushState({ step }, "", `?step=${step}`);
+  }, [pageState]);
 
   const [address, setAddress] = useState("");
   const [listingTitle, setListingTitle] = useState("");
@@ -1235,7 +1370,7 @@ export default function GeneratePage() {
     return (
       <div className="mx-auto flex max-w-3xl flex-col items-center justify-center px-4 py-24">
         <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900"
+          className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900 motion-reduce:animate-none"
           aria-hidden
         />
         <p className="mt-4 text-sm font-medium text-neutral-900">
@@ -1250,11 +1385,22 @@ export default function GeneratePage() {
 
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-neutral-900">Review Blueprint</h1>
-          <p className="mt-1 text-sm text-neutral-600">
-            Check the generated script before creating room clips.
-          </p>
+        <StepIndicator current="review" />
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-neutral-900">Review Blueprint</h1>
+            <p className="mt-1 text-sm text-neutral-600">
+              Check the generated script before creating room clips.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => window.history.back()}
+            className={SECONDARY_BTN_CLASS}
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+            Back
+          </button>
         </div>
 
         {error && (
@@ -1442,6 +1588,7 @@ export default function GeneratePage() {
 
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
+        <StepIndicator current="clips" />
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-neutral-900">
@@ -1455,9 +1602,10 @@ export default function GeneratePage() {
           </div>
           <button
             type="button"
-            onClick={() => setPageState("form")}
-            className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50"
+            onClick={() => window.history.back()}
+            className={SECONDARY_BTN_CLASS}
           >
+            <ChevronLeftIcon className="h-4 w-4" />
             Back
           </button>
         </div>
@@ -1539,7 +1687,7 @@ export default function GeneratePage() {
                       {clip.mediaFileId && (
                         <a
                           href={`/api/clips/download?id=${clip.mediaFileId}`}
-                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+                          className={TERTIARY_BTN_CLASS}
                         >
                           Download
                         </a>
@@ -1548,7 +1696,7 @@ export default function GeneratePage() {
                         href={clip.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+                        className={TERTIARY_BTN_CLASS}
                       >
                         Open
                       </a>
@@ -1595,6 +1743,7 @@ export default function GeneratePage() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
+      <StepIndicator current="form" />
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-neutral-900">Generate Video</h1>
         <p className="mt-1 text-sm text-neutral-600">
@@ -1631,7 +1780,7 @@ export default function GeneratePage() {
                     loadingBlueprintId === item.id ||
                     deletingBlueprintId === item.id
                   }
-                  className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-lg px-2 py-3 text-left hover:bg-neutral-50 disabled:opacity-60"
+                  className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors duration-200 hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-neutral-900">
@@ -1652,7 +1801,7 @@ export default function GeneratePage() {
                     disabled={
                       deletingBlueprintId === item.id || loadingBlueprintId === item.id
                     }
-                    className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+                    className={SECONDARY_BTN_CLASS}
                     aria-label={`Edit draft for ${item.property_name}`}
                   >
                     Edit
@@ -1665,7 +1814,7 @@ export default function GeneratePage() {
                     disabled={
                       deletingBlueprintId === item.id || loadingBlueprintId === item.id
                     }
-                    className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+                    className={SECONDARY_BTN_CLASS}
                   >
                     Clips
                   </button>
@@ -1674,7 +1823,7 @@ export default function GeneratePage() {
                   type="button"
                   onClick={() => handleDeleteBlueprint(item.id, item.property_name)}
                   disabled={deletingBlueprintId === item.id}
-                  className="shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                  className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border border-neutral-200 px-3 py-2 text-sm text-red-600 transition-colors duration-200 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-not-allowed disabled:opacity-60"
                   aria-label={`Delete blueprint for ${item.property_name}`}
                 >
                   {deletingBlueprintId === item.id ? "Deleting…" : "Delete"}
@@ -2021,7 +2170,7 @@ export default function GeneratePage() {
             <button
               type="button"
               onClick={addRoom}
-              className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+              className={TERTIARY_BTN_CLASS}
             >
               + Add room
             </button>
@@ -2283,7 +2432,7 @@ function RoomPhotoCard({
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50"
+          className={TERTIARY_BTN_CLASS}
         >
           + Add photo
         </button>
@@ -2291,7 +2440,7 @@ function RoomPhotoCard({
           type="button"
           onClick={onDeclutter}
           disabled={decluttering || !hasUploadedPhotos}
-          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-sm text-neutral-700 hover:bg-neutral-50 disabled:opacity-60"
+          className={TERTIARY_BTN_CLASS}
         >
           {decluttering ? "Decluttering…" : "Declutter photos"}
         </button>
