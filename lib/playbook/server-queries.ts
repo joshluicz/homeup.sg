@@ -132,7 +132,7 @@ export async function getAllPlaybookSlugs(): Promise<string[]> {
   const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("playbook_videos")
-    .select("slug, article, video_url, content_kind");
+    .select("slug, article, video_url");
 
   if (error) {
     console.warn("getAllPlaybookSlugs:", error.message);
@@ -156,7 +156,7 @@ export async function getPlaybookArticleSitemapEntries(): Promise<PlaybookArticl
   const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("playbook_videos")
-    .select("slug, article, video_url, content_kind, updated_at");
+    .select("slug, article, video_url, updated_at");
 
   if (error) {
     console.warn("getPlaybookArticleSitemapEntries:", error.message);
