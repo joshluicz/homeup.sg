@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
 import type { Listing, ListingFormData } from "./types";
 import { formDataToDbPayload, validateListingForm } from "./validation";
+import { triggerListingRevalidate } from "./revalidate-listings-client";
 
 function mapDbError(error: { code?: string; message: string }): Error {
   if (error.code === "23505") {
@@ -28,6 +29,7 @@ export async function createListing(
     .single();
 
   if (error) throw mapDbError(error);
+  await triggerListingRevalidate();
   return listing;
 }
 
@@ -53,6 +55,7 @@ export async function updateListing(
 
   if (error) throw mapDbError(error);
   if (!listing) throw new Error("Listing not found");
+  await triggerListingRevalidate();
   return listing;
 }
 
@@ -69,4 +72,5 @@ export async function deleteListing(listingId: string): Promise<void> {
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Listing not found");
+  await triggerListingRevalidate();
 }

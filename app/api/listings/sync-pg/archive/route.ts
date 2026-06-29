@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth";
 import { archiveRemovedPgListings } from "@/lib/listings/sync-pg-sources";
 import { purgeExpiredArchivedListings } from "@/lib/listings/purge-archived-listings";
+import { revalidateListingPaths } from "@/lib/listings/revalidate-listings";
 
 export async function POST() {
   const { supabase, error: authError } = await requireAuth();
@@ -10,6 +11,7 @@ export async function POST() {
   try {
     const archived = await archiveRemovedPgListings(supabase);
     const { purged } = await purgeExpiredArchivedListings(supabase);
+    if (archived.length > 0 || purged > 0) revalidateListingPaths();
     return NextResponse.json({ success: true, archived, purged });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Archive failed";
