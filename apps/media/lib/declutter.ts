@@ -9,8 +9,10 @@ export const DEFAULT_DECLUTTER_INSTRUCTIONS =
   "Preserve all permanent architecture, room dimensions, walls, floors, windows, doors, built-in cabinetry, major furniture, lighting direction, and camera angle. " +
   "Do not add new furniture. Do not redesign or restyle the room.";
 
-const FAL_MODEL = "fal-ai/finegrain-eraser";
-type DeclutterMode = "express" | "standard" | "premium";
+// Instruction-based editor (no segmentation step), reliable for whole-room
+// declutter. The previous finegrain-eraser kept timing out building a text
+// segmentation mask for the multi-object declutter prompt.
+const FAL_MODEL = "fal-ai/flux-pro/kontext";
 
 function slugifyLabel(label: string): string {
   return label
@@ -41,6 +43,16 @@ function extractOutputUrl(data: unknown): string {
   }
 
   const record = data as Record<string, unknown>;
+
+  const images = record.images;
+  if (Array.isArray(images) && images.length > 0) {
+    const first = images[0];
+    if (first && typeof first === "object" && "url" in first) {
+      const url = (first as { url?: unknown }).url;
+      if (typeof url === "string" && url) return url;
+    }
+  }
+
   const image = record.image;
   if (image && typeof image === "object" && "url" in image) {
     const url = (image as { url?: unknown }).url;
@@ -58,33 +70,15 @@ export async function declutterImageToR2(options: {
   sourceUrl: string;
   r2Key: string;
   prompt?: string;
-  mode?: DeclutterMode;
 }): Promise<{ cleaned_r2_url: string; r2_key: string }> {
   fal.config({ credentials: getFalApiKey() });
 
-  const prompt = options.prompt ?? DEFAULT_DECLUTTER_ERASE_PROMPT;
-  const primaryMode = options.mode ?? "express";
-  const fallbackMode: DeclutterMode = primaryMode === "express" ? "standard" : "express";
-
-  const runDeclutter = (mode: DeclutterMode) =>
-    fal.subscribe(FAL_MODEL, {
-      input: {
-        image_url: options.sourceUrl,
-        prompt,
-        mode,
-      },
-    });
-
-  let result: Awaited<ReturnType<typeof fal.subscribe>>;
-  try {
-    result = await runDeclutter(primaryMode);
-  } catch (err) {
-    if (!isSegmentationTimeout(err)) {
-      throw err;
-    }
-
-    result = await runDeclutter(fallbackMode);
-  }
+  const result = await fal.subscribe(FAL_MODEL, {
+    input: {
+      image_url: options.sourceUrl,
+      prompt: options.prompt ?? DEFAULT_DECLUTTER_INSTRUCTIONS,
+    },
+  });
 
   const outputUrl = extractOutputUrl(result.data);
   const archived = await archiveRemoteFileToR2(outputUrl, options.r2Key);
@@ -93,13 +87,4 @@ export async function declutterImageToR2(options: {
     cleaned_r2_url: archived.r2_url,
     r2_key: options.r2Key,
   };
-}
-
-function isSegmentationTimeout(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const record = err as { body?: { detail?: unknown }; message?: unknown };
-  const detail =
-    typeof record.body?.detail === "string" ? record.body.detail : "";
-  const message = typeof record.message === "string" ? record.message : "";
-  return /segmentation mask|timeout/i.test(`${detail} ${message}`);
 }
