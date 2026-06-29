@@ -138,8 +138,9 @@ function SetupGuide() {
       <ol className="space-y-3 text-sm text-amber-800 list-decimal list-inside">
         <li>
           Site tracking uses measurement ID{" "}
-          <code className="bg-amber-100 px-1 rounded">{GA_MEASUREMENT_ID}</code> (set via{" "}
-          <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_GA_MEASUREMENT_ID</code> in Vercel)
+          <code className="bg-amber-100 px-1 rounded">{GA_MEASUREMENT_ID}</code> (override with{" "}
+          <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_GA_MEASUREMENT_ID</code> in your
+          server env if needed)
         </li>
         <li>In GA4 → Admin → Data Streams → Enhanced Measurement → enable Scrolls &amp; Video Engagement</li>
         <li>
@@ -148,12 +149,12 @@ function SetupGuide() {
         </li>
         <li>In GA4 → Admin → Property Access Management → add the service account email as <strong>Viewer</strong></li>
         <li>
-          In Vercel → Project → Settings → Environment Variables, add{" "}
+          On the server that runs this Next.js app, add{" "}
           <code className="bg-amber-100 px-1 rounded">GA_SERVICE_ACCOUNT_JSON</code> (paste the full JSON key).
           Optional: <code className="bg-amber-100 px-1 rounded">GA_PROPERTY_ID</code> (numeric ID) — otherwise it is
           resolved automatically from {GA_MEASUREMENT_ID}.
         </li>
-        <li>Redeploy the site after saving env vars</li>
+        <li>Restart or redeploy after saving env vars</li>
       </ol>
     </div>
   );
@@ -205,7 +206,7 @@ export function AnalyticsTab() {
           result.error === "GA_API_ERROR"
             ? " Check that GA_PROPERTY_ID is the numeric Property ID (not the G-XXXX Measurement ID) and that the service account has Viewer access on the GA4 property."
             : result.error === "GA_AUTH_FAILED"
-              ? " The GA service-account key could not authenticate — re-check GA_SERVICE_ACCOUNT_JSON in Vercel."
+              ? " The GA service-account key could not authenticate — re-check GA_SERVICE_ACCOUNT_JSON on the server."
               : "";
         setError(`${result.error}${detail}.${hint}`);
         return;

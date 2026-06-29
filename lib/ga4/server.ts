@@ -159,7 +159,7 @@ export async function fetchGaAnalytics(days: number) {
     if (!propertyId) {
       return {
         error: "GA_API_ERROR" as const,
-        detail: `No GA4 property found for measurement ID ${measurementId}. Add GA_PROPERTY_ID in Vercel env or grant the service account Viewer access.`,
+        detail: `No GA4 property found for measurement ID ${measurementId}. Add GA_PROPERTY_ID to your server env or grant the service account Viewer access.`,
       };
     }
   }
