@@ -7,13 +7,14 @@ import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
 import { ScrollToTopButton } from "@/components/ui/ScrollToTopButton";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
 import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
 import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const GA_ID = GA_MEASUREMENT_ID;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
 
 const jakarta = Plus_Jakarta_Sans({

@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { createClient } from "@/lib/supabase/client";
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const GA_ID = GA_MEASUREMENT_ID;
 
 export function AnalyticsProvider() {
   const pathname = usePathname();

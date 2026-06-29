@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { BarChart2, Users, Eye, Clock, TrendingUp, MessageCircle, Play, FileText, Loader2, AlertCircle } from "lucide-react";
 
 // ── GA4 response helpers ──────────────────────────────────────────────────────
@@ -136,19 +136,24 @@ function SetupGuide() {
         </div>
       </div>
       <ol className="space-y-3 text-sm text-amber-800 list-decimal list-inside">
-        <li>Create a GA4 property at <strong>analytics.google.com</strong> and copy the Measurement ID (G-XXXXXXXX)</li>
-        <li>Add <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXX</code> to your GitHub Actions secrets</li>
-        <li>In GA4 → Admin → Data Streams → Enhanced Measurement → enable Scrolls &amp; Video Engagement</li>
-        <li>Go to <strong>Google Cloud Console</strong> → create a project → enable the Analytics Data API → create a Service Account → download the JSON key</li>
-        <li>In GA4 → Admin → Account Access Management → add the service account email as Viewer</li>
-        <li>In Supabase dashboard → Edge Functions → Secrets, add:
-          <ul className="mt-1 ml-4 space-y-1 list-disc">
-            <li><code className="bg-amber-100 px-1 rounded">GA_PROPERTY_ID</code> — numeric ID from GA4 Admin → Property Settings</li>
-            <li><code className="bg-amber-100 px-1 rounded">GA_SERVICE_ACCOUNT_JSON</code> — paste the full JSON key contents</li>
-          </ul>
+        <li>
+          Site tracking uses measurement ID{" "}
+          <code className="bg-amber-100 px-1 rounded">{GA_MEASUREMENT_ID}</code> (set via{" "}
+          <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_GA_MEASUREMENT_ID</code> in Vercel)
         </li>
-        <li>Deploy the Supabase Edge Function: <code className="bg-amber-100 px-1 rounded">supabase functions deploy ga4-analytics</code></li>
-        <li>Trigger a new build &amp; deploy to activate the GA4 tracking tag</li>
+        <li>In GA4 → Admin → Data Streams → Enhanced Measurement → enable Scrolls &amp; Video Engagement</li>
+        <li>
+          In <strong>Google Cloud Console</strong> → enable the <strong>Google Analytics Data API</strong> and{" "}
+          <strong>Google Analytics Admin API</strong> → create a Service Account → download the JSON key
+        </li>
+        <li>In GA4 → Admin → Property Access Management → add the service account email as <strong>Viewer</strong></li>
+        <li>
+          In Vercel → Project → Settings → Environment Variables, add{" "}
+          <code className="bg-amber-100 px-1 rounded">GA_SERVICE_ACCOUNT_JSON</code> (paste the full JSON key).
+          Optional: <code className="bg-amber-100 px-1 rounded">GA_PROPERTY_ID</code> (numeric ID) — otherwise it is
+          resolved automatically from {GA_MEASUREMENT_ID}.
+        </li>
+        <li>Redeploy the site after saving env vars</li>
       </ol>
     </div>
   );
@@ -179,11 +184,15 @@ export function AnalyticsTab() {
     setLoading(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { data: result, error: fnError } = await supabase.functions.invoke("ga4-analytics", {
-        body: { days: d },
+      const resp = await fetch("/api/admin/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: d }),
       });
-      if (fnError) throw fnError;
+      const result = await resp.json();
+      if (!resp.ok && !result?.error) {
+        throw new Error(`Analytics request failed (${resp.status})`);
+      }
       if (result?.error === "GA4_NOT_CONFIGURED") {
         setNotConfigured(true);
         return;
@@ -196,7 +205,7 @@ export function AnalyticsTab() {
           result.error === "GA_API_ERROR"
             ? " Check that GA_PROPERTY_ID is the numeric Property ID (not the G-XXXX Measurement ID) and that the service account has Viewer access on the GA4 property."
             : result.error === "GA_AUTH_FAILED"
-              ? " The GA service-account key could not authenticate — re-check GA_SERVICE_ACCOUNT_JSON."
+              ? " The GA service-account key could not authenticate — re-check GA_SERVICE_ACCOUNT_JSON in Vercel."
               : "";
         setError(`${result.error}${detail}.${hint}`);
         return;
@@ -281,7 +290,10 @@ export function AnalyticsTab() {
 
       {/* Header + date range */}
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-lg font-bold text-neutral-900">Analytics</h2>
+        <div>
+          <h2 className="font-display text-lg font-bold text-neutral-900">Analytics</h2>
+          <p className="mt-0.5 text-xs text-neutral-400">GA4 · {GA_MEASUREMENT_ID}</p>
+        </div>
         <div className="flex gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1">
           {[7, 30, 90].map((d) => (
             <button
