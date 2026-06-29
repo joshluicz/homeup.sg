@@ -113,6 +113,15 @@ export async function getAllWatchSlugsServer(): Promise<string[]> {
   return [...new Set([...sheetSlugs, ...dbSlugs, ...agentSlugs])];
 }
 
+function filterPublishedPlaybookArticleRows(
+  rows: Record<string, unknown>[],
+): Record<string, unknown>[] {
+  return rows.filter((row) => {
+    const entry = rowToVideo(row);
+    return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
+  });
+}
+
 /** Server/build-time Supabase queries (no cookies). Used by generateStaticParams and the
  *  static-rendered /playbook/[slug] article pages. Mirrors lib/listings/server-queries.ts. */
 export async function getAllPlaybookSlugs(): Promise<string[]> {
@@ -123,19 +132,41 @@ export async function getAllPlaybookSlugs(): Promise<string[]> {
   const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("playbook_videos")
-    .select("slug, article, video_url");
+    .select("slug, article, video_url, content_kind");
 
   if (error) {
     console.warn("getAllPlaybookSlugs:", error.message);
     return [];
   }
 
-  return (data ?? [])
-    .filter((row) => {
-      const entry = rowToVideo(row);
-      return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
-    })
-    .map((row) => row.slug as string);
+  return filterPublishedPlaybookArticleRows(data ?? []).map((row) => row.slug as string);
+}
+
+export type PlaybookArticleSitemapEntry = {
+  slug: string;
+  updatedAt: string | null;
+};
+
+/** Published playbook articles for sitemap.xml (slug + last modified). */
+export async function getPlaybookArticleSitemapEntries(): Promise<PlaybookArticleSitemapEntry[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+
+  const supabase = createClient(url, key);
+  const { data, error } = await supabase
+    .from("playbook_videos")
+    .select("slug, article, video_url, content_kind, updated_at");
+
+  if (error) {
+    console.warn("getPlaybookArticleSitemapEntries:", error.message);
+    return [];
+  }
+
+  return filterPublishedPlaybookArticleRows(data ?? []).map((row) => ({
+    slug: row.slug as string,
+    updatedAt: (row.updated_at as string | null) ?? null,
+  }));
 }
 
 export async function getPlaybookVideoBySlugServer(

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
-import { getAllPlaybookSlugs } from "@/lib/playbook/server-queries";
+import { getPlaybookArticleSitemapEntries } from "@/lib/playbook/server-queries";
 import { SITE_URL } from "@/lib/seo/constants";
 
 /** Refresh listing URLs hourly so new inventory appears without a full redeploy. */
@@ -34,10 +34,13 @@ function coreSitemapEntries(now: Date): MetadataRoute.Sitemap {
   ];
 }
 
-function playbookSitemapEntries(now: Date, slugs: string[]): MetadataRoute.Sitemap {
-  return slugs.map((slug) => ({
-    url: `${SITE_URL}/playbook/${slug}`,
-    lastModified: now,
+function playbookSitemapEntries(
+  articles: { slug: string; updatedAt: string | null }[],
+  fallbackDate: Date,
+): MetadataRoute.Sitemap {
+  return articles.map((article) => ({
+    url: `${SITE_URL}/playbook/${article.slug}`,
+    lastModified: article.updatedAt ? new Date(article.updatedAt) : fallbackDate,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -62,10 +65,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   try {
-    const playbookSlugs = (await getAllPlaybookSlugs()).filter(Boolean);
-    playbookPages = playbookSitemapEntries(now, playbookSlugs);
+    const playbookArticles = await getPlaybookArticleSitemapEntries();
+    playbookPages = playbookSitemapEntries(playbookArticles, now);
   } catch (error) {
-    console.error("sitemap: playbook slug fetch failed", error);
+    console.error("sitemap: playbook article fetch failed", error);
   }
 
   return [...core, ...listingPages, ...playbookPages];
