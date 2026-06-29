@@ -31,6 +31,42 @@ const ROOM_SUGGESTIONS = [
   "Facade",
 ];
 
+const HDB_ROOM_OPTIONS = [
+  "1 room",
+  "2 rooms",
+  "3 rooms",
+  "4 rooms",
+  "5 rooms",
+  "Executive",
+  "Jumbo",
+  "Multi Gen",
+] as const;
+
+const COUNT_OPTIONS = ["1", "2", "3", "4", "5"] as const;
+
+const TENURE_PRESETS = ["99 yrs", "999 yrs", "Freehold", "Others"] as const;
+type TenurePreset = (typeof TENURE_PRESETS)[number];
+
+function isHdbPropertyType(propertyType: PropertyType): boolean {
+  return propertyType === "HDB Flat";
+}
+
+function parseTenureInput(saved: string): {
+  preset: TenurePreset | "";
+  other: string;
+} {
+  if (!saved) return { preset: "", other: "" };
+  if (saved === "99 yrs" || saved === "999 yrs" || saved === "Freehold") {
+    return { preset: saved, other: "" };
+  }
+  return { preset: "Others", other: saved };
+}
+
+function resolveTenureValue(preset: TenurePreset | "", other: string): string {
+  if (preset === "Others") return other.trim();
+  return preset;
+}
+
 const INPUT_CLASS =
   "w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-400 focus:ring-2 focus:ring-neutral-200";
 const CARD_CLASS = "rounded-xl border border-neutral-200 bg-white p-6 shadow-sm";
@@ -485,7 +521,8 @@ export default function GeneratePage() {
   const [areaSqm, setAreaSqm] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [pricePsf, setPricePsf] = useState("");
-  const [tenure, setTenure] = useState("");
+  const [tenurePreset, setTenurePreset] = useState<TenurePreset | "">("");
+  const [tenureOther, setTenureOther] = useState("");
   const [condition, setCondition] = useState("");
   const [renovationStatus, setRenovationStatus] =
     useState<RenovationStatus>("Move-in ready");
@@ -662,7 +699,9 @@ export default function GeneratePage() {
       setAreaSqm(input.area_sqm ?? "");
       setPriceRange(input.price_range ?? "");
       setPricePsf(input.price_psf ?? "");
-      setTenure(input.tenure ?? "");
+      const parsedTenure = parseTenureInput(input.tenure ?? "");
+      setTenurePreset(parsedTenure.preset);
+      setTenureOther(parsedTenure.other);
       setCondition(input.condition ?? "");
       setRenovationStatus(
         (input.renovation_status as RenovationStatus) ?? "Move-in ready",
@@ -949,7 +988,10 @@ export default function GeneratePage() {
           area_sqm: requiredField(areaSqm, "Not specified"),
           price_range: requiredField(priceRange, "Not specified"),
           price_psf: requiredField(pricePsf, "Not specified"),
-          tenure: requiredField(tenure, "Not specified"),
+          tenure: requiredField(
+            resolveTenureValue(tenurePreset, tenureOther),
+            "Not specified",
+          ),
           condition: requiredField(condition, "Not specified"),
           selling_points: sellingPoints.trim(),
           renovation_status: renovationStatus,
@@ -1004,7 +1046,7 @@ export default function GeneratePage() {
         area_sqm: areaSqm.trim(),
         price_range: priceRange.trim(),
         price_psf: pricePsf.trim(),
-        tenure: tenure.trim(),
+        tenure: resolveTenureValue(tenurePreset, tenureOther).trim(),
         condition: condition.trim(),
         renovation_status: renovationStatus,
         selling_points: sellingPoints.trim(),
@@ -1713,7 +1755,19 @@ export default function GeneratePage() {
                 </label>
                 <select
                   value={propertyType}
-                  onChange={(e) => setPropertyType(e.target.value as PropertyType)}
+                  onChange={(e) => {
+                    const next = e.target.value as PropertyType;
+                    setPropertyType(next);
+                    if (
+                      isHdbPropertyType(next) &&
+                      rooms &&
+                      !HDB_ROOM_OPTIONS.includes(
+                        rooms as (typeof HDB_ROOM_OPTIONS)[number],
+                      )
+                    ) {
+                      setRooms("");
+                    }
+                  }}
                   className={INPUT_CLASS}
                 >
                   <option value="HDB Flat">HDB Flat</option>
@@ -1727,40 +1781,65 @@ export default function GeneratePage() {
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                   Rooms
                 </label>
-                <input
-                  type="text"
-                  value={rooms}
-                  onChange={(e) => setRooms(e.target.value)}
-                  className={INPUT_CLASS}
-                  placeholder='e.g. "4"'
-                />
+                {isHdbPropertyType(propertyType) ? (
+                  <select
+                    value={rooms}
+                    onChange={(e) => setRooms(e.target.value)}
+                    className={INPUT_CLASS}
+                  >
+                    <option value="">Select HDB room type</option>
+                    {HDB_ROOM_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={rooms}
+                    onChange={(e) => setRooms(e.target.value)}
+                    className={INPUT_CLASS}
+                    placeholder='e.g. "4"'
+                  />
+                )}
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
-                  Bedrooms
+                  Bedrooms (Private)
                 </label>
-                <input
-                  type="text"
+                <select
                   value={bedrooms}
                   onChange={(e) => setBedrooms(e.target.value)}
                   className={INPUT_CLASS}
-                  placeholder='e.g. "3"'
-                />
+                >
+                  <option value="">Select</option>
+                  {COUNT_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                   Bathrooms
                 </label>
-                <input
-                  type="text"
+                <select
                   value={bathrooms}
                   onChange={(e) => setBathrooms(e.target.value)}
                   className={INPUT_CLASS}
-                  placeholder='e.g. "2"'
-                />
+                >
+                  <option value="">Select</option>
+                  {COUNT_OPTIONS.map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -1824,13 +1903,29 @@ export default function GeneratePage() {
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
                   Tenure
                 </label>
-                <input
-                  type="text"
-                  value={tenure}
-                  onChange={(e) => setTenure(e.target.value)}
+                <select
+                  value={tenurePreset}
+                  onChange={(e) =>
+                    setTenurePreset(e.target.value as TenurePreset | "")
+                  }
                   className={INPUT_CLASS}
-                  placeholder="e.g. 99 years"
-                />
+                >
+                  <option value="">Select</option>
+                  {TENURE_PRESETS.map((option) => (
+                    <option key={option} value={option}>
+                      {option === "Others" ? "Others:" : option}
+                    </option>
+                  ))}
+                </select>
+                {tenurePreset === "Others" && (
+                  <input
+                    type="text"
+                    value={tenureOther}
+                    onChange={(e) => setTenureOther(e.target.value)}
+                    className={`${INPUT_CLASS} mt-2`}
+                    placeholder="Specify tenure"
+                  />
+                )}
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-neutral-700">
