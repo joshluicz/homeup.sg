@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 // ── Paste your Google Form published URL here once the form is created ──────
 // It looks like: https://docs.google.com/forms/d/e/<long-id>/viewform?embedded=true
-const GOOGLE_FORM_EMBED_URL = "https://docs.google.com/forms/d/e/1FAIpQLSe1TJ1YKWCPMz1j_4bQx06nQ3OYHLLR_uwfyeVpVq9cjj-Wfw/viewform?embedded=true";
+const GOOGLE_FORM_EMBED_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeCqQ33BT2QKF2kLfIM7iiKFKziehASRYbUT79qSW-EzNI_PQ/viewform?embedded=true";
 // ────────────────────────────────────────────────────────────────────────────
 
 export default function EventRegisterPage() {
