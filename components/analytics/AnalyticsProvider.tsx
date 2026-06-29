@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 
 const GA_ID = GA_MEASUREMENT_ID;
 
@@ -16,7 +16,7 @@ export function AnalyticsProvider() {
   // traffic. Flag the browser and disable GA4 for the rest of the session so
   // admin activity never pollutes Analytics. The flag persists across IP changes.
   useEffect(() => {
-    if (!GA_ID) return;
+    if (!GA_ID || !isSupabaseConfigured()) return;
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {

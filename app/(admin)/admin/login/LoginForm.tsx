@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
 import { Button } from "@/components/ui/Button";
 import { Loader2 } from "lucide-react";
@@ -17,8 +17,17 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setConfigError(
+        "Supabase is not configured locally. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local, then restart npm run dev.",
+      );
+      setCheckingSession(false);
+      return;
+    }
+
     const supabase = createClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
@@ -54,6 +63,17 @@ export function LoginForm() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-neutral-50">
         <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+      </div>
+    );
+  }
+
+  if (configError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
+        <div className="w-full max-w-md rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-900">
+          <p className="font-semibold">Admin login unavailable</p>
+          <p className="mt-2 leading-relaxed">{configError}</p>
+        </div>
       </div>
     );
   }
