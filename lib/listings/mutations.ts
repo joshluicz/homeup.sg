@@ -22,6 +22,29 @@ export async function createListing(
   const status = action === "publish" ? "active" : "draft";
   const payload = formDataToDbPayload(data, status);
 
+  // The slug column is UNIQUE across all rows, including soft-deleted ones.
+  // If a previously deleted listing still owns this slug, revive that row with
+  // the new data instead of failing with a unique-constraint error.
+  const { data: softDeleted } = await supabase
+    .from("listings")
+    .select("id")
+    .eq("slug", payload.slug)
+    .not("deleted_at", "is", null)
+    .maybeSingle();
+
+  if (softDeleted) {
+    const { data: revived, error: reviveError } = await supabase
+      .from("listings")
+      .update({ ...payload, deleted_at: null })
+      .eq("id", softDeleted.id)
+      .select()
+      .single();
+
+    if (reviveError) throw mapDbError(reviveError);
+    await triggerListingRevalidate();
+    return revived;
+  }
+
   const { data: listing, error } = await supabase
     .from("listings")
     .insert({ ...payload, id: listingId })
