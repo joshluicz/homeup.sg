@@ -1,109 +1,117 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { Navbar } from "@/components/layout/Navbar";
+import { Footer } from "@/components/layout/Footer";
 
 export const metadata: Metadata = {
   title: "July 2026 Property Event – Register Now | HomeUP",
   description:
     "Join HomeUP's exclusive July 2026 Property Event in Singapore. Meet our CEA-licensed agents, get expert advice on buying or selling, and discover the best deals of the year.",
-  robots: { index: false, follow: false }, // keep registration page out of search results
+  robots: { index: false, follow: false },
 };
 
-// ── Paste your Google Form published URL here once the form is created ──────
-// It looks like: https://docs.google.com/forms/d/e/<long-id>/viewform?embedded=true
-const GOOGLE_FORM_EMBED_URL =
+const GOOGLE_FORM_EMBED_URL: string =
   "https://docs.google.com/forms/d/e/1FAIpQLSeCqQ33BT2QKF2kLfIM7iiKFKziehASRYbUT79qSW-EzNI_PQ/viewform?embedded=true";
-// ────────────────────────────────────────────────────────────────────────────
+
+const WHAT_TO_EXPECT = [
+  "One-on-one consultations with CEA-licensed HomeUP agents",
+  "Live market briefing — HDB, condo, landed & new launches",
+  "Exclusive event-only pricing packages",
+  "First-time buyer crash course",
+  "Q&A panel with senior property advisors",
+  "Lucky draw & networking session",
+];
 
 export default function EventRegisterPage() {
   const formReady = GOOGLE_FORM_EMBED_URL.includes("/forms/d/");
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] font-sans">
-      {/* ── Header ── */}
-      <header className="bg-[#1B3A6B] text-white">
-        <div className="mx-auto max-w-5xl px-6 py-5 flex items-center justify-between">
-          <a href="/" aria-label="HomeUP homepage">
-            <Image
-              src="/images/homeup-logo-wordmark-light.svg"
-              alt="HomeUP"
-              width={140}
-              height={36}
-              priority
-            />
-          </a>
-          <span className="text-sm font-medium text-[#F5A623] tracking-wide uppercase">
-            July 2026 Property Event
-          </span>
-        </div>
-      </header>
+    <div className="min-h-screen bg-neutral-50 font-display">
+      <Navbar />
 
       {/* ── Hero ── */}
-      <section className="bg-[#1B3A6B] text-white pb-16 pt-12">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <p className="mb-3 text-[#F5A623] text-sm font-semibold uppercase tracking-widest">
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 text-white">
+        {/* subtle grid texture */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+        <div className="relative mx-auto max-w-5xl px-6 py-16 sm:py-20 text-center">
+          <span className="inline-block rounded-full bg-primary-500/30 border border-primary-400/40 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary-200 mb-5">
             Exclusive Event · July 2026 · Singapore
-          </p>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight mb-5">
+          </span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight mb-5 tracking-tight">
             HomeUP July 2026<br />Property Event
           </h1>
-          <p className="text-blue-200 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Whether you are buying your first home, upgrading, or looking to invest —
+          <p className="text-primary-100 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+            Whether you&apos;re buying your first home, upgrading, or looking to invest —
             join us for an exclusive evening with Singapore&apos;s top fixed-fee property
             advisors. Get personalised advice, market insights, and exclusive deals,
             all under one roof.
           </p>
+
+          {/* Event meta pills */}
+          <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
+            {[
+              { icon: "📅", label: "Date: To be announced" },
+              { icon: "📍", label: "Location: Singapore CBD" },
+              { icon: "🎟", label: "Free entry — limited seats" },
+            ].map(({ icon, label }) => (
+              <span
+                key={label}
+                className="flex items-center gap-2 rounded-full bg-white/10 border border-white/20 px-4 py-2 font-medium text-white backdrop-blur-sm"
+              >
+                <span>{icon}</span>
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Event detail pills ── */}
-      <div className="bg-[#F5A623]">
-        <div className="mx-auto max-w-5xl px-6 py-4 flex flex-wrap justify-center gap-6 text-[#1B3A6B] font-semibold text-sm">
-          <span>📅 &nbsp;Date: To be announced</span>
-          <span>📍 &nbsp;Location: Singapore CBD</span>
-          <span>🎟 &nbsp;Free entry — limited seats</span>
-        </div>
-      </div>
+      {/* ── Main content ── */}
+      <main className="mx-auto max-w-5xl px-6 py-14 grid grid-cols-1 lg:grid-cols-5 gap-10">
 
-      {/* ── Main content: highlights + form ── */}
-      <main className="mx-auto max-w-5xl px-6 py-14 grid grid-cols-1 lg:grid-cols-5 gap-12">
+        {/* Left: sidebar info */}
+        <aside className="lg:col-span-2 space-y-6">
 
-        {/* Left: what to expect */}
-        <aside className="lg:col-span-2 space-y-8">
-          <div>
-            <h2 className="text-xl font-bold text-[#1B3A6B] mb-4">What to expect</h2>
-            <ul className="space-y-3 text-gray-700 text-sm leading-relaxed">
-              {[
-                "One-on-one consultations with CEA-licensed HomeUP agents",
-                "Live market briefing — HDB, condo, landed & new launches",
-                "Exclusive event-only pricing packages",
-                "First-time buyer crash course",
-                "Q&A panel with senior property advisors",
-                "Lucky draw & networking session",
-              ].map((item) => (
-                <li key={item} className="flex gap-3">
-                  <span className="text-[#F5A623] font-bold flex-shrink-0">✓</span>
+          {/* What to expect */}
+          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <h2 className="text-base font-bold text-neutral-900 mb-4">What to expect</h2>
+            <ul className="space-y-3">
+              {WHAT_TO_EXPECT.map((item) => (
+                <li key={item} className="flex gap-3 text-sm text-neutral-600 leading-relaxed">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 text-xs font-bold">
+                    ✓
+                  </span>
                   {item}
                 </li>
               ))}
             </ul>
           </div>
 
-          <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
-            <p className="text-xs font-semibold text-[#1B3A6B] uppercase tracking-wide mb-2">
+          {/* About HomeUP */}
+          <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary-600 mb-2">
               About HomeUP
             </p>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              HomeUP is Singapore&apos;s fixed-fee property agency operated by C&amp;H Properties
-              Pte Ltd. We have closed 1,000+ transactions with transparent pricing from&nbsp;$1,999
-              — no hidden fees, no percentage commissions.
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              CEA-licensed property agents under C&amp;H Properties Pte Ltd. We have closed
+              1,000+ transactions with transparent pricing from&nbsp;$1,999 — no hidden fees,
+              no percentage commissions.
             </p>
           </div>
 
-          <div className="rounded-xl bg-[#1B3A6B] text-white p-5">
-            <p className="font-bold mb-1">Questions?</p>
-            <p className="text-sm text-blue-200">
+          {/* Questions */}
+          <div className="rounded-2xl bg-neutral-950 text-white p-6">
+            <p className="font-bold text-sm mb-1">Questions?</p>
+            <p className="text-sm text-neutral-400 leading-relaxed">
               Reach us at{" "}
-              <a href="https://homeup.sg" className="text-[#F5A623] underline">
+              <a href="https://homeup.sg" className="text-primary-400 underline underline-offset-2 hover:text-primary-300 transition-colors">
                 homeup.sg
               </a>{" "}
               or WhatsApp your agent directly.
@@ -111,12 +119,12 @@ export default function EventRegisterPage() {
           </div>
         </aside>
 
-        {/* Right: Google Form embed */}
+        {/* Right: registration form */}
         <div className="lg:col-span-3">
-          <div className="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
-            <div className="bg-[#1B3A6B] px-6 py-4">
+          <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+            <div className="bg-primary-600 px-6 py-5">
               <h2 className="text-white font-bold text-lg">Register your spot</h2>
-              <p className="text-blue-200 text-sm">Seats are limited — secure yours today.</p>
+              <p className="text-primary-100 text-sm mt-0.5">Seats are limited — secure yours today.</p>
             </div>
 
             {formReady ? (
@@ -125,24 +133,20 @@ export default function EventRegisterPage() {
                 title="HomeUP July 2026 Event Registration Form"
                 width="100%"
                 height="1100"
-                frameBorder="0"
-                marginHeight={0}
-                marginWidth={0}
-                className="block"
+                style={{ border: 0, display: "block" }}
               >
                 Loading form…
               </iframe>
             ) : (
-              /* Placeholder shown until the Google Form URL is added */
               <div className="flex flex-col items-center justify-center py-24 px-8 text-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-3xl">
+                <div className="w-14 h-14 rounded-full bg-primary-50 flex items-center justify-center text-2xl">
                   📋
                 </div>
-                <p className="font-semibold text-[#1B3A6B] text-lg">Registration form coming soon</p>
-                <p className="text-gray-500 text-sm max-w-xs">
-                  Run <code className="bg-gray-100 px-1 rounded">createForm.gs</code> in Google Apps Script,
+                <p className="font-semibold text-neutral-900 text-lg">Registration form coming soon</p>
+                <p className="text-neutral-500 text-sm max-w-xs leading-relaxed">
+                  Run <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs">createForm.gs</code> in Google Apps Script,
                   then paste the published form URL into{" "}
-                  <code className="bg-gray-100 px-1 rounded">GOOGLE_FORM_EMBED_URL</code> in this page.
+                  <code className="bg-neutral-100 px-1.5 py-0.5 rounded text-xs">GOOGLE_FORM_EMBED_URL</code> in this page.
                 </p>
               </div>
             )}
@@ -150,15 +154,7 @@ export default function EventRegisterPage() {
         </div>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="bg-[#1B3A6B] text-blue-200 text-center py-6 text-xs">
-        <p>
-          © {new Date().getFullYear()} HomeUP · Operated by C&amp;H Properties Pte Ltd ·{" "}
-          <a href="/privacy-policy" className="underline hover:text-white">
-            Privacy Policy
-          </a>
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }
