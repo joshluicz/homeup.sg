@@ -41,6 +41,8 @@ const nextConfig = {
     const rules = [
       // Path-based access to the PropMeta dashboard (works before the subdomain DNS is set).
       { source: "/dashboard", destination: "/dashboard.html" },
+      // Per-agent dashboard view (Phase 2); the SPA reads the slug from the URL.
+      { source: "/dashboard/a/:slug", destination: "/dashboard.html" },
     ];
     if (supabaseUrl) {
       rules.push({

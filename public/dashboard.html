@@ -36,6 +36,16 @@
   canvas{ max-height:340px; }
   footer{ color:var(--muted); font-size:12px; text-align:center; padding:20px; }
   .pos{ color:var(--green); } .neg{ color:#dc2626; }
+  .agenthero{ display:flex; align-items:center; gap:16px; }
+  .agenthero img{ width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--green2); flex:0 0 auto; }
+  .agenthero .aname{ font-size:18px; font-weight:800; letter-spacing:-.2px; }
+  .agenthero .ameta{ color:var(--muted); font-size:13px; margin:2px 0 7px; }
+  .agenthero .chip{ display:inline-block; background:#ecfdf5; color:var(--green); border:1px solid #bbf7d0; border-radius:999px; padding:2px 10px; font-size:12px; margin:0 5px 4px 0; }
+  .agenthero .abadge{ margin-left:auto; color:var(--green); font-weight:700; font-size:12px; text-align:right; max-width:170px; line-height:1.4; }
+  @media(max-width:560px){ .agenthero .abadge{ display:none; } }
+  textarea{ font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:10px; width:100%; resize:vertical; }
+  .btn{ padding:8px 16px; background:var(--green); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
+  .btn:disabled{ opacity:.5; cursor:default; }
 </style>
 </head>
 <body>
@@ -44,6 +54,7 @@
   <p id="updated">Loading…</p>
 </header>
 <div class="wrap">
+  <div id="agentHero" class="panel agenthero" style="display:none"></div>
   <div class="panel">
     <h2>Where houses sold — map</h2>
     <div class="controls">District:<select id="mapDist"></select> <span class="desc" id="mapCount"></span></div>
@@ -97,6 +108,16 @@
     </div>
   </div>
 
+  <div class="panel">
+    <h2>Tell us what you need</h2>
+    <p class="desc" id="fbWho">What would make this dashboard more useful for your work? Request a feature, a data cut, or a view — it goes straight to the HomeUP product team.</p>
+    <textarea id="fbMsg" rows="3" placeholder="e.g. show rental yield by project, or let me filter by MRT line…"></textarea>
+    <div style="margin-top:10px">
+      <button id="fbSend" class="btn">Send feedback</button>
+      <span class="desc" id="fbStat" style="margin-left:10px"></span>
+    </div>
+  </div>
+
   <footer id="foot"></footer>
 </div>
 
@@ -106,6 +127,46 @@ const sgd = (n) => n==null ? "—" : "$" + Math.round(n).toLocaleString();
 const GREEN="#15803d", GREEN2="#22c55e", AMBER="#f59e0b", RED="#dc2626", SLATE="#94a3b8";
 const regionColor = (r) => r==="CCR"?RED : r==="RCR"?AMBER : r==="OCR"?GREEN2 : SLATE;
 let D, charts={};
+
+// ---- Phase 2: per-agent branding + feedback loop ----
+function getAgentSlug(){
+  const m = location.pathname.match(/\/a\/([a-z0-9-]+)/i);
+  if(m) return m[1];
+  return new URLSearchParams(location.search).get("agent") || null;
+}
+const AGENT = getAgentSlug();
+function loadAgent(){
+  if(!AGENT) return;
+  fetch("/api/dashboard/agent?slug="+encodeURIComponent(AGENT)).then(r=>r.ok?r.json():null).then(a=>{
+    if(!a || a.error) return;
+    document.title = a.name+" · PropMeta · HomeUP";
+    const hero=$("agentHero"); if(!hero) return;
+    hero.style.display="flex";
+    hero.innerHTML =
+      `<img src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`+
+      `<div><div class="aname">${a.name}</div>`+
+      `<div class="ameta">${a.profileTitle||"Property Advisor"} · CEA ${a.cea}</div>`+
+      (a.specialties||[]).slice(0,4).map(s=>`<span class="chip">${s}</span>`).join("")+`</div>`+
+      `<div class="abadge">Prepared for you · live SG market intelligence</div>`;
+    $("fbWho").textContent = "Hi "+a.name.split(" ")[0]+" — what would make this dashboard more useful for your work? It goes straight to the HomeUP product team.";
+  }).catch(()=>{});
+}
+function initFeedback(){
+  const send=$("fbSend"); if(!send) return;
+  send.onclick=()=>{
+    const msg=$("fbMsg").value.trim();
+    if(msg.length<2){ $("fbStat").textContent="Type a message first."; return; }
+    $("fbStat").textContent="Sending…"; send.disabled=true;
+    fetch("/api/dashboard/feedback",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({agentSlug:AGENT||"general",message:msg,page:location.pathname})})
+      .then(r=>r.json()).then(j=>{
+        if(j.ok){ $("fbMsg").value=""; $("fbStat").textContent="Thanks — sent. We read every note."; }
+        else { $("fbStat").textContent="Error: "+(j.error||"try again"); }
+      }).catch(()=>{ $("fbStat").textContent="Network error — try again."; })
+      .finally(()=>{ send.disabled=false; });
+  };
+}
+loadAgent(); initFeedback();
 
 function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id), cfg); }
 function barCfg(labels, data, colors, axisLabel, fmt){
