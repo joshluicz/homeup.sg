@@ -3,7 +3,7 @@ const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, 
 
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ["patchright", "patchright-core"],
+    serverComponentsExternalPackages: ["patchright", "patchright-core", "pg"],
     optimizeCss: true,
     optimizePackageImports: [
       "lucide-react",
@@ -38,13 +38,17 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    if (!supabaseUrl) return [];
-    return [
-      {
+    const rules = [
+      // Path-based access to the PropMeta dashboard (works before the subdomain DNS is set).
+      { source: "/dashboard", destination: "/dashboard.html" },
+    ];
+    if (supabaseUrl) {
+      rules.push({
         source: "/playbook/thumbs/:file",
         destination: `${supabaseUrl}/storage/v1/object/public/listing-images/playbook/video-thumbnails/:file`,
-      },
-    ];
+      });
+    }
+    return rules;
   },
   async redirects() {
     return [

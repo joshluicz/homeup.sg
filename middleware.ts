@@ -18,8 +18,25 @@ function shouldSkipMarkdown(pathname: string): boolean {
   return false;
 }
 
+// The dashboard subdomain (dashboard.homeup.sg) serves the static PropMeta SPA from
+// /public/dashboard.html; its data comes from /api/dashboard/*. Everything else on that host
+// (api, next internals, files with an extension) passes straight through to the same project.
+function isDashboardHost(request: NextRequest): boolean {
+  const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
+  return host === "dashboard.homeup.sg" || host.startsWith("dashboard.localhost");
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isDashboardHost(request)) {
+    if (pathname.startsWith("/api") || pathname.startsWith("/_next") || /\.[a-z0-9]+$/i.test(pathname)) {
+      return NextResponse.next();
+    }
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard.html";
+    return NextResponse.rewrite(url);
+  }
 
   if (!shouldSkipMarkdown(pathname) && wantsMarkdown(request)) {
     const markdown = await getMarkdownForPath(pathname);

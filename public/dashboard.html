@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HomeUP · Singapore Property Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<style>
+  :root{ --green:#15803d; --green2:#22c55e; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  header{ background:#fff; border-bottom:1px solid var(--line); padding:22px 28px; }
+  header h1{ margin:0; font-size:20px; letter-spacing:-.2px; }
+  header h1 span{ color:var(--green); }
+  header p{ margin:4px 0 0; color:var(--muted); font-size:13px; }
+  .wrap{ max-width:1200px; margin:0 auto; padding:24px 28px 60px; }
+  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
+  .card .lbl{ color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
+  .card .val{ font-size:26px; font-weight:800; margin-top:6px; letter-spacing:-.5px; }
+  .card .sub{ color:var(--muted); font-size:12px; margin-top:2px; }
+  .panel{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 22px; margin-bottom:20px; }
+  .panel h2{ margin:0 0 2px; font-size:16px; }
+  .panel .desc{ color:var(--muted); font-size:13px; margin:0 0 14px; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:840px){ .grid2{ grid-template-columns:1fr; } }
+  select{ font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; margin-left:8px; }
+  .controls{ font-size:13px; color:var(--muted); margin-bottom:12px; }
+  .tbtn{ font:inherit; font-size:13px; font-weight:700; padding:5px 13px; margin:0 7px 7px 0; border:1.5px solid var(--c); border-radius:999px; background:#fff; color:var(--c); cursor:pointer; opacity:.45; transition:all .15s; }
+  .tbtn.active{ background:var(--c); color:#fff; opacity:1; }
+  canvas{ max-height:340px; }
+  footer{ color:var(--muted); font-size:12px; text-align:center; padding:20px; }
+  .pos{ color:var(--green); } .neg{ color:#dc2626; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Home<span>UP</span> · Singapore Property Intelligence</h1>
+  <p id="updated">Loading…</p>
+</header>
+<div class="wrap">
+  <div class="panel">
+    <h2>Where houses sold — map</h2>
+    <div class="controls">District:<select id="mapDist"></select> <span class="desc" id="mapCount"></span></div>
+    <div id="map" style="height:480px; border-radius:12px; overflow:hidden; border:1px solid var(--line);"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Price per sqm over time — by housing type</h2>
+    <p class="desc">Monthly median $/sqm, last 5 years. Tap a type to show/hide its line — magnitudes differ (HDB ~$6k vs Apartment ~$23k/sqm), so isolating helps. Landed is land-area basis.</p>
+    <div id="trendBtns" style="margin:4px 0 14px"></div>
+    <canvas id="trendChart" style="max-height:420px"></canvas>
+  </div>
+
+
+  <div class="panel">
+    <h2>Relationship explorer — how any two variables move together</h2>
+    <p class="desc">Pick a vertical (Y) and horizontal (X) variable. Numeric × numeric draws a scatter with the correlation <b>r</b>, a fitted line, and a binned-median trend through the cloud. Pick a category for X (district, type, region) to compare medians. <b>Correlation ≠ causation</b> — narrow by district/type to hold the obvious confounders fixed.</p>
+    <div class="controls">
+      Y:<select id="cy"></select>
+      X:<select id="cx"></select>
+      District:<select id="cDist"></select>
+      Type:<select id="cType"></select>
+      <button id="cGo" style="margin-left:8px;padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Plot</button>
+      <span class="desc" id="cStat" style="margin-left:8px"></span>
+    </div>
+    <canvas id="corrChart" style="max-height:420px"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>Search sales by size &amp; area — compare $/sqm</h2>
+    <p class="desc">Unit sizes differ even within one condo, so total price misleads — compare by <b>$/sqm</b>. Filter by district, type, and floor area.</p>
+    <div class="controls">
+      District:<select id="txDist"></select>
+      Type:<select id="txType"></select>
+      Size (sqm):<input id="txMin" type="number" placeholder="min" style="width:72px;margin-left:6px">
+      <input id="txMax" type="number" placeholder="max" style="width:72px">
+      <button id="txGo" style="margin-left:8px;padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Search</button>
+      <span class="desc" id="txCount" style="margin-left:8px"></span>
+    </div>
+    <div style="overflow:auto;max-height:440px;border:1px solid var(--line);border-radius:10px">
+      <table id="txTable" style="width:100%;border-collapse:collapse;font-size:13px"></table>
+    </div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const sgd = (n) => n==null ? "—" : "$" + Math.round(n).toLocaleString();
+const GREEN="#15803d", GREEN2="#22c55e", AMBER="#f59e0b", RED="#dc2626", SLATE="#94a3b8";
+const regionColor = (r) => r==="CCR"?RED : r==="RCR"?AMBER : r==="OCR"?GREEN2 : SLATE;
+let D, charts={};
+
+function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id), cfg); }
+function barCfg(labels, data, colors, axisLabel, fmt){
+  return { type:"bar", data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4 }] },
+    options:{ plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmt(c.raw)}} },
+      scales:{ y:{ title:{display:true,text:axisLabel}, ticks:{callback:fmt} } } } };
+}
+
+function cards(){
+  const m=D.market;
+  const items=[
+    ["HDB median price", sgd(num(m["median price"])), "resale, last 6mo"],
+    ["HDB median PSF", "$"+(num(m["median psf"])||0).toLocaleString(), "per sqm"],
+    ["HDB volume (6mo)", (num(m["txn volume (6mo)"])||0).toLocaleString(), "transactions"],
+    ["HDB price YoY", fmtPct(num(m["price YoY %"])), "year on year"],
+    ["SG private yield", med(D.yields.map(y=>y.yield)).toFixed(1)+"%", "median gross"],
+  ];
+  $("cards").innerHTML = items.map(([l,v,s])=>`<div class="card"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join("");
+}
+function num(v){ const n=Number(String(v==null?"":v).replace(/,/g,"")); return Number.isFinite(n)?n:null; }
+function fmtPct(n){ if(n==null) return "—"; const c=n>=0?"pos":"neg"; return `<span class="${c}">${n>=0?"+":""}${n}%</span>`; }
+function med(a){ a=a.filter(x=>x!=null).sort((x,y)=>x-y); return a.length? a[Math.floor(a.length/2)] : 0; }
+
+function yieldChart(){
+  const ys=[...D.yields].sort((a,b)=>b.yield-a.yield);
+  mkChart("yieldChart", barCfg(ys.map(y=>y.district), ys.map(y=>y.yield), ys.map(()=>GREEN), "Gross yield %", v=>v+"%"));
+}
+function supplyChart(){
+  const s=[...D.supply].sort((a,b)=>b.units-a.units).slice(0,15);
+  mkChart("supplyChart", barCfg(s.map(x=>x.district), s.map(x=>x.units), s.map(()=>AMBER), "Upcoming units", v=>v.toLocaleString()));
+}
+function hdbChart(){
+  const flat=$("flatSel").value;
+  const rows=D.hdb.filter(r=>r.flat===flat && r.conf!=="Low" && r.median).sort((a,b)=>b.median-a.median);
+  mkChart("hdbChart", barCfg(rows.map(r=>r.town), rows.map(r=>r.median), rows.map(()=>GREEN), "Median price", sgd));
+}
+function leaseChart(){
+  const d=$("distSel").value, t=$("typeSel").value;
+  const order={ "Freehold":0,"LH 90+yr":1,"LH 75-89yr":2,"LH 60-74yr":3,"LH <60yr":4 };
+  const rows=D.private.filter(r=>r.district===d && r.type===t && r.median)
+    .sort((a,b)=>(order[a.lease]??9)-(order[b.lease]??9));
+  mkChart("leaseChart", barCfg(rows.map(r=>r.lease+" (n="+r.n+")"), rows.map(r=>r.median), rows.map(()=>GREEN), "Median price", sgd));
+}
+
+function opts(sel, vals, def){ sel.innerHTML=vals.map(v=>`<option ${v===def?"selected":""}>${v}</option>`).join(""); }
+
+function loadTx(){
+  const d=$("txDist").value, t=$("txType").value, mn=$("txMin").value, mx=$("txMax").value;
+  const qs=new URLSearchParams();
+  if(d&&d!=="All")qs.set("district",d); if(t&&t!=="All")qs.set("type",t);
+  if(mn)qs.set("amin",mn); if(mx)qs.set("amax",mx);
+  $("txCount").textContent="…";
+  fetch("/api/dashboard/transactions?"+qs).then(r=>r.json()).then(j=>{
+    $("txCount").textContent=`${j.count.toLocaleString()} sales`+(j.count>800?" (showing newest 800)":"");
+    const head="<thead><tr style='text-align:left;border-bottom:2px solid var(--line);position:sticky;top:0;background:#fff'><th style='padding:7px 9px'>Project</th><th>Dist</th><th>Type</th><th>Tenure</th><th>Floor</th><th>Sqm</th><th>Price</th><th>$/sqm</th><th>Month</th></tr></thead>";
+    const body=j.rows.map(r=>`<tr style='border-bottom:1px solid var(--line)'><td style='padding:6px 9px'>${r.project}</td><td>${r.district}</td><td>${r.type}</td><td>${(r.tenure||"").replace(/ lease commencing.*/,"").slice(0,18)}</td><td>${r.floor}</td><td>${r.area??"—"}</td><td>${sgd(r.price)}</td><td><b>${r.psm?"$"+r.psm.toLocaleString():"—"}</b></td><td>${r.month}</td></tr>`).join("");
+    $("txTable").innerHTML=head+"<tbody>"+body+"</tbody>";
+  }).catch(()=>$("txCount").textContent="error loading");
+}
+
+fetch("/api/dashboard/meta").then(r=>r.json()).then(d=>{
+  D=d;
+  $("updated").textContent = "Live from PropMeta · updated " + new Date(d.updated).toLocaleString("en-SG");
+
+  opts($("txDist"), ["All",...(D.districts||[])], "All");
+  opts($("txType"), ["All",...(D.types||[])], "All");
+  $("txGo").onclick=loadTx;
+  [$("txMin"),$("txMax")].forEach(el=>el.addEventListener("keydown",e=>{if(e.key==="Enter")loadTx();}));
+  loadTx();
+  fillVars();
+
+  $("foot").textContent = `Data: URA Data Service + data.gov.sg · ${(D.total||0).toLocaleString()} transactions in the database. Figures are indicative; verify with a formal valuation.`;
+}).catch(e=>{ $("updated").textContent="Error loading data: "+e; });
+
+// ---- relationship explorer (query engine) ----
+let corrChart;
+function rWord(r){ const a=Math.abs(r); const s=a<.1?"negligible":a<.3?"weak":a<.5?"moderate":a<.7?"strong":"very strong"; return (r<0?"negative ":"positive ")+s; }
+function fillVars(){
+  const num=(D.variables&&D.variables.numeric)||[], cat=(D.variables&&D.variables.categoric)||[];
+  $("cy").innerHTML = num.map(v=>`<option value="${v.key}">${v.label}</option>`).join("");
+  $("cx").innerHTML =
+    `<optgroup label="Numeric">`+num.map(v=>`<option value="${v.key}">${v.label}</option>`).join("")+`</optgroup>`+
+    `<optgroup label="Category">`+cat.map(v=>`<option value="${v.key}">${v.label}</option>`).join("")+`</optgroup>`;
+  $("cy").value="price"; $("cx").value="area_sqm";
+  opts($("cDist"), ["All",...(D.districts||[])], "All");
+  opts($("cType"), ["All",...(D.types||[])], "All");
+  $("cGo").onclick=plotCorr;
+  [$("cy"),$("cx"),$("cDist"),$("cType")].forEach(el=>el.addEventListener("change",plotCorr));
+  plotCorr();
+}
+function plotCorr(){
+  const x=$("cx").value, y=$("cy").value, d=$("cDist").value, t=$("cType").value;
+  const qs=new URLSearchParams({x,y}); if(d!=="All")qs.set("district",d); if(t!=="All")qs.set("type",t);
+  $("cStat").textContent="…";
+  fetch("/api/dashboard/correlate?"+qs).then(r=>r.json()).then(j=>{
+    if(j.error){ $("cStat").textContent="error: "+j.error; return; }
+    if(corrChart) corrChart.destroy();
+    const fmtY = j.y.money ? (v=>"$"+Math.round(v).toLocaleString()) : (v=>Math.round(v).toLocaleString());
+    if(j.mode==="category"){
+      if(!j.rows.length){ $("cStat").textContent="no data for this combination"; return; }
+      const labels=j.rows.map(r=>r.cat), med=j.rows.map(r=>r.median);
+      corrChart=new Chart($("corrChart"),{ type:"bar", data:{ labels, datasets:[{ data:med, backgroundColor:"#15803d", borderRadius:4 }] },
+        options:{ plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>{const r=j.rows[c.dataIndex]; return `median ${fmtY(r.median)} · n=${r.n} · IQR ${fmtY(r.p25)}–${fmtY(r.p75)}`;}}} },
+          scales:{ y:{ title:{display:true,text:"median "+j.y.label}, ticks:{callback:fmtY} } } } });
+      $("cStat").innerHTML=`Median <b>${j.y.label}</b> by <b>${j.x.label}</b> · ${j.rows.length} groups`;
+      return;
+    }
+    const s=j.stat;
+    if(!s||!s.n){ $("cStat").textContent="no data for this combination"; return; }
+    const pts=j.points.map(p=>({x:+p.x,y:+p.y}));
+    const binPts=(j.bins||[]).map(b=>({x:+b.x,y:+b.y}));
+    const fmtX = j.x.money ? (v=>"$"+(v/1000)+"k") : (v=>(+v).toLocaleString());
+    // zoom each axis to the p2–p98 range so a few outliers don't blow out the scale (no extrapolation)
+    const pad=(lo,hi)=>{ lo=+lo; hi=+hi; if(!isFinite(lo)||!isFinite(hi)||hi<=lo) return {}; const m=(hi-lo)*0.04; return {min:lo-m,max:hi+m}; };
+    const xB=pad(s.xlo,s.xhi), yB=pad(s.ylo,s.yhi);
+    corrChart=new Chart($("corrChart"),{
+      data:{ datasets:[
+        { type:"scatter", label:"sales", data:pts, backgroundColor:"rgba(21,128,61,.16)", pointRadius:2.5, pointHoverRadius:4 },
+        { type:"line", label:"median trend", data:binPts, borderColor:"#0f172a", borderWidth:2, pointRadius:0, tension:.3 }
+      ]},
+      options:{ plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:c=>`${j.x.label}: ${(+c.parsed.x).toLocaleString()} · ${j.y.label}: ${fmtY(c.parsed.y)}`}} },
+        scales:{ x:{ type:"linear", title:{display:true,text:j.x.label}, min:xB.min, max:xB.max, ticks:{callback:fmtX} },
+                 y:{ title:{display:true,text:j.y.label}, min:yB.min, max:yB.max, ticks:{callback:fmtY} } } } });
+    const r=s.pearson;
+    $("cStat").innerHTML = (r==null) ? `n=${(s.n||0).toLocaleString()}` :
+      `r = <b>${r.toFixed(2)}</b> (${rWord(r)}) · R² ${(s.r2!=null?s.r2:0).toFixed(2)} · n=${s.n.toLocaleString()} · slope ${j.y.money?"$":""}${Math.round(s.slope).toLocaleString()} per unit ${j.x.label.split(" ")[0]}`;
+  }).catch(()=>{ $("cStat").textContent="error loading"; });
+}
+
+// ---- $/sqm over time (stock-style line chart) ----
+const TYPE_COLORS={HDB:"#15803d",Condo:"#2563eb",Apartment:"#7c3aed",EC:"#0891b2",Landed:"#dc2626",Cluster:"#f59e0b"};
+fetch("/api/dashboard/trend").then(r=>r.json()).then(t=>{
+  const grad=(c,color)=>{ const a=c.chart.chartArea; if(!a) return "transparent";
+    const g=c.chart.ctx.createLinearGradient(0,a.top,0,a.bottom); g.addColorStop(0,color+"45"); g.addColorStop(1,color+"00"); return g; };
+  const ds=Object.keys(t.series).map(k=>{ const col=TYPE_COLORS[k]||"#64748b";
+    return { label:k, data:t.series[k], borderColor:col, backgroundColor:(c)=>grad(c,col),
+      fill:"start", borderWidth:2, pointRadius:0, tension:.25, spanGaps:true }; });
+  const tc=new Chart($("trendChart"), { type:"line", data:{ labels:t.months, datasets:ds },
+    options:{ interaction:{mode:"index",intersect:false},
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.dataset.label+": "+(c.raw!=null?"$"+c.raw.toLocaleString()+"/sqm":"—")}} },
+      scales:{ y:{ title:{display:true,text:"$/sqm"}, ticks:{callback:v=>"$"+(v/1000)+"k"} }, x:{ ticks:{maxTicksLimit:12} } } } });
+  // toggle buttons (one per housing type)
+  const wrap=$("trendBtns");
+  ds.forEach((d,i)=>{
+    const b=document.createElement("button");
+    b.textContent=d.label; b.className="tbtn active"; b.style.setProperty("--c", d.borderColor);
+    b.onclick=()=>{ const vis=tc.isDatasetVisible(i); tc.setDatasetVisibility(i,!vis); tc.update(); b.classList.toggle("active",!vis); };
+    wrap.appendChild(b);
+  });
+}).catch(()=>{});
+
+// ---- map of where houses sold ----
+let map, cluster, MAPDATA=[];
+function pinIcon(color){
+  // inverted-raindrop pin: rounded top, point at bottom marking the exact location
+  return L.divIcon({ className:"", iconSize:[24,32], iconAnchor:[12,32], popupAnchor:[0,-28],
+    html:`<svg width="24" height="32" viewBox="0 0 24 32"><path d="M12 0C5.4 0 0 5.4 0 12c0 8.5 12 20 12 20s12-11.5 12-20C24 5.4 18.6 0 12 0z" fill="${color}" stroke="#fff" stroke-width="1.5"/><circle cx="12" cy="12" r="3.6" fill="#fff"/></svg>` });
+}
+function initMap(){
+  map = L.map("map", {scrollWheelZoom:true}).setView([1.3521,103.8198], 11);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {attribution:"© OpenStreetMap © CARTO", maxZoom:19}).addTo(map);
+  cluster = L.markerClusterGroup({maxClusterRadius:45});
+  map.addLayer(cluster);
+  const legend = L.control({position:"bottomright"});
+  legend.onAdd=function(){ const d=L.DomUtil.create("div");
+    d.style.cssText="background:#fff;padding:8px 11px;border-radius:8px;box-shadow:0 1px 5px rgba(0,0,0,.2);font-size:12px;line-height:1.7";
+    d.innerHTML="<b>Median price</b><br><span style='color:#15803d'>●</span> under \$1.5M<br><span style='color:#f59e0b'>●</span> \$1.5M – \$3M<br><span style='color:#dc2626'>●</span> over \$3M";
+    return d; };
+  legend.addTo(map);
+}
+function renderMap(){
+  const d = $("mapDist").value;
+  const rows = MAPDATA.filter(m=> (d==="All"||m.district===d) && m.lat && m.lng);
+  cluster.clearLayers();
+  const bounds=[];
+  rows.forEach(m=>{
+    const color = m.median>3e6?"#dc2626":m.median>1.5e6?"#f59e0b":"#15803d";
+    const mk = L.marker([m.lat,m.lng], {icon: pinIcon(color)});
+    mk.bindPopup(`<b>${m.label}</b><br>${m.district} · ${m.type}<br><b>${m.n}</b> sale${m.n>1?"s":""} · median ${sgd(m.median)}<br><b>$${(m.psm||0).toLocaleString()}/sqm</b> · range ${sgd(m.lo)} – ${sgd(m.hi)}`);
+    cluster.addLayer(mk); bounds.push([m.lat,m.lng]);
+  });
+  $("mapCount").textContent = `${rows.length} locations · ${rows.reduce((a,m)=>a+m.n,0).toLocaleString()} sales (last 6mo)`;
+  if(bounds.length) map.fitBounds(bounds, {padding:[30,30], maxZoom:15});
+}
+initMap();
+function loadMap(attempt){
+  $("mapCount").textContent="Loading map…";
+  fetch("/api/dashboard/map").then(r=>r.json()).then(rows=>{
+    if(!Array.isArray(rows)) throw new Error((rows&&rows.error)||"data not ready");
+    MAPDATA=rows;
+    const dists=["All",...[...new Set(rows.map(r=>r.district))].sort()];
+    $("mapDist").innerHTML = dists.map(d=>`<option>${d}</option>`).join("");
+    $("mapDist").onchange=renderMap;
+    renderMap();
+  }).catch(e=>{
+    if((attempt||0)<4){ setTimeout(()=>loadMap((attempt||0)+1), 2000); } // self-heal transient errors (cold start)
+    else { $("mapCount").textContent="Map unavailable — reload in a moment ("+e.message+")"; }
+  });
+}
+loadMap();
+</script>
+</body>
+</html>
