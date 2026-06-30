@@ -585,7 +585,7 @@ function loadMap(attempt){
     const dists=["All",...[...new Set(rows.map(r=>r.district))].sort()];
     $("mapDist").innerHTML = dists.map(d=>`<option>${d}</option>`).join("");
     $("mapDist").onchange=()=>renderMap();
-    $("mapNames").innerHTML = rows.map(m=>`<option value="${esc(m.label)}">`).join("");
+    $("mapNames").innerHTML = [...new Set(rows.map(m=>m.label).filter(Boolean))].sort((a,b)=>a.localeCompare(b)).map(l=>`<option value="${esc(l)}">`).join("");
     $("mapSearch").onchange=()=>selectHouse($("mapSearch").value);
     $("mapSearch").addEventListener("keydown",e=>{ if(e.key==="Enter") selectHouse($("mapSearch").value); });
     renderMap();
