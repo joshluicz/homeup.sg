@@ -40,6 +40,18 @@
   textarea{ font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:10px; width:100%; resize:vertical; }
   .btn{ padding:8px 16px; background:var(--green); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:600; }
   .btn:disabled{ opacity:.5; cursor:default; }
+  .cllist{ display:flex; flex-wrap:wrap; gap:10px; }
+  .clcard{ border:1px solid var(--line); border-radius:12px; padding:11px 14px; cursor:pointer; background:#fff; min-width:180px; transition:.12s; }
+  .clcard:hover{ border-color:var(--green2); box-shadow:0 1px 6px rgba(0,0,0,.06); }
+  .clcard.active{ border-color:var(--green); background:#f0fdf4; }
+  .clcard .cn{ font-weight:700; font-size:14px; }
+  .clcard .cm{ color:var(--muted); font-size:12px; margin-top:3px; }
+  .signal{ background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:9px 12px; font-size:13px; margin-bottom:7px; }
+  .field{ display:inline-block; margin:0 10px 8px 0; font-size:13px; color:var(--muted); }
+  .field input{ font:inherit; padding:5px 8px; border:1px solid var(--line); border-radius:7px; margin-left:5px; }
+  .proprow{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .tag{ font-size:11px; font-weight:700; padding:1px 8px; border-radius:999px; text-transform:capitalize; }
+  .tag.liked{ background:#dcfce7; color:#15803d; } .tag.rejected{ background:#fee2e2; color:#dc2626; } .tag.shortlist{ background:#fef9c3; color:#a16207; }
 </style>
 </head>
 <body>
@@ -52,6 +64,17 @@
 </header>
 <div class="wrap">
   <div id="agentHero" class="panel agenthero" style="display:none"></div>
+
+  <div id="clientPanel" class="panel" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><h2 style="margin:0">Client tracker</h2><p class="desc" style="margin:2px 0 0">Log what each buyer likes &amp; rejects — the dashboard reveals their <b>real</b> constraints and matches them to live sales.</p></div>
+      <button id="clAdd" class="btn">+ Add client</button>
+    </div>
+    <div id="clForm" style="display:none;margin-top:14px"></div>
+    <div id="clList" class="cllist" style="margin-top:14px"></div>
+    <div id="clDetail" style="display:none;margin-top:16px"></div>
+  </div>
+
   <div class="panel">
     <h2>Where houses sold — map</h2>
     <div class="controls">District:<select id="mapDist"></select> <span class="desc" id="mapCount"></span></div>
@@ -133,6 +156,7 @@ function getAgentSlug(){
 }
 let AGENT = getAgentSlug();
 function renderAgent(a){
+  updateClientPanel();
   const hero=$("agentHero");
   if(!a){ if(hero) hero.style.display="none"; document.title=DEFAULT_TITLE; $("fbWho").textContent=DEFAULT_FB; return; }
   document.title = a.name+" · PropMeta · HomeUP";
@@ -189,9 +213,84 @@ function initFeedback(){
       .finally(()=>{ send.disabled=false; });
   };
 }
-loadAgent(AGENT); initFeedback(); initAgentToggle();
+loadAgent(AGENT); initFeedback(); initAgentToggle(); initClientTracker();
 
 function opts(sel, vals, def){ sel.innerHTML=vals.map(v=>`<option ${v===def?"selected":""}>${v}</option>`).join(""); }
+
+// ---- Phase 2.5: client tracker (per-agent book of buyers) ----
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function moneyC(n){ n=+n; if(!isFinite(n)) return "—"; if(Math.abs(n)>=1e6) return "$"+(n/1e6).toLocaleString(undefined,{maximumFractionDigits:2})+"M"; if(Math.abs(n)>=1e3) return "$"+Math.round(n/1e3)+"k"; return "$"+Math.round(n); }
+function budgetLabel(c){ return (c.budget_min||c.budget_max) ? (c.budget_min?moneyC(c.budget_min):"") + "–" + (c.budget_max?moneyC(c.budget_max):"") : "no budget set"; }
+function initClientTracker(){ const a=$("clAdd"); if(a) a.onclick=showClientForm; updateClientPanel(); }
+function updateClientPanel(){ const p=$("clientPanel"); if(!p) return; if(!AGENT){ p.style.display="none"; return; } p.style.display="block"; loadClients(); }
+function loadClients(){
+  fetch("/api/dashboard/clients?agent="+encodeURIComponent(AGENT)).then(r=>r.json()).then(j=>{
+    const list=$("clList");
+    if(!j.clients||!j.clients.length){ list.innerHTML=`<p class="desc">No clients yet — add your first buyer to start revealing their preferences.</p>`; return; }
+    list.innerHTML=j.clients.map(c=>`<div class="clcard" data-id="${c.id}"><div class="cn">${esc(c.name)}</div><div class="cm">♥ ${c.liked} · ✗ ${c.rejected} · ${esc(budgetLabel(c))}</div></div>`).join("");
+    list.querySelectorAll(".clcard").forEach(el=>el.onclick=()=>openClient(el.dataset.id));
+  }).catch(()=>{});
+}
+function showClientForm(){
+  const f=$("clForm"); f.style.display="block";
+  f.innerHTML=`<div class="field">Name<input id="ncName" placeholder="e.g. Mr Tan"></div>`+
+    `<div class="field">Budget<input id="ncBmin" type="number" placeholder="min" style="width:96px"></div>`+
+    `<div class="field">–<input id="ncBmax" type="number" placeholder="max" style="width:96px"></div>`+
+    `<div class="field">Districts<input id="ncDist" placeholder="D15,D16" style="width:96px"></div>`+
+    `<div class="field">Types<input id="ncTypes" placeholder="Condominium" style="width:130px"></div>`+
+    `<div class="field">Beds<input id="ncBeds" type="number" style="width:52px"></div>`+
+    `<div class="field" style="display:block">Notes<input id="ncNotes" placeholder="context…" style="width:340px"></div>`+
+    `<button id="ncSave" class="btn">Save client</button> <button id="ncCancel" class="btn" style="background:#fff;color:var(--muted);border:1px solid var(--line)">Cancel</button> <span class="desc" id="ncStat"></span>`;
+  $("ncSave").onclick=saveClient; $("ncCancel").onclick=()=>{ f.style.display="none"; };
+}
+function saveClient(){
+  const body={ agent:AGENT, name:$("ncName").value.trim(), budgetMin:$("ncBmin").value, budgetMax:$("ncBmax").value,
+    districts:$("ncDist").value, types:$("ncTypes").value, bedrooms:$("ncBeds").value, notes:$("ncNotes").value };
+  if(!body.name){ $("ncStat").textContent="Name required."; return; }
+  $("ncStat").textContent="Saving…";
+  fetch("/api/dashboard/clients",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json()).then(j=>{ if(j.id){ $("clForm").style.display="none"; loadClients(); openClient(j.id); } else $("ncStat").textContent="Error: "+(j.error||"try again"); }).catch(()=>$("ncStat").textContent="Error");
+}
+function openClient(id){
+  $("clList").querySelectorAll(".clcard").forEach(el=>el.classList.toggle("active",el.dataset.id==id));
+  fetch("/api/dashboard/client?id="+id).then(r=>r.json()).then(j=>{
+    if(j.error){ $("clDetail").innerHTML=`<p class="desc">${esc(j.error)}</p>`; $("clDetail").style.display="block"; return; }
+    const c=j.client, m=j.match;
+    const signals=j.insights.signals.map(s=>`<div class="signal">${esc(s)}</div>`).join("");
+    const matchTxt = (m&&m.n) ? `<b>${(+m.n).toLocaleString()}</b> comparable sales in the last 12 months fit their stated criteria · median <b>${moneyC(m.median_price)}</b> · ${moneyC(m.median_psm)}/sqm`
+                              : "Set districts / types / budget to see matching market activity.";
+    const propRow=p=>`<div class="proprow"><span class="tag ${p.status}">${p.status}</span><b>${esc(p.label||"—")}</b><span class="desc">${esc(p.district||"")} ${esc(p.property_type||"")} ${p.price?"· "+moneyC(p.price):""} ${p.reason?"· “"+esc(p.reason)+"”":""}</span><span style="margin-left:auto;cursor:pointer;color:#dc2626;font-weight:700" data-del="${p.id}">×</span></div>`;
+    $("clDetail").innerHTML=
+      `<h3 style="margin:0 0 2px">${esc(c.name)} <span class="desc" style="font-weight:400">${esc(budgetLabel(c))} · ${esc((c.wanted_districts||[]).join(", ")||"any district")} ${c.bedrooms?"· "+c.bedrooms+"BR":""}</span></h3>`+
+      `<div style="margin:12px 0">${signals}</div>`+
+      `<div class="desc" style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px">📊 ${matchTxt}</div>`+
+      `<div style="font-weight:700;font-size:13px;margin-bottom:6px">Viewing log</div>`+
+      `<div id="propList">${j.properties.length?j.properties.map(propRow).join(""):'<p class="desc">No viewings logged yet — add one below.</p>'}</div>`+
+      `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">`+
+        `<div class="field">Property<input id="pLabel" placeholder="project / address" style="width:150px"></div>`+
+        `<div class="field">District<input id="pDist" placeholder="D15" style="width:58px"></div>`+
+        `<div class="field">Type<input id="pType" placeholder="Condominium" style="width:120px"></div>`+
+        `<div class="field">Price<input id="pPrice" type="number" style="width:100px"></div>`+
+        `<div class="field">Sqm<input id="pArea" type="number" style="width:62px"></div>`+
+        `<div class="field">Reason<input id="pReason" placeholder="why rejected?" style="width:140px"></div>`+
+        `<button class="btn" style="background:#15803d" data-st="liked">♥ Liked</button> `+
+        `<button class="btn" style="background:#a16207" data-st="shortlist">★ Shortlist</button> `+
+        `<button class="btn" style="background:#dc2626" data-st="rejected">✗ Rejected</button> <span class="desc" id="pStat"></span>`+
+      `</div>`;
+    $("clDetail").style.display="block";
+    $("clDetail").querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>addProp(id,b.dataset.st));
+    $("clDetail").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delProp(b.dataset.del,id));
+  }).catch(()=>{});
+}
+function addProp(id,status){
+  const body={ clientId:id, label:$("pLabel").value.trim(), district:$("pDist").value.trim(), propertyType:$("pType").value.trim(),
+    price:$("pPrice").value, areaSqm:$("pArea").value, status, reason:$("pReason").value.trim() };
+  if(!body.label){ $("pStat").textContent="Property name required."; return; }
+  $("pStat").textContent="Saving…";
+  fetch("/api/dashboard/client-prop",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(r=>r.json()).then(()=>{ openClient(id); loadClients(); }).catch(()=>$("pStat").textContent="Error");
+}
+function delProp(pid,id){ fetch("/api/dashboard/client-prop?id="+pid,{method:"DELETE"}).then(()=>{ openClient(id); loadClients(); }).catch(()=>{}); }
 
 function loadTx(){
   const qs=new URLSearchParams();
