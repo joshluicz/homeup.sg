@@ -60,10 +60,14 @@
     <h1>Home<span>UP</span> · Singapore Property Intelligence</h1>
     <p id="updated">Loading…</p>
   </div>
-  <label id="agentToggle" class="agenttoggle" style="display:none">Agent view:<select id="agentSel" aria-label="Switch agent view"></select></label>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <label id="agentToggle" class="agenttoggle" style="display:none">Agent view:<select id="agentSel" aria-label="Switch agent view"></select></label>
+    <span id="authArea" class="agenttoggle"></span>
+  </div>
 </header>
 <div class="wrap">
   <div id="agentHero" class="panel agenthero" style="display:none"></div>
+  <div id="authGate" class="panel" style="display:none"></div>
 
   <div id="clientPanel" class="panel" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
@@ -155,21 +159,56 @@ function getAgentSlug(){
   return new URLSearchParams(location.search).get("agent") || null;
 }
 let AGENT = getAgentSlug();
+let SESSION = null;
+function fetchSession(){ return fetch("/api/dashboard/session").then(r=>r.json()).then(s=>{ SESSION = s.anon?null:s; return SESSION; }).catch(()=>{ SESSION=null; }); }
+function authorizedFor(slug){ return SESSION && (SESSION.role==="owner" || SESSION.slug===slug); }
 function renderAgent(a){
-  updateClientPanel();
   const hero=$("agentHero");
-  if(!a){ if(hero) hero.style.display="none"; document.title=DEFAULT_TITLE; $("fbWho").textContent=DEFAULT_FB; return; }
-  document.title = a.name+" · PropMeta · HomeUP";
-  if(hero){
-    hero.style.display="flex";
-    hero.innerHTML =
-      `<img src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`+
-      `<div><div class="aname">${a.name}</div>`+
-      `<div class="ameta">${a.profileTitle||"Property Advisor"} · CEA ${a.cea}</div>`+
-      (a.specialties||[]).slice(0,4).map(s=>`<span class="chip">${s}</span>`).join("")+`</div>`+
-      `<div class="abadge">Prepared for you · live SG market intelligence</div>`;
+  if(!a){ if(hero) hero.style.display="none"; document.title=DEFAULT_TITLE; $("fbWho").textContent=DEFAULT_FB; }
+  else {
+    document.title = a.name+" · PropMeta · HomeUP";
+    if(hero){
+      hero.style.display="flex";
+      hero.innerHTML =
+        `<img src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`+
+        `<div><div class="aname">${a.name}</div>`+
+        `<div class="ameta">${a.profileTitle||"Property Advisor"} · CEA ${a.cea}</div>`+
+        (a.specialties||[]).slice(0,4).map(s=>`<span class="chip">${s}</span>`).join("")+`</div>`+
+        `<div class="abadge">Prepared for you · live SG market intelligence</div>`;
+    }
+    $("fbWho").textContent = "Hi "+a.name.split(" ")[0]+" — what would make this dashboard more useful for your work? It goes straight to the HomeUP product team.";
   }
-  $("fbWho").textContent = "Hi "+a.name.split(" ")[0]+" — what would make this dashboard more useful for your work? It goes straight to the HomeUP product team.";
+  updateClientPanel();
+  applyGate();
+}
+// ---- session / login gate ----
+function renderAuthArea(){
+  const el=$("authArea"); if(!el) return;
+  if(SESSION){ el.innerHTML=`<b>${esc(SESSION.slug)}</b>${SESSION.role==="owner"?" (owner)":""} · <a href="#" id="logoutBtn" style="color:var(--green)">Log out</a>`; $("logoutBtn").onclick=(e)=>{e.preventDefault();doLogout();}; }
+  else { el.innerHTML=`<button id="loginBtn" class="btn" style="padding:6px 12px">Agent log in</button>`; $("loginBtn").onclick=()=>{ const g=$("authGate"); g.style.display="block"; showLogin(); g.scrollIntoView({behavior:"smooth",block:"center"}); }; }
+}
+function showLogin(){
+  const gate=$("authGate"); gate.style.display="block";
+  gate.innerHTML=`<h2 style="margin:0 0 2px">Agent log in</h2><p class="desc">Enter your passcode to open your client tracker.</p>`+
+    `<div class="field">Passcode<input id="lgPass" type="password" placeholder="passcode" style="width:150px"></div>`+
+    `<button id="lgGo" class="btn">Log in</button> <span class="desc" id="lgStat"></span>`;
+  $("lgGo").onclick=doLogin; $("lgPass").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();}); $("lgPass").focus();
+}
+function doLogin(){
+  const pass=$("lgPass").value.trim(); if(!pass){ $("lgStat").textContent="Enter your passcode."; return; }
+  $("lgStat").textContent="…";
+  fetch("/api/dashboard/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({passcode:pass})})
+    .then(r=>r.json()).then(j=>{
+      if(!j.ok){ $("lgStat").textContent=j.error||"invalid passcode"; return; }
+      $("authGate").style.display="none";
+      fetchSession().then(()=>{ renderAuthArea(); initAgentToggle(); const goto=(j.role!=="owner")?j.slug:AGENT; if(goto) setAgent(goto); else { updateClientPanel(); applyGate(); } });
+    }).catch(()=>{ $("lgStat").textContent="error"; });
+}
+function doLogout(){ fetch("/api/dashboard/logout",{method:"POST"}).then(()=>fetchSession()).then(()=>{ renderAuthArea(); initAgentToggle(); updateClientPanel(); applyGate(); }); }
+function applyGate(){
+  const gate=$("authGate");
+  if(AGENT && !authorizedFor(AGENT)){ if($("agentHero")) $("agentHero").style.display="none"; if($("clientPanel")) $("clientPanel").style.display="none"; showLogin(); }
+  else if(gate){ gate.style.display="none"; }
 }
 function loadAgent(slug){
   if(!slug){ renderAgent(null); return; }
@@ -190,9 +229,11 @@ function setAgent(slug){
 }
 function initAgentToggle(){
   fetch("/api/dashboard/agents").then(r=>r.ok?r.json():null).then(j=>{
-    if(!j || !j.agents || !j.agents.length) return; // no agents (e.g. Railway) → hide toggle
+    if(!j || !j.agents || !j.agents.length){ if($("agentToggle")) $("agentToggle").style.display="none"; return; }
+    let agents=j.agents;
+    if(SESSION && SESSION.role!=="owner") agents=agents.filter(a=>a.slug===SESSION.slug); // agents see only themselves
     const sel=$("agentSel");
-    sel.innerHTML = `<option value="">General view</option>`+j.agents.map(a=>`<option value="${a.slug}">${a.name}</option>`).join("");
+    sel.innerHTML = `<option value="">General view</option>`+agents.map(a=>`<option value="${a.slug}">${a.name}</option>`).join("");
     sel.value = AGENT || "";
     $("agentToggle").style.display="";
     sel.onchange=()=>setAgent(sel.value);
@@ -213,7 +254,7 @@ function initFeedback(){
       .finally(()=>{ send.disabled=false; });
   };
 }
-loadAgent(AGENT); initFeedback(); initAgentToggle(); initClientTracker();
+fetchSession().then(()=>{ renderAuthArea(); loadAgent(AGENT); initFeedback(); initAgentToggle(); initClientTracker(); applyGate(); });
 
 function opts(sel, vals, def){ sel.innerHTML=vals.map(v=>`<option ${v===def?"selected":""}>${v}</option>`).join(""); }
 
@@ -222,7 +263,7 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function moneyC(n){ n=+n; if(!isFinite(n)) return "—"; if(Math.abs(n)>=1e6) return "$"+(n/1e6).toLocaleString(undefined,{maximumFractionDigits:2})+"M"; if(Math.abs(n)>=1e3) return "$"+Math.round(n/1e3)+"k"; return "$"+Math.round(n); }
 function budgetLabel(c){ return (c.budget_min||c.budget_max) ? (c.budget_min?moneyC(c.budget_min):"") + "–" + (c.budget_max?moneyC(c.budget_max):"") : "no budget set"; }
 function initClientTracker(){ const a=$("clAdd"); if(a) a.onclick=showClientForm; updateClientPanel(); }
-function updateClientPanel(){ const p=$("clientPanel"); if(!p) return; if(!AGENT){ p.style.display="none"; return; } p.style.display="block"; loadClients(); }
+function updateClientPanel(){ const p=$("clientPanel"); if(!p) return; if(!AGENT || !authorizedFor(AGENT)){ p.style.display="none"; return; } p.style.display="block"; loadClients(); }
 function loadClients(){
   fetch("/api/dashboard/clients?agent="+encodeURIComponent(AGENT)).then(r=>r.json()).then(j=>{
     const list=$("clList");
