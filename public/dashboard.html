@@ -317,7 +317,10 @@ function openClient(id){
                               : "Set districts / types / budget to see matching market activity.";
     const propRow=p=>`<div class="proprow"><span class="tag ${p.status}">${p.status}</span><b>${esc(p.label||"—")}</b><span class="desc">${esc(p.district||"")} ${esc(p.property_type||"")} ${p.price?"· "+moneyC(p.price):""} ${p.reason?"· “"+esc(p.reason)+"”":""}</span><span style="margin-left:auto;cursor:pointer;color:#dc2626;font-weight:700" data-del="${p.id}">×</span></div>`;
     $("clDetail").innerHTML=
-      `<h3 style="margin:0 0 2px">${esc(c.name)} <span class="desc" style="font-weight:400">${esc(budgetLabel(c))} · ${esc((c.wanted_districts||[]).join(", ")||"any district")} ${c.bedrooms?"· "+c.bedrooms+"BR":""}</span></h3>`+
+      `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">`+
+        `<h3 style="margin:0">${esc(c.name)} <span class="desc" style="font-weight:400">${esc(budgetLabel(c))} · ${esc((c.wanted_districts||[]).join(", ")||"any district")} ${c.bedrooms?"· "+c.bedrooms+"BR":""}</span></h3>`+
+        `<button id="delClientBtn" class="btn" style="background:#fff;color:#dc2626;border:1px solid var(--line);padding:5px 11px">Delete client</button>`+
+      `</div>`+
       `<div style="margin:12px 0">${signals}</div>`+
       `<div class="desc" style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:14px">📊 ${matchTxt}</div>`+
       `<div style="font-weight:700;font-size:13px;margin-bottom:6px">Viewing log</div>`+
@@ -334,6 +337,7 @@ function openClient(id){
         `<button class="btn" style="background:#dc2626" data-st="rejected">✗ Rejected</button> <span class="desc" id="pStat"></span>`+
       `</div>`;
     $("clDetail").style.display="block";
+    const dc=$("delClientBtn"); if(dc) dc.onclick=()=>delClient(c.id,c.name);
     $("clDetail").querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>addProp(id,b.dataset.st));
     $("clDetail").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>delProp(b.dataset.del,id));
   }).catch(()=>{});
@@ -347,6 +351,13 @@ function addProp(id,status){
     .then(r=>r.json()).then(()=>{ openClient(id); loadClients(); }).catch(()=>$("pStat").textContent="Error");
 }
 function delProp(pid,id){ fetch("/api/dashboard/client-prop?id="+pid,{method:"DELETE"}).then(()=>{ openClient(id); loadClients(); }).catch(()=>{}); }
+function delClient(id,name){
+  if(!confirm("Delete client “"+name+"” and all their viewing history? This cannot be undone.")) return;
+  fetch("/api/dashboard/clients?id="+id,{method:"DELETE"}).then(r=>r.json()).then(j=>{
+    if(j.error){ toast("Error: "+j.error); return; }
+    toast("Deleted "+name); $("clDetail").style.display="none"; setActiveClient(null); loadClients();
+  }).catch(()=>toast("Error"));
+}
 
 // ---- one-click logging from the map & search (active client) ----
 let ACTIVE_CLIENT = null;

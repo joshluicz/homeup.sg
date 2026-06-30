@@ -45,6 +45,7 @@ export async function addProperty(b: Body) {
 }
 
 export async function deleteProperty(id: unknown) { await pool.query("delete from client_properties where id=$1", [int(id)]); return { ok: true }; }
+export async function deleteClient(id: unknown) { await pool.query("delete from clients where id=$1", [int(id)]); return { ok: true }; } // client_properties cascade via FK
 
 export async function ownerOfClient(id: unknown): Promise<string | null> { const r = await pool.query("select agent_slug from clients where id=$1", [int(id)]); return r.rows[0] ? r.rows[0].agent_slug : null; }
 export async function ownerOfProp(id: unknown): Promise<string | null> { const r = await pool.query("select c.agent_slug from client_properties p join clients c on c.id=p.client_id where p.id=$1", [int(id)]); return r.rows[0] ? r.rows[0].agent_slug : null; }
