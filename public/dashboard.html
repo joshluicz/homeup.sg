@@ -52,6 +52,12 @@
   .proprow{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:13px; }
   .tag{ font-size:11px; font-weight:700; padding:1px 8px; border-radius:999px; text-transform:capitalize; }
   .tag.liked{ background:#dcfce7; color:#15803d; } .tag.rejected{ background:#fee2e2; color:#dc2626; } .tag.shortlist{ background:#fef9c3; color:#a16207; }
+  .qbtn{ font-size:13px; border:1px solid var(--line); background:#fff; border-radius:7px; padding:2px 8px; cursor:pointer; margin-left:4px; }
+  .qbtn:hover{ border-color:var(--green2); }
+  .qbtn.l{ color:#15803d } .qbtn.s{ color:#a16207 } .qbtn.r{ color:#dc2626 }
+  #logBar{ position:sticky; top:0; z-index:600; background:var(--green); color:#fff; padding:9px 16px; font-size:13px; text-align:center; }
+  #logBar a{ color:#fff; text-decoration:underline; margin-left:8px; }
+  .housecard{ border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:14px; background:#f8fafc; }
 </style>
 </head>
 <body>
@@ -65,6 +71,7 @@
     <span id="authArea" class="agenttoggle"></span>
   </div>
 </header>
+<div id="logBar" style="display:none"><span id="logBarTxt"></span><a href="#" id="logBarStop">stop</a></div>
 <div class="wrap">
   <div id="agentHero" class="panel agenthero" style="display:none"></div>
   <div id="authGate" class="panel" style="display:none"></div>
@@ -81,7 +88,13 @@
 
   <div class="panel">
     <h2>Where houses sold — map</h2>
-    <div class="controls">District:<select id="mapDist"></select> <span class="desc" id="mapCount"></span></div>
+    <div class="controls">
+      Find a house:<input id="mapSearch" list="mapNames" placeholder="project / street name…" autocomplete="off" style="width:210px;margin-left:6px">
+      <datalist id="mapNames"></datalist>
+      District:<select id="mapDist"></select>
+      <span class="desc" id="mapCount"></span>
+    </div>
+    <div id="houseDetail" style="display:none"></div>
     <div id="map" style="height:480px; border-radius:12px; overflow:hidden; border:1px solid var(--line);"></div>
   </div>
 
@@ -204,7 +217,7 @@ function doLogin(){
       fetchSession().then(()=>{ renderAuthArea(); initAgentToggle(); const goto=(j.role!=="owner")?j.slug:AGENT; if(goto) setAgent(goto); else { updateClientPanel(); applyGate(); } });
     }).catch(()=>{ $("lgStat").textContent="error"; });
 }
-function doLogout(){ fetch("/api/dashboard/logout",{method:"POST"}).then(()=>fetchSession()).then(()=>{ renderAuthArea(); initAgentToggle(); updateClientPanel(); applyGate(); }); }
+function doLogout(){ setActiveClient(null); fetch("/api/dashboard/logout",{method:"POST"}).then(()=>fetchSession()).then(()=>{ renderAuthArea(); initAgentToggle(); updateClientPanel(); applyGate(); }); }
 function applyGate(){
   const gate=$("authGate");
   if(AGENT && !authorizedFor(AGENT)){ if($("agentHero")) $("agentHero").style.display="none"; if($("clientPanel")) $("clientPanel").style.display="none"; showLogin(); }
@@ -217,6 +230,7 @@ function loadAgent(slug){
 }
 function setAgent(slug){
   AGENT = slug || null;
+  setActiveClient(null);
   const u = new URL(location.href);
   if(/\/a\/[a-z0-9-]+/i.test(u.pathname) || !slug){ // keep path-style URLs path-style
     u.pathname = u.pathname.replace(/\/a\/[a-z0-9-]+/i,"") || "/";
@@ -262,7 +276,7 @@ function opts(sel, vals, def){ sel.innerHTML=vals.map(v=>`<option ${v===def?"sel
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function moneyC(n){ n=+n; if(!isFinite(n)) return "—"; if(Math.abs(n)>=1e6) return "$"+(n/1e6).toLocaleString(undefined,{maximumFractionDigits:2})+"M"; if(Math.abs(n)>=1e3) return "$"+Math.round(n/1e3)+"k"; return "$"+Math.round(n); }
 function budgetLabel(c){ return (c.budget_min||c.budget_max) ? (c.budget_min?moneyC(c.budget_min):"") + "–" + (c.budget_max?moneyC(c.budget_max):"") : "no budget set"; }
-function initClientTracker(){ const a=$("clAdd"); if(a) a.onclick=showClientForm; updateClientPanel(); }
+function initClientTracker(){ const a=$("clAdd"); if(a) a.onclick=showClientForm; const s=$("logBarStop"); if(s) s.onclick=(e)=>{e.preventDefault(); setActiveClient(null);}; updateClientPanel(); }
 function updateClientPanel(){ const p=$("clientPanel"); if(!p) return; if(!AGENT || !authorizedFor(AGENT)){ p.style.display="none"; return; } p.style.display="block"; loadClients(); }
 function loadClients(){
   fetch("/api/dashboard/clients?agent="+encodeURIComponent(AGENT)).then(r=>r.json()).then(j=>{
@@ -297,6 +311,7 @@ function openClient(id){
   fetch("/api/dashboard/client?id="+id).then(r=>r.json()).then(j=>{
     if(j.error){ $("clDetail").innerHTML=`<p class="desc">${esc(j.error)}</p>`; $("clDetail").style.display="block"; return; }
     const c=j.client, m=j.match;
+    setActiveClient(c);
     const signals=j.insights.signals.map(s=>`<div class="signal">${esc(s)}</div>`).join("");
     const matchTxt = (m&&m.n) ? `<b>${(+m.n).toLocaleString()}</b> comparable sales in the last 12 months fit their stated criteria · median <b>${moneyC(m.median_price)}</b> · ${moneyC(m.median_psm)}/sqm`
                               : "Set districts / types / budget to see matching market activity.";
@@ -333,6 +348,72 @@ function addProp(id,status){
 }
 function delProp(pid,id){ fetch("/api/dashboard/client-prop?id="+pid,{method:"DELETE"}).then(()=>{ openClient(id); loadClients(); }).catch(()=>{}); }
 
+// ---- one-click logging from the map & search (active client) ----
+let ACTIVE_CLIENT = null;
+function toast(msg){
+  let t=$("pmToast");
+  if(!t){ t=document.createElement("div"); t.id="pmToast"; t.style.cssText="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);opacity:0;transition:opacity .2s"; document.body.appendChild(t); }
+  t.textContent=msg; t.style.opacity="1"; clearTimeout(t._t); t._t=setTimeout(()=>{t.style.opacity="0";},2200);
+}
+function setActiveClient(c){
+  const newId=c?c.id:null, oldId=ACTIVE_CLIENT?ACTIVE_CLIENT.id:null;
+  ACTIVE_CLIENT = c ? {id:c.id,name:c.name,budget_min:c.budget_min,budget_max:c.budget_max,wanted_districts:c.wanted_districts,wanted_types:c.wanted_types} : null;
+  const bar=$("logBar");
+  if(ACTIVE_CLIENT){ $("logBarTxt").innerHTML=`🎯 Quick-logging viewings to <b>${esc(ACTIVE_CLIENT.name)}</b> — tap ♥ / ★ / ✗ on any house below`; bar.style.display="block"; }
+  else if(bar){ bar.style.display="none"; }
+  if(newId!==oldId){ if(MAPDATA&&MAPDATA.length) renderMap(true); if($("txTable")&&$("txTable").innerHTML) loadTx(); }
+}
+function quickBtns(){ return `<button class="qbtn l" data-qs="liked" title="Liked">♥</button><button class="qbtn s" data-qs="shortlist" title="Shortlist">★</button><button class="qbtn r" data-qs="rejected" title="Rejected">✗</button>`; }
+function houseProp(m){ return {label:m.label,district:m.district,type:m.type,price:m.median,area:(m.psm&&m.median)?Math.round(m.median/m.psm):null}; }
+function fitBadge(prop){
+  if(!ACTIVE_CLIENT) return "";
+  const c=ACTIVE_CLIENT, issues=[];
+  if(c.budget_max && prop.price>+c.budget_max) issues.push("above budget");
+  if(c.budget_min && prop.price<+c.budget_min) issues.push("below range");
+  if(c.wanted_districts&&c.wanted_districts.length && prop.district && !c.wanted_districts.includes(prop.district)) issues.push("outside districts");
+  if(c.wanted_types&&c.wanted_types.length && prop.type && !c.wanted_types.includes(prop.type)) issues.push("different type");
+  return issues.length ? `<span style="color:#dc2626">✗ ${issues.join(", ")} for ${esc(c.name)}</span>` : `<span style="color:#15803d">✓ fits ${esc(c.name)}’s criteria</span>`;
+}
+function logProp(prop, status){
+  if(!ACTIVE_CLIENT){ toast("Open a client first to quick-log."); return; }
+  const reason = status==="rejected" ? (prompt("Why rejected? (optional)")||"").trim() : "";
+  fetch("/api/dashboard/client-prop",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({clientId:ACTIVE_CLIENT.id,label:prop.label,district:prop.district,propertyType:prop.type,price:prop.price,areaSqm:prop.area,status,reason})})
+    .then(r=>r.json()).then(j=>{
+      if(j.error){ toast("Error: "+j.error); return; }
+      toast((status==="liked"?"♥ Liked":status==="shortlist"?"★ Shortlisted":"✗ Rejected")+" → "+ACTIVE_CLIENT.name);
+      loadClients(); if($("clDetail")&&$("clDetail").style.display!=="none") openClient(ACTIVE_CLIENT.id);
+    }).catch(()=>toast("Error logging"));
+}
+// ---- map search by name + house details ----
+function selectHouse(q){
+  q=(q||"").trim().toLowerCase(); if(!q||!MAPDATA||!MAPDATA.length) return;
+  const m = MAPDATA.find(x=>(x.label||"").toLowerCase()===q) || MAPDATA.find(x=>(x.label||"").toLowerCase().includes(q));
+  if(!m){ toast("No house found for “"+q+"”"); return; }
+  if($("mapDist").value!=="All" && $("mapDist").value!==m.district){ $("mapDist").value="All"; renderMap(true); }
+  const mk = MARKERS[m.label];
+  if(mk && cluster.zoomToShowLayer){ cluster.zoomToShowLayer(mk, ()=>mk.openPopup()); }
+  else if(m.lat&&m.lng){ map.flyTo([m.lat,m.lng], 16); }
+  showHouseDetail(m);
+}
+function showHouseDetail(m){
+  const d=$("houseDetail"); d.style.display="block";
+  d.innerHTML = `<div class="housecard">`+
+    `<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">`+
+      `<div><b style="font-size:15px">${esc(m.label)}</b> <span class="desc">${m.district} · ${esc(m.type||"")}</span></div>`+
+      `<div>${ACTIVE_CLIENT?quickBtns():""}</div>`+
+    `</div>`+
+    `<div class="desc" style="margin-top:6px">${m.n} sale${m.n>1?"s":""} (6mo) · median <b>${sgd(m.median)}</b> · <b>$${(m.psm||0).toLocaleString()}/sqm</b> · range ${sgd(m.lo)}–${sgd(m.hi)}</div>`+
+    (ACTIVE_CLIENT?`<div class="desc" style="margin-top:5px">${fitBadge(houseProp(m))}</div>`:"")+
+    `<div id="houseTx" class="desc" style="margin-top:8px">Loading recent sales…</div>`+
+  `</div>`;
+  d.querySelectorAll("[data-qs]").forEach(b=>b.onclick=()=>logProp(houseProp(m), b.dataset.qs));
+  fetch("/api/dashboard/transactions?q="+encodeURIComponent(m.label)).then(r=>r.json()).then(j=>{
+    const rows=(j.rows||[]).slice(0,6);
+    $("houseTx").innerHTML = rows.length ? "<b>Recent sales:</b> "+rows.map(r=>`${r.month} · ${r.area||"?"}sqm · ${sgd(r.price)}${r.psm?" ($"+r.psm.toLocaleString()+"/sqm)":""}`).join("  ·  ") : "No itemised sales found for this name.";
+  }).catch(()=>{ $("houseTx").textContent=""; });
+}
+
 function loadTx(){
   const qs=new URLSearchParams();
   const set=(k,id)=>{ const v=$(id).value.trim(); if(v&&v!=="All") qs.set(k,v); };
@@ -341,9 +422,11 @@ function loadTx(){
   $("txCount").textContent="…";
   fetch("/api/dashboard/transactions?"+qs).then(r=>r.json()).then(j=>{
     $("txCount").textContent=`${j.count.toLocaleString()} sales`+(j.count>800?" (showing newest 800)":"");
-    const head="<thead><tr style='text-align:left;border-bottom:2px solid var(--line);position:sticky;top:0;background:#fff'><th style='padding:7px 9px'>Project</th><th>Dist</th><th>Type</th><th>Tenure</th><th>Floor</th><th>Sqm</th><th>Price</th><th>$/sqm</th><th>Month</th></tr></thead>";
-    const body=j.rows.map(r=>`<tr style='border-bottom:1px solid var(--line)'><td style='padding:6px 9px'>${r.project}</td><td>${r.district}</td><td>${r.type}</td><td>${(r.tenure||"").replace(/ lease commencing.*/,"").slice(0,18)}</td><td>${r.floor}</td><td>${r.area??"—"}</td><td>${sgd(r.price)}</td><td><b>${r.psm?"$"+r.psm.toLocaleString():"—"}</b></td><td>${r.month}</td></tr>`).join("");
+    const logCol = !!ACTIVE_CLIENT;
+    const head="<thead><tr style='text-align:left;border-bottom:2px solid var(--line);position:sticky;top:0;background:#fff'><th style='padding:7px 9px'>Project</th><th>Dist</th><th>Type</th><th>Tenure</th><th>Floor</th><th>Sqm</th><th>Price</th><th>$/sqm</th><th>Month</th>"+(logCol?"<th>Log</th>":"")+"</tr></thead>";
+    const body=j.rows.map((r,i)=>`<tr style='border-bottom:1px solid var(--line)'><td style='padding:6px 9px'>${esc(r.project)}</td><td>${r.district}</td><td>${esc(r.type)}</td><td>${esc((r.tenure||"").replace(/ lease commencing.*/,"").slice(0,18))}</td><td>${r.floor}</td><td>${r.area??"—"}</td><td>${sgd(r.price)}</td><td><b>${r.psm?"$"+r.psm.toLocaleString():"—"}</b></td><td>${r.month}</td>`+(logCol?`<td style='white-space:nowrap'><button class='qbtn l' data-qi='${i}' data-qs='liked'>♥</button><button class='qbtn s' data-qi='${i}' data-qs='shortlist'>★</button><button class='qbtn r' data-qi='${i}' data-qs='rejected'>✗</button></td>`:"")+`</tr>`).join("");
     $("txTable").innerHTML=head+"<tbody>"+body+"</tbody>";
+    if(logCol){ $("txTable").querySelectorAll("[data-qi]").forEach(b=>{ const r=j.rows[+b.dataset.qi]; b.onclick=()=>logProp({label:r.project,district:r.district,type:r.type,price:r.price,area:r.area}, b.dataset.qs); }); }
   }).catch(()=>$("txCount").textContent="error loading");
 }
 
@@ -464,6 +547,8 @@ function initMap(){
   map = L.map("map", {scrollWheelZoom:true, minZoom:11, maxBounds:SG_BOUNDS.pad(0.6), maxBoundsViscosity:0.7}).setView(SG_CENTER, 11);
   // if the view drifts off Singapore, glide back to it
   map.on("moveend", ()=>{ if(!SG_BOUNDS.contains(map.getCenter())) map.flyTo(SG_CENTER, Math.max(map.getZoom(),11), {duration:.6}); });
+  // wire quick-log buttons inside a marker popup to the active client
+  map.on("popupopen", (e)=>{ const src=e.popup._source, el=e.popup.getElement(); if(!src||!src._pm||!el) return; el.querySelectorAll("[data-qs]").forEach(b=>b.onclick=()=>logProp(houseProp(src._pm), b.dataset.qs)); });
   L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {attribution:"© OpenStreetMap © CARTO", maxZoom:19}).addTo(map);
   cluster = L.markerClusterGroup({maxClusterRadius:45});
   map.addLayer(cluster);
@@ -474,19 +559,22 @@ function initMap(){
     return d; };
   legend.addTo(map);
 }
-function renderMap(){
+let MARKERS={};
+function renderMap(skipFit){
   const d = $("mapDist").value;
   const rows = MAPDATA.filter(m=> (d==="All"||m.district===d) && m.lat && m.lng);
-  cluster.clearLayers();
+  cluster.clearLayers(); MARKERS={};
   const bounds=[];
   rows.forEach(m=>{
     const color = m.median>3e6?"#dc2626":m.median>1.5e6?"#f59e0b":"#15803d";
     const mk = L.marker([m.lat,m.lng], {icon: pinIcon(color)});
-    mk.bindPopup(`<b>${m.label}</b><br>${m.district} · ${m.type}<br><b>${m.n}</b> sale${m.n>1?"s":""} · median ${sgd(m.median)}<br><b>$${(m.psm||0).toLocaleString()}/sqm</b> · range ${sgd(m.lo)} – ${sgd(m.hi)}`);
-    cluster.addLayer(mk); bounds.push([m.lat,m.lng]);
+    mk._pm = m;
+    const btns = ACTIVE_CLIENT ? `<div style="margin-top:6px">${quickBtns()}</div>` : "";
+    mk.bindPopup(`<b>${esc(m.label)}</b><br>${m.district} · ${esc(m.type||"")}<br><b>${m.n}</b> sale${m.n>1?"s":""} · median ${sgd(m.median)}<br><b>$${(m.psm||0).toLocaleString()}/sqm</b> · range ${sgd(m.lo)} – ${sgd(m.hi)}${btns}`);
+    cluster.addLayer(mk); MARKERS[m.label]=mk; bounds.push([m.lat,m.lng]);
   });
   $("mapCount").textContent = `${rows.length} locations · ${rows.reduce((a,m)=>a+m.n,0).toLocaleString()} sales (last 6mo)`;
-  if(bounds.length) map.fitBounds(bounds, {padding:[30,30], maxZoom:15});
+  if(!skipFit && bounds.length) map.fitBounds(bounds, {padding:[30,30], maxZoom:15});
 }
 initMap();
 function loadMap(attempt){
@@ -496,7 +584,10 @@ function loadMap(attempt){
     MAPDATA=rows;
     const dists=["All",...[...new Set(rows.map(r=>r.district))].sort()];
     $("mapDist").innerHTML = dists.map(d=>`<option>${d}</option>`).join("");
-    $("mapDist").onchange=renderMap;
+    $("mapDist").onchange=()=>renderMap();
+    $("mapNames").innerHTML = rows.map(m=>`<option value="${esc(m.label)}">`).join("");
+    $("mapSearch").onchange=()=>selectHouse($("mapSearch").value);
+    $("mapSearch").addEventListener("keydown",e=>{ if(e.key==="Enter") selectHouse($("mapSearch").value); });
     renderMap();
   }).catch(e=>{
     if((attempt||0)<4){ setTimeout(()=>loadMap((attempt||0)+1), 2000); } // self-heal transient errors (cold start)
