@@ -85,6 +85,14 @@ export async function getTxns(p: Params) {
   if (p.type && p.type !== "All") { params.push(p.type); where.push(`property_type=$${params.length}`); }
   if (p.amin) { params.push(Number(p.amin)); where.push(`area_sqm>=$${params.length}`); }
   if (p.amax) { params.push(Number(p.amax)); where.push(`area_sqm<=$${params.length}`); }
+  if (p.pmin) { params.push(Number(p.pmin)); where.push(`price>=$${params.length}`); }
+  if (p.pmax) { params.push(Number(p.pmax)); where.push(`price<=$${params.length}`); }
+  if (p.psmin) { params.push(Number(p.psmin)); where.push(`psm>=$${params.length}`); }
+  if (p.psmax) { params.push(Number(p.psmax)); where.push(`psm<=$${params.length}`); }
+  if (p.region && p.region !== "All") { params.push(p.region); where.push(`market_segment=$${params.length}`); }
+  if (p.tenure === "Freehold") { where.push(`lower(coalesce(tenure,'')) like '%freehold%'`); }
+  else if (p.tenure === "Leasehold") { where.push(`tenure is not null and lower(tenure) not like '%freehold%'`); }
+  if (p.q) { params.push(`%${p.q}%`); where.push(`project ilike $${params.length}`); }
   const w = where.join(" and ");
   const count = (await pool.query(`select count(*)::int as n from transactions where ${w}`, params)).rows[0].n;
   const { rows } = await pool.query(

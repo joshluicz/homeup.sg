@@ -74,13 +74,22 @@
 
   <div class="panel">
     <h2>Search sales by size &amp; area — compare $/sqm</h2>
-    <p class="desc">Unit sizes differ even within one condo, so total price misleads — compare by <b>$/sqm</b>. Filter by district, type, and floor area.</p>
-    <div class="controls">
+    <p class="desc">Unit sizes differ even within one condo, so total price misleads — compare by <b>$/sqm</b>. Filter by project, district, type, region, tenure, size, price and $/sqm.</p>
+    <div class="controls" style="line-height:2.2">
+      Project:<input id="txQ" type="text" placeholder="name contains…" style="width:150px;margin-left:6px">
       District:<select id="txDist"></select>
       Type:<select id="txType"></select>
-      Size (sqm):<input id="txMin" type="number" placeholder="min" style="width:72px;margin-left:6px">
-      <input id="txMax" type="number" placeholder="max" style="width:72px">
+      Region:<select id="txRegion"></select>
+      Tenure:<select id="txTenure"></select>
+      <br>
+      Size (sqm):<input id="txMin" type="number" placeholder="min" style="width:64px;margin-left:6px">
+      <input id="txMax" type="number" placeholder="max" style="width:64px">
+      Price ($):<input id="txPMin" type="number" placeholder="min" style="width:88px;margin-left:6px">
+      <input id="txPMax" type="number" placeholder="max" style="width:88px">
+      $/sqm:<input id="txPsMin" type="number" placeholder="min" style="width:72px;margin-left:6px">
+      <input id="txPsMax" type="number" placeholder="max" style="width:72px">
       <button id="txGo" style="margin-left:8px;padding:6px 14px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Search</button>
+      <button id="txClear" style="margin-left:6px;padding:6px 12px;background:#fff;color:var(--muted);border:1px solid var(--line);border-radius:8px;cursor:pointer">Clear</button>
       <span class="desc" id="txCount" style="margin-left:8px"></span>
     </div>
     <div style="overflow:auto;max-height:440px;border:1px solid var(--line);border-radius:10px">
@@ -144,10 +153,10 @@ function leaseChart(){
 function opts(sel, vals, def){ sel.innerHTML=vals.map(v=>`<option ${v===def?"selected":""}>${v}</option>`).join(""); }
 
 function loadTx(){
-  const d=$("txDist").value, t=$("txType").value, mn=$("txMin").value, mx=$("txMax").value;
   const qs=new URLSearchParams();
-  if(d&&d!=="All")qs.set("district",d); if(t&&t!=="All")qs.set("type",t);
-  if(mn)qs.set("amin",mn); if(mx)qs.set("amax",mx);
+  const set=(k,id)=>{ const v=$(id).value.trim(); if(v&&v!=="All") qs.set(k,v); };
+  set("q","txQ"); set("district","txDist"); set("type","txType"); set("region","txRegion"); set("tenure","txTenure");
+  set("amin","txMin"); set("amax","txMax"); set("pmin","txPMin"); set("pmax","txPMax"); set("psmin","txPsMin"); set("psmax","txPsMax");
   $("txCount").textContent="…";
   fetch("/api/dashboard/transactions?"+qs).then(r=>r.json()).then(j=>{
     $("txCount").textContent=`${j.count.toLocaleString()} sales`+(j.count>800?" (showing newest 800)":"");
@@ -163,8 +172,12 @@ fetch("/api/dashboard/meta").then(r=>r.json()).then(d=>{
 
   opts($("txDist"), ["All",...(D.districts||[])], "All");
   opts($("txType"), ["All",...(D.types||[])], "All");
+  opts($("txRegion"), ["All","CCR","RCR","OCR"], "All");
+  opts($("txTenure"), ["All","Freehold","Leasehold"], "All");
   $("txGo").onclick=loadTx;
-  [$("txMin"),$("txMax")].forEach(el=>el.addEventListener("keydown",e=>{if(e.key==="Enter")loadTx();}));
+  $("txClear").onclick=()=>{ ["txQ","txDist","txType","txRegion","txTenure","txMin","txMax","txPMin","txPMax","txPsMin","txPsMax"].forEach(id=>{ const el=$(id); if(el.tagName==="SELECT") el.value="All"; else el.value=""; }); loadTx(); };
+  ["txQ","txMin","txMax","txPMin","txPMax","txPsMin","txPsMax"].forEach(id=>$(id).addEventListener("keydown",e=>{if(e.key==="Enter")loadTx();}));
+  ["txDist","txType","txRegion","txTenure"].forEach(id=>$(id).addEventListener("change",loadTx));
   loadTx();
   fillVars();
 
