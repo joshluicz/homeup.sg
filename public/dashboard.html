@@ -14,21 +14,15 @@
   :root{ --green:#15803d; --green2:#22c55e; --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
-  header{ background:#fff; border-bottom:1px solid var(--line); padding:22px 28px; }
+  header{ background:#fff; border-bottom:1px solid var(--line); padding:18px 28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
   header h1{ margin:0; font-size:20px; letter-spacing:-.2px; }
   header h1 span{ color:var(--green); }
   header p{ margin:4px 0 0; color:var(--muted); font-size:13px; }
+  .agenttoggle{ font-size:13px; color:var(--muted); font-weight:600; white-space:nowrap; }
   .wrap{ max-width:1200px; margin:0 auto; padding:24px 28px 60px; }
-  .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
-  .card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px 18px; }
-  .card .lbl{ color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; }
-  .card .val{ font-size:26px; font-weight:800; margin-top:6px; letter-spacing:-.5px; }
-  .card .sub{ color:var(--muted); font-size:12px; margin-top:2px; }
   .panel{ background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px 22px; margin-bottom:20px; }
   .panel h2{ margin:0 0 2px; font-size:16px; }
   .panel .desc{ color:var(--muted); font-size:13px; margin:0 0 14px; }
-  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-  @media(max-width:840px){ .grid2{ grid-template-columns:1fr; } }
   select{ font:inherit; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; margin-left:8px; }
   .controls{ font-size:13px; color:var(--muted); margin-bottom:12px; }
   .tbtn{ font:inherit; font-size:13px; font-weight:700; padding:5px 13px; margin:0 7px 7px 0; border:1.5px solid var(--c); border-radius:999px; background:#fff; color:var(--c); cursor:pointer; opacity:.45; transition:all .15s; }
@@ -50,8 +44,11 @@
 </head>
 <body>
 <header>
-  <h1>Home<span>UP</span> · Singapore Property Intelligence</h1>
-  <p id="updated">Loading…</p>
+  <div>
+    <h1>Home<span>UP</span> · Singapore Property Intelligence</h1>
+    <p id="updated">Loading…</p>
+  </div>
+  <label id="agentToggle" class="agenttoggle" style="display:none">Agent view:<select id="agentSel" aria-label="Switch agent view"></select></label>
 </header>
 <div class="wrap">
   <div id="agentHero" class="panel agenthero" style="display:none"></div>
@@ -71,7 +68,7 @@
 
   <div class="panel">
     <h2>Relationship explorer — how any two variables move together</h2>
-    <p class="desc">Pick a vertical (Y) and horizontal (X) variable. Numeric × numeric draws a scatter with the correlation <b>r</b>, a fitted line, and a binned-median trend through the cloud. Pick a category for X (district, type, region) to compare medians. <b>Correlation ≠ causation</b> — narrow by district/type to hold the obvious confounders fixed.</p>
+    <p class="desc">Pick a vertical (Y) and horizontal (X) variable. Numeric × numeric draws a scatter with the correlation <b>r</b> and a binned-median trend line through the cloud. Pick a category for X (district, type, region) to compare medians. <b>Correlation ≠ causation</b> — narrow by district/type to hold the obvious confounders fixed.</p>
     <div class="controls">
       Y:<select id="cy"></select>
       X:<select id="cx"></select>
@@ -124,23 +121,22 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const sgd = (n) => n==null ? "—" : "$" + Math.round(n).toLocaleString();
-const GREEN="#15803d", GREEN2="#22c55e", AMBER="#f59e0b", RED="#dc2626", SLATE="#94a3b8";
-const regionColor = (r) => r==="CCR"?RED : r==="RCR"?AMBER : r==="OCR"?GREEN2 : SLATE;
-let D, charts={};
+let D;
 
-// ---- Phase 2: per-agent branding + feedback loop ----
+// ---- Phase 2: per-agent branding, switcher + feedback loop ----
+const DEFAULT_TITLE = "HomeUP · Singapore Property Intelligence";
+const DEFAULT_FB = "What would make this dashboard more useful for your work? Request a feature, a data cut, or a view — it goes straight to the HomeUP product team.";
 function getAgentSlug(){
   const m = location.pathname.match(/\/a\/([a-z0-9-]+)/i);
   if(m) return m[1];
   return new URLSearchParams(location.search).get("agent") || null;
 }
-const AGENT = getAgentSlug();
-function loadAgent(){
-  if(!AGENT) return;
-  fetch("/api/dashboard/agent?slug="+encodeURIComponent(AGENT)).then(r=>r.ok?r.json():null).then(a=>{
-    if(!a || a.error) return;
-    document.title = a.name+" · PropMeta · HomeUP";
-    const hero=$("agentHero"); if(!hero) return;
+let AGENT = getAgentSlug();
+function renderAgent(a){
+  const hero=$("agentHero");
+  if(!a){ if(hero) hero.style.display="none"; document.title=DEFAULT_TITLE; $("fbWho").textContent=DEFAULT_FB; return; }
+  document.title = a.name+" · PropMeta · HomeUP";
+  if(hero){
     hero.style.display="flex";
     hero.innerHTML =
       `<img src="${a.photo}" alt="${a.name}" onerror="this.style.display='none'">`+
@@ -148,7 +144,34 @@ function loadAgent(){
       `<div class="ameta">${a.profileTitle||"Property Advisor"} · CEA ${a.cea}</div>`+
       (a.specialties||[]).slice(0,4).map(s=>`<span class="chip">${s}</span>`).join("")+`</div>`+
       `<div class="abadge">Prepared for you · live SG market intelligence</div>`;
-    $("fbWho").textContent = "Hi "+a.name.split(" ")[0]+" — what would make this dashboard more useful for your work? It goes straight to the HomeUP product team.";
+  }
+  $("fbWho").textContent = "Hi "+a.name.split(" ")[0]+" — what would make this dashboard more useful for your work? It goes straight to the HomeUP product team.";
+}
+function loadAgent(slug){
+  if(!slug){ renderAgent(null); return; }
+  fetch("/api/dashboard/agent?slug="+encodeURIComponent(slug)).then(r=>r.ok?r.json():null)
+    .then(a=>renderAgent(a&&!a.error?a:null)).catch(()=>{});
+}
+function setAgent(slug){
+  AGENT = slug || null;
+  const u = new URL(location.href);
+  if(/\/a\/[a-z0-9-]+/i.test(u.pathname) || !slug){ // keep path-style URLs path-style
+    u.pathname = u.pathname.replace(/\/a\/[a-z0-9-]+/i,"") || "/";
+    if(slug) u.pathname = u.pathname.replace(/\/$/,"") + "/a/" + slug;
+    u.searchParams.delete("agent");
+  } else { u.searchParams.set("agent", slug); }
+  history.replaceState(null,"",u);
+  const sel=$("agentSel"); if(sel) sel.value = slug||"";
+  loadAgent(slug);
+}
+function initAgentToggle(){
+  fetch("/api/dashboard/agents").then(r=>r.ok?r.json():null).then(j=>{
+    if(!j || !j.agents || !j.agents.length) return; // no agents (e.g. Railway) → hide toggle
+    const sel=$("agentSel");
+    sel.innerHTML = `<option value="">General view</option>`+j.agents.map(a=>`<option value="${a.slug}">${a.name}</option>`).join("");
+    sel.value = AGENT || "";
+    $("agentToggle").style.display="";
+    sel.onchange=()=>setAgent(sel.value);
   }).catch(()=>{});
 }
 function initFeedback(){
@@ -166,50 +189,7 @@ function initFeedback(){
       .finally(()=>{ send.disabled=false; });
   };
 }
-loadAgent(); initFeedback();
-
-function mkChart(id, cfg){ if(charts[id]) charts[id].destroy(); charts[id]=new Chart($(id), cfg); }
-function barCfg(labels, data, colors, axisLabel, fmt){
-  return { type:"bar", data:{ labels, datasets:[{ data, backgroundColor:colors, borderRadius:4 }] },
-    options:{ plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>fmt(c.raw)}} },
-      scales:{ y:{ title:{display:true,text:axisLabel}, ticks:{callback:fmt} } } } };
-}
-
-function cards(){
-  const m=D.market;
-  const items=[
-    ["HDB median price", sgd(num(m["median price"])), "resale, last 6mo"],
-    ["HDB median PSF", "$"+(num(m["median psf"])||0).toLocaleString(), "per sqm"],
-    ["HDB volume (6mo)", (num(m["txn volume (6mo)"])||0).toLocaleString(), "transactions"],
-    ["HDB price YoY", fmtPct(num(m["price YoY %"])), "year on year"],
-    ["SG private yield", med(D.yields.map(y=>y.yield)).toFixed(1)+"%", "median gross"],
-  ];
-  $("cards").innerHTML = items.map(([l,v,s])=>`<div class="card"><div class="lbl">${l}</div><div class="val">${v}</div><div class="sub">${s}</div></div>`).join("");
-}
-function num(v){ const n=Number(String(v==null?"":v).replace(/,/g,"")); return Number.isFinite(n)?n:null; }
-function fmtPct(n){ if(n==null) return "—"; const c=n>=0?"pos":"neg"; return `<span class="${c}">${n>=0?"+":""}${n}%</span>`; }
-function med(a){ a=a.filter(x=>x!=null).sort((x,y)=>x-y); return a.length? a[Math.floor(a.length/2)] : 0; }
-
-function yieldChart(){
-  const ys=[...D.yields].sort((a,b)=>b.yield-a.yield);
-  mkChart("yieldChart", barCfg(ys.map(y=>y.district), ys.map(y=>y.yield), ys.map(()=>GREEN), "Gross yield %", v=>v+"%"));
-}
-function supplyChart(){
-  const s=[...D.supply].sort((a,b)=>b.units-a.units).slice(0,15);
-  mkChart("supplyChart", barCfg(s.map(x=>x.district), s.map(x=>x.units), s.map(()=>AMBER), "Upcoming units", v=>v.toLocaleString()));
-}
-function hdbChart(){
-  const flat=$("flatSel").value;
-  const rows=D.hdb.filter(r=>r.flat===flat && r.conf!=="Low" && r.median).sort((a,b)=>b.median-a.median);
-  mkChart("hdbChart", barCfg(rows.map(r=>r.town), rows.map(r=>r.median), rows.map(()=>GREEN), "Median price", sgd));
-}
-function leaseChart(){
-  const d=$("distSel").value, t=$("typeSel").value;
-  const order={ "Freehold":0,"LH 90+yr":1,"LH 75-89yr":2,"LH 60-74yr":3,"LH <60yr":4 };
-  const rows=D.private.filter(r=>r.district===d && r.type===t && r.median)
-    .sort((a,b)=>(order[a.lease]??9)-(order[b.lease]??9));
-  mkChart("leaseChart", barCfg(rows.map(r=>r.lease+" (n="+r.n+")"), rows.map(r=>r.median), rows.map(()=>GREEN), "Median price", sgd));
-}
+loadAgent(AGENT); initFeedback(); initAgentToggle();
 
 function opts(sel, vals, def){ sel.innerHTML=vals.map(v=>`<option ${v===def?"selected":""}>${v}</option>`).join(""); }
 
