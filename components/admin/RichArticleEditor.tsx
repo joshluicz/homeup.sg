@@ -1,0 +1,625 @@
+"use client";
+
+import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Link from "@tiptap/extension-link";
+import Image from "@tiptap/extension-image";
+import Placeholder from "@tiptap/extension-placeholder";
+import TextAlign from "@tiptap/extension-text-align";
+import FontFamily from "@tiptap/extension-font-family";
+import { TextStyle } from "@tiptap/extension-text-style";
+import Color from "@tiptap/extension-color";
+import { Markdown } from "tiptap-markdown";
+import { useEffect, useRef, useState, useCallback } from "react";
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  Minus,
+  Quote,
+  Undo,
+  Redo,
+  Loader2,
+  Check,
+  Upload,
+  ChevronDown,
+} from "lucide-react";
+import { uploadPlaybookArticleImage } from "@/lib/playbook/storage";
+import { cn } from "@/lib/utils";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+type RichArticleEditorProps = {
+  value: string;
+  onChange: (value: string) => void;
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function isImageFile(file: File): boolean {
+  if (file.type.startsWith("image/")) return true;
+  return /\.(jpe?g|png|webp|gif|bmp|svg|ico|tiff?|heic|heif|avif)$/i.test(file.name);
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function ToolbarDivider() {
+  return <div className="mx-1 h-5 w-px bg-neutral-200" />;
+}
+
+function ToolbarButton({
+  onClick,
+  active,
+  disabled,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  active?: boolean;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        onClick();
+      }}
+      disabled={disabled}
+      title={title}
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded transition-colors",
+        active
+          ? "bg-neutral-200 text-neutral-900"
+          : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900",
+        disabled && "cursor-not-allowed opacity-40",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function HeadingSelect({ editor }: { editor: Editor }) {
+  const options = [
+    { label: "Normal text", value: "paragraph" },
+    { label: "Heading 1", value: "h1" },
+    { label: "Heading 2", value: "h2" },
+    { label: "Heading 3", value: "h3" },
+  ] as const;
+
+  const current =
+    editor.isActive("heading", { level: 1 })
+      ? "h1"
+      : editor.isActive("heading", { level: 2 })
+        ? "h2"
+        : editor.isActive("heading", { level: 3 })
+          ? "h3"
+          : "paragraph";
+
+  return (
+    <div className="relative">
+      <select
+        value={current}
+        title="Text style"
+        onChange={(e) => {
+          const val = e.target.value;
+          if (val === "paragraph") {
+            editor.chain().focus().setParagraph().run();
+          } else if (val === "h1") {
+            editor.chain().focus().toggleHeading({ level: 1 }).run();
+          } else if (val === "h2") {
+            editor.chain().focus().toggleHeading({ level: 2 }).run();
+          } else if (val === "h3") {
+            editor.chain().focus().toggleHeading({ level: 3 }).run();
+          }
+        }}
+        className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-neutral-400" />
+    </div>
+  );
+}
+
+const FONTS = [
+  { label: "Default", value: "" },
+  { label: "Georgia", value: "Georgia, serif" },
+  { label: "Arial", value: "Arial, sans-serif" },
+  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
+  { label: "Courier New", value: "'Courier New', monospace" },
+  { label: "Times New Roman", value: "'Times New Roman', serif" },
+] as const;
+
+function FontSelect({ editor }: { editor: Editor }) {
+  const activeFont =
+    FONTS.find((f) => f.value && editor.isActive("textStyle", { fontFamily: f.value }))?.value ??
+    "";
+
+  return (
+    <div className="relative">
+      <select
+        value={activeFont}
+        title="Font"
+        onChange={(e) => {
+          const val = e.target.value;
+          if (!val) {
+            editor.chain().focus().unsetFontFamily().run();
+          } else {
+            editor.chain().focus().setFontFamily(val).run();
+          }
+        }}
+        className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
+      >
+        {FONTS.map((f) => (
+          <option key={f.value} value={f.value} style={{ fontFamily: f.value || undefined }}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-neutral-400" />
+    </div>
+  );
+}
+
+const TEXT_COLORS = [
+  { label: "Default", value: "" },
+  { label: "Black", value: "#111111" },
+  { label: "Dark grey", value: "#444444" },
+  { label: "Grey", value: "#888888" },
+  { label: "Red", value: "#e53e3e" },
+  { label: "Orange", value: "#dd6b20" },
+  { label: "Green", value: "#276749" },
+  { label: "Blue", value: "#2b6cb0" },
+  { label: "Purple", value: "#553c9a" },
+] as const;
+
+function ColorSelect({ editor }: { editor: Editor }) {
+  const activeColor =
+    TEXT_COLORS.find((c) => c.value && editor.isActive("textStyle", { color: c.value }))?.value ??
+    "";
+
+  return (
+    <div className="relative flex items-center">
+      <select
+        value={activeColor}
+        title="Text colour"
+        onChange={(e) => {
+          const val = e.target.value;
+          if (!val) {
+            editor.chain().focus().unsetColor().run();
+          } else {
+            editor.chain().focus().setColor(val).run();
+          }
+        }}
+        className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
+        style={{ color: activeColor || undefined }}
+      >
+        {TEXT_COLORS.map((c) => (
+          <option key={c.value} value={c.value} style={{ color: c.value || undefined }}>
+            {c.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-neutral-400" />
+    </div>
+  );
+}
+
+function LinkDialog({ editor }: { editor: Editor }) {
+  const [open, setOpen] = useState(false);
+  const [url, setUrl] = useState("");
+
+  function apply() {
+    if (!url.trim()) {
+      editor.chain().focus().unsetLink().run();
+    } else {
+      editor.chain().focus().setLink({ href: url.trim(), target: "_blank" }).run();
+    }
+    setOpen(false);
+    setUrl("");
+  }
+
+  return (
+    <div className="relative">
+      <ToolbarButton
+        onClick={() => {
+          if (editor.isActive("link")) {
+            editor.chain().focus().unsetLink().run();
+          } else {
+            setUrl(editor.getAttributes("link").href ?? "");
+            setOpen(true);
+          }
+        }}
+        active={editor.isActive("link")}
+        title="Link"
+      >
+        <LinkIcon className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      {open && (
+        <div className="absolute left-0 top-9 z-50 flex w-72 flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-3 shadow-lg">
+          <p className="text-xs font-semibold text-neutral-700">Insert link</p>
+          <input
+            autoFocus
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") apply();
+              if (e.key === "Escape") setOpen(false);
+            }}
+            placeholder="https://example.com"
+            className="rounded border border-neutral-200 px-2 py-1.5 text-xs outline-none focus:border-primary-400"
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={apply}
+              className="flex-1 rounded bg-primary-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-primary-700"
+            >
+              Apply
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex-1 rounded border border-neutral-200 px-2 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Toolbar ─────────────────────────────────────────────────────────────────
+
+function Toolbar({
+  editor,
+  onImageUpload,
+  uploading,
+}: {
+  editor: Editor;
+  onImageUpload: () => void;
+  uploading: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5">
+      {/* Undo / Redo */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        title="Undo"
+      >
+        <Undo className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        title="Redo"
+      >
+        <Redo className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Heading / font selectors */}
+      <HeadingSelect editor={editor} />
+      <FontSelect editor={editor} />
+      <ColorSelect editor={editor} />
+
+      <ToolbarDivider />
+
+      {/* Inline marks */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        active={editor.isActive("bold")}
+        title="Bold (Ctrl+B)"
+      >
+        <Bold className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        active={editor.isActive("italic")}
+        title="Italic (Ctrl+I)"
+      >
+        <Italic className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        active={editor.isActive("underline")}
+        title="Underline (Ctrl+U)"
+      >
+        <UnderlineIcon className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        active={editor.isActive("strike")}
+        title="Strikethrough"
+      >
+        <Strikethrough className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Alignment */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign("left").run()}
+        active={editor.isActive({ textAlign: "left" })}
+        title="Align left"
+      >
+        <AlignLeft className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign("center").run()}
+        active={editor.isActive({ textAlign: "center" })}
+        title="Align centre"
+      >
+        <AlignCenter className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign("right").run()}
+        active={editor.isActive({ textAlign: "right" })}
+        title="Align right"
+      >
+        <AlignRight className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+        active={editor.isActive({ textAlign: "justify" })}
+        title="Justify"
+      >
+        <AlignJustify className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Lists */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        active={editor.isActive("bulletList")}
+        title="Bullet list"
+      >
+        <List className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        active={editor.isActive("orderedList")}
+        title="Numbered list"
+      >
+        <ListOrdered className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Block elements */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        active={editor.isActive("blockquote")}
+        title="Callout box"
+      >
+        <Quote className="h-3.5 w-3.5" />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setHorizontalRule().run()}
+        title="Horizontal divider"
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Link */}
+      <LinkDialog editor={editor} />
+
+      {/* Image */}
+      <ToolbarButton onClick={onImageUpload} disabled={uploading} title="Insert image">
+        {uploading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <ImageIcon className="h-3.5 w-3.5" />
+        )}
+      </ToolbarButton>
+    </div>
+  );
+}
+
+// ─── Main editor ─────────────────────────────────────────────────────────────
+
+export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  // Counter to track nested drag-enter/leave events so the drag indicator
+  // doesn't flicker when the pointer moves over child elements.
+  const dragCounter = useRef(0);
+  const [uploadStatus, setUploadStatus] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Track whether the next onChange is from an external update (parent re-setting value)
+  // vs an internal edit (user typing). This prevents cursor-jump feedback loops.
+  const internalChange = useRef(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextStyle,
+      FontFamily,
+      Color,
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Link.configure({ openOnClick: false, autolink: true }),
+      Image.configure({ inline: false, allowBase64: false }),
+      Placeholder.configure({
+        placeholder:
+          "Start writing your article here… Use the toolbar above to format text, add headings, callout boxes, and images.",
+      }),
+      Markdown.configure({
+        html: true,
+        transformPastedText: true,
+        transformCopiedText: false,
+      }),
+    ],
+    content: value,
+    onUpdate({ editor }) {
+      internalChange.current = true;
+      const md = (editor.storage as unknown as Record<string, { getMarkdown: () => string }>).markdown.getMarkdown();
+      onChange(md);
+    },
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-neutral max-w-none min-h-[420px] px-8 py-6 outline-none focus:outline-none [&>*:first-child]:mt-0",
+      },
+    },
+  });
+
+  // Keep editor in sync when parent value changes externally (e.g. switching article).
+  // Use setMarkdown so the Markdown extension parses the content correctly.
+  useEffect(() => {
+    if (!editor) return;
+    if (internalChange.current) {
+      internalChange.current = false;
+      return;
+    }
+    const current = (editor.storage as unknown as Record<string, { getMarkdown: () => string }>).markdown.getMarkdown();
+    if (current !== value) {
+      (editor.commands as unknown as Record<string, (v: string) => void>).setMarkdown(value ?? "");
+    }
+  }, [value, editor]);
+
+  const handleFiles = useCallback(
+    async (files: FileList | File[] | null) => {
+      const file = Array.from(files ?? []).find(isImageFile);
+      if (!file) {
+        setUploadStatus({ kind: "error", message: "Please choose an image file." });
+        return;
+      }
+      setUploading(true);
+      setUploadStatus(null);
+      try {
+        const url = await uploadPlaybookArticleImage(file);
+        editor?.chain().focus().setImage({ src: url, alt: "Article illustration" }).run();
+        setUploadStatus({
+          kind: "success",
+          message: "Photo inserted. Click Save changes at the bottom to keep it.",
+        });
+      } catch (err) {
+        setUploadStatus({
+          kind: "error",
+          message: err instanceof Error ? err.message : "Image upload failed. Please try again.",
+        });
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    },
+    [editor],
+  );
+
+  if (!editor) return null;
+
+  return (
+    <div className="space-y-2">
+      {/* Editor chrome — Google Docs-style card */}
+      <div
+        className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
+        onDragEnter={(e) => {
+          e.preventDefault();
+          dragCounter.current += 1;
+          setDragging(true);
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDragLeave={() => {
+          dragCounter.current -= 1;
+          if (dragCounter.current === 0) setDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          dragCounter.current = 0;
+          setDragging(false);
+          void handleFiles(e.dataTransfer.files);
+        }}
+      >
+        {/* Toolbar */}
+        <Toolbar
+          editor={editor}
+          onImageUpload={() => fileInputRef.current?.click()}
+          uploading={uploading}
+        />
+
+        {/* Page canvas */}
+        <div
+          className={cn(
+            "relative bg-neutral-50 px-4 py-4 transition-colors",
+            dragging && "bg-primary-50",
+          )}
+        >
+          <div className="mx-auto max-w-3xl rounded bg-white shadow-sm ring-1 ring-neutral-200">
+            <EditorContent editor={editor} />
+          </div>
+
+          {dragging && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-lg">
+                <Upload className="h-4 w-4" />
+                Drop to insert image
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Drag-drop hint bar */}
+        <div className="flex items-center gap-1.5 border-t border-neutral-100 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-400">
+          <Upload className="h-3 w-3 shrink-0" />
+          Drag &amp; drop an image anywhere in the editor, or click the image icon in the toolbar
+        </div>
+      </div>
+
+      {/* Upload status */}
+      {uploadStatus && (
+        <div
+          className={cn(
+            "flex items-start gap-2 rounded-lg border px-3 py-2 text-sm",
+            uploadStatus.kind === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : "border-red-200 bg-red-50 text-red-700",
+          )}
+        >
+          {uploadStatus.kind === "success" && <Check className="mt-0.5 h-4 w-4 shrink-0" />}
+          <span>{uploadStatus.message}</span>
+        </div>
+      )}
+
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => void handleFiles(e.target.files)}
+      />
+    </div>
+  );
+}
