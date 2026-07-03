@@ -10,6 +10,10 @@ import TextAlign from "@tiptap/extension-text-align";
 import FontFamily from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { TableCell } from "@tiptap/extension-table-cell";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Bold,
@@ -32,6 +36,7 @@ import {
   Check,
   Upload,
   ChevronDown,
+  Table as TableIcon,
 } from "lucide-react";
 import { uploadPlaybookArticleImage } from "@/lib/playbook/storage";
 import { cn } from "@/lib/utils";
@@ -424,6 +429,82 @@ function Toolbar({
           <ImageIcon className="h-3.5 w-3.5" />
         )}
       </ToolbarButton>
+
+      <ToolbarDivider />
+
+      {/* Table */}
+      <TableMenu editor={editor} />
+    </div>
+  );
+}
+
+// ─── Table menu ──────────────────────────────────────────────────────────────
+
+function TableMenu({ editor }: { editor: Editor }) {
+  const [open, setOpen] = useState(false);
+  const inTable = editor.isActive("table");
+
+  return (
+    <div className="relative">
+      <ToolbarButton
+        onClick={() => setOpen((v) => !v)}
+        active={inTable}
+        title="Table"
+      >
+        <TableIcon className="h-3.5 w-3.5" />
+      </ToolbarButton>
+
+      {open && (
+        <div className="absolute left-0 top-9 z-50 min-w-[180px] rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+          {!inTable && (
+            <button
+              type="button"
+              className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                setOpen(false);
+              }}
+            >
+              Insert table (3×3)
+            </button>
+          )}
+          {inTable && (
+            <>
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnAfter().run(); setOpen(false); }}>
+                Add column after
+              </button>
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addColumnBefore().run(); setOpen(false); }}>
+                Add column before
+              </button>
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteColumn().run(); setOpen(false); }}>
+                Delete column
+              </button>
+              <hr className="my-1 border-neutral-100" />
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowAfter().run(); setOpen(false); }}>
+                Add row after
+              </button>
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().addRowBefore().run(); setOpen(false); }}>
+                Add row before
+              </button>
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-neutral-700 hover:bg-neutral-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteRow().run(); setOpen(false); }}>
+                Delete row
+              </button>
+              <hr className="my-1 border-neutral-100" />
+              <button type="button" className="flex w-full items-center px-3 py-1.5 text-xs text-red-600 hover:bg-red-50"
+                onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().deleteTable().run(); setOpen(false); }}>
+                Delete table
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -453,6 +534,10 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false, autolink: true }),
       TiptapImage.configure({ inline: false, allowBase64: false }),
+      Table.configure({ resizable: false }),
+      TableRow,
+      TableHeader,
+      TableCell,
       Placeholder.configure({
         placeholder:
           "Start writing your article here… Use the toolbar above to format text, add headings, callout boxes, and images.",

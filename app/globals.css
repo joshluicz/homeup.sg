@@ -544,3 +544,9 @@ h2 {
 .playbook-article-html table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
 .playbook-article-html th { background: #f9fafb; font-weight: 600; padding: 0.6rem 0.75rem; border: 1px solid #e5e7eb; text-align: left; }
 .playbook-article-html td { padding: 0.6rem 0.75rem; border: 1px solid #e5e7eb; }
+
+/* ─── TipTap table styles (editor) ──────────────────────────────────────── */
+.ProseMirror table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+.ProseMirror table td, .ProseMirror table th { border: 1px solid #e5e7eb; padding: 0.5rem 0.75rem; min-width: 60px; vertical-align: top; position: relative; }
+.ProseMirror table th { background: #f9fafb; font-weight: 600; }
+.ProseMirror table .selectedCell:after { content: ""; position: absolute; inset: 0; background: rgba(59,130,246,0.1); pointer-events: none; }
