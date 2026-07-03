@@ -1,4 +1,5 @@
 import type { Agent } from "@/lib/data/agents";
+import { getAgentShareImage } from "@/lib/data/agents";
 import type { FaqItem } from "@/lib/data/faqs";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import type { Listing } from "@/lib/listings/types";
@@ -362,7 +363,7 @@ export function personSchema(agent: Agent) {
     "@id": `${SITE_URL}/agents/${agent.slug}#person`,
     name: agent.name,
     url: `${SITE_URL}/agents/${agent.slug}`,
-    image: `${SITE_URL}${agent.photo}`,
+    image: `${SITE_URL}${getAgentShareImage(agent)}`,
     description: agent.bio,
     jobTitle: "CEA-Licensed Property Advisor",
     worksFor: { "@id": ORG_ID },
@@ -384,7 +385,7 @@ export function realEstateAgentSchema(agent: Agent) {
     "@id": `${SITE_URL}/agents/${agent.slug}#agent`,
     name: agent.name,
     url: `${SITE_URL}/agents/${agent.slug}`,
-    image: `${SITE_URL}${agent.photo}`,
+    image: `${SITE_URL}${getAgentShareImage(agent)}`,
     description: agent.bio,
     parentOrganization: { "@id": ORG_ID },
     identifier: {
