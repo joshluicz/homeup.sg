@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AgentProfile } from "@/components/sections/AgentProfile";
-import { getAgentBySlug, getAllAgentSlugs } from "@/lib/data/agents";
+import { getAgentBySlug, getAllAgentSlugs, getAgentShareImage, AGENT_OG_IMAGE_SIZE } from "@/lib/data/agents";
 import { SITE_URL } from "@/lib/seo/constants";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
@@ -30,10 +30,10 @@ export async function generateMetadata({ params }: AgentPageProps): Promise<Meta
     title: `${agent.name} | Property Advisor`,
     description: agent.bio,
     path: `/agents/${agent.slug}`,
-    ogImage: `${SITE_URL}${agent.photo}`,
+    ogImage: `${SITE_URL}${getAgentShareImage(agent)}`,
     ogImageAlt: `${agent.name}, CEA ${agent.cea}, HomeUP property advisor`,
-    ogImageWidth: 400,
-    ogImageHeight: 400,
+    ogImageWidth: AGENT_OG_IMAGE_SIZE,
+    ogImageHeight: AGENT_OG_IMAGE_SIZE,
   });
 }
 

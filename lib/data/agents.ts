@@ -33,6 +33,8 @@ export interface Agent {
   cea: string;
   bio: string;
   photo: string;
+  /** Square social/search preview image; falls back to `photo` when omitted */
+  ogPhoto?: string;
   /** Short pull-quote for the profile hero */
   quote?: string;
   /** When true, hero quote renders as third-person summary without quotation marks */
@@ -126,6 +128,7 @@ export const AGENTS: Agent[] = [
     cea: "R069651E",
     bio: "Having completed hundreds of property transactions across Singapore, Tong Boon has helped hundreds of families successfully upgrade and acquire their next home.",
     photo: "/images/agent-tong-boon.png",
+    ogPhoto: "/images/agent-tong-boon-og.png",
     quote:
       "Having completed hundreds of property transactions across Singapore, Tong Boon has helped hundreds of families successfully upgrade and acquire their next home. His market insights and transaction experience have led to invitations from CNA and features on 99.co, where he shares commentary on Singapore's residential property market as a subject matter expert.",
     quoteThirdPerson: true,
@@ -289,6 +292,12 @@ export const AGENTS: Agent[] = [
 export function getAgentBySlug(slug: string): Agent | undefined {
   return AGENTS.find((a) => a.slug === slug);
 }
+
+export function getAgentShareImage(agent: Agent): string {
+  return agent.ogPhoto ?? agent.photo;
+}
+
+export const AGENT_OG_IMAGE_SIZE = 1200;
 
 export function getAllAgentSlugs(): string[] {
   return AGENTS.map((a) => a.slug);
