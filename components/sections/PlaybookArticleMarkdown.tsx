@@ -3,7 +3,7 @@
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeSanitize from "rehype-sanitize";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { normalizePlaybookMarkdown } from "@/lib/playbook/markdown";
 import { PlaybookArticleFigure } from "@/components/sections/PlaybookArticleFigure";
 import { cn } from "@/lib/utils";
@@ -100,6 +100,30 @@ function buildMarkdownComponents(variant: PlaybookArticleMarkdownProps["variant"
   };
 }
 
+// Extended sanitize schema — allows span/u/s with limited inline styles so that
+// rich-text formatting (font family, text colour, underline, strikethrough) from
+// the WYSIWYG editor is preserved when articles are rendered publicly.
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      ["style", /^(font-family|color|font-size):[^;]{0,120}$/],
+    ],
+    "*": [
+      ...(defaultSchema.attributes?.["*"] ?? []),
+      ["style", /^text-align:\s*(left|center|right|justify)$/],
+    ],
+  },
+  tagNames: [
+    ...(defaultSchema.tagNames ?? []),
+    "u",
+    "s",
+    "span",
+  ].filter((v, i, a) => a.indexOf(v) === i),
+};
+
 export function PlaybookArticleMarkdown({
   content,
   variant = "default",
@@ -112,7 +136,7 @@ export function PlaybookArticleMarkdown({
     <div className={cn(variant === "callout" && "text-neutral-900")}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
+        rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}
         components={buildMarkdownComponents(variant)}
       >
         {markdown}
