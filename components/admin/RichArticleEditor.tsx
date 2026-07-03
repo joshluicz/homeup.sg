@@ -484,9 +484,7 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
     content: value,
     onUpdate({ editor }) {
       internalChange.current = true;
-      // tiptap-markdown stores its serializer on editor.storage.markdown
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const md = (editor.storage as any).markdown.getMarkdown() as string;
+      const md = (editor.storage as unknown as Record<string, { getMarkdown: () => string }>).markdown.getMarkdown();
       onChange(md);
     },
     editorProps: {
@@ -505,11 +503,9 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       internalChange.current = false;
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const current = (editor.storage as any).markdown.getMarkdown() as string;
+    const current = (editor.storage as unknown as Record<string, { getMarkdown: () => string }>).markdown.getMarkdown();
     if (current !== value) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (editor.commands as any).setMarkdown(value ?? "");
+      (editor.commands as unknown as Record<string, (v: string) => void>).setMarkdown(value ?? "");
     }
   }, [value, editor]);
 
