@@ -11,7 +11,9 @@ export async function POST() {
   try {
     const archived = await archiveRemovedPgListings(supabase);
     const { purged } = await purgeExpiredArchivedListings(supabase);
-    if (archived.length > 0 || purged > 0) revalidateListingPaths();
+    if (archived.length > 0 || purged > 0) {
+      revalidateListingPaths(archived.map((row) => row.slug));
+    }
     return NextResponse.json({ success: true, archived, purged });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Archive failed";

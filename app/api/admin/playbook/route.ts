@@ -1,14 +1,12 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePlaybookPaths } from "@/lib/playbook/revalidate-playbook";
 
 // Push article + metadata changes live without a redeploy: revalidate the affected
 // pages so the ISR-cached /playbook/[slug] (and the listing) regenerate on next request.
-function revalidatePlaybook(slug?: string) {
-  revalidatePath("/playbook");
-  revalidatePath("/playbook/articles");
-  revalidatePath("/playbook/videos");
-  if (slug) revalidatePath(`/playbook/${slug}`);
+function revalidatePlaybook(slug?: string, contentKind?: "article" | "video") {
+  const slugs = slug && contentKind === "article" ? [slug] : [];
+  revalidatePlaybookPaths(slugs);
 }
 
 export async function GET() {
@@ -107,7 +105,7 @@ export async function POST(request: Request) {
       .select()
       .single();
     if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-    revalidatePlaybook(payload.slug);
+    revalidatePlaybook(payload.slug, contentKind);
     return NextResponse.json({ video: data });
   }
 
@@ -123,7 +121,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  revalidatePlaybook(payload.slug);
+  revalidatePlaybook(payload.slug, contentKind);
   return NextResponse.json({ video: data }, { status: 201 });
 }
 
@@ -136,13 +134,14 @@ export async function DELETE(request: Request) {
 
   const { data: row } = await supabase
     .from("playbook_videos")
-    .select("slug")
+    .select("slug, article, video_url")
     .eq("id", id)
     .maybeSingle();
 
   const { error: dbError } = await supabase.from("playbook_videos").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
-  revalidatePlaybook(row?.slug as string | undefined);
+  const wasArticle = Boolean((row?.article as string | null)?.trim());
+  revalidatePlaybook(row?.slug as string | undefined, wasArticle ? "article" : "video");
   return NextResponse.json({ ok: true });
 }

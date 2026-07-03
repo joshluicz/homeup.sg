@@ -18,7 +18,11 @@
     "pg:sheet": "npx tsx scripts/run-pg-sheet-sync.ts",
     "pg:automation": "npx tsx scripts/run-pg-automation.ts",
     "pg:watch": "npx tsx scripts/run-pg-watch.ts",
-    "dns-aid:publish": "node scripts/publish-dns-aid.mjs"
+    "dns-aid:publish": "node scripts/publish-dns-aid.mjs",
+    "indexnow:submit": "node scripts/submit-indexnow.mjs",
+    "indexnow:listings": "node scripts/submit-indexnow.mjs --listings",
+    "indexnow:playbook": "node scripts/submit-indexnow.mjs --playbook",
+    "indexnow:all": "node scripts/submit-indexnow.mjs --all"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
