@@ -12,6 +12,7 @@ import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
+import { getKnownPlaybookArticleSlugs } from "@/lib/playbook/article-slugs";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import { getPlaybookAgentName, inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
 import { getAgentBySlug } from "@/lib/data/agents";
@@ -26,13 +27,20 @@ import {
 
 export const dynamicParams = true;
 export const revalidate = 3600;
+export const maxDuration = 60;
 
 const FALLBACK_SLUG = "_";
 
 type ArticlePageProps = { params: { slug: string } };
 
 export async function generateStaticParams() {
-  const slugs = await getAllPlaybookSlugs();
+  const [dbSlugs, knownSlugs] = await Promise.all([
+    getAllPlaybookSlugs(),
+    Promise.resolve(getKnownPlaybookArticleSlugs()),
+  ]);
+  const slugs = [...new Set([...dbSlugs, ...knownSlugs])].filter(
+    (slug) => slug && slug !== FALLBACK_SLUG,
+  );
   if (slugs.length === 0) return [{ slug: FALLBACK_SLUG }];
   return slugs.map((slug) => ({ slug }));
 }
