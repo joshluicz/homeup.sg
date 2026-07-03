@@ -109,8 +109,6 @@ function HeadingSelect({ editor }: { editor: Editor }) {
           ? "h3"
           : "paragraph";
 
-  const label = options.find((o) => o.value === current)?.label ?? "Normal text";
-
   return (
     <div className="relative">
       <select
@@ -451,6 +449,9 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // Counter to track nested drag-enter/leave events so the drag indicator
+  // doesn't flicker when the pointer moves over child elements.
+  const dragCounter = useRef(0);
   const [uploadStatus, setUploadStatus] = useState<{
     kind: "success" | "error";
     message: string;
@@ -496,7 +497,8 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
     },
   });
 
-  // Keep editor in sync when parent value changes externally (e.g. switching article)
+  // Keep editor in sync when parent value changes externally (e.g. switching article).
+  // Use setMarkdown so the Markdown extension parses the content correctly.
   useEffect(() => {
     if (!editor) return;
     if (internalChange.current) {
@@ -506,7 +508,8 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const current = (editor.storage as any).markdown.getMarkdown() as string;
     if (current !== value) {
-      editor.commands.setContent(value ?? "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (editor.commands as any).setMarkdown(value ?? "");
     }
   }, [value, editor]);
 
@@ -546,13 +549,19 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       {/* Editor chrome — Google Docs-style card */}
       <div
         className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
-        onDragOver={(e) => {
+        onDragEnter={(e) => {
           e.preventDefault();
+          dragCounter.current += 1;
           setDragging(true);
         }}
-        onDragLeave={() => setDragging(false)}
+        onDragOver={(e) => e.preventDefault()}
+        onDragLeave={() => {
+          dragCounter.current -= 1;
+          if (dragCounter.current === 0) setDragging(false);
+        }}
         onDrop={(e) => {
           e.preventDefault();
+          dragCounter.current = 0;
           setDragging(false);
           void handleFiles(e.dataTransfer.files);
         }}
@@ -567,7 +576,7 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
         {/* Page canvas */}
         <div
           className={cn(
-            "bg-neutral-50 px-4 py-4 transition-colors",
+            "relative bg-neutral-50 px-4 py-4 transition-colors",
             dragging && "bg-primary-50",
           )}
         >
