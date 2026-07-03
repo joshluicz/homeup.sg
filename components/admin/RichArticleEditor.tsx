@@ -4,13 +4,12 @@ import { useEditor, EditorContent, Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
+import TiptapImage from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import TextAlign from "@tiptap/extension-text-align";
 import FontFamily from "@tiptap/extension-font-family";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
-import { Markdown } from "tiptap-markdown";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Bold,
@@ -49,6 +48,11 @@ type RichArticleEditorProps = {
 function isImageFile(file: File): boolean {
   if (file.type.startsWith("image/")) return true;
   return /\.(jpe?g|png|webp|gif|bmp|svg|ico|tiff?|heic|heif|avif)$/i.test(file.name);
+}
+
+/** Detect whether a string is HTML or plain Markdown. */
+export function isHtmlContent(content: string): boolean {
+  return /^\s*</.test(content.trim());
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -116,15 +120,10 @@ function HeadingSelect({ editor }: { editor: Editor }) {
         title="Text style"
         onChange={(e) => {
           const val = e.target.value;
-          if (val === "paragraph") {
-            editor.chain().focus().setParagraph().run();
-          } else if (val === "h1") {
-            editor.chain().focus().toggleHeading({ level: 1 }).run();
-          } else if (val === "h2") {
-            editor.chain().focus().toggleHeading({ level: 2 }).run();
-          } else if (val === "h3") {
-            editor.chain().focus().toggleHeading({ level: 3 }).run();
-          }
+          if (val === "paragraph") editor.chain().focus().setParagraph().run();
+          else if (val === "h1") editor.chain().focus().toggleHeading({ level: 1 }).run();
+          else if (val === "h2") editor.chain().focus().toggleHeading({ level: 2 }).run();
+          else if (val === "h3") editor.chain().focus().toggleHeading({ level: 3 }).run();
         }}
         className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
       >
@@ -160,11 +159,8 @@ function FontSelect({ editor }: { editor: Editor }) {
         title="Font"
         onChange={(e) => {
           const val = e.target.value;
-          if (!val) {
-            editor.chain().focus().unsetFontFamily().run();
-          } else {
-            editor.chain().focus().setFontFamily(val).run();
-          }
+          if (!val) editor.chain().focus().unsetFontFamily().run();
+          else editor.chain().focus().setFontFamily(val).run();
         }}
         className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
       >
@@ -203,11 +199,8 @@ function ColorSelect({ editor }: { editor: Editor }) {
         title="Text colour"
         onChange={(e) => {
           const val = e.target.value;
-          if (!val) {
-            editor.chain().focus().unsetColor().run();
-          } else {
-            editor.chain().focus().setColor(val).run();
-          }
+          if (!val) editor.chain().focus().unsetColor().run();
+          else editor.chain().focus().setColor(val).run();
         }}
         className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
         style={{ color: activeColor || undefined }}
@@ -304,7 +297,6 @@ function Toolbar({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5">
-      {/* Undo / Redo */}
       <ToolbarButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -322,14 +314,12 @@ function Toolbar({
 
       <ToolbarDivider />
 
-      {/* Heading / font selectors */}
       <HeadingSelect editor={editor} />
       <FontSelect editor={editor} />
       <ColorSelect editor={editor} />
 
       <ToolbarDivider />
 
-      {/* Inline marks */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
         active={editor.isActive("bold")}
@@ -361,7 +351,6 @@ function Toolbar({
 
       <ToolbarDivider />
 
-      {/* Alignment */}
       <ToolbarButton
         onClick={() => editor.chain().focus().setTextAlign("left").run()}
         active={editor.isActive({ textAlign: "left" })}
@@ -393,7 +382,6 @@ function Toolbar({
 
       <ToolbarDivider />
 
-      {/* Lists */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         active={editor.isActive("bulletList")}
@@ -411,7 +399,6 @@ function Toolbar({
 
       <ToolbarDivider />
 
-      {/* Block elements */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         active={editor.isActive("blockquote")}
@@ -428,10 +415,8 @@ function Toolbar({
 
       <ToolbarDivider />
 
-      {/* Link */}
       <LinkDialog editor={editor} />
 
-      {/* Image */}
       <ToolbarButton onClick={onImageUpload} disabled={uploading} title="Insert image">
         {uploading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -449,16 +434,13 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
-  // Counter to track nested drag-enter/leave events so the drag indicator
-  // doesn't flicker when the pointer moves over child elements.
   const dragCounter = useRef(0);
   const [uploadStatus, setUploadStatus] = useState<{
     kind: "success" | "error";
     message: string;
   } | null>(null);
 
-  // Track whether the next onChange is from an external update (parent re-setting value)
-  // vs an internal edit (user typing). This prevents cursor-jump feedback loops.
+  // Prevent onChange → setContent → onChange feedback loop
   const internalChange = useRef(false);
 
   const editor = useEditor({
@@ -470,22 +452,17 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       Color,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Link.configure({ openOnClick: false, autolink: true }),
-      Image.configure({ inline: false, allowBase64: false }),
+      TiptapImage.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({
         placeholder:
           "Start writing your article here… Use the toolbar above to format text, add headings, callout boxes, and images.",
       }),
-      Markdown.configure({
-        html: true,
-        transformPastedText: true,
-        transformCopiedText: false,
-      }),
     ],
-    content: value,
-    onUpdate({ editor }) {
+    // Accept HTML (new articles) or plain text/Markdown (legacy) as initial content
+    content: isHtmlContent(value) ? value : `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`,
+    onUpdate({ editor: ed }) {
       internalChange.current = true;
-      const md = (editor.storage as unknown as Record<string, { getMarkdown: () => string }>).markdown.getMarkdown();
-      onChange(md);
+      onChange(ed.getHTML());
     },
     editorProps: {
       attributes: {
@@ -495,17 +472,19 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
     },
   });
 
-  // Keep editor in sync when parent value changes externally (e.g. switching article).
-  // Use setMarkdown so the Markdown extension parses the content correctly.
+  // Sync when parent swaps the article (e.g. switching between articles in the list)
   useEffect(() => {
     if (!editor) return;
     if (internalChange.current) {
       internalChange.current = false;
       return;
     }
-    const current = (editor.storage as unknown as Record<string, { getMarkdown: () => string }>).markdown.getMarkdown();
+    const current = editor.getHTML();
     if (current !== value) {
-      (editor.commands as unknown as Record<string, (v: string) => void>).setMarkdown(value ?? "");
+      const html = isHtmlContent(value)
+        ? value
+        : `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`;
+      editor.commands.setContent(html);
     }
   }, [value, editor]);
 
@@ -542,7 +521,6 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
 
   return (
     <div className="space-y-2">
-      {/* Editor chrome — Google Docs-style card */}
       <div
         className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
         onDragEnter={(e) => {
@@ -562,14 +540,12 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
           void handleFiles(e.dataTransfer.files);
         }}
       >
-        {/* Toolbar */}
         <Toolbar
           editor={editor}
           onImageUpload={() => fileInputRef.current?.click()}
           uploading={uploading}
         />
 
-        {/* Page canvas */}
         <div
           className={cn(
             "relative bg-neutral-50 px-4 py-4 transition-colors",
@@ -590,14 +566,12 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
           )}
         </div>
 
-        {/* Drag-drop hint bar */}
         <div className="flex items-center gap-1.5 border-t border-neutral-100 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-400">
           <Upload className="h-3 w-3 shrink-0" />
           Drag &amp; drop an image anywhere in the editor, or click the image icon in the toolbar
         </div>
       </div>
 
-      {/* Upload status */}
       {uploadStatus && (
         <div
           className={cn(
@@ -612,7 +586,6 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
         </div>
       )}
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
