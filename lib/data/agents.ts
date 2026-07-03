@@ -16,6 +16,17 @@ export interface AgentSocialLinks {
   tiktok?: string;
 }
 
+export interface AgentAccoladeFootnote {
+  marker: string;
+  text?: string;
+  link?: {
+    href: string;
+    label: string;
+    before?: string;
+    after?: string;
+  };
+}
+
 export interface Agent {
   slug: string;
   name: string;
@@ -30,6 +41,8 @@ export interface Agent {
   about: string[];
   /** Awards, credentials, and recognition */
   accolades?: string[];
+  /** Optional footnotes for accolade superscript markers */
+  accoladeFootnotes?: AgentAccoladeFootnote[];
   /** Role shown on the agent profile page (e.g. Co-Founder, Partner) */
   profileTitle?: string;
   specialties: string[];
@@ -58,10 +71,28 @@ export const AGENTS: Agent[] = [
       "Dennis brings extensive experience across Singapore's property market, with 5 private property investments including a landed home in Singapore held under trust and 3 properties in China.",
     quoteThirdPerson: true,
     accolades: [
-      "NUS BBA (Hons)",
-      "ABF Award (Ministry of Trade & Industry)",
-      "Top Sale (Residential) 2025",
-      "Double Centurion Award 2025",
+      "BBA (Hons), NUS¹",
+      "Asian Business Fellowship Award, MTI²",
+      "#2 Transactor³ in Singapore | 2024 (Private Residential Sale)",
+      "#1 Transactor³ in Singapore | 2025 (Private Residential Sale)",
+    ],
+    accoladeFootnotes: [
+      {
+        marker: "¹",
+        text: "Bachelor of Business Administration (Hons), NUS",
+      },
+      {
+        marker: "²",
+        link: {
+          before: "Award by ",
+          label: "Ministry of Trade & Industry (Singapore)",
+          href: "https://www.nas.gov.sg/archivesonline/data/pdfdoc/2002061803.ht",
+        },
+      },
+      {
+        marker: "³",
+        text: "Rankings based on seller-represented sale transactions (Condo, Landed, EC) | 2024 (96 Deals); 2025 (101 Deals) | Source: Data.gov.sg",
+      },
     ],
     about: [],
     specialties: ["HDB upgrades", "Landed sales", "Sell-and-buy planning"],

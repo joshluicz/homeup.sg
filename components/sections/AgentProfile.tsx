@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
-import type { Agent } from "@/lib/data/agents";
+import type { Agent, AgentAccoladeFootnote } from "@/lib/data/agents";
 import type { AgentProfileVideo } from "@/lib/agents/profile-videos";
 import { AgentProfileVideos } from "@/components/agents/AgentProfileVideos";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
@@ -11,6 +11,29 @@ import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
 interface AgentProfileProps {
   agent: Agent;
   profileVideos: AgentProfileVideo[];
+}
+
+function AccoladeFootnote({ footnote }: { footnote: AgentAccoladeFootnote }) {
+  return (
+    <p className="text-xs font-normal leading-relaxed text-neutral-500">
+      <span aria-hidden="true">{footnote.marker} </span>
+      {footnote.text}
+      {footnote.link && (
+        <>
+          {footnote.link.before}
+          <Link
+            href={footnote.link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-700 underline decoration-primary-200 underline-offset-2 transition hover:text-primary-800 hover:decoration-primary-400"
+          >
+            {footnote.link.label}
+          </Link>
+          {footnote.link.after}
+        </>
+      )}
+    </p>
+  );
 }
 
 export function AgentProfile({ agent, profileVideos }: AgentProfileProps) {
@@ -103,6 +126,13 @@ export function AgentProfile({ agent, profileVideos }: AgentProfileProps) {
                       </li>
                     ))}
                   </ul>
+                  {agent.accoladeFootnotes && agent.accoladeFootnotes.length > 0 && (
+                    <div className="mt-4 space-y-1.5 border-t border-neutral-100 pt-4">
+                      {agent.accoladeFootnotes.map((footnote) => (
+                        <AccoladeFootnote key={footnote.marker} footnote={footnote} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
