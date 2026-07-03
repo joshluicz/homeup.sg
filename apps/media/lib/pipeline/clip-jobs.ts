@@ -223,8 +223,14 @@ export async function runAdvanceClips(
     const falModel = metadata.fal_model ?? resolveFalModelForTask(
       metadata.image_urls ?? [row.r2_url],
     );
+    const label = metadata.label ?? row.file_name;
 
     if (!falJobId) {
+      await recordClipFailureStep(
+        logger,
+        label,
+        "Missing fal_job_id in metadata",
+      );
       await markFileFailed(
         serviceSupabase,
         row.id,
@@ -235,7 +241,6 @@ export async function runAdvanceClips(
       continue;
     }
 
-    const label = metadata.label ?? row.file_name;
     const status = await logger?.step(
       `check_clip_status:${label}`,
       `Check clip status: ${label}`,
@@ -248,6 +253,11 @@ export async function runAdvanceClips(
     }
 
     if (status.status === "failed") {
+      await recordClipFailureStep(
+        logger,
+        label,
+        status.error ?? "Clip generation failed",
+      );
       await markFileFailed(
         serviceSupabase,
         row.id,
@@ -269,6 +279,11 @@ export async function runAdvanceClips(
     ) ?? await fetchRoomClipResult(falJobId, label, falModel);
 
     if (!result.success || !result.video_url) {
+      await recordClipFailureStep(
+        logger,
+        label,
+        result.error ?? "No video URL from fal",
+      );
       await markFileFailed(
         serviceSupabase,
         row.id,
@@ -314,6 +329,7 @@ export async function runAdvanceClips(
     } catch (archiveErr) {
       const message =
         archiveErr instanceof Error ? archiveErr.message : "Archive failed";
+      await recordClipFailureStep(logger, label, message);
       await markFileFailed(serviceSupabase, row.id, message, metadata);
       failed += 1;
     }
@@ -327,6 +343,25 @@ export async function runAdvanceClips(
     failed,
     still_processing,
   };
+}
+
+async function recordClipFailureStep(
+  logger: PipelineRunLogger | null,
+  label: string,
+  message: string,
+) {
+  if (!logger?.enabled) return;
+
+  await logger
+    .step(
+      `clip_failed:${label}`,
+      `Clip failed: ${label}`,
+      () => {
+        throw new Error(message);
+      },
+      { inputSummary: { label } },
+    )
+    .catch(() => undefined);
 }
 
 async function markFileFailed(
