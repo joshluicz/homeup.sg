@@ -4,7 +4,8 @@ const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, 
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["patchright", "patchright-core", "pg"],
-    optimizeCss: true,
+    // optimizeCss (critters) caused intermittent HTTP 500 on large /playbook/[slug] pages
+    // during ISR regen — error HTML included data-critters-container; GSC could not fetch.
     optimizePackageImports: [
       "lucide-react",
       "framer-motion",
