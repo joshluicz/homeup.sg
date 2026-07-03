@@ -1,0 +1,39 @@
+name: Warm playbook pages after deploy
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "app/(public)/playbook/**"
+      - "components/sections/ArticleBody.tsx"
+      - "components/sections/Playbook*.tsx"
+      - "lib/playbook/**"
+      - "next.config.mjs"
+      - "scripts/warm-playbook-pages.mjs"
+      - ".github/workflows/warm-playbook-after-deploy.yml"
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Wait for Vercel production deploy
+        run: sleep 120
+
+      - name: Warm playbook article URLs on production
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npm run playbook:warm
