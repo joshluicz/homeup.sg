@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { cache } from "react";
 import type { PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
 import {
   PLAYBOOK_TOPICS,
@@ -169,9 +170,7 @@ export async function getPlaybookArticleSitemapEntries(): Promise<PlaybookArticl
   }));
 }
 
-export async function getPlaybookVideoBySlugServer(
-  slug: string,
-): Promise<PlaybookVideo | null> {
+async function fetchPlaybookVideoBySlug(slug: string): Promise<PlaybookVideo | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
@@ -188,3 +187,6 @@ export async function getPlaybookVideoBySlugServer(
   if (!isPlaybookArticle(video) || !video.article?.trim()) return null;
   return video;
 }
+
+/** Cached per request so generateMetadata + page share one Supabase round-trip. */
+export const getPlaybookVideoBySlugServer = cache(fetchPlaybookVideoBySlug);
