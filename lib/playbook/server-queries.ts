@@ -18,6 +18,7 @@ import {
   getAllAgentProfileVideoSlugsServer,
 } from "@/lib/agents/profile-videos";
 import { agentProfileVideoToPlaybookVideo } from "@/lib/playbook/public-videos";
+import { getPlaybookArticleFromJson } from "@/lib/playbook/json-fallback";
 
 function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
   const topic = row.topic as PlaybookTopic | null;
@@ -173,19 +174,26 @@ export async function getPlaybookArticleSitemapEntries(): Promise<PlaybookArticl
 async function fetchPlaybookVideoBySlug(slug: string): Promise<PlaybookVideo | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
 
-  const supabase = createClient(url, key);
-  const { data, error } = await supabase
-    .from("playbook_videos")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
+  if (url && key) {
+    try {
+      const supabase = createClient(url, key);
+      const { data, error } = await supabase
+        .from("playbook_videos")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
 
-  if (error || !data) return null;
-  const video = rowToVideo(data);
-  if (!isPlaybookArticle(video) || !video.article?.trim()) return null;
-  return video;
+      if (!error && data) {
+        const video = rowToVideo(data);
+        if (isPlaybookArticle(video) && video.article?.trim()) return video;
+      }
+    } catch (error) {
+      console.warn("fetchPlaybookVideoBySlug Supabase:", error);
+    }
+  }
+
+  return getPlaybookArticleFromJson(slug);
 }
 
 /** Cached per request so generateMetadata + page share one Supabase round-trip. */
