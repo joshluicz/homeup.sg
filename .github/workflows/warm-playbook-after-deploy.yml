@@ -4,14 +4,6 @@ on:
   push:
     branches:
       - master
-    paths:
-      - "app/(public)/playbook/**"
-      - "components/sections/ArticleBody.tsx"
-      - "components/sections/Playbook*.tsx"
-      - "lib/playbook/**"
-      - "next.config.mjs"
-      - "scripts/warm-playbook-pages.mjs"
-      - ".github/workflows/warm-playbook-after-deploy.yml"
 
 jobs:
   warm:
