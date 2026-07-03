@@ -463,9 +463,12 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
   // Push the direct-Supabase save/delete live on the ISR-cached public pages immediately.
   async function revalidatePlaybook() {
     try {
-      await fetch("/api/admin/playbook/revalidate", { method: "POST" });
-    } catch {
-      /* non-fatal: pages still refresh on the next ISR window */
+      const res = await fetch("/api/admin/playbook/revalidate", { method: "POST" });
+      if (!res.ok) {
+        console.error("[PlaybookTab] revalidation failed:", res.status, await res.text());
+      }
+    } catch (err) {
+      console.error("[PlaybookTab] revalidation network error:", err);
     }
   }
 
