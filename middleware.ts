@@ -28,6 +28,13 @@ function isDashboardHost(request: NextRequest): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
+
+  if (host === "www.homeup.sg") {
+    const url = request.nextUrl.clone();
+    url.host = "homeup.sg";
+    return NextResponse.redirect(url, 301);
+  }
 
   if (isDashboardHost(request)) {
     if (pathname.startsWith("/api") || pathname.startsWith("/_next") || /\.[a-z0-9]+$/i.test(pathname)) {

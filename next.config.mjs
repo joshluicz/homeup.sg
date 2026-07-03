@@ -55,6 +55,12 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/:path*",
+        has: [{ type: "host", value: "www.homeup.sg" }],
+        destination: "https://homeup.sg/:path*",
+        permanent: true,
+      },
+      {
         source: "/favicon.ico",
         destination: "/icon.png",
         permanent: true,
