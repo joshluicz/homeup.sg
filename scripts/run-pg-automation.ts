@@ -39,7 +39,10 @@ export async function runPgAutomation(): Promise<number> {
     log("  (dry-run: skipping sheet refresh)");
   } else {
     const sheet = await refreshPgSourcesFromGoogleSheet(supabase);
-    log(`  ${sheet.saved} active source(s) loaded`);
+    log(`  ${sheet.saved} listed source(s) loaded`);
+    if (sheet.price_updates.length > 0) {
+      log(`  updated ${sheet.price_updates.length} listing price(s) from sheet`);
+    }
     if (sheet.skipped.held_off_website > 0) {
       log(`  ${sheet.skipped.held_off_website} held off website (relist later)`);
     }

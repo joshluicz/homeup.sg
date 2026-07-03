@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import type { ListingFormData } from "@/lib/listings/types";
 import { postListingImport } from "@/lib/listings/import/client";
+import { parsePgListingUrl } from "@/lib/listings/pg-url";
 import { Loader2 } from "lucide-react";
 
 type ImportResult = {
@@ -63,7 +64,20 @@ export function ListingImportPanel({ listingId, onSuccess }: ListingImportPanelP
       }
 
       onSuccess({
-        data: result.data ?? {},
+        data: {
+          ...(result.data ?? {}),
+          ...(payload.url
+            ? (() => {
+                const parsed = parsePgListingUrl(payload.url);
+                return parsed
+                  ? {
+                      source_pg_url: parsed.pg_url,
+                      source_pg_listing_id: parsed.pg_listing_id,
+                    }
+                  : {};
+              })()
+            : {}),
+        },
         warnings: result.warnings ?? [],
       });
     } catch (err) {

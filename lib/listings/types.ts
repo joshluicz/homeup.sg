@@ -57,6 +57,8 @@ export interface ListingFormData {
   address_line_1: string;
   featured_image_url: string | null;
   image_urls: string[];
+  source_pg_url?: string | null;
+  source_pg_listing_id?: string | null;
 }
 
 export type ListingFilter = "all" | "active" | "draft" | "sold";

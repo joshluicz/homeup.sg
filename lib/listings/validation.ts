@@ -37,7 +37,7 @@ export function formDataToDbPayload(
     address_line_1: data.address_line_1?.trim() || null,
     featured_image_url: data.featured_image_url,
     image_urls: data.image_urls,
-    source_pg_url: extras?.source_pg_url ?? null,
-    source_pg_listing_id: extras?.source_pg_listing_id ?? null,
+    source_pg_url: extras?.source_pg_url ?? data.source_pg_url ?? null,
+    source_pg_listing_id: extras?.source_pg_listing_id ?? data.source_pg_listing_id ?? null,
   };
 }

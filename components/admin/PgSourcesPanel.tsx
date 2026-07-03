@@ -43,6 +43,7 @@ type SheetRefreshResponse = {
     invalid_url: number;
     unknown_agent: number;
     duplicate_id: number;
+    not_listed?: number;
   };
   sheet_agent_column_count?: number;
   sheet_format_fixes?: Array<{
@@ -55,6 +56,12 @@ type SheetRefreshResponse = {
   sheet_total_rows?: number;
   sell_on_sheet?: number;
   rent_on_sheet?: number;
+  price_updates?: Array<{
+    pg_listing_id: string;
+    slug: string;
+    old_price: number;
+    new_price: number;
+  }>;
 };
 
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${LISTINGS_SHEET_ID}/edit`;
@@ -127,7 +134,7 @@ export function PgSourcesPanel() {
       const sell = json.sell_on_sheet ?? json.saved ?? 0;
       const rent = json.rent_on_sheet ?? 0;
       setStatusMessage(
-        `Loaded ${json.saved ?? 0} active listing(s) for sync (${sell} sale + ${rent} rent).`,
+        `Loaded ${json.saved ?? 0} listed source(s) for sync (${sell} sale + ${rent} rent). Updated ${json.price_updates?.length ?? 0} price(s).`,
       );
       await refreshPreview();
     } catch (err) {
@@ -277,7 +284,7 @@ export function PgSourcesPanel() {
       <div>
         <h1 className="text-xl font-bold text-neutral-900">Listings sync</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Google Sheet is the source of truth for active listings. Refresh → review → sync →
+          Google Sheet is the source of truth for active listings and prices. Refresh → review → sync →
           publish.
         </p>
       </div>
@@ -303,13 +310,11 @@ export function PgSourcesPanel() {
           Step 1 — Refresh from Google Sheet
         </h2>
         <p className="mt-1 text-sm text-neutral-600">
-          Reads the team&apos;s listings tracker. Each active row must have the agent in{" "}
-          <strong>Agent column B</strong> (not Months Since Listing). Rows with{" "}
-          <strong>Remarks</strong> or <strong>Unit Status</strong> exactly <strong>SOLD</strong> or{" "}
-          <strong>DELISTED</strong> are skipped. Held statuses like{" "}
-          <strong>DELISTED, RELIST LATER</strong> are skipped too. Rent vs sale is detected from the
-          PropertyGuru URL (<code className="text-xs">for-rent</code> vs{" "}
-          <code className="text-xs">for-sale</code>).
+          Reads the team&apos;s listings tracker. A row is active only when{" "}
+          <strong>Status</strong> is <strong>Listed</strong>. Rows marked{" "}
+          <strong>Sold</strong> or <strong>Delisted</strong> are skipped. Each listed row must have
+          the agent in <strong>Agent column B</strong> and a valid PropertyGuru link.{" "}
+          <strong>Listed Price</strong> is pushed into any matching HomeUP listing.
         </p>
         <a
           href={SHEET_URL}
@@ -367,6 +372,23 @@ export function PgSourcesPanel() {
                   ))}
               </ul>
             )}
+            {(sheetResult.price_updates?.length ?? 0) > 0 && (
+              <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-950">
+                <p className="font-medium">
+                  Updated {sheetResult.price_updates!.length} listing price(s) from Listed Price
+                </p>
+                <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs">
+                  {sheetResult.price_updates!.map((update) => (
+                    <li key={update.pg_listing_id}>
+                      <strong>{update.pg_listing_id}</strong> — ${update.old_price.toLocaleString(
+                        "en-SG",
+                      )}{" "}
+                      → ${update.new_price.toLocaleString("en-SG")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </>
         )}
         {sheetResult?.skipped && (
@@ -384,6 +406,9 @@ export function PgSourcesPanel() {
               : ""}
             {sheetResult.skipped.unknown_agent > 0
               ? `, ${sheetResult.skipped.unknown_agent} unknown agent`
+              : ""}
+            {(sheetResult.skipped.not_listed ?? 0) > 0
+              ? `, ${sheetResult.skipped.not_listed} not Listed status`
               : ""}
           </p>
         )}

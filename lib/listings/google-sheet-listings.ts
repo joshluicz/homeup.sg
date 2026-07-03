@@ -10,6 +10,7 @@ export type SheetListingRow = {
   agent_name: string;
   client_name: string;
   status: string;
+  listed_price: number | null;
 };
 
 export type SheetFormatFix = {
@@ -40,6 +41,7 @@ export type FetchSheetListingsResult = {
     invalid_url: number;
     unknown_agent: number;
     duplicate_id: number;
+    not_listed: number;
   };
   /** Non-empty cells in Agent column B (matches sheet COUNTA(B3:B220) intent). */
   sheet_agent_column_count: number;
@@ -50,19 +52,20 @@ function isRentListingUrl(url: string): boolean {
   return /\/listing\/for-rent-/i.test(url) || /\/for-rent-/i.test(url);
 }
 
-/** Exact SOLD / DELISTED — off the sheet's active set. */
-function isInactiveStatus(raw: string): boolean {
-  const status = raw.trim().toUpperCase();
-  return status === "SOLD" || status === "DELISTED";
+function normalizeStatus(raw: string): string {
+  return raw.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-/** On sheet for ops but not on HomeUP (temporarily off PG / relisting later). */
-function isHeldOffWebsite(raw: string): boolean {
-  const status = raw.trim().toUpperCase();
-  if (!status) return false;
-  if (status.includes("DELISTED") && status !== "DELISTED") return true;
-  if (status === "WILL RELIST AGAIN") return true;
-  return false;
+function isListedStatus(raw: string): boolean {
+  const status = normalizeStatus(raw);
+  return status === "listed";
+}
+
+function parseListedPrice(raw: string): number | null {
+  const digits = raw.replace(/[^\d.]/g, "");
+  if (!digits) return null;
+  const value = Number(digits);
+  return Number.isFinite(value) && value > 0 ? Math.round(value) : null;
 }
 
 /** Map sheet agent label → HomeUP agent slug. */
@@ -169,6 +172,7 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
       invalid_url: 0,
       unknown_agent: 0,
       duplicate_id: 0,
+      not_listed: 0,
     },
     sheet_agent_column_count: 0,
     sheet_total_rows: 0,
@@ -186,16 +190,18 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
     const agentColumn = cell(row, col, "agent");
     if (agentColumn) result.sheet_agent_column_count++;
 
-    const remarksStatus = cell(row, col, "remarks");
-    const unitStatus = cell(row, col, "unit status");
-    if (isInactiveStatus(remarksStatus) || isInactiveStatus(unitStatus)) {
-      const upper = `${remarksStatus} ${unitStatus}`.toUpperCase();
-      if (upper.includes("SOLD")) result.skipped.sold++;
-      else result.skipped.delisted++;
+    const sheetStatus = cell(row, col, "status");
+    const normalizedStatus = normalizeStatus(sheetStatus);
+    if (normalizedStatus === "sold") {
+      result.skipped.sold++;
       continue;
     }
-    if (isHeldOffWebsite(remarksStatus) || isHeldOffWebsite(unitStatus)) {
-      result.skipped.held_off_website++;
+    if (normalizedStatus === "delisted") {
+      result.skipped.delisted++;
+      continue;
+    }
+    if (!isListedStatus(sheetStatus)) {
+      result.skipped.not_listed++;
       continue;
     }
 
@@ -228,7 +234,7 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
           pg_listing_id: parsed.pg_listing_id,
           client_name: cell(row, col, "client name"),
           misplaced_agent_label: monthsLabel || loLabel,
-          remarks: remarksStatus || unitStatus,
+          remarks: sheetStatus,
         });
       } else {
         result.skipped.missing_agent_column++;
@@ -252,7 +258,8 @@ export function parseListingsSheetCsv(csvText: string): FetchSheetListingsResult
       agent_slug: agentSlug,
       agent_name: agent?.name ?? agentSlug,
       client_name: cell(row, col, "client name"),
-      status: remarksStatus || unitStatus,
+      status: sheetStatus,
+      listed_price: parseListedPrice(cell(row, col, "listed price")),
     });
 
     if (isRent) result.rent_on_sheet++;

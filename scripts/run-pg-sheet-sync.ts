@@ -38,6 +38,14 @@ async function main() {
   console.log("Agent column B filled:", result.sheet_agent_column_count);
   console.log("By agent:", result.by_agent);
   console.log("Skipped:", result.skipped);
+  console.log("Price updates:", result.price_updates.length);
+  for (const update of result.price_updates.slice(0, 20)) {
+    console.log(
+      `  ${update.pg_listing_id} (${update.slug}): $${update.old_price.toLocaleString(
+        "en-SG",
+      )} → $${update.new_price.toLocaleString("en-SG")}`,
+    );
+  }
   if (result.sheet_format_fixes.length > 0) {
     console.log("\nSheet format fixes (move agent to column B):");
     for (const f of result.sheet_format_fixes) {

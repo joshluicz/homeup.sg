@@ -159,7 +159,7 @@ export async function importOnePgListing(
 
   const { data: activeBySlug } = await supabase
     .from("listings")
-    .select("id, source_pg_listing_id, listed_as, slug")
+    .select("id, source_pg_listing_id, listed_as, slug, status")
     .eq("slug", formData.slug)
     .is("deleted_at", null)
     .maybeSingle();
@@ -167,6 +167,29 @@ export async function importOnePgListing(
   if (activeBySlug) {
     if (activeBySlug.source_pg_listing_id === pgListingId) {
       return { ok: false, error: "Already imported" };
+    }
+
+    if (!activeBySlug.source_pg_listing_id) {
+      const existingStatus = activeBySlug.status === "draft" ? "draft" : "active";
+      const payloadForManualListing = formDataToDbPayload(
+        formData,
+        existingStatus,
+        {
+          source_pg_url: pgUrl,
+          source_pg_listing_id: pgListingId,
+        },
+      );
+
+      const { error: updateError } = await supabase
+        .from("listings")
+        .update(payloadForManualListing)
+        .eq("id", activeBySlug.id);
+
+      if (updateError) {
+        return { ok: false, error: updateError.message };
+      }
+
+      return { ok: true, title: formData.title, slug: formData.slug };
     }
 
     // Same development slug, different PG listing (e.g. another unit) — never overwrite.

@@ -8,6 +8,19 @@ import {
 export type SyncSheetSourcesResult = FetchSheetListingsResult & {
   saved: number;
   by_agent: Record<string, number>;
+  price_updates: Array<{
+    pg_listing_id: string;
+    slug: string;
+    old_price: number;
+    new_price: number;
+  }>;
+};
+
+type PgSourceInsert = {
+  agent_slug: string;
+  pg_url: string;
+  pg_listing_id: string;
+  listed_price?: number | null;
 };
 
 export async function replacePgSourcesFromSheet(
@@ -25,15 +38,22 @@ export async function replacePgSourcesFromSheet(
     return { saved: 0, by_agent: {} };
   }
 
-  const { error: insertError } = await supabase.from("pg_listing_sources").insert(
-    active.map((row) => ({
-      agent_slug: row.agent_slug,
-      pg_url: row.pg_url,
-      pg_listing_id: row.pg_listing_id,
-    })),
-  );
+  const rowsWithPrice: PgSourceInsert[] = active.map((row) => ({
+    agent_slug: row.agent_slug,
+    pg_url: row.pg_url,
+    pg_listing_id: row.pg_listing_id,
+    listed_price: row.listed_price,
+  }));
 
-  if (insertError) throw new Error(insertError.message);
+  const { error: insertError } = await supabase.from("pg_listing_sources").insert(rowsWithPrice);
+
+  if (insertError && /listed_price/i.test(insertError.message)) {
+    const rowsWithoutPrice = rowsWithPrice.map(({ listed_price: _listedPrice, ...row }) => row);
+    const { error: retryError } = await supabase.from("pg_listing_sources").insert(rowsWithoutPrice);
+    if (retryError) throw new Error(retryError.message);
+  } else if (insertError) {
+    throw new Error(insertError.message);
+  }
 
   const by_agent: Record<string, number> = {};
   for (const row of active) {
@@ -43,10 +63,59 @@ export async function replacePgSourcesFromSheet(
   return { saved: active.length, by_agent };
 }
 
+export async function updateListingPricesFromSheet(
+  supabase: SupabaseClient,
+  active: SheetListingRow[],
+): Promise<SyncSheetSourcesResult["price_updates"]> {
+  const priceByPgId = new Map(
+    active
+      .filter((row) => row.listed_price != null)
+      .map((row) => [row.pg_listing_id, row.listed_price as number]),
+  );
+
+  if (priceByPgId.size === 0) return [];
+
+  const { data: listings, error } = await supabase
+    .from("listings")
+    .select("id, slug, price, source_pg_listing_id")
+    .in("source_pg_listing_id", [...priceByPgId.keys()])
+    .is("deleted_at", null);
+
+  if (error) throw new Error(error.message);
+
+  const updates: SyncSheetSourcesResult["price_updates"] = [];
+
+  for (const listing of listings ?? []) {
+    const pgListingId = listing.source_pg_listing_id as string;
+    const nextPrice = priceByPgId.get(pgListingId);
+    if (nextPrice == null) continue;
+
+    const oldPrice = Math.round(Number(listing.price));
+    if (oldPrice === nextPrice) continue;
+
+    const { error: updateError } = await supabase
+      .from("listings")
+      .update({ price: nextPrice })
+      .eq("id", listing.id);
+
+    if (updateError) throw new Error(updateError.message);
+
+    updates.push({
+      pg_listing_id: pgListingId,
+      slug: listing.slug as string,
+      old_price: oldPrice,
+      new_price: nextPrice,
+    });
+  }
+
+  return updates;
+}
+
 export async function refreshPgSourcesFromGoogleSheet(
   supabase: SupabaseClient,
 ): Promise<SyncSheetSourcesResult> {
   const sheet = await fetchListingsFromGoogleSheet();
   const { saved, by_agent } = await replacePgSourcesFromSheet(supabase, sheet.active);
-  return { ...sheet, saved, by_agent };
+  const price_updates = await updateListingPricesFromSheet(supabase, sheet.active);
+  return { ...sheet, saved, by_agent, price_updates };
 }

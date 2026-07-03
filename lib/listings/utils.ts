@@ -69,6 +69,8 @@ export function listingToFormData(listing: Listing): ListingFormData {
     address_line_1: listing.address_line_1 ?? "",
     featured_image_url: listing.featured_image_url,
     image_urls: listing.image_urls ?? [],
+    source_pg_url: listing.source_pg_url,
+    source_pg_listing_id: listing.source_pg_listing_id,
   };
 }
 
