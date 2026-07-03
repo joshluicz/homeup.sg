@@ -5,6 +5,8 @@ import type { Listing } from "@/lib/listings/types";
 import { getPublicListingUrl } from "@/lib/listings/utils";
 import {
   CEA_LICENSE,
+  CEA_PUBLIC_REGISTER_URL,
+  CEA_WEBSITE_URL,
   LEGAL_NAME,
   ORG_ID,
   ORG_SAME_AS,
@@ -216,6 +218,25 @@ export function organizationSchema() {
       name: "CEA Licence",
       value: CEA_LICENSE,
     },
+    hasCredential: {
+      "@type": "EducationalOccupationalCredential",
+      credentialCategory: "CEA Estate Agency Licence",
+      identifier: CEA_LICENSE,
+      recognizedBy: {
+        "@type": "Organization",
+        name: "Council for Estate Agencies (CEA)",
+        url: CEA_WEBSITE_URL,
+      },
+      url: CEA_PUBLIC_REGISTER_URL,
+    },
+    knowsAbout: [
+      "Singapore property resale",
+      "HDB resale",
+      "Condominium sales",
+      "Landed property sales",
+      "Fixed-fee estate agency",
+      "Property buying representation",
+    ],
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "HomeUP Fixed-Fee Selling Packages",
@@ -492,8 +513,12 @@ export function videoObjectsSchema(videos: { title: string; description: string;
 
 /** Article/guide schema for a Playbook entry. Pairs with faqSchema + videoObjectsSchema
  *  on the /playbook/[slug] page so the guide is eligible for rich results and AI answers. */
-export function articleSchema(video: PlaybookVideo) {
+export function articleSchema(video: PlaybookVideo, authorAgentSlug?: string) {
   const url = `${SITE_URL}/playbook/${video.slug}`;
+  const author = authorAgentSlug
+    ? { "@id": `${SITE_URL}/agents/${authorAgentSlug}#person` }
+    : { "@id": ORG_ID };
+
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -503,7 +528,7 @@ export function articleSchema(video: PlaybookVideo) {
     datePublished: video.publishedAt,
     dateModified: video.publishedAt,
     inLanguage: "en-SG",
-    author: { "@id": ORG_ID },
+    author,
     publisher: { "@id": ORG_ID },
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,

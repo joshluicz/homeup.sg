@@ -13,12 +13,14 @@ import {
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
-import { getPlaybookAgentName } from "@/lib/playbook/agent-attribution";
+import { getPlaybookAgentName, inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
+import { getAgentBySlug } from "@/lib/data/agents";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import {
   articleSchema,
   breadcrumbSchema,
   faqSchema,
+  personSchema,
   speakableWebPageSchema,
 } from "@/lib/seo/schema";
 
@@ -59,6 +61,8 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
   const articleBlocks = parsePlaybookArticleBlocks(video.article!);
   const showStructuredFaq = articleHasInlineFaq(articleBlocks);
   const showDbFaq = hasFaq && !showStructuredFaq;
+  const authorSlug = inferPlaybookAgentSlug(video);
+  const author = getAgentBySlug(authorSlug);
 
   return (
     <>
@@ -69,7 +73,8 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             { name: "Playbook", path: "/playbook" },
             { name: video.title, path: `/playbook/${video.slug}` },
           ]),
-          articleSchema(video),
+          articleSchema(video, authorSlug),
+          ...(author ? [personSchema(author)] : []),
           ...(showDbFaq ? [faqSchema(video.faq!)] : []),
           speakableWebPageSchema({
             path: `/playbook/${video.slug}`,

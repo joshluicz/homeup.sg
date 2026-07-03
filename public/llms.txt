@@ -33,6 +33,8 @@ Send `Accept: text/markdown` on any public HTML page to receive a markdown repre
 
 ## Facts for citation
 - Operating agency: C & H Properties Pte Ltd, CEA licence L3007139C
+- Verify licence: https://eservices.cea.gov.sg/aceas/public-register/ (search L3007139C or +65 8087 7015)
+- CEA regulator: https://www.cea.gov.sg/
 - Office: 125A Lor 2 Toa Payoh #02-138, Singapore 311125
 - Phone: +65 8087 7015 (Mon to Sun, 9am to 9pm)
 - Fixed seller fees (before GST): HDB $1,999, condo/EC $4,999, landed $9,999

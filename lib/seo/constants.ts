@@ -5,11 +5,15 @@ export const ORG_ID = `${SITE_URL}/#organization`;
 export const OG_IMAGE = `${SITE_URL}/images/team-group.png`;
 export const LEGAL_NAME = "C & H Properties Pte Ltd";
 export const CEA_LICENSE = "L3007139C";
+export const CEA_PUBLIC_REGISTER_URL = "https://eservices.cea.gov.sg/aceas/public-register/";
+export const CEA_WEBSITE_URL = "https://www.cea.gov.sg/";
 export const PARENT_ORG_NAME = "Haus Plus Pte. Ltd.";
 export const PARENT_ORG_UEN = "202538756D";
 export const PARENT_ORG_ID = `${SITE_URL}/#parent-organization`;
 
 export const ORG_SAME_AS = [
+  CEA_PUBLIC_REGISTER_URL,
+  CEA_WEBSITE_URL,
   "https://www.instagram.com/homeup_singapore",
   "https://www.tiktok.com/@homeup.sg",
   "https://www.facebook.com/share/1GmU7rZQfK/",

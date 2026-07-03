@@ -106,7 +106,7 @@ const nodes = [
     },
     {
       credentials: {
-        httpHeaderAuth: { id: "REPLACE_ANTHROPIC_CREDENTIAL_ID", name: "Anthropic" },
+        httpHeaderAuth: { id: "REPLACE_ANTHROPIC_CREDENTIAL_ID", name: "Anthropic Key" },
       },
     },
   ),

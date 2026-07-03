@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AboutListingsGoal } from "@/components/sections/AboutListingsGoal";
 import { AGENTS, getAgentBySlug } from "@/lib/data/agents";
-import { SITE_VISION } from "@/lib/seo/constants";
+import { CEA_LICENSE, CEA_PUBLIC_REGISTER_URL, SITE_VISION } from "@/lib/seo/constants";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { LastUpdated } from "@/components/ui/LastUpdated";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
@@ -109,7 +109,16 @@ export function AboutContent({
             <Eyebrow>Our Team</Eyebrow>
             <h2 className="section-title">CEA-licensed advisors you can trust</h2>
             <p className="section-lead">
-              Every HomeUP advisor is CEA-registered with a public registration number.
+              Every HomeUP advisor is CEA-registered with a public registration number.{" "}
+              <a
+                href={CEA_PUBLIC_REGISTER_URL}
+                className="font-semibold text-primary-600 underline-offset-2 hover:underline"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Verify agency licence {CEA_LICENSE} on the CEA Public Register
+              </a>
+              .
             </p>
           </FadeInUp>
 
