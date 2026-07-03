@@ -76,6 +76,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Video URL is required." }, { status: 400 });
   }
 
+  const { data: existing } = await supabase
+    .from("agent_profile_videos")
+    .select("id")
+    .eq("agent_slug", agentSlug)
+    .eq("video_url", videoUrl)
+    .maybeSingle();
+
+  if (existing) {
+    return NextResponse.json(
+      { error: "A video with this URL already exists for this agent." },
+      { status: 409 },
+    );
+  }
+
   const resolvedThumbnail = thumbnail || (await fetchOEmbedThumbnail(videoUrl));
 
   const requestedSlug = slugify(String(body.slug ?? "").trim());
@@ -98,7 +112,15 @@ export async function POST(request: Request) {
     .select("*")
     .single();
 
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+  if (dbError) {
+    if (dbError.message.includes("agent_profile_videos_agent_url_idx")) {
+      return NextResponse.json(
+        { error: "A video with this URL already exists for this agent." },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: dbError.message }, { status: 500 });
+  }
 
   revalidateAgent(agentSlug);
   return NextResponse.json(data);
@@ -140,9 +162,34 @@ export async function PATCH(request: Request) {
     updates.slug = requested;
   }
 
-  if (body.videoUrl !== undefined && body.thumbnail === undefined) {
-    const thumb = await fetchOEmbedThumbnail(String(body.videoUrl).trim());
-    if (thumb) updates.thumbnail = thumb;
+  if (body.videoUrl !== undefined) {
+    const newVideoUrl = String(body.videoUrl).trim();
+    const { data: currentRow } = await supabase
+      .from("agent_profile_videos")
+      .select("agent_slug, video_url")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (currentRow && newVideoUrl !== currentRow.video_url) {
+      const { data: urlConflict } = await supabase
+        .from("agent_profile_videos")
+        .select("id")
+        .eq("agent_slug", currentRow.agent_slug)
+        .eq("video_url", newVideoUrl)
+        .maybeSingle();
+
+      if (urlConflict) {
+        return NextResponse.json(
+          { error: "A video with this URL already exists for this agent." },
+          { status: 409 },
+        );
+      }
+    }
+
+    if (body.thumbnail === undefined) {
+      const thumb = await fetchOEmbedThumbnail(newVideoUrl);
+      if (thumb) updates.thumbnail = thumb;
+    }
   }
 
   const { data, error: dbError } = await supabase
@@ -152,7 +199,15 @@ export async function PATCH(request: Request) {
     .select("*")
     .single();
 
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
+  if (dbError) {
+    if (dbError.message.includes("agent_profile_videos_agent_url_idx")) {
+      return NextResponse.json(
+        { error: "A video with this URL already exists for this agent." },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ error: dbError.message }, { status: 500 });
+  }
 
   revalidateAgent(data.agent_slug);
   return NextResponse.json(data);
