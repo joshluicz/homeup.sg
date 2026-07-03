@@ -62,6 +62,10 @@ type SheetRefreshResponse = {
     old_price: number;
     new_price: number;
   }>;
+  linked_manual?: Array<{
+    pg_listing_id: string;
+    slug: string;
+  }>;
 };
 
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${LISTINGS_SHEET_ID}/edit`;
@@ -134,7 +138,7 @@ export function PgSourcesPanel() {
       const sell = json.sell_on_sheet ?? json.saved ?? 0;
       const rent = json.rent_on_sheet ?? 0;
       setStatusMessage(
-        `Loaded ${json.saved ?? 0} listed source(s) for sync (${sell} sale + ${rent} rent). Updated ${json.price_updates?.length ?? 0} price(s).`,
+        `Loaded ${json.saved ?? 0} listed source(s) for sync (${sell} sale + ${rent} rent). Linked ${json.linked_manual?.length ?? 0} manual listing(s). Updated ${json.price_updates?.length ?? 0} price(s).`,
       );
       await refreshPreview();
     } catch (err) {
@@ -384,6 +388,20 @@ export function PgSourcesPanel() {
                         "en-SG",
                       )}{" "}
                       → ${update.new_price.toLocaleString("en-SG")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {(sheetResult.linked_manual?.length ?? 0) > 0 && (
+              <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-950">
+                <p className="font-medium">
+                  Linked {sheetResult.linked_manual!.length} existing manual listing(s) to PG IDs
+                </p>
+                <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs">
+                  {sheetResult.linked_manual!.map((linked) => (
+                    <li key={linked.pg_listing_id}>
+                      <strong>{linked.pg_listing_id}</strong> — {linked.slug}
                     </li>
                   ))}
                 </ul>

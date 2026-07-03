@@ -43,6 +43,9 @@ export async function runPgAutomation(): Promise<number> {
     if (sheet.price_updates.length > 0) {
       log(`  updated ${sheet.price_updates.length} listing price(s) from sheet`);
     }
+    if (sheet.linked_manual.length > 0) {
+      log(`  linked ${sheet.linked_manual.length} manual listing(s) to PG IDs`);
+    }
     if (sheet.skipped.held_off_website > 0) {
       log(`  ${sheet.skipped.held_off_website} held off website (relist later)`);
     }

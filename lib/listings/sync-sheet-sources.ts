@@ -4,6 +4,7 @@ import {
   type FetchSheetListingsResult,
   type SheetListingRow,
 } from "@/lib/listings/google-sheet-listings";
+import { propertySlugFromPgUrl } from "@/lib/listings/pg-url";
 
 export type SyncSheetSourcesResult = FetchSheetListingsResult & {
   saved: number;
@@ -13,6 +14,10 @@ export type SyncSheetSourcesResult = FetchSheetListingsResult & {
     slug: string;
     old_price: number;
     new_price: number;
+  }>;
+  linked_manual: Array<{
+    pg_listing_id: string;
+    slug: string;
   }>;
 };
 
@@ -61,6 +66,53 @@ export async function replacePgSourcesFromSheet(
   }
 
   return { saved: active.length, by_agent };
+}
+
+export async function linkManualListingsFromSheet(
+  supabase: SupabaseClient,
+  active: SheetListingRow[],
+): Promise<SyncSheetSourcesResult["linked_manual"]> {
+  const sourceBySlug = new Map<string, SheetListingRow>();
+  for (const row of active) {
+    const slug = propertySlugFromPgUrl(row.pg_url);
+    if (slug) sourceBySlug.set(slug, row);
+  }
+
+  if (sourceBySlug.size === 0) return [];
+
+  const { data: manualListings, error } = await supabase
+    .from("listings")
+    .select("id, slug")
+    .is("source_pg_listing_id", null)
+    .is("deleted_at", null)
+    .in("slug", [...sourceBySlug.keys()]);
+
+  if (error) throw new Error(error.message);
+
+  const linked: SyncSheetSourcesResult["linked_manual"] = [];
+
+  for (const listing of manualListings ?? []) {
+    const slug = listing.slug as string;
+    const source = sourceBySlug.get(slug);
+    if (!source) continue;
+
+    const { error: updateError } = await supabase
+      .from("listings")
+      .update({
+        source_pg_url: source.pg_url,
+        source_pg_listing_id: source.pg_listing_id,
+      })
+      .eq("id", listing.id);
+
+    if (updateError) throw new Error(updateError.message);
+
+    linked.push({
+      pg_listing_id: source.pg_listing_id,
+      slug,
+    });
+  }
+
+  return linked;
 }
 
 export async function updateListingPricesFromSheet(
@@ -116,6 +168,7 @@ export async function refreshPgSourcesFromGoogleSheet(
 ): Promise<SyncSheetSourcesResult> {
   const sheet = await fetchListingsFromGoogleSheet();
   const { saved, by_agent } = await replacePgSourcesFromSheet(supabase, sheet.active);
+  const linked_manual = await linkManualListingsFromSheet(supabase, sheet.active);
   const price_updates = await updateListingPricesFromSheet(supabase, sheet.active);
-  return { ...sheet, saved, by_agent, price_updates };
+  return { ...sheet, saved, by_agent, linked_manual, price_updates };
 }

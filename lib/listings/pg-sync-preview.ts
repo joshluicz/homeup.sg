@@ -39,13 +39,14 @@ export async function getPgSyncPreview(
   const { data: listings, error: listingsError } = await supabase
     .from("listings")
     .select("title, slug, source_pg_listing_id, source_pg_url, status")
-    .not("source_pg_listing_id", "is", null)
     .is("deleted_at", null);
 
   if (listingsError) throw new Error(listingsError.message);
 
   const homeupPgIds = new Set(
-    (listings ?? []).map((row) => row.source_pg_listing_id as string),
+    (listings ?? [])
+      .map((row) => row.source_pg_listing_id as string | null)
+      .filter((pgId): pgId is string => Boolean(pgId)),
   );
 
   const on_site_active = (listings ?? []).filter((row) => row.status === "active").length;
@@ -61,7 +62,10 @@ export async function getPgSyncPreview(
     }));
 
   const to_archive = (listings ?? [])
-    .filter((row) => !sourceIds.has(row.source_pg_listing_id as string))
+    .filter((row) => {
+      const pgId = row.source_pg_listing_id as string | null;
+      return pgId && !sourceIds.has(pgId);
+    })
     .map((row) => ({
       title: row.title as string,
       slug: row.slug as string,

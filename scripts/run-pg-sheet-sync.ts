@@ -38,6 +38,10 @@ async function main() {
   console.log("Agent column B filled:", result.sheet_agent_column_count);
   console.log("By agent:", result.by_agent);
   console.log("Skipped:", result.skipped);
+  console.log("Linked manual listings:", result.linked_manual.length);
+  for (const linked of result.linked_manual.slice(0, 20)) {
+    console.log(`  ${linked.pg_listing_id} → ${linked.slug}`);
+  }
   console.log("Price updates:", result.price_updates.length);
   for (const update of result.price_updates.slice(0, 20)) {
     console.log(
