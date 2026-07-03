@@ -453,7 +453,8 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       if (dbError) { setError(dbError.message); setSaving(false); return; }
     }
 
-    await revalidatePlaybook();
+    const articleSlug = editingSlug || slugify(form.title);
+    await revalidatePlaybook(mode === "article" ? articleSlug : undefined);
     setSaving(false);
     setShowForm(false);
     setEditId(null);
@@ -461,9 +462,14 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
   }
 
   // Push the direct-Supabase save/delete live on the ISR-cached public pages immediately.
-  async function revalidatePlaybook() {
+  async function revalidatePlaybook(articleSlug?: string) {
     try {
-      await fetch("/api/admin/playbook/revalidate", { method: "POST" });
+      const slugs = articleSlug ? [articleSlug] : [];
+      await fetch("/api/admin/playbook/revalidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slugs }),
+      });
     } catch {
       /* non-fatal: pages still refresh on the next ISR window */
     }
@@ -496,7 +502,9 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
         setEditId(null);
       }
 
-      await revalidatePlaybook();
+      await revalidatePlaybook(
+        isPlaybookArticle({ article: v.article, videoUrl: v.video_url }) ? v.slug : undefined,
+      );
       await loadVideos();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete this guide.");

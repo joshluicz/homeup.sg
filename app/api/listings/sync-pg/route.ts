@@ -12,7 +12,11 @@ export async function POST() {
   try {
     const result = await runPgListingSync(supabase);
     if (result.added.length > 0 || result.archived.length > 0) {
-      revalidateListingPaths();
+      const slugs = [
+        ...result.added.map((row) => row.slug),
+        ...result.archived.map((row) => row.slug),
+      ];
+      revalidateListingPaths(slugs);
     }
     return NextResponse.json({ success: true, ...result });
   } catch (err) {

@@ -41,7 +41,7 @@ export async function createListing(
       .single();
 
     if (reviveError) throw mapDbError(reviveError);
-    await triggerListingRevalidate();
+    await triggerListingRevalidate(payload.slug);
     return revived;
   }
 
@@ -52,7 +52,7 @@ export async function createListing(
     .single();
 
   if (error) throw mapDbError(error);
-  await triggerListingRevalidate();
+  await triggerListingRevalidate(payload.slug);
   return listing;
 }
 
@@ -78,7 +78,7 @@ export async function updateListing(
 
   if (error) throw mapDbError(error);
   if (!listing) throw new Error("Listing not found");
-  await triggerListingRevalidate();
+  await triggerListingRevalidate(payload.slug);
   return listing;
 }
 
@@ -95,5 +95,5 @@ export async function deleteListing(listingId: string): Promise<void> {
 
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Listing not found");
-  await triggerListingRevalidate();
+  await triggerListingRevalidate(data.slug as string);
 }
