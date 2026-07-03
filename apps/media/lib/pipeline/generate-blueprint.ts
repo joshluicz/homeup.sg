@@ -4,6 +4,7 @@ import type {
   ParsedBlueprint,
 } from "@/lib/pipeline/types";
 import { buildClaudeRequest } from "@/lib/pipeline/build-claude-request";
+import type { PipelineRunLogger } from "@/lib/pipeline/execution-log";
 import { parseBlueprintJson } from "@/lib/pipeline/parse-blueprint-json";
 import { validateGenerateInput } from "@/lib/pipeline/validate-generate-input";
 
@@ -78,12 +79,46 @@ async function saveBlueprintRow(
 export async function runGenerateBlueprint(
   supabase: SupabaseClient,
   body: unknown,
+  execution?: PipelineRunLogger,
 ): Promise<GenerateBlueprintResult> {
-  const input = validateGenerateInput(body);
-  const claudeBody = buildClaudeRequest(input);
-  const claudeText = await callClaude(claudeBody);
-  const parsed = parseBlueprintJson(claudeText, input);
-  const blueprintId = await saveBlueprintRow(supabase, parsed);
+  const logger = execution ?? null;
+  const input = await logger?.step(
+    "validate_input",
+    "Validate generate input",
+    () => validateGenerateInput(body),
+  ) ?? validateGenerateInput(body);
+  const claudeBody = await logger?.step(
+    "build_claude_request",
+    "Build Claude request",
+    () => buildClaudeRequest(input),
+    {
+      outputSummary: {
+        model: "claude-sonnet-4-6",
+        room_count: input.room_count,
+      },
+    },
+  ) ?? buildClaudeRequest(input);
+  const claudeText = await logger?.step(
+    "call_claude",
+    "Generate blueprint with Claude",
+    () => callClaude(claudeBody),
+  ) ?? await callClaude(claudeBody);
+  const parsed = await logger?.step(
+    "parse_blueprint_json",
+    "Parse blueprint JSON",
+    () => parseBlueprintJson(claudeText, input),
+    {
+      outputSummary: {
+        room_count: input.room_count,
+        script_chars: claudeText.length,
+      },
+    },
+  ) ?? parseBlueprintJson(claudeText, input);
+  const blueprintId = await logger?.step(
+    "save_blueprint",
+    "Save blueprint to Supabase",
+    () => saveBlueprintRow(supabase, parsed),
+  ) ?? await saveBlueprintRow(supabase, parsed);
 
   return {
     status: "success",

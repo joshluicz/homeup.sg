@@ -32,6 +32,9 @@ export function AppNav({ email }: AppNavProps) {
             <a href="/generate" className="text-sm text-neutral-600 hover:text-neutral-900">
               Generate
             </a>
+            <a href="/executions" className="text-sm text-neutral-600 hover:text-neutral-900">
+              Executions
+            </a>
           </nav>
         </div>
         <div className="flex items-center gap-3">

@@ -20,3 +20,16 @@ export function createServiceClient(): SupabaseClient {
 
   return serviceClient;
 }
+
+export function tryCreateServiceClient(): SupabaseClient | null {
+  try {
+    return createServiceClient();
+  } catch (error) {
+    console.warn(
+      error instanceof Error
+        ? error.message
+        : "Failed to create Supabase service client",
+    );
+    return null;
+  }
+}

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { archiveRemoteFileToR2, getPublicR2Url } from "@/lib/r2";
+import type { PipelineRunLogger } from "@/lib/pipeline/execution-log";
 import {
   checkRoomClipStatus,
   fetchRoomClipResult,
@@ -42,21 +43,62 @@ export async function runApproveBlueprint(
   supabase: SupabaseClient,
   serviceSupabase: SupabaseClient,
   body: unknown,
+  execution?: PipelineRunLogger,
 ): Promise<ApproveBlueprintResult> {
-  const { blueprint_id, room_photos } = validateApproveInput(body);
-  const tasks = splitRoomsForProcessing(blueprint_id, room_photos);
+  const logger = execution ?? null;
+  const { blueprint_id, room_photos } = await logger?.step(
+    "validate_approval",
+    "Validate approval input",
+    () => validateApproveInput(body),
+  ) ?? validateApproveInput(body);
+  const tasks = await logger?.step(
+    "split_rooms",
+    "Split rooms for clip processing",
+    () => splitRoomsForProcessing(blueprint_id, room_photos),
+    { outputSummary: { room_count: room_photos.length } },
+  ) ?? splitRoomsForProcessing(blueprint_id, room_photos);
 
-  const { error: statusError } = await supabase
+  const statusError = await logger?.step(
+    "set_blueprint_ready",
+    "Set blueprint status to ready",
+    async () => {
+      const { error } = await supabase
+        .from("blueprints")
+        .update({ status: "ready" })
+        .eq("id", blueprint_id);
+      return error;
+    },
+    { inputSummary: { blueprint_id } },
+  ) ?? (await supabase
     .from("blueprints")
     .update({ status: "ready" })
-    .eq("id", blueprint_id);
+    .eq("id", blueprint_id)).error;
 
   if (statusError) {
     throw new Error(statusError.message);
   }
 
   for (const task of tasks) {
-    const start = await startRoomClip({
+    const start = await logger?.step(
+      `start_clip:${task.label}`,
+      `Start clip: ${task.label}`,
+      () =>
+        startRoomClip({
+          blueprint_id: task.blueprint_id,
+          label: task.label,
+          r2_url: task.r2_url,
+          image_urls: task.image_urls,
+          higgsfield_prompt: task.higgsfield_prompt,
+          duration_seconds: task.duration_seconds,
+        }),
+      {
+        inputSummary: {
+          label: task.label,
+          image_count: task.image_urls.length,
+          duration_seconds: task.duration_seconds,
+        },
+      },
+    ) ?? await startRoomClip({
       blueprint_id: task.blueprint_id,
       label: task.label,
       r2_url: task.r2_url,
@@ -144,8 +186,22 @@ async function upsertProcessingFile(
 export async function runAdvanceClips(
   serviceSupabase: SupabaseClient,
   blueprintId: string,
+  execution?: PipelineRunLogger,
 ): Promise<AdvanceClipsResult> {
-  const { data: rows, error } = await serviceSupabase
+  const logger = execution ?? null;
+  const { data: rows, error } = await logger?.step(
+    "load_processing_clips",
+    "Load processing clips",
+    () =>
+      serviceSupabase
+        .from("media_files")
+        .select(
+          "id, job_id, file_name, r2_key, r2_url, duration_seconds, metadata, status",
+        )
+        .eq("job_id", blueprintId)
+        .eq("status", "processing"),
+    { inputSummary: { blueprint_id: blueprintId } },
+  ) ?? await serviceSupabase
     .from("media_files")
     .select(
       "id, job_id, file_name, r2_key, r2_url, duration_seconds, metadata, status",
@@ -179,7 +235,13 @@ export async function runAdvanceClips(
       continue;
     }
 
-    const status = await checkRoomClipStatus(falJobId, metadata.label ?? row.file_name, falModel);
+    const label = metadata.label ?? row.file_name;
+    const status = await logger?.step(
+      `check_clip_status:${label}`,
+      `Check clip status: ${label}`,
+      () => checkRoomClipStatus(falJobId, label, falModel),
+      { inputSummary: { label, fal_model: falModel } },
+    ) ?? await checkRoomClipStatus(falJobId, label, falModel);
 
     if (status.status === "processing") {
       continue;
@@ -199,11 +261,12 @@ export async function runAdvanceClips(
       continue;
     }
 
-    const result = await fetchRoomClipResult(
-      falJobId,
-      metadata.label ?? row.file_name,
-      falModel,
-    );
+    const result = await logger?.step(
+      `fetch_clip_result:${label}`,
+      `Fetch clip result: ${label}`,
+      () => fetchRoomClipResult(falJobId, label, falModel),
+      { inputSummary: { label, fal_model: falModel } },
+    ) ?? await fetchRoomClipResult(falJobId, label, falModel);
 
     if (!result.success || !result.video_url) {
       await markFileFailed(
@@ -218,9 +281,15 @@ export async function runAdvanceClips(
       failed += 1;
       continue;
     }
+    const videoUrl = result.video_url;
 
     try {
-      const archived = await archiveRemoteFileToR2(result.video_url, row.r2_key);
+      const archived = await logger?.step(
+        `archive_clip:${label}`,
+        `Archive clip to R2: ${label}`,
+        () => archiveRemoteFileToR2(videoUrl, row.r2_key),
+        { inputSummary: { label, r2_key: row.r2_key } },
+      ) ?? await archiveRemoteFileToR2(videoUrl, row.r2_key);
       const { error: updateError } = await serviceSupabase
         .from("media_files")
         .update({

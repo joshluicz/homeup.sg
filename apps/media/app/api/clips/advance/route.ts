@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runAdvanceClips } from "@/lib/pipeline/clip-jobs";
+import { createPipelineRunLogger } from "@/lib/pipeline/execution-log";
 import { requireAuth } from "@/lib/supabase/auth";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -11,7 +12,7 @@ type AdvanceBody = {
 };
 
 export async function POST(request: Request) {
-  const { error } = await requireAuth();
+  const { user, error } = await requireAuth();
   if (error) return error;
 
   let body: AdvanceBody;
@@ -30,8 +31,28 @@ export async function POST(request: Request) {
 
   try {
     const serviceSupabase = createServiceClient();
-    const result = await runAdvanceClips(serviceSupabase, body.blueprint_id);
-    return NextResponse.json(result);
+    const execution = await createPipelineRunLogger({
+      supabase: serviceSupabase,
+      workflow: "advance_clips",
+      uploadedBy: user?.id,
+      subjectType: "blueprint",
+      subjectId: body.blueprint_id,
+      title: "Advance room clip jobs",
+      inputSummary: { blueprint_id: body.blueprint_id },
+    });
+
+    try {
+      const result = await runAdvanceClips(
+        serviceSupabase,
+        body.blueprint_id,
+        execution,
+      );
+      await execution.finish(result);
+      return NextResponse.json(result);
+    } catch (err) {
+      await execution.fail(err);
+      throw err;
+    }
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to advance clip jobs";
