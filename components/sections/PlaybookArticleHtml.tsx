@@ -11,7 +11,13 @@ type Props = { html: string };
 export function PlaybookArticleHtml({ html }: Props) {
   if (!html?.trim()) return null;
 
-  const clean = DOMPurify.sanitize(html, {
+  // Wrap bare <table> elements in a scroll container to match the Markdown renderer
+  const withWrappedTables = html.replace(
+    /<table(\s)/gi,
+    '<div class="table-wrapper"><table$1',
+  ).replace(/<\/table>/gi, "</table></div>");
+
+  const clean = DOMPurify.sanitize(withWrappedTables, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "b", "em", "i", "u", "s", "del",
       "h1", "h2", "h3", "h4", "h5", "h6",
