@@ -3,12 +3,14 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
 // Push article + metadata changes live without a redeploy: revalidate the affected
-// pages so the ISR-cached /playbook/[slug] (and the listing) regenerate on next request.
-function revalidatePlaybook(slug?: string) {
-  revalidatePath("/playbook");
-  revalidatePath("/playbook/articles");
-  revalidatePath("/playbook/videos");
-  if (slug) revalidatePath(`/playbook/${slug}`);
+// pages so the ISR-cached /playbook/[slug] regenerates on next request.
+// Using the route-pattern form of revalidatePath ensures all dynamic segments are
+// invalidated, not just the one literal URL.
+function revalidatePlaybook(_slug?: string) {
+  revalidatePath("/playbook", "page");
+  revalidatePath("/playbook/[slug]", "page");
+  revalidatePath("/playbook/watch/[slug]", "page");
+  revalidatePath("/playbook/topic/[topic]", "page");
 }
 
 export async function GET() {
