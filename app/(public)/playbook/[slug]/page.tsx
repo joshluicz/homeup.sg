@@ -12,6 +12,7 @@ import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
 } from "@/lib/playbook/server-queries";
+import { getKnownPlaybookArticleSlugs } from "@/lib/playbook/article-slugs";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import { getPlaybookAgentName, inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
 import { getAgentBySlug } from "@/lib/data/agents";
@@ -26,20 +27,22 @@ import {
 
 export const dynamicParams = true;
 export const revalidate = 3600;
-
-const FALLBACK_SLUG = "_";
+export const maxDuration = 60;
 
 type ArticlePageProps = { params: { slug: string } };
 
 export async function generateStaticParams() {
-  const slugs = await getAllPlaybookSlugs();
-  if (slugs.length === 0) return [{ slug: FALLBACK_SLUG }];
+  const [dbSlugs, knownSlugs] = await Promise.all([
+    getAllPlaybookSlugs(),
+    Promise.resolve(getKnownPlaybookArticleSlugs()),
+  ]);
+  const slugs = [...new Set([...dbSlugs, ...knownSlugs])].filter(Boolean);
   return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: ArticlePageProps) {
   const video = await getPlaybookVideoBySlugServer(params.slug);
-  if (!video?.article?.trim()) return { title: "Guide Not Found" };
+  if (!video?.article?.trim()) notFound();
 
   return buildPageMetadata({
     title: video.title,

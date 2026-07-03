@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
+import { PLAYBOOK_TOPICS } from "@/lib/data/playbook";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
 import { getPlaybookArticleSitemapEntries } from "@/lib/playbook/server-queries";
 import { SITE_URL } from "@/lib/seo/constants";
@@ -30,6 +31,12 @@ function coreSitemapEntries(now: Date): MetadataRoute.Sitemap {
     ...agentPages,
     { url: `${SITE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.75 },
     { url: `${SITE_URL}/playbook`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    ...PLAYBOOK_TOPICS.map((topic) => ({
+      url: `${SITE_URL}/playbook/topic/${topic}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.65,
+    })),
     { url: `${SITE_URL}/privacy-policy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { ListingDetailContent } from "@/components/listings/ListingDetailContent";
-import { ListingDetailNotFound } from "@/components/listings/ListingDetailNotFound";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import {
@@ -27,7 +27,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: ListingDetailPageProps): Promise<Metadata> {
   const listing = await getListingBySlugServer(params.slug);
-  if (!listing) return { title: "Listing Not Found" };
+  if (!listing) notFound();
 
   return buildPageMetadata({
     title: listing.title,
@@ -40,31 +40,25 @@ export async function generateMetadata({ params }: ListingDetailPageProps): Prom
 
 export default async function ListingDetailPage({ params }: ListingDetailPageProps) {
   const listing = await getListingBySlugServer(params.slug);
-  const related = listing
-    ? await getRelatedListingsServer(listing.flat_type, listing.slug)
-    : [];
+  if (!listing) notFound();
+
+  const related = await getRelatedListingsServer(listing.flat_type, listing.slug);
 
   return (
     <>
-      {listing && (
-        <JsonLd
-          data={[
-            breadcrumbSchema([
-              { name: "Home", path: "/" },
-              { name: "Listings", path: "/listings" },
-              { name: listing.title, path: `/listings/${listing.slug}` },
-            ]),
-            realEstateListingSchema(listing),
-          ]}
-        />
-      )}
+      <JsonLd
+        data={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Listings", path: "/listings" },
+            { name: listing.title, path: `/listings/${listing.slug}` },
+          ]),
+          realEstateListingSchema(listing),
+        ]}
+      />
       <Navbar />
       <main>
-        {listing ? (
-          <ListingDetailContent listing={listing} related={related} />
-        ) : (
-          <ListingDetailNotFound />
-        )}
+        <ListingDetailContent listing={listing} related={related} />
         <CtaBanner />
       </main>
       <Footer />
