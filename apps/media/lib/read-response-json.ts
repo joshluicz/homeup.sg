@@ -12,4 +12,4 @@ export async function readResponseJson<T>(res: Response): Promise<T> {
 }
 
 export const EMPTY_WEBHOOK_RESPONSE_MESSAGE =
-  "The workflow returned no data. Ensure the n8n workflow ends with a Respond to Webhook node that returns blueprint JSON.";
+  "Blueprint generation returned no data.";

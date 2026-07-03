@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Smoke-test phase 1 blueprint generation via the live n8n webhook.
+ * Smoke-test phase 1 blueprint generation via the in-app API route.
  *
- * Usage:
+ * Usage (dev server must be running on :3001 with a logged-in session):
  *   node apps/media/scripts/test-mock-blueprint.mjs
  *
  * Env:
- *   MOCK_BLUEPRINT_UPLOADED_BY — auth.users UUID (required shape; default below)
- *   N8N_GENERATE_BLUEPRINT_WEBHOOK — override webhook URL
+ *   MEDIA_API_BASE — default http://localhost:3001
+ *   MOCK_BLUEPRINT_UPLOADED_BY — auth.users UUID
  *   SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY — optional DB verify fallback
  */
 import fs from "fs";
@@ -16,9 +16,13 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../../..");
-const envLocal = path.join(repoRoot, ".env.local");
-if (fs.existsSync(envLocal)) {
-  for (const line of fs.readFileSync(envLocal, "utf8").split("\n")) {
+
+for (const envPath of [
+  path.join(repoRoot, ".env.local"),
+  path.join(repoRoot, "apps/media/.env.local"),
+]) {
+  if (!fs.existsSync(envPath)) continue;
+  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
     const eq = trimmed.indexOf("=");
@@ -29,11 +33,9 @@ if (fs.existsSync(envLocal)) {
   }
 }
 
-const WEBHOOK =
-  process.env.N8N_GENERATE_BLUEPRINT_WEBHOOK ??
-  "https://n8n-production-d50a.up.railway.app/webhook/homeup-generate-blueprint";
+const API_BASE = process.env.MEDIA_API_BASE ?? "http://localhost:3001";
+const ENDPOINT = `${API_BASE}/api/generate-blueprint`;
 
-// blueprints.uploaded_by is uuid REFERENCES auth.users(id) — not an email.
 const UPLOADED_BY =
   process.env.MOCK_BLUEPRINT_UPLOADED_BY ??
   "2663a5bd-381e-4b43-912b-f8b7bdea3daa";
@@ -49,19 +51,11 @@ function assertValidUploadedBy(value) {
     process.exit(1);
   }
   if (value.includes("@")) {
-    console.error(
-      `uploaded_by must be a UUID, not an email (got "${value}").\n` +
-        "blueprints.uploaded_by references auth.users(id).\n" +
-        "Set MOCK_BLUEPRINT_UPLOADED_BY to your Supabase user id, e.g.:\n" +
-        "  MOCK_BLUEPRINT_UPLOADED_BY=2663a5bd-381e-4b43-912b-f8b7bdea3daa node apps/media/scripts/test-mock-blueprint.mjs",
-    );
+    console.error(`uploaded_by must be a UUID, not an email (got "${value}").`);
     process.exit(1);
   }
   if (!UUID_RE.test(value)) {
-    console.error(
-      `uploaded_by does not look like a UUID (got "${value}").\n` +
-        "Set MOCK_BLUEPRINT_UPLOADED_BY to a valid auth.users id.",
-    );
+    console.error(`uploaded_by does not look like a UUID (got "${value}").`);
     process.exit(1);
   }
 }
@@ -142,11 +136,13 @@ const MOCK_PAYLOAD = {
 };
 
 const started = Date.now();
-console.log(`POST ${WEBHOOK}`);
+console.log(`POST ${ENDPOINT}`);
 console.log(`uploaded_by: ${UPLOADED_BY}`);
-console.log("Payload:", JSON.stringify(MOCK_PAYLOAD, null, 2));
+console.log(
+  "Note: this route requires an authenticated session cookie from media.homeup.sg / localhost:3001",
+);
 
-const res = await fetch(WEBHOOK, {
+const res = await fetch(ENDPOINT, {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify(MOCK_PAYLOAD),
@@ -157,6 +153,13 @@ const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 
 console.log(`\nStatus: ${res.status} (${elapsed}s)`);
 console.log("Body:", text.trim() ? text.slice(0, 2000) : "(empty)");
+
+if (res.status === 401) {
+  console.error(
+    "\nFAIL — unauthorized. Log in at the media app in your browser, then retry with a session cookie or test from the UI.",
+  );
+  process.exit(1);
+}
 
 if (!res.ok) {
   process.exit(1);
@@ -169,7 +172,7 @@ if (text.trim()) {
     const data = JSON.parse(text);
     blueprintId = data.blueprint_id ?? null;
     if (blueprintId) {
-      console.log(`\nOK — blueprint_id from webhook: ${blueprintId}`);
+      console.log(`\nOK — blueprint_id from API: ${blueprintId}`);
       process.exit(0);
     }
     console.warn("\nWarning: 200 JSON but no blueprint_id in response");
@@ -188,6 +191,6 @@ if (row?.id) {
 }
 
 console.error(
-  "\nFAIL — no blueprint_id in webhook response and no matching row in Supabase.",
+  "\nFAIL — no blueprint_id in API response and no matching row in Supabase.",
 );
 process.exit(1);

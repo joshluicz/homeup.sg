@@ -1348,6 +1348,11 @@ export default function GeneratePage() {
 
     async function pollMediaFiles() {
       try {
+        await fetch("/api/clips/advance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ blueprint_id: blueprintId }),
+        });
         const clips = await fetchRoomClips(blueprintId!, roomLabels);
         setClipCards(enrichClipsWithPhotos(clips, blueprint, roomEntries));
       } catch {

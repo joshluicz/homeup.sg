@@ -23,7 +23,7 @@ export type Blueprint = {
   input_data?: BlueprintInputData;
 };
 
-export type N8nGenerateResponse = {
+export type GenerateBlueprintResponse = {
   status?: string;
   blueprint_id?: string;
   message?: string;

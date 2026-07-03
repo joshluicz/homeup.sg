@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth";
 
-const N8N_TRANSCRIBE_WEBHOOK =
-  "https://n8n-production-d50a.up.railway.app/webhook/media-job-transcribe";
-
 type CreateUploadJobBody = {
   blueprint_id?: string;
 };
@@ -68,8 +65,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: jobError.message }, { status: 500 });
   }
 
-  const webhookErrors: string[] = [];
-
   for (const clip of clips) {
     const { error: fileError } = await supabase.from("media_files").insert({
       job_id: jobId,
@@ -85,28 +80,13 @@ export async function POST(request: Request) {
     if (fileError) {
       return NextResponse.json({ error: fileError.message }, { status: 500 });
     }
-
-    try {
-      const webhookRes = await fetch(N8N_TRANSCRIBE_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          job_id: jobId,
-          r2_key: clip.r2_key,
-        }),
-      });
-
-      if (!webhookRes.ok) {
-        webhookErrors.push(clip.file_name);
-      }
-    } catch {
-      webhookErrors.push(clip.file_name);
-    }
   }
 
   return NextResponse.json({
     job_id: jobId,
     clip_count: clips.length,
-    transcription_warnings: webhookErrors,
+    transcription_warnings: [],
+    transcription_note:
+      "Automatic transcription is not implemented yet. Clips were copied into the upload job.",
   });
 }
