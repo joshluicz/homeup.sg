@@ -26,14 +26,23 @@ function isDashboardHost(request: NextRequest): boolean {
   return host === "dashboard.homeup.sg" || host.startsWith("dashboard.localhost");
 }
 
+function redirectLegacyHostToApex(request: NextRequest): NextResponse {
+  const url = request.nextUrl.clone();
+  url.protocol = "https:";
+  url.host = "homeup.sg";
+  return NextResponse.redirect(url, 301);
+}
+
+function isLegacyMarketingHost(host: string): boolean {
+  return host === "www.homeup.sg" || host === "lp.homeup.sg";
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
 
-  if (host === "www.homeup.sg") {
-    const url = request.nextUrl.clone();
-    url.host = "homeup.sg";
-    return NextResponse.redirect(url, 301);
+  if (isLegacyMarketingHost(host)) {
+    return redirectLegacyHostToApex(request);
   }
 
   if (isDashboardHost(request)) {

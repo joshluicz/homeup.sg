@@ -61,6 +61,22 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: "/:path*",
+        has: [{ type: "host", value: "lp.homeup.sg" }],
+        destination: "https://homeup.sg/:path*",
+        permanent: true,
+      },
+      {
+        source: "/property-listing",
+        destination: "/listings",
+        permanent: true,
+      },
+      {
+        source: "/property-listing/:path*",
+        destination: "/listings",
+        permanent: true,
+      },
+      {
         source: "/favicon.ico",
         destination: "/icon.png",
         permanent: true,
