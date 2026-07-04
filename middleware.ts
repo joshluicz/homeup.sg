@@ -26,6 +26,11 @@ function isDashboardHost(request: NextRequest): boolean {
   return host === "dashboard.homeup.sg" || host.startsWith("dashboard.localhost");
 }
 
+function isRentHost(request: NextRequest): boolean {
+  const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
+  return host === "rent.homeup.sg" || host.startsWith("rent.localhost");
+}
+
 function redirectLegacyHostToApex(request: NextRequest): NextResponse {
   const url = request.nextUrl.clone();
   url.protocol = "https:";
@@ -52,6 +57,18 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard.html";
     return NextResponse.rewrite(url);
+  }
+
+  if (isRentHost(request)) {
+    if (pathname.startsWith("/api") || pathname.startsWith("/_next") || /\.[a-z0-9]+$/i.test(pathname)) {
+      return NextResponse.next();
+    }
+    if (pathname === "/") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/list";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
 
   if (!shouldSkipMarkdown(pathname) && wantsMarkdown(request)) {
