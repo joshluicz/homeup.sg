@@ -54,7 +54,7 @@ function StatsCard() {
 
   useEffect(() => {
     let controls: ReturnType<typeof animate>[] = [];
-    let loopTimer: ReturnType<typeof window.setTimeout> | null = null;
+    let loopTimer: number | null = null;
 
     function startCount() {
       setShowPlus(false);
