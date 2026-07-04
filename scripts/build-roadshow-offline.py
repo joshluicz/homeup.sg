@@ -200,12 +200,12 @@ What is inside:
 - index.html: the roadshow display page
 - assets/homeup-roadshow.mp4: the local video file
 - assets/*.png and *.svg: logo and agent images
-- start-roadshow.bat: starts a local server on http://localhost:3000
+- start-roadshow.bat: opens the roadshow page directly from this folder
 
 Recommended setup on Windows:
 1. Unzip this folder.
 2. Double-click start-roadshow.bat.
-3. Chrome/Edge should open http://127.0.0.1:8765/index.html automatically.
+3. Chrome/Edge should open the roadshow display directly from the unzipped folder.
 4. Plug the laptop into the TV screen.
 5. Press F11 for full screen.
 6. If the video does not autoplay with sound, click the video once.
@@ -214,8 +214,8 @@ No internet is needed after this folder is downloaded.
 
 Important:
 - Do not open start-roadshow.bat in the browser. That only shows the script text.
-- If you see a Directory Listing or 404 page, close old Command Prompt/Terminal windows that may be running an older server, then double-click start-roadshow.bat again.
-- The correct display URL is http://127.0.0.1:8765/index.html.
+- If you see a localhost 404 or directory listing, you are looking at an old local server tab. Close that tab and double-click start-roadshow.bat again.
+- The page can also be opened by double-clicking index.html directly.
 
 Fallback:
 - If the start script does not work, double-click index.html directly.
@@ -224,23 +224,8 @@ Fallback:
 
 BAT = r"""@echo off
 cd /d "%~dp0"
-set ROADSHOW_PORT=8765
-set ROADSHOW_URL=http://127.0.0.1:%ROADSHOW_PORT%/index.html
-echo Starting HomeUP roadshow at %ROADSHOW_URL%
-start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process '%ROADSHOW_URL%'"
-where py >nul 2>nul
-if %errorlevel%==0 (
-  py -3 -m http.server %ROADSHOW_PORT%
-  goto :eof
-)
-where python >nul 2>nul
-if %errorlevel%==0 (
-  python -m http.server %ROADSHOW_PORT%
-  goto :eof
-)
-echo Python was not found on this laptop.
-echo You can still double-click index.html to open the roadshow page directly.
-pause
+echo Opening HomeUP roadshow display...
+start "" "%~dp0index.html"
 """
 
 
