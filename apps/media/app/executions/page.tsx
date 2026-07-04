@@ -21,6 +21,17 @@ type PipelineStep = {
   status: "running" | "success" | "error" | "skipped";
 };
 
+const REQUIRED_RUNTIME_ENV = [
+  { key: "ANTHROPIC_API_KEY", label: "Anthropic blueprint generation" },
+  { key: "FAL_API_KEY", label: "fal.ai room clip generation" },
+  { key: "SUPABASE_SERVICE_ROLE_KEY", label: "Supabase pipeline writes" },
+  { key: "R2_ACCESS_KEY_ID", label: "R2 access key" },
+  { key: "R2_SECRET_ACCESS_KEY", label: "R2 secret key" },
+  { key: "R2_BUCKET_NAME", label: "R2 bucket" },
+  { key: "R2_ENDPOINT", label: "R2 endpoint" },
+  { key: "R2_PUBLIC_URL", label: "R2 public URL" },
+];
+
 function statusClass(status: PipelineRun["status"] | PipelineStep["status"]) {
   switch (status) {
     case "success":
@@ -104,6 +115,11 @@ export default async function ExecutionsPage() {
         .in("run_id", runIds)
     : { data: [] };
   const typedSteps = (steps ?? []) as PipelineStep[];
+  const envStatuses = REQUIRED_RUNTIME_ENV.map((item) => ({
+    ...item,
+    configured: Boolean(process.env[item.key]?.trim()),
+  }));
+  const missingEnv = envStatuses.filter((item) => !item.configured);
 
   const stepCounts = new Map<string, { total: number; failed: number }>();
   for (const step of typedSteps) {
@@ -127,6 +143,53 @@ export default async function ExecutionsPage() {
         <p className="text-sm text-neutral-500">
           Showing latest {typedRuns.length} run{typedRuns.length === 1 ? "" : "s"}
         </p>
+      </div>
+
+      <div
+        className={`mt-8 rounded-2xl border p-5 ${
+          missingEnv.length > 0
+            ? "border-amber-200 bg-amber-50"
+            : "border-emerald-200 bg-emerald-50"
+        }`}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2
+              className={`text-base font-semibold ${
+                missingEnv.length > 0 ? "text-amber-900" : "text-emerald-900"
+              }`}
+            >
+              Runtime configuration
+            </h2>
+            <p
+              className={`mt-1 text-sm ${
+                missingEnv.length > 0 ? "text-amber-800" : "text-emerald-800"
+              }`}
+            >
+              {missingEnv.length > 0
+                ? "Some required server-side environment variables are missing."
+                : "All required server-side environment variables are present."}
+            </p>
+          </div>
+          <span
+            className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${
+              missingEnv.length > 0
+                ? "bg-amber-100 text-amber-800 ring-amber-200"
+                : "bg-emerald-100 text-emerald-800 ring-emerald-200"
+            }`}
+          >
+            {missingEnv.length > 0 ? `${missingEnv.length} missing` : "healthy"}
+          </span>
+        </div>
+        {missingEnv.length > 0 && (
+          <ul className="mt-4 space-y-1 text-sm text-amber-900">
+            {missingEnv.map((item) => (
+              <li key={item.key}>
+                <code>{item.key}</code> — {item.label}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="mt-8 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
