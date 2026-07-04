@@ -55,7 +55,7 @@ function RoadshowSetup() {
           <ol className="mt-4 space-y-3 text-base leading-relaxed text-neutral-200">
             <li>1. Unzip the downloaded file.</li>
             <li>2. Double-click <code className="rounded bg-white/10 px-1.5 py-0.5">start-roadshow.bat</code>.</li>
-            <li>3. Open <code className="rounded bg-white/10 px-1.5 py-0.5">http://localhost:3000</code> if the browser does not open automatically.</li>
+            <li>3. Open <code className="rounded bg-white/10 px-1.5 py-0.5">http://127.0.0.1:8765/index.html</code> if the browser does not open automatically.</li>
             <li>4. Plug the laptop into the TV screen.</li>
             <li>5. Press <code className="rounded bg-white/10 px-1.5 py-0.5">F11</code> for full screen.</li>
             <li>6. If the video does not autoplay with sound, click the video once.</li>
@@ -67,7 +67,9 @@ function RoadshowSetup() {
             <h3 className="font-bold">Fallback</h3>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">
               If the start script does not work, open <code>index.html</code> inside the unzipped
-              folder directly.
+              folder directly. If you see a 404 or directory listing, close old Command
+              Prompt/Terminal windows that may be running a previous server, then open{" "}
+              <code>http://127.0.0.1:8765/index.html</code>.
             </p>
           </div>
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5">

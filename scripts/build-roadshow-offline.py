@@ -205,12 +205,17 @@ What is inside:
 Recommended setup on Windows:
 1. Unzip this folder.
 2. Double-click start-roadshow.bat.
-3. Chrome/Edge should open http://localhost:3000 automatically.
+3. Chrome/Edge should open http://127.0.0.1:8765/index.html automatically.
 4. Plug the laptop into the TV screen.
 5. Press F11 for full screen.
 6. If the video does not autoplay with sound, click the video once.
 
 No internet is needed after this folder is downloaded.
+
+Important:
+- Do not open start-roadshow.bat in the browser. That only shows the script text.
+- If you see a Directory Listing or 404 page, close old Command Prompt/Terminal windows that may be running an older server, then double-click start-roadshow.bat again.
+- The correct display URL is http://127.0.0.1:8765/index.html.
 
 Fallback:
 - If the start script does not work, double-click index.html directly.
@@ -219,16 +224,18 @@ Fallback:
 
 BAT = r"""@echo off
 cd /d "%~dp0"
-echo Starting HomeUP roadshow at http://localhost:3000
-start "" "http://localhost:3000"
+set ROADSHOW_PORT=8765
+set ROADSHOW_URL=http://127.0.0.1:%ROADSHOW_PORT%/index.html
+echo Starting HomeUP roadshow at %ROADSHOW_URL%
+start "" powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 2; Start-Process '%ROADSHOW_URL%'"
 where py >nul 2>nul
 if %errorlevel%==0 (
-  py -3 -m http.server 3000
+  py -3 -m http.server %ROADSHOW_PORT%
   goto :eof
 )
 where python >nul 2>nul
 if %errorlevel%==0 (
-  python -m http.server 3000
+  python -m http.server %ROADSHOW_PORT%
   goto :eof
 )
 echo Python was not found on this laptop.
