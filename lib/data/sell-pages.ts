@@ -41,7 +41,7 @@ export const SELL_PAGE_GENERAL: SellPageConfig = {
   meta: {
     title: "Sell Your Property in Singapore",
     description:
-      "Sell your HDB, condo, or landed home with HomeUP's transparent fixed fees from $1,999. Full-service listing, marketing, viewings, and documentation. 1,000+ transactions closed.",
+      "Sell your HDB, condo or landed home with HomeUP. Fixed fees from $1,999. Full marketing, viewings and documentation. 1,000+ transactions closed.",
   },
 };
 
