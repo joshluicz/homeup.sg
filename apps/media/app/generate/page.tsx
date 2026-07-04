@@ -1569,7 +1569,7 @@ export default function GeneratePage() {
               <>
                 <p className="mb-4 text-sm text-neutral-600">
                   Approve this blueprint to generate {blueprintRooms.length} room
-                  clips with fal Seedance 1.5 Pro.
+                  clips with fal Seedance 2 multi-reference video.
                 </p>
                 <button
                   type="button"
