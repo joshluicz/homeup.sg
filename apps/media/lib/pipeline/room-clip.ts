@@ -90,10 +90,10 @@ function resolveFalModel(body: RoomClipRequest, imageUrls: string[]): string {
   ) {
     return body.fal_model;
   }
-  if (imageUrls.length >= 1) {
+  if (imageUrls.length > 1) {
     return FAL_MODEL_SEEDANCE_2;
   }
-  return FAL_MODEL_SEEDANCE_2;
+  return FAL_MODEL_SEEDANCE_15;
 }
 
 function countImageReferences(prompt: string): number {
@@ -117,33 +117,30 @@ function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
   const refsPresent = countImageReferences(trimmed);
 
   if (imageCount > 1) {
-    if (refsPresent >= imageCount) {
-      return trimmed;
-    }
-
-    const refList = buildImageReferenceList(imageCount);
+    const contextRefs = Array.from(
+      { length: imageCount - 1 },
+      (_, index) => `@Image${index + 2}`,
+    ).join(", ");
+    const refCoverage =
+      refsPresent >= imageCount
+        ? ""
+        : ` Reference images provided: ${buildImageReferenceList(imageCount)}.`;
     const multiRefSuffix =
-      `Use all reference images (${refList}) as equally weighted factual sources — ` +
-      `they are different angles of the same room. ` +
-      `Move the camera smoothly across the viewpoints shown in ${refList}, ` +
-      `treating them as one continuous space. ` +
-      `Do not invent walls, doors, windows, furniture, or rooms not shown in ${refList}. ` +
-      `Keep architecture, layout, colours, and objects identical to the references. ` +
-      `Empty room, no people.`;
+      `${refCoverage} PRIMARY FRAME: animate @Image1 only. ` +
+      `${contextRefs} are context references for room layout, depth, materials, and adjacent details only. ` +
+      `Do not transition, morph, blend, crossfade, or travel from @Image1 into ${contextRefs}. ` +
+      `No split-room composite, no stitched panorama, no second viewpoint reveal. ` +
+      `Use a gentle in-frame pan or micro push within @Image1 while preserving @Image1 composition. ` +
+      `Use the other references only to avoid hallucinating unseen geometry. ` +
+      `Keep architecture, layout, colours, and objects identical to the references. Empty room, no people.`;
 
     return `${trimmed} ${multiRefSuffix}`;
   }
 
-  if (
-    /photo-faithful|reference image|reference viewpoints|source photo|@Image\d/i.test(
-      trimmed,
-    )
-  ) {
-    return trimmed;
-  }
-
   const singleRefSuffix =
-    "Photo-faithful animation only: slow camera movement across the visible scene in @Image1. " +
+    "Animate the still photo with visible but controlled in-frame motion: slow pan, slight parallax, or gentle push within @Image1 only. " +
+    "Ignore any static locked-off or tripod wording if present. " +
+    "Do not freeze the shot; the camera motion should be noticeable while staying realistic. " +
     "Do not invent new walls, doors, windows, furniture, or rooms. " +
     "Keep architecture, layout, colours, and objects identical to the reference image. " +
     "Empty room, no people.";
@@ -176,9 +173,6 @@ function buildSeedance15Input(
 ) {
   const prompt = buildSeedancePrompt(higgsfield_prompt, 1);
   const clipDuration = Math.min(Math.max(duration_seconds ?? 6, 4), 8);
-  const wantsPan = /\bpan\b/i.test(higgsfield_prompt);
-  const wantsStatic =
-    /\b(static|locked[- ]?off|tripod|no movement)\b/i.test(higgsfield_prompt);
 
   return {
     image_url: r2_url,
@@ -187,7 +181,7 @@ function buildSeedance15Input(
     aspect_ratio: "9:16",
     resolution: "720p",
     generate_audio: false,
-    camera_fixed: wantsStatic || !wantsPan,
+    camera_fixed: false,
   };
 }
 
