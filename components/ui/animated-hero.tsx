@@ -72,7 +72,7 @@ function AnimatedHero() {
           <div className="flex flex-row gap-3">
             <Button size="lg" className="gap-4" variant="outline" asChild>
               <a href={WA} target="_blank" rel="noopener noreferrer">
-                Jump on a call <PhoneCall className="h-4 w-4" />
+                WhatsApp Us <PhoneCall className="h-4 w-4" />
               </a>
             </Button>
             <Button size="lg" className="gap-4" asChild>

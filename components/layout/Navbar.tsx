@@ -77,7 +77,7 @@ export function Navbar() {
         }
         auth={{
           signup: {
-            text: "Book a Call",
+            text: "WhatsApp Us",
             url: WHATSAPP,
             icon: <WhatsAppIcon className="h-4 w-4 shrink-0" />,
           },

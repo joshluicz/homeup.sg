@@ -102,11 +102,11 @@ export function ListingCard({ listing, compact = false, priority = false }: List
               href={buildListingWhatsAppUrl(listing.title, priceLabel)}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => { e.stopPropagation(); trackButtonClick("Enquire - Listing Card"); }}
+              onClick={(e) => { e.stopPropagation(); trackButtonClick("WhatsApp Us - Listing Card"); }}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary-700"
             >
               <MessageCircle className="h-3.5 w-3.5 shrink-0" />
-              Enquire
+              WhatsApp Us
             </a>
             <Link
               href={href}

@@ -83,7 +83,7 @@ export function BuyHero({ content = BUY_PAGE_GENERAL.hero }: BuyHeroProps) {
               <Button size="lg" asChild className="w-full sm:w-auto">
                 <a href={WA} target="_blank" rel="noopener noreferrer" className="justify-center gap-2">
                   <WhatsAppIcon className="h-5 w-5 shrink-0" />
-                  Book a Free Consultation
+                  WhatsApp Us
                 </a>
               </Button>
               <p className="mt-2 text-sm font-normal text-neutral-400">{content.ctaNote}</p>

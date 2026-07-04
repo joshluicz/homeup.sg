@@ -198,13 +198,14 @@ export function Hero() {
             Fixed Fee Agents | Dedicated to Families
           </motion.p>
 
-          <motion.p
+          <motion.h2
             custom={0.14} initial="hidden" animate="show" variants={fade}
-            className="mt-4 max-w-md text-base font-normal leading-relaxed text-neutral-600 sm:text-lg"
+            className="mt-4 max-w-xl font-display text-2xl font-extrabold leading-tight tracking-tight text-neutral-950 sm:text-3xl lg:text-[1.9rem]"
           >
-            Most Singapore homeowners give away $10,000 to $70,000 in commission.
-            HomeUP charges a fixed fee for the same full service.
-          </motion.p>
+            Most agents take <span className="text-red-600">2%</span>.
+            <br />
+            We charge a <span className="text-primary-600">flat fee</span> instead.
+          </motion.h2>
 
           <motion.div
             custom={0.22} initial="hidden" animate="show" variants={fade}
@@ -213,7 +214,7 @@ export function Hero() {
             <Button size="lg" asChild className="w-full sm:w-auto">
               <a href={WA} target="_blank" rel="noopener noreferrer" className="justify-center gap-2">
                 <WhatsAppIcon className="h-5 w-5 shrink-0" />
-                Book a Free Call
+                WhatsApp Us
               </a>
             </Button>
             <p className="mt-2 text-sm font-normal text-neutral-400">
@@ -222,18 +223,18 @@ export function Hero() {
           </motion.div>
         </div>
 
-        {/* Right: visuals — stats first on desktop to align with headline */}
+        {/* Right: visuals — stats first so transaction proof is visible early. */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.25, ease }}
           className="flex min-w-0 max-lg:w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
         >
-          <div className="order-2 w-full lg:order-1">
+          <div className="order-1 w-full">
             <StatsCard />
           </div>
 
-          <div className="order-1 w-full lg:order-2 lg:-mb-5 lg:-mt-8">
+          <div className="order-2 w-full lg:-mb-5 lg:-mt-8">
             <Image
               src="/images/team-group.webp"
               alt="The HomeUP team, CEA-licensed property agents in Singapore"

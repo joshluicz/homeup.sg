@@ -26,7 +26,7 @@ export const BUY_PLANS: BuyPlan[] = [
     description:
       "Full guidance through grants, financing and the resale process for your next flat.",
     learnMoreHref: "/buy-hdb",
-    buttonText: "Connect with HOMEUP agent",
+    buttonText: "WhatsApp Us",
     includes: [
       "Affordability & grant planning",
       "Financing guidance",
@@ -43,7 +43,7 @@ export const BUY_PLANS: BuyPlan[] = [
     description:
       "Market insights, project comparisons and negotiation support for resale condo and landed homes, at no cost to you.",
     learnMoreHref: "/buy-condo-landed",
-    buttonText: "Connect with HOMEUP agent",
+    buttonText: "WhatsApp Us",
     includes: [
       "Market & project comparisons",
       "Unbiased shortlisting",
@@ -60,7 +60,7 @@ export const BUY_PLANS: BuyPlan[] = [
     description:
       "We assist you to purchase New Launch straight from developers. Buyer pays no commission.",
     learnMoreHref: "/buy-new-launch",
-    buttonText: "Connect with HOMEUP agent",
+    buttonText: "WhatsApp Us",
     includes: [
       "Unbiased project analysis",
       "Unit selection guidance",

@@ -60,7 +60,7 @@ interface BuyLandingContentProps {
 export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandingContentProps) {
   const isGeneral = config.filterType === null;
   const faqConfig = config.filterType ? FAQ_BY_TYPE[config.filterType] : GENERAL_FAQ;
-  const faqWhatsappContext: WhatsAppMessageKey = config.filterType
+  const faqWhatsAppContext: WhatsAppMessageKey = config.filterType
     ? FAQ_WHATSAPP_BY_TYPE[config.filterType]
     : "faqBuyGeneral";
 
@@ -82,7 +82,7 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
           eyebrow={faqConfig.eyebrow}
           title={faqConfig.title}
           lead={faqConfig.lead}
-          whatsappContext={faqWhatsappContext}
+          whatsappContext={faqWhatsAppContext}
         />
         <Testimonials />
         <AgentProfiles />
@@ -101,7 +101,7 @@ export function BuyLandingContent({ config, showAwardsStrip = false }: BuyLandin
         eyebrow={faqConfig.eyebrow}
         title={faqConfig.title}
         lead={faqConfig.lead}
-        whatsappContext={faqWhatsappContext}
+        whatsappContext={faqWhatsAppContext}
       />
       <Testimonials />
       <AgentProfiles />

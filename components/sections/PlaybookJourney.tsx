@@ -92,7 +92,7 @@ function PlaybookWhatsAppCTA() {
         rel="noopener noreferrer"
         className="fixed right-0 top-1/2 z-40 hidden -translate-y-1/2 items-center gap-2 rounded-l-2xl bg-primary-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-primary-700 hover:pr-5 lg:flex"
       >
-        Free Planning Call
+        WhatsApp Us
       </a>
       <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
         <a
@@ -101,7 +101,7 @@ function PlaybookWhatsAppCTA() {
           rel="noopener noreferrer"
           className="flex w-full items-center justify-center gap-2.5 bg-primary-600 py-4 text-sm font-bold text-white"
         >
-          Free Planning Call → WhatsApp Us
+          WhatsApp Us
         </a>
       </div>
     </>

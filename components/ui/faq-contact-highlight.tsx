@@ -23,12 +23,12 @@ export function FaqContactHighlight({ whatsappUrl, className }: FaqContactHighli
           />
           <h3 className="text-sm font-bold text-neutral-900">Still have questions?</h3>
           <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-            If we didn&apos;t cover it above, WhatsApp us. We&apos;ll give you a straight answer.
+            If we didn&apos;t cover it above, tap WhatsApp Us. We&apos;ll give you a straight answer.
           </p>
           <Button size="sm" asChild className="mt-4 gap-2">
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
               <WhatsAppIcon className="h-4 w-4 shrink-0" />
-              Message us on WhatsApp
+              WhatsApp Us
             </a>
           </Button>
         </aside>

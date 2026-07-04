@@ -50,42 +50,6 @@ interface PricingSection4Props {
   showSlider?: boolean;
 }
 
-function saleContextLabel(type: (typeof COMPARISON_ROWS)[number]["type"]) {
-  if (type === "HDB Flat") return "HDB flat";
-  if (type === "Condo / EC") return "condo";
-  return "landed home";
-}
-
-function SavingsCallout({ row }: { row: (typeof COMPARISON_ROWS)[number] }) {
-  return (
-    <div className="mt-8 rounded-2xl border border-[#c5ddd0] bg-[#eef5f0] px-5 py-5 sm:px-6">
-      <p className="text-xs font-semibold uppercase tracking-widest text-primary-800">
-        Typical agent vs HomeUP
-      </p>
-      <p className="mt-3 text-base font-semibold leading-snug text-neutral-900 sm:text-lg">
-        On a {formatSgd(row.salePrice)} {saleContextLabel(row.type)} sale, you keep
-      </p>
-      <p className="mt-1 font-display text-3xl font-extrabold leading-none tracking-tight text-primary-700 sm:text-4xl">
-        {formatSgd(row.savings)} more
-      </p>
-      <p className="mt-1.5 text-xs font-normal text-neutral-500">incl. GST</p>
-      <p className="mt-4 text-sm leading-relaxed text-neutral-600">
-        Most agents charge around{" "}
-        <span className="font-semibold text-neutral-800">{formatSgd(row.typicalInclGst)}</span> at
-        2% commission. HomeUP charges{" "}
-        <span className="font-semibold text-primary-800">{formatHomeupFee(row.homeupBase)}</span> +
-        GST for the same full service.
-      </p>
-    </div>
-  );
-}
-
-function rowForType(type: SellPropertyType) {
-  const label =
-    type === "HDB" ? "HDB Flat" : type === "Condo" ? "Condo / EC" : "Landed Home";
-  return COMPARISON_ROWS.find((row) => row.type === label) ?? COMPARISON_ROWS[0];
-}
-
 function ComparisonCards() {
   return (
     <div className="grid gap-4 md:hidden">
@@ -197,8 +161,6 @@ export default function PricingSection4({
   const reserveFootnoteSpace =
     plans.length > 1 && plans.some((p) => p.footnote);
 
-  const highlightRow = filterType ? rowForType(filterType) : COMPARISON_ROWS[0];
-
   return (
     <section
       aria-label="Fixed-fee pricing packages"
@@ -206,20 +168,11 @@ export default function PricingSection4({
       className="section-padding bg-neutral-50"
     >
       <div className="container-page">
-        <FadeInUp className="section-header">
-          <Eyebrow>Save on agent fees</Eyebrow>
-          <h2 className="section-title">
-            Most agents take 2%.
-            <br className="hidden sm:block" /> We charge a flat fee instead.
-          </h2>
-          <p className="section-lead">
-            HomeUP charges one fixed fee with full agent services. You keep the difference!
-          </p>
-        </FadeInUp>
-
-        <FadeInUp delay={0.06}>
-          <SavingsCallout row={highlightRow} />
-        </FadeInUp>
+        {showSlider && (
+          <FadeInUp delay={0.06}>
+            <SavingsSlider mode="sell" defaultType={defaultSliderType} className="mt-0" />
+          </FadeInUp>
+        )}
 
         <FadeInUp delay={0.08} className="mt-10 sm:mt-12">
           <p className="text-sm font-bold text-neutral-900">Our fixed fees</p>
@@ -261,7 +214,7 @@ export default function PricingSection4({
           <div className="section-header mb-6">
             <Eyebrow>Compare the numbers</Eyebrow>
             <h3 className="section-title text-2xl sm:text-3xl">
-              Fixed fee vs typical 2% commission
+              HomeUP vs Typical 2% Agent
             </h3>
           </div>
 
@@ -278,11 +231,6 @@ export default function PricingSection4({
           </p>
         </FadeInUp>
 
-        {showSlider && (
-          <FadeInUp delay={0.25}>
-            <SavingsSlider mode="sell" defaultType={defaultSliderType} />
-          </FadeInUp>
-        )}
       </div>
     </section>
   );

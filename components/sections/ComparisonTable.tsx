@@ -86,7 +86,7 @@ export function ComparisonTable() {
               asChild
             >
               <a href={whatsappUrl} rel="noopener noreferrer" target="_blank">
-                Schedule a Consultation
+                WhatsApp Us
               </a>
             </Button>
           </div>

@@ -21,7 +21,7 @@ export const SELL_PLANS: SellPlan[] = [
     type: "HDB",
     price: 1999,
     learnMoreHref: "/sell-hdb",
-    buttonText: "Connect with HOMEUP agent",
+    buttonText: "WhatsApp Us",
   },
   {
     name: "Condo Seller",
@@ -30,7 +30,7 @@ export const SELL_PLANS: SellPlan[] = [
     type: "Condo",
     price: 4999,
     learnMoreHref: "/sell-condo",
-    buttonText: "Connect with HOMEUP agent",
+    buttonText: "WhatsApp Us",
     footnote: "Additional 0.5% (sale price) applies if buyer has a co-broke agent",
   },
   {
@@ -40,7 +40,7 @@ export const SELL_PLANS: SellPlan[] = [
     type: "Landed",
     price: 9999,
     learnMoreHref: "/sell-landed",
-    buttonText: "Connect with HOMEUP agent",
+    buttonText: "WhatsApp Us",
     footnote: "Additional 0.5% (sale price) applies if buyer has a co-broke agent",
   },
 ];

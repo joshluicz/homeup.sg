@@ -22,7 +22,7 @@ export function CtaBanner() {
             </p>
             <Button className="mt-6 w-full sm:mt-8 sm:w-auto" size="lg" asChild>
               <a href={whatsappUrl} rel="noopener noreferrer" target="_blank">
-                Schedule a Consultation Today
+                WhatsApp Us
               </a>
             </Button>
           </div>

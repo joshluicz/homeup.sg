@@ -77,7 +77,7 @@ export function ListingDetailContent({ listing, related = [] }: ListingDetailCon
           {specSummary && <p className="mt-2 text-sm text-neutral-600">{specSummary}</p>}
           <p className="mt-4">
             <a href={whatsAppHref} className="text-sm font-semibold text-primary-600">
-              Enquire on WhatsApp
+              WhatsApp Us
             </a>
           </p>
         </div>
