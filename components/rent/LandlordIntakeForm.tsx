@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { MultistepForm, type MultistepFormStep } from "@/components/ui/multistep-form";
 import { getAttributionForSubmit } from "@/lib/intake/attribution";
 import { SG_DISTRICTS } from "@/lib/intake/districts";
-import { LISTING_TYPE_OPTIONS } from "@/lib/intake/listing-types";
+import { ListingTypeSelector } from "@/components/rent/ListingTypeSelector";
 import type { ListingType } from "@/lib/intake/types";
 import { MAX_PHOTOS, MIN_PHOTOS, RECOMMENDED_PHOTOS, MAX_PHOTO_BYTES } from "@/lib/intake/storage";
 import { cn } from "@/lib/utils";
@@ -297,34 +297,7 @@ export function LandlordIntakeForm() {
         {currentStep === 1 && (
           <fieldset data-step="1" className="space-y-3">
             <legend className="sr-only">What are you renting out?</legend>
-            <div className="space-y-2">
-              {LISTING_TYPE_OPTIONS.map((option) => (
-                <label
-                  key={option.value}
-                  className={cn(
-                    "flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors",
-                    listingType === option.value
-                      ? "border-primary-600 bg-primary-50/40"
-                      : "border-neutral-200 hover:border-neutral-300",
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="listing_type_ui"
-                      value={option.value}
-                      checked={listingType === option.value}
-                      onChange={() => setListingType(option.value)}
-                      className="h-4 w-4 accent-primary-600"
-                    />
-                    {option.label}
-                  </span>
-                  {option.fee ? (
-                    <span className="text-xs font-semibold text-neutral-600">{option.fee}</span>
-                  ) : null}
-                </label>
-              ))}
-            </div>
+            <ListingTypeSelector value={listingType} onChange={setListingType} />
           </fieldset>
         )}
 

@@ -5,7 +5,7 @@ import { HomeUpLogo } from "@/components/ui/HomeUpLogo";
 export const metadata: Metadata = {
   title: "List Your Rental | HomeUp Rent",
   description:
-    "List your room or whole unit with HomeUp. Transparent fixed fee — $499 per room, $999 per whole unit. CEA-licensed agents.",
+    "List your room or whole unit with HomeUp. Transparent fixed fee at $499 per room and $999 per whole unit. CEA-licensed agents.",
   robots: { index: true, follow: true },
 };
 

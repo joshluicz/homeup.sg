@@ -7,7 +7,7 @@ export default function RentListPage() {
       <div className="mb-8 space-y-2">
         <h1 className="text-2xl font-bold tracking-tight">List your rental</h1>
         <p className="text-sm text-neutral-600">
-          Fixed fee — $499 per room, $999 per whole unit. We market it, you host the viewing.
+          Fixed fee at $499 per room and $999 per whole unit. We market it, you host the viewing.
         </p>
       </div>
       <Suspense fallback={<p className="text-sm text-neutral-500">Loading form…</p>}>

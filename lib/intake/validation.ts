@@ -8,7 +8,7 @@ const optionalString = z
   .transform((v) => (v == null || String(v).trim() === "" ? null : String(v).trim()));
 
 const listingTypeEnum = z.enum(
-  ["hdb_room", "hdb_whole", "condo_room", "condo_whole", "landed_whole", "other"],
+  ["hdb_room", "hdb_whole", "condo_room", "condo_whole", "other"],
   { message: "Select what you're renting out" },
 );
 
