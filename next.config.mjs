@@ -128,6 +128,8 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          // Avoid Cloudflare/Vercel serving stale HTML that references deleted JS chunks.
+          { key: "CDN-Cache-Control", value: "max-age=0" },
         ],
       },
     ];

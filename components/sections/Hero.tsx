@@ -34,7 +34,13 @@ const fade = {
 const breakdown = [
   { key: "hdb" as const, target: 860, label: "HDB" },
   { key: "condo" as const, target: 260, label: "Condo & Landed" },
-];
+] as const;
+
+const STATS_DEFAULT = {
+  total: 1000,
+  hdb: breakdown[0].target,
+  condo: breakdown[1].target,
+} as const;
 
 const agents = [
   { src: "/images/agent-dennis.png", name: "Dennis" },
@@ -47,16 +53,19 @@ const agents = [
 
 function StatsCard() {
   const ref = useRef<HTMLDivElement>(null);
-  const [total, setTotal] = useState(0);
-  const [hdb, setHdb] = useState(0);
-  const [condo, setCondo] = useState(0);
-  const [showPlus, setShowPlus] = useState(false);
+  const [total, setTotal] = useState<number>(STATS_DEFAULT.total);
+  const [hdb, setHdb] = useState<number>(STATS_DEFAULT.hdb);
+  const [condo, setCondo] = useState<number>(STATS_DEFAULT.condo);
+  const [showPlus, setShowPlus] = useState(true);
 
   useEffect(() => {
     let controls: ReturnType<typeof animate>[] = [];
 
     function startCount() {
       setShowPlus(false);
+      setTotal(0);
+      setHdb(0);
+      setCondo(0);
       controls = [
         animate(0, 1000, {
           duration: COUNT_DURATION,
@@ -64,12 +73,12 @@ function StatsCard() {
           onUpdate: (v) => setTotal(Math.round(v)),
           onComplete: () => setShowPlus(true),
         }),
-        animate(0, 860, {
+        animate(0, STATS_DEFAULT.hdb, {
           duration: COUNT_DURATION,
           ease: "linear",
           onUpdate: (v) => setHdb(Math.round(v)),
         }),
-        animate(0, 260, {
+        animate(0, STATS_DEFAULT.condo, {
           duration: COUNT_DURATION,
           ease: "linear",
           onUpdate: (v) => setCondo(Math.round(v)),

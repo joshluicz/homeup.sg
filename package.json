@@ -19,6 +19,7 @@
     "pg:automation": "npx tsx scripts/run-pg-automation.ts",
     "pg:watch": "npx tsx scripts/run-pg-watch.ts",
     "dns-aid:publish": "node scripts/publish-dns-aid.mjs",
+    "cloudflare:rocket-loader-off": "node scripts/disable-cloudflare-rocket-loader.mjs",
     "indexnow:submit": "node scripts/submit-indexnow.mjs",
     "indexnow:listings": "node scripts/submit-indexnow.mjs --listings",
     "indexnow:playbook": "node scripts/submit-indexnow.mjs --playbook",

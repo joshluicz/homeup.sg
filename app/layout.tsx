@@ -9,6 +9,7 @@ import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
+import { CHUNK_RECOVERY_BOOTSTRAP } from "@/lib/chunk-recovery";
 import { LOADING_SCREEN_BOOTSTRAP } from "@/lib/loading-screen-dismiss";
 import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
@@ -85,7 +86,13 @@ export default function RootLayout({
     <html lang="en" className={jakarta.variable}>
       <head>
         <script
+          id="homeup-chunk-recovery"
+          data-cfasync="false"
+          dangerouslySetInnerHTML={{ __html: CHUNK_RECOVERY_BOOTSTRAP }}
+        />
+        <script
           id="homeup-loading-bootstrap"
+          data-cfasync="false"
           dangerouslySetInnerHTML={{ __html: LOADING_SCREEN_BOOTSTRAP }}
         />
         <style id="critical-css" dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
