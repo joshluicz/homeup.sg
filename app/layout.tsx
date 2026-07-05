@@ -5,12 +5,11 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { WhatsAppFloat } from "@/components/ui/WhatsAppFloat";
 import { ScrollToTopButton } from "@/components/ui/ScrollToTopButton";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
-import { LOADING_SCREEN_BOOTSTRAP } from "@/lib/loading-screen-dismiss";
+import { HOMEUP_READY_BOOTSTRAP } from "@/lib/homeup-ready";
 import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
 import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
@@ -84,6 +83,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={jakarta.variable}>
       <head>
+        <script
+          id="homeup-ready-bootstrap"
+          dangerouslySetInnerHTML={{ __html: HOMEUP_READY_BOOTSTRAP }}
+        />
         <style id="critical-css" dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
         {SUPABASE_URL && (
           <>
@@ -95,14 +98,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body>
-        <script
-          id="homeup-loading-bootstrap"
-          dangerouslySetInnerHTML={{ __html: LOADING_SCREEN_BOOTSTRAP }}
-        />
-        <noscript>
-          <style>{`#homeup-loading-screen{display:none!important}`}</style>
-        </noscript>
-        <LoadingScreen />
         {GA_ID && (
           <Script id="ga4-loader" strategy="lazyOnload">{`
             try {

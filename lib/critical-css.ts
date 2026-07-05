@@ -3,6 +3,7 @@ export const CRITICAL_CSS = `
 *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid}
 html{-webkit-text-size-adjust:100%;line-height:1.5}
 body{margin:0;background:#fff;color:#1e1812;font-family:var(--font-jakarta,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+#homeup-loading-screen,.loading-screen-logo{display:none!important}
 a{color:inherit;text-decoration:none}
 img,video{max-width:100%;height:auto;display:block}
 h1,h2{font-family:var(--font-jakarta,system-ui,sans-serif);font-weight:800;letter-spacing:-.03em;margin:0}

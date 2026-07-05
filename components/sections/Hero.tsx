@@ -76,14 +76,9 @@ function StatsCard() {
       ];
     }
 
-    if ((window as unknown as Record<string, unknown>).__homeupLoaded) {
-      startCount();
-    } else {
-      window.addEventListener("homeup:loaded", startCount, { once: true });
-    }
+    startCount();
 
     return () => {
-      window.removeEventListener("homeup:loaded", startCount);
       controls.forEach((c) => c.stop());
     };
   }, []);
