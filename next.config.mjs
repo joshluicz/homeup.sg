@@ -1,7 +1,15 @@
 /** @type {import('next').NextConfig} */
 const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");
 
+/** Per-deploy asset prefix busts poisoned browser disk cache for JS chunks. */
+const deployAssetId =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ??
+  process.env.VERCEL_DEPLOYMENT_ID?.slice(0, 12) ??
+  "local";
+
 const nextConfig = {
+  assetPrefix:
+    process.env.VERCEL === "1" ? `/_assets/${deployAssetId}` : undefined,
   experimental: {
     serverComponentsExternalPackages: ["patchright", "patchright-core", "pg"],
     // optimizeCss (critters) caused intermittent HTTP 500 on large /playbook/[slug] pages
@@ -40,6 +48,8 @@ const nextConfig = {
   },
   async rewrites() {
     const rules = [
+      // Serve current chunks for any deploy-scoped asset prefix (handles stale HTML too).
+      { source: "/_assets/:build/_next/:path*", destination: "/_next/:path*" },
       // Path-based access to the PropMeta dashboard (works before the subdomain DNS is set).
       { source: "/dashboard", destination: "/dashboard.html" },
       // Per-agent dashboard view (Phase 2); the SPA reads the slug from the URL.

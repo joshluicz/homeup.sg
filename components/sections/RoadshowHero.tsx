@@ -45,12 +45,14 @@ interface RoadshowHeroProps {
   videoSrc: string;
 }
 
+const STATS_DEFAULT = { total: 1000, hdb: 860, condo: 260 } as const;
+
 function StatsCard() {
   const ref = useRef<HTMLDivElement>(null);
-  const [total, setTotal] = useState(0);
-  const [hdb, setHdb] = useState(0);
-  const [condo, setCondo] = useState(0);
-  const [showPlus, setShowPlus] = useState(false);
+  const [total, setTotal] = useState<number>(STATS_DEFAULT.total);
+  const [hdb, setHdb] = useState<number>(STATS_DEFAULT.hdb);
+  const [condo, setCondo] = useState<number>(STATS_DEFAULT.condo);
+  const [showPlus, setShowPlus] = useState(true);
 
   useEffect(() => {
     let controls: ReturnType<typeof animate>[] = [];
@@ -197,7 +199,7 @@ export function RoadshowHero(props: RoadshowHeroProps) {
           <div className="flex min-w-0 flex-col items-center text-center">
             <motion.div
               custom={0}
-              initial="hidden"
+              initial={false}
               animate="show"
               variants={fade}
               className="-mt-10 mb-8"
@@ -215,7 +217,7 @@ export function RoadshowHero(props: RoadshowHeroProps) {
 
             <motion.h1
               custom={0.06}
-              initial="hidden"
+              initial={false}
               animate="show"
               variants={fade}
               className="max-w-2xl font-display text-[clamp(2.45rem,4vw,4.75rem)] font-extrabold leading-[0.96] tracking-tight text-neutral-950"
@@ -229,7 +231,7 @@ export function RoadshowHero(props: RoadshowHeroProps) {
 
             <motion.div
               custom={0.14}
-              initial="hidden"
+              initial={false}
               animate="show"
               variants={fade}
               className="mt-8 max-w-xl"
@@ -240,7 +242,7 @@ export function RoadshowHero(props: RoadshowHeroProps) {
             <div className="mt-16 flex flex-col items-center">
               <motion.h2
                 custom={0.22}
-                initial="hidden"
+                initial={false}
                 animate="show"
                 variants={fade}
                 className="font-display text-[clamp(1.85rem,3.15vw,3.45rem)] font-extrabold leading-[1] tracking-tight text-neutral-900"
@@ -264,7 +266,7 @@ export function RoadshowHero(props: RoadshowHeroProps) {
 
               <motion.div
                 custom={0.3}
-                initial="hidden"
+                initial={false}
                 animate="show"
                 variants={fade}
                 className="mt-8 flex -space-x-2"
@@ -289,7 +291,7 @@ export function RoadshowHero(props: RoadshowHeroProps) {
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, delay: 0.18, ease }}
             className="min-w-0"

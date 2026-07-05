@@ -10,7 +10,7 @@ export const CHUNK_RECOVERY_BOOTSTRAP = `
   var MAX_RELOADS = 1;
 
   function isNextChunk(src) {
-    return src && src.indexOf("/_next/static/") !== -1;
+    return src && (src.indexOf("/_next/static/") !== -1 || src.indexOf("/_assets/") !== -1);
   }
 
   function bustUrl(src) {
