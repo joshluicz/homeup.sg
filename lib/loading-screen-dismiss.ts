@@ -3,7 +3,7 @@ export const LOADING_MIN_MS = 1500;
 export const LOADING_FADE_MS = 600;
 export const LOADING_FALLBACK_MS = 6000;
 
-/** Removes the splash overlay and signals hero animations. Safe to call multiple times. */
+/** Hides the splash overlay and signals hero animations. Safe to call multiple times. */
 export function dismissLoadingScreenDom(): void {
   if (typeof window === "undefined") return;
 
@@ -20,8 +20,6 @@ export function dismissLoadingScreenDom(): void {
 
   win.__homeupLoaded = true;
   window.dispatchEvent(new CustomEvent("homeup:loaded"));
-
-  window.setTimeout(() => el.remove(), LOADING_FADE_MS);
 }
 
 /** Last-resort fallback if React never hydrates the splash component. */
@@ -38,7 +36,6 @@ export const LOADING_SCREEN_BOOTSTRAP = `
     el.style.pointerEvents = "none";
     window.__homeupLoaded = true;
     window.dispatchEvent(new CustomEvent("homeup:loaded"));
-    setTimeout(function () { el.remove(); }, ${LOADING_FADE_MS});
   }, MAX);
 })();
 `;
