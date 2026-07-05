@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createFormToken } from "@/lib/intake/form-token";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {

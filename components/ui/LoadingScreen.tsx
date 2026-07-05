@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-
-const MIN_MS = 1500;
-const FADE_MS = 600;
-const FALLBACK_MS = 6000;
+import {
+  dismissLoadingScreenDom,
+  LOADING_FADE_MS,
+  LOADING_FALLBACK_MS,
+  LOADING_MIN_MS,
+  LOADING_SCREEN_ID,
+} from "@/lib/loading-screen-dismiss";
 
 export function LoadingScreen() {
   const [fading, setFading] = useState(false);
@@ -19,26 +22,25 @@ export function LoadingScreen() {
       if (dismissed) return;
       dismissed = true;
       setFading(true);
-      (window as unknown as Record<string, unknown>).__homeupLoaded = true;
-      window.dispatchEvent(new CustomEvent("homeup:loaded"));
-      setTimeout(() => setGone(true), FADE_MS);
+      dismissLoadingScreenDom();
+      setTimeout(() => setGone(true), LOADING_FADE_MS);
     }
 
-    function onLoad() {
-      const remaining = Math.max(0, MIN_MS - (Date.now() - start));
+    function onReady() {
+      const remaining = Math.max(0, LOADING_MIN_MS - (Date.now() - start));
       setTimeout(dismiss, remaining);
     }
 
-    if (document.readyState === "complete") {
-      onLoad();
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", onReady, { once: true });
     } else {
-      window.addEventListener("load", onLoad, { once: true });
+      onReady();
     }
 
-    const fallback = setTimeout(dismiss, FALLBACK_MS);
+    const fallback = setTimeout(dismiss, LOADING_FALLBACK_MS);
 
     return () => {
-      window.removeEventListener("load", onLoad);
+      document.removeEventListener("DOMContentLoaded", onReady);
       clearTimeout(fallback);
     };
   }, []);
@@ -47,6 +49,7 @@ export function LoadingScreen() {
 
   return (
     <div
+      id={LOADING_SCREEN_ID}
       aria-hidden="true"
       style={{
         position: "fixed",
@@ -57,7 +60,7 @@ export function LoadingScreen() {
         justifyContent: "center",
         backgroundColor: "#ffffff",
         opacity: fading ? 0 : 1,
-        transition: `opacity ${FADE_MS}ms ease`,
+        transition: `opacity ${LOADING_FADE_MS}ms ease`,
         pointerEvents: fading ? "none" : "all",
       }}
     >

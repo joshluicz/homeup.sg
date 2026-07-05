@@ -10,6 +10,7 @@ import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
+import { LOADING_SCREEN_BOOTSTRAP } from "@/lib/loading-screen-dismiss";
 import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
 import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
@@ -94,6 +95,13 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body>
+        <script
+          id="homeup-loading-bootstrap"
+          dangerouslySetInnerHTML={{ __html: LOADING_SCREEN_BOOTSTRAP }}
+        />
+        <noscript>
+          <style>{`#homeup-loading-screen{display:none!important}`}</style>
+        </noscript>
         <LoadingScreen />
         {GA_ID && (
           <Script id="ga4-loader" strategy="lazyOnload">{`
