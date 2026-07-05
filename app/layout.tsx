@@ -9,7 +9,8 @@ import { AnalyticsProvider } from "@/components/analytics/AnalyticsProvider";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
 import { WebMCPProvider } from "@/components/ai/WebMCPProvider";
 import { CRITICAL_CSS } from "@/lib/critical-css";
-import { HOMEUP_READY_BOOTSTRAP } from "@/lib/homeup-ready";
+import { LOADING_SCREEN_BOOTSTRAP } from "@/lib/loading-screen-dismiss";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 import { OG_IMAGE, SITE_URL } from "@/lib/seo/constants";
 import { websiteSchema } from "@/lib/seo/schema";
 import "./globals.css";
@@ -84,8 +85,8 @@ export default function RootLayout({
     <html lang="en" className={jakarta.variable}>
       <head>
         <script
-          id="homeup-ready-bootstrap"
-          dangerouslySetInnerHTML={{ __html: HOMEUP_READY_BOOTSTRAP }}
+          id="homeup-loading-bootstrap"
+          dangerouslySetInnerHTML={{ __html: LOADING_SCREEN_BOOTSTRAP }}
         />
         <style id="critical-css" dangerouslySetInnerHTML={{ __html: CRITICAL_CSS }} />
         {SUPABASE_URL && (
@@ -98,6 +99,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
       <body>
+        <LoadingScreen />
         {GA_ID && (
           <Script id="ga4-loader" strategy="lazyOnload">{`
             try {

@@ -11,7 +11,7 @@ interface AnimProps {
   className?: string;
 }
 
-/** Fades up on scroll into view. Use for headings, paragraphs, standalone blocks. */
+/** Fades up on scroll into view. SSR-visible — does not depend on JS to show content. */
 export function FadeInUp({ children, delay = 0, className }: AnimProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
@@ -19,8 +19,8 @@ export function FadeInUp({ children, delay = 0, className }: AnimProps) {
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 28 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+      initial={false}
+      animate={isInView ? { opacity: 1, y: 0 } : false}
       transition={{ duration: 0.55, delay, ease }}
       className={className}
     >
@@ -29,7 +29,7 @@ export function FadeInUp({ children, delay = 0, className }: AnimProps) {
   );
 }
 
-/** Fades in on scroll (no vertical movement). Use for images and wide containers. */
+/** Fades in on scroll (no vertical movement). SSR-visible. */
 export function FadeIn({ children, delay = 0, className }: AnimProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
@@ -37,8 +37,8 @@ export function FadeIn({ children, delay = 0, className }: AnimProps) {
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0 }}
-      animate={isInView ? { opacity: 1 } : { opacity: 0 }}
+      initial={false}
+      animate={isInView ? { opacity: 1 } : false}
       transition={{ duration: 0.6, delay, ease: "easeOut" }}
       className={className}
     >
@@ -47,10 +47,7 @@ export function FadeIn({ children, delay = 0, className }: AnimProps) {
   );
 }
 
-/**
- * Wraps a grid/list and staggers its direct StaggerItem children.
- * Apply your grid/flex classes here.
- */
+/** Wraps a grid/list and staggers its direct StaggerItem children. */
 export function StaggerContainer({ children, className }: AnimProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.05 });
@@ -58,8 +55,8 @@ export function StaggerContainer({ children, className }: AnimProps) {
   return (
     <motion.div
       ref={ref}
-      initial="hidden"
-      animate={isInView ? "visible" : "hidden"}
+      initial={false}
+      animate={isInView ? "visible" : false}
       variants={{
         hidden: {},
         visible: { transition: { staggerChildren: 0.1 } },
@@ -75,6 +72,7 @@ export function StaggerContainer({ children, className }: AnimProps) {
 export function StaggerItem({ children, className }: AnimProps) {
   return (
     <motion.div
+      initial={false}
       variants={{
         hidden: { opacity: 0, y: 24 },
         visible: {

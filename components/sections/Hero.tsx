@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { whatsAppUrlFor } from "@/lib/whatsapp";
+import { useHomeupLoaded } from "@/lib/use-homeup-loaded";
 
 const Typewriter = dynamic(
   () => import("@/components/ui/typewriter").then((m) => ({ default: m.Typewriter })),
@@ -76,9 +77,14 @@ function StatsCard() {
       ];
     }
 
-    startCount();
+    if ((window as unknown as Record<string, unknown>).__homeupLoaded) {
+      startCount();
+    } else {
+      window.addEventListener("homeup:loaded", startCount, { once: true });
+    }
 
     return () => {
+      window.removeEventListener("homeup:loaded", startCount);
       controls.forEach((c) => c.stop());
     };
   }, []);
@@ -159,6 +165,8 @@ function SocialProofRow() {
 }
 
 export function Hero() {
+  const homeupLoaded = useHomeupLoaded();
+
   return (
     <section aria-label="Fixed-fee property agents hero" className="bg-white">
       <div className="mx-auto flex w-full max-w-[1200px] flex-col items-center gap-8 px-8 py-12 sm:px-12 lg:flex-row lg:items-start lg:gap-12 lg:py-16 xl:px-20">
@@ -166,7 +174,10 @@ export function Hero() {
         {/* Left: copy */}
         <div className="min-w-0 shrink-0 max-lg:w-full lg:w-[44%]">
           <motion.h1
-            custom={0} initial="hidden" animate="show" variants={fade}
+            custom={0}
+            initial={false}
+            animate={homeupLoaded ? "show" : false}
+            variants={fade}
             className="font-display font-extrabold leading-[1.06] tracking-tight text-neutral-900 text-[clamp(1.2rem,7vw,3.2rem)] lg:text-[clamp(1.5rem,3.2vw,2.4rem)]"
           >
             Sell Your Home for More.
@@ -187,14 +198,20 @@ export function Hero() {
           </motion.h1>
 
           <motion.p
-            custom={0.08} initial="hidden" animate="show" variants={fade}
+            custom={0.08}
+            initial={false}
+            animate={homeupLoaded ? "show" : false}
+            variants={fade}
             className="mt-3 text-sm font-medium leading-normal text-neutral-500 [font-feature-settings:'liga'_off,'calt'_off]"
           >
             Fixed Fee Agents | Dedicated to Families
           </motion.p>
 
           <motion.h2
-            custom={0.14} initial="hidden" animate="show" variants={fade}
+            custom={0.14}
+            initial={false}
+            animate={homeupLoaded ? "show" : false}
+            variants={fade}
             className="mt-4 max-w-xl font-display text-2xl font-extrabold leading-tight tracking-tight text-neutral-950 sm:text-3xl lg:text-[1.9rem]"
           >
             Most agents take <span className="text-red-600">2%</span>.
@@ -203,7 +220,10 @@ export function Hero() {
           </motion.h2>
 
           <motion.div
-            custom={0.22} initial="hidden" animate="show" variants={fade}
+            custom={0.22}
+            initial={false}
+            animate={homeupLoaded ? "show" : false}
+            variants={fade}
             className="mt-6"
           >
             <Button size="lg" asChild className="w-full sm:w-auto">
@@ -220,8 +240,8 @@ export function Hero() {
 
         {/* Right: visuals — stats first so transaction proof is visible early. */}
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={false}
+          animate={homeupLoaded ? { opacity: 1, y: 0 } : false}
           transition={{ duration: 0.85, delay: 0.25, ease }}
           className="flex min-w-0 max-lg:w-full flex-col gap-4 lg:-mt-2 lg:flex-1 lg:gap-3"
         >
