@@ -197,15 +197,14 @@ HTML = """<!doctype html>
 README = """HomeUP Roadshow Offline Kit
 
 What is inside:
-- index.html: the roadshow display page
+- index.html: the roadshow display page (open this file)
 - assets/homeup-roadshow.mp4: the local video file
 - assets/*.png and *.svg: logo and agent images
-- start-roadshow.bat: opens the roadshow page directly from this folder
 
 Recommended setup on Windows:
 1. Unzip this folder.
-2. Double-click start-roadshow.bat.
-3. Chrome/Edge should open the roadshow display directly from the unzipped folder.
+2. Double-click index.html.
+3. Chrome or Edge should open the roadshow display.
 4. Plug the laptop into the TV screen.
 5. Press F11 for full screen.
 6. If the video does not autoplay with sound, click the video once.
@@ -213,19 +212,9 @@ Recommended setup on Windows:
 No internet is needed after this folder is downloaded.
 
 Important:
-- Do not open start-roadshow.bat in the browser. That only shows the script text.
-- If you see a localhost 404 or directory listing, you are looking at an old local server tab. Close that tab and double-click start-roadshow.bat again.
-- The page can also be opened by double-clicking index.html directly.
-
-Fallback:
-- If the start script does not work, double-click index.html directly.
-- If Windows says Python is missing, install Python or use any simple local static server.
-"""
-
-BAT = r"""@echo off
-cd /d "%~dp0"
-echo Opening HomeUP roadshow display...
-start "" "%~dp0index.html"
+- Open index.html directly. Do not use localhost or a local server.
+- If you see a localhost 404 or directory listing, close that tab and open index.html from the unzipped folder instead.
+- If Windows Smart App Control blocks a file, ignore any .bat scripts and open index.html only.
 """
 
 
@@ -244,7 +233,6 @@ def main() -> None:
 
     (BUILD_DIR / "index.html").write_text(HTML, encoding="utf-8")
     (BUILD_DIR / "README.txt").write_text(README, encoding="utf-8")
-    (BUILD_DIR / "start-roadshow.bat").write_text(BAT, encoding="utf-8")
 
     if ZIP_PATH.exists():
         ZIP_PATH.unlink()

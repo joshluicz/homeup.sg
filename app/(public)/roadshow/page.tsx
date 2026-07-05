@@ -54,28 +54,35 @@ function RoadshowSetup() {
           <h2 className="font-display text-2xl font-extrabold">How to run it</h2>
           <ol className="mt-4 space-y-3 text-base leading-relaxed text-neutral-200">
             <li>1. Unzip the downloaded file.</li>
-            <li>2. Double-click <code className="rounded bg-white/10 px-1.5 py-0.5">start-roadshow.bat</code>.</li>
-            <li>3. Chrome/Edge should open the display page from the unzipped folder.</li>
+            <li>
+              2. Double-click{" "}
+              <code className="rounded bg-white/10 px-1.5 py-0.5">index.html</code> inside the
+              unzipped folder.
+            </li>
+            <li>3. Chrome or Edge should open the roadshow display.</li>
             <li>4. Plug the laptop into the TV screen.</li>
-            <li>5. Press <code className="rounded bg-white/10 px-1.5 py-0.5">F11</code> for full screen.</li>
+            <li>
+              5. Press <code className="rounded bg-white/10 px-1.5 py-0.5">F11</code> for full
+              screen.
+            </li>
             <li>6. If the video does not autoplay with sound, click the video once.</li>
           </ol>
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
-            <h3 className="font-bold">Fallback</h3>
+            <h3 className="font-bold">Windows security</h3>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-              If the start script does not work, open <code>index.html</code> inside the unzipped
-              folder directly. If you see a localhost 404 or directory listing, close that tab.
-              The offline kit no longer needs localhost.
+              Open <code>index.html</code> only. Do not run any script files. If Smart App Control
+              blocks something, close that dialog and open <code>index.html</code> from the
+              unzipped folder instead.
             </p>
           </div>
           <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
-            <h3 className="font-bold">TV display page</h3>
+            <h3 className="font-bold">Online option</h3>
             <p className="mt-2 text-sm leading-relaxed text-neutral-600">
-              The clean display is still available at <code>/roadshow</code>. This setup page is at{" "}
-              <code>/roadshow?setup=1</code>.
+              If internet is available, open <code>/roadshow</code> in the browser instead. This
+              setup page is at <code>/roadshow?setup=1</code>.
             </p>
           </div>
         </div>

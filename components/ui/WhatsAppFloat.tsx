@@ -8,6 +8,9 @@ const WA = whatsAppUrlFor("float");
 
 export function WhatsAppFloat() {
   const pathname = usePathname();
+
+  if (pathname?.startsWith("/roadshow")) return null;
+
   return (
     <a
       href={WA}
