@@ -46,6 +46,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const host = (request.headers.get("host") || "").split(":")[0].toLowerCase();
 
+  // Strip legacy chunk-recovery ?_cb= param — it never busted script cache and
+  // left users on ugly broken URLs after clearing storage.
+  if (request.nextUrl.searchParams.has("_cb")) {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("_cb");
+    return NextResponse.redirect(url, 302);
+  }
+
   if (isLegacyMarketingHost(host)) {
     return redirectLegacyHostToApex(request);
   }

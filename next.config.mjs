@@ -129,7 +129,9 @@ const nextConfig = {
             value: "camera=(), microphone=(), geolocation=()",
           },
           // Avoid Cloudflare/Vercel serving stale HTML that references deleted JS chunks.
-          { key: "CDN-Cache-Control", value: "max-age=0" },
+          { key: "Cache-Control", value: "private, no-cache, no-store, must-revalidate, max-age=0" },
+          { key: "CDN-Cache-Control", value: "no-store" },
+          { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
         ],
       },
     ];
