@@ -88,7 +88,7 @@ export const AGENTS: Agent[] = [
         link: {
           before: "Award by ",
           label: "Ministry of Trade & Industry (Singapore)",
-          href: "https://www.nas.gov.sg/archivesonline/data/pdfdoc/2002061803.ht",
+          href: "https://www.nas.gov.sg/archivesonline/data/pdfdoc/2002061803.htm",
         },
       },
       {
