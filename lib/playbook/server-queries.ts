@@ -14,6 +14,10 @@ import {
 } from "@/lib/playbook/public-videos";
 import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
 import {
+  getAllAgentIntroWatchSlugs,
+  getAgentIntroVideoForWatchServer,
+} from "@/lib/agents/intro-videos";
+import {
   getAgentProfileVideoBySlugServer,
   getAllAgentProfileVideoSlugsServer,
 } from "@/lib/agents/profile-videos";
@@ -87,6 +91,9 @@ export async function getPlaybookVideosByTopicServer(): Promise<
 export async function getPlaybookVideoForWatchServer(
   slug: string,
 ): Promise<PlaybookVideo | null> {
+  const introVideo = getAgentIntroVideoForWatchServer(slug);
+  if (introVideo?.videoUrl?.trim()) return introVideo;
+
   const { data, error } = await fetchPlaybookRows();
   const dbVideos = error || !data ? [] : data.map(rowToVideo);
   const merged = mergePlaybookVideos(dbVideos);
@@ -111,8 +118,20 @@ export async function getAllWatchSlugsServer(): Promise<string[]> {
           .map((v) => v.slug);
 
   const agentSlugs = await getAllAgentProfileVideoSlugsServer();
+  const introSlugs = getAllAgentIntroWatchSlugs();
 
-  return [...new Set([...sheetSlugs, ...dbSlugs, ...agentSlugs])];
+  return [...new Set([...sheetSlugs, ...dbSlugs, ...agentSlugs, ...introSlugs])];
+}
+
+export type WatchPageSitemapEntry = {
+  slug: string;
+  updatedAt: string | null;
+};
+
+/** All shareable watch pages for sitemap.xml (playbook, agent profile, and intro videos). */
+export async function getWatchPageSitemapEntries(): Promise<WatchPageSitemapEntry[]> {
+  const slugs = await getAllWatchSlugsServer();
+  return slugs.map((slug) => ({ slug, updatedAt: null }));
 }
 
 function filterPublishedPlaybookArticleRows(

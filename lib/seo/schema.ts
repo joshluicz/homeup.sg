@@ -5,6 +5,11 @@ import type { PlaybookVideo } from "@/lib/data/playbook";
 import type { Listing } from "@/lib/listings/types";
 import { getPublicListingUrl } from "@/lib/listings/utils";
 import {
+  externalVideoWatchUrl,
+  resolveThumbnail,
+  toEmbedUrl as playbookEmbedUrl,
+} from "@/lib/playbook/embed";
+import {
   CEA_LICENSE,
   CEA_PUBLIC_REGISTER_URL,
   CEA_WEBSITE_URL,
@@ -466,23 +471,6 @@ export function realEstateListingSchema(listing: Listing) {
   };
 }
 
-function toEmbedUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes("youtube.com")) {
-      const id = u.searchParams.get("v");
-      return id ? `https://www.youtube.com/embed/${id}` : url;
-    }
-    if (u.hostname.includes("youtu.be")) {
-      return `https://www.youtube.com/embed${u.pathname}`;
-    }
-    if (u.hostname.includes("vimeo.com")) {
-      return `https://player.vimeo.com/video${u.pathname}`;
-    }
-  } catch {}
-  return url;
-}
-
 function durationToIso(duration: string): string {
   const parts = duration.split(":").map(Number);
   if (parts.length === 2) {
@@ -496,20 +484,68 @@ function durationToIso(duration: string): string {
   return "PT0S";
 }
 
-export function videoObjectsSchema(videos: { title: string; description: string; thumbnail: string; videoUrl: string; publishedAt: string; duration: string }[]) {
+type VideoSchemaInput = {
+  slug?: string;
+  title: string;
+  description?: string;
+  thumbnail: string;
+  videoUrl: string;
+  publishedAt?: string;
+  duration?: string;
+};
+
+function buildVideoObjectSchema(video: VideoSchemaInput) {
+  const pageUrl = video.slug ? `${SITE_URL}/playbook/watch/${video.slug}` : undefined;
+  const thumbnailUrl = resolveThumbnail(video.thumbnail, video.videoUrl);
+
+  return {
+    "@type": "VideoObject" as const,
+    ...(pageUrl && { "@id": `${pageUrl}#video`, url: pageUrl }),
+    name: video.title,
+    description: video.description || video.title,
+    thumbnailUrl,
+    contentUrl: externalVideoWatchUrl(video.videoUrl),
+    embedUrl: playbookEmbedUrl(video.videoUrl),
+    ...(video.publishedAt ? { uploadDate: video.publishedAt } : {}),
+    ...(video.duration ? { duration: durationToIso(video.duration) } : {}),
+    publisher: { "@id": ORG_ID },
+  };
+}
+
+export function videoObjectsSchema(
+  videos: {
+    slug?: string;
+    title: string;
+    description: string;
+    thumbnail: string;
+    videoUrl: string;
+    publishedAt: string;
+    duration: string;
+  }[],
+) {
   return videos
-    .filter((v) => v.videoUrl && v.thumbnail)
-    .map((v) => ({
+    .filter((video) => video.videoUrl && video.thumbnail)
+    .map((video) => ({
       "@context": "https://schema.org",
-      "@type": "VideoObject",
-      name: v.title,
-      description: v.description || v.title,
-      thumbnailUrl: v.thumbnail,
-      embedUrl: toEmbedUrl(v.videoUrl),
-      uploadDate: v.publishedAt,
-      ...(v.duration ? { duration: durationToIso(v.duration) } : {}),
-      publisher: { "@id": ORG_ID },
+      ...buildVideoObjectSchema(video),
     }));
+}
+
+/** Watch-primary page schema so Google can index the video on a dedicated watch URL. */
+export function watchPageSchema(video: VideoSchemaInput) {
+  const pageUrl = `${SITE_URL}/playbook/watch/${video.slug}`;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": pageUrl,
+    url: pageUrl,
+    name: video.title,
+    description: video.description || video.title,
+    inLanguage: "en-SG",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    mainEntity: buildVideoObjectSchema({ ...video, slug: video.slug }),
+  };
 }
 
 /** Article/guide schema for a Playbook entry. Pairs with faqSchema + videoObjectsSchema
@@ -535,7 +571,7 @@ export function articleSchema(video: PlaybookVideo, authorAgentSlug?: string) {
     url,
     ...(video.tags?.length ? { keywords: video.tags.join(", ") } : {}),
     ...(video.videoUrl && video.thumbnail
-      ? { video: videoObjectsSchema([video])[0] }
+      ? { video: buildVideoObjectSchema({ ...video, description: video.description || video.title }) }
       : {}),
   };
 }

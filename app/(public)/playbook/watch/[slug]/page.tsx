@@ -12,7 +12,7 @@ import {
 } from "@/lib/playbook/server-queries";
 import { resolveThumbnail } from "@/lib/playbook/embed";
 import { buildPageMetadata } from "@/lib/seo/metadata";
-import { breadcrumbSchema } from "@/lib/seo/schema";
+import { breadcrumbSchema, watchPageSchema } from "@/lib/seo/schema";
 
 export const dynamicParams = true;
 
@@ -50,11 +50,22 @@ export default async function PlaybookWatchPage({ params }: WatchPageProps) {
   return (
     <>
       <JsonLd
-        data={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Playbook", path: "/playbook" },
-          { name: video.title, path: `/playbook/watch/${video.slug}` },
-        ])}
+        data={[
+          breadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Playbook", path: "/playbook" },
+            { name: video.title, path: `/playbook/watch/${video.slug}` },
+          ]),
+          watchPageSchema({
+            slug: video.slug,
+            title: video.title,
+            description: video.description,
+            thumbnail: video.thumbnail,
+            videoUrl: video.videoUrl,
+            publishedAt: video.publishedAt,
+            duration: video.duration,
+          }),
+        ]}
       />
       <Navbar />
       <main className="bg-white">
