@@ -146,11 +146,11 @@ export const AGENTS: Agent[] = [
       },
       {
         marker: "²",
-        text: "Rankings based on Buyer-represented Purchase transactions (Resale Properties) | 2025 | Source: Data.gov.sg",
+        text: "Rankings based on Buyer-represented Purchase transactions (Resale Private Properties) | 2025 | Source: Data.gov.sg",
       },
       {
         marker: "³",
-        text: "Global Award for Top 2% Achievers",
+        text: "Global Award for Top 2% Achievers | C21",
       },
     ],
     about: [],
