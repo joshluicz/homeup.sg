@@ -395,6 +395,14 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       setError("Article body is required.");
       return;
     }
+    if (mode === "article" && /^\s*</.test(form.article.trim())) {
+      setError("Article contains HTML formatting. Please rewrite using plain Markdown format (see the format guide in the editor).");
+      return;
+    }
+    if (mode === "article" && !/^How HomeUp Approaches This:/im.test(form.article)) {
+      setError("Article is missing the required 'How HomeUp Approaches This:' section. See the format guide in the editor.");
+      return;
+    }
     if (mode === "video" && !hasVideo) {
       setError("Add a video link or upload a file.");
       return;
