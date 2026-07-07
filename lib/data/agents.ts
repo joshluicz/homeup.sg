@@ -134,9 +134,24 @@ export const AGENTS: Agent[] = [
     quoteThirdPerson: true,
     accolades: [
       "NUS Real Estate (Hons)",
-      "Top Private Property Buying Transactor | C&H 2025",
+      "#1 Transactor in Agency | C&H 2025 (Private Residential Purchase)¹",
+      "#1 Transactor in Singapore | 2025 (Private Resale Purchase)²",
       "Top Agent Under 40 & Top 3 Producer | C&H 2025",
-      "Centurion Award 2025",
+      "Centurion Award 2025³",
+    ],
+    accoladeFootnotes: [
+      {
+        marker: "¹",
+        text: "Rankings based on Buyer-represented Purchase transactions (New Launch, Resale, EC) | C&H 2025",
+      },
+      {
+        marker: "²",
+        text: "Rankings based on Buyer-represented Purchase transactions (Resale Properties) | 2025 | Source: Data.gov.sg",
+      },
+      {
+        marker: "³",
+        text: "Global Award for Top 2% Achievers",
+      },
     ],
     about: [],
     specialties: ["Buyer representation", "New launch", "Upgrader planning"],
