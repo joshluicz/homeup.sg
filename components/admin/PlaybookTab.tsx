@@ -413,8 +413,11 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
         ? resolveThumbnail(form.thumbnail.trim(), form.video_url.trim())
         : "";
 
+    // Compute slug once so the INSERT and the revalidation/warmup use the identical value.
+    const newSlug = (!editId || isSheetCatalogue) ? slugify(form.title) : undefined;
+
     const payload = {
-      slug: isSheetCatalogue ? editingSlug : editId ? undefined : slugify(form.title),
+      slug: isSheetCatalogue ? editingSlug : newSlug,
       title: form.title.trim(),
       description: form.description.trim(),
       category: form.category,
@@ -453,7 +456,8 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       if (dbError) { setError(dbError.message); setSaving(false); return; }
     }
 
-    const articleSlug = editingSlug || slugify(form.title);
+    // Use the already-computed slug — never re-call slugify() here, as Date.now() changes.
+    const articleSlug = editingSlug || newSlug || "";
     await revalidatePlaybook(mode === "article" ? articleSlug : undefined);
     setSaving(false);
     setShowForm(false);

@@ -56,9 +56,8 @@ function isImageFile(file: File): boolean {
 }
 
 /** Detect whether a string is HTML or plain Markdown. */
-export function isHtmlContent(content: string): boolean {
-  return /^\s*</.test(content.trim());
-}
+export { isHtmlContent } from "@/lib/playbook/is-html-content";
+import { isHtmlContent } from "@/lib/playbook/is-html-content";
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 

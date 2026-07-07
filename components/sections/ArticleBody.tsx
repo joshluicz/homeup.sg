@@ -5,7 +5,7 @@ import { PlaybookStructuredArticle } from "@/components/sections/PlaybookStructu
 import { PlaybookArticleMarkdown } from "@/components/sections/PlaybookArticleMarkdown";
 import { PlaybookArticleHtml } from "@/components/sections/PlaybookArticleHtml";
 import { normalizePlaybookMarkdown } from "@/lib/playbook/markdown";
-import { isHtmlContent } from "@/components/admin/RichArticleEditor";
+import { isHtmlContent } from "@/lib/playbook/is-html-content";
 
 /**
  * Renders a playbook article. Handles three content formats:
