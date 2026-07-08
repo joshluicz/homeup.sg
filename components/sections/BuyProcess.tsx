@@ -70,7 +70,7 @@ const CONDO_STEPS: ProcessStep[] = [
   {
     step: "05",
     title: "Completion",
-    body: "Loan approved, insurance arranged, and completion timeline tracked. HomeUP monitors every milestone to key collection.",
+    body: "Loan approved and completion timeline tracked. HomeUP monitors every milestone to key collection.",
   },
 ];
 
