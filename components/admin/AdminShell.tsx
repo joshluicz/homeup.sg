@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/admin/listings", label: "Listings" },
   { href: "/admin/listings/pg-sources", label: "Listings Sync" },
   { href: "/admin/listings?tab=playbook&view=articles", label: "Articles" },
+  { href: "/admin/article-generation", label: "AI Generate" },
   { href: "/admin/agent-profiles", label: "Agent Videos" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
 ];
