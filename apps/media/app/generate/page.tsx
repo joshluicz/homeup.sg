@@ -812,10 +812,13 @@ export default function GeneratePage() {
       if (roomLabels.length > 0) {
         const clips = await fetchRoomClips(blueprintId, roomLabels);
         setClipCards(enrichClipsWithPhotos(clips, loaded, roomEntries));
+        // If clips have already been started, land on the clips view so the
+        // user can see status and retry failed clips directly.
+        setPageState(clips.length > 0 ? "clips" : "review");
       } else {
         setClipCards([]);
+        setPageState("review");
       }
-      setPageState("review");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load blueprint.");
     } finally {
@@ -1690,7 +1693,7 @@ export default function GeneratePage() {
           </div>
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={() => setPageState("review")}
             className={SECONDARY_BTN_CLASS}
           >
             <ChevronLeftIcon className="h-4 w-4" />
