@@ -12,6 +12,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -26,9 +27,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body>
+      <body className="flex min-h-full flex-col">
         {user && <AppNav email={user.email ?? "Signed in"} />}
-        <main>{children}</main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </body>
     </html>
   );
