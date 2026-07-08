@@ -14,7 +14,7 @@ import {
   roomImageUrls,
 } from "@/lib/blueprint";
 import { EMPTY_WEBHOOK_RESPONSE_MESSAGE, readResponseJson } from "@/lib/read-response-json";
-import { clipFileNameForLabel } from "@/lib/pipeline/room-label";
+import { clipFileNameForLabel, expandPhotoLabels } from "@/lib/pipeline/room-label";
 
 const WEBHOOK_GENERATE_BLUEPRINT = "/api/generate-blueprint";
 const WEBHOOK_APPROVE_BLUEPRINT = "/api/approve-blueprint";
@@ -260,9 +260,22 @@ function buildClipCardsFromRows(
   rows: MediaFileRow[],
   roomLabels: string[],
 ): ClipCard[] {
+  // Blueprint labels come first; then append any extra labels created by the
+  // pipeline for multi-photo rooms (e.g. "Living Room (2)") that aren't
+  // already represented in the blueprint list.
+  const seen = new Set(roomLabels);
+  const extraLabels: string[] = [];
+  for (const row of rows) {
+    const lbl = row.metadata?.label;
+    if (lbl && !seen.has(lbl)) {
+      seen.add(lbl);
+      extraLabels.push(lbl);
+    }
+  }
+
   const labels =
     roomLabels.length > 0
-      ? roomLabels
+      ? [...roomLabels, ...extraLabels]
       : rows
           .map((row) => row.metadata?.label)
           .filter((label): label is string => Boolean(label));
@@ -1243,27 +1256,37 @@ export default function GeneratePage() {
       );
     }
 
-    setClipCards((prev) =>
-      roomPhotos.map((room) => {
-        const existing = prev.find((clip) => clip.label === room.label);
-        return {
-          label: room.label,
-          status: "queued" as const,
-          fileName: clipFileNameForLabel(room.label),
-          previewUrl:
-            existing?.previewUrl ??
-            roomPrimaryPreviewUrl(
-              roomEntries.find((entry) => entry.label === room.label) ?? {
-                id: "",
-                label: room.label,
-                durationSeconds: 5,
-                photos: [],
-              },
-            ) ??
-            null,
-        };
-      }),
-    );
+    setClipCards((prev) => {
+      return roomPhotos.flatMap((room) => {
+        const imageCount = Math.max(
+          (room.image_urls?.filter((u) => u.trim() !== "") ?? [room.r2_url].filter(Boolean)).length,
+          1,
+        );
+        const subLabels = expandPhotoLabels(room.label, imageCount);
+        const baseEntry = roomEntries.find((entry) => entry.label === room.label);
+
+        return subLabels.map((label, i) => {
+          const existing = prev.find((clip) => clip.label === label);
+          return {
+            label,
+            status: "queued" as const,
+            fileName: clipFileNameForLabel(label),
+            previewUrl:
+              existing?.previewUrl ??
+              (i === 0
+                ? roomPrimaryPreviewUrl(
+                    baseEntry ?? {
+                      id: "",
+                      label: room.label,
+                      durationSeconds: 5,
+                      photos: [],
+                    },
+                  )
+                : null),
+          };
+        });
+      });
+    });
     setPageState("clips");
   }
 

@@ -4,6 +4,9 @@ export const FAL_MODEL_SEEDANCE_2 = "bytedance/seedance-2.0/reference-to-video";
 export const FAL_MODEL_SEEDANCE_15 =
   "fal-ai/bytedance/seedance/v1.5/pro/image-to-video";
 
+/** All new clip jobs use Seedance 1.5; Seedance 2.0 is kept only for historic reference. */
+export const FAL_MODEL_DEFAULT = FAL_MODEL_SEEDANCE_15;
+
 const SUBMIT_TIMEOUT_MS = 30_000;
 const STATUS_TIMEOUT_MS = 12_000;
 const RESULT_TIMEOUT_MS = 30_000;
@@ -83,15 +86,10 @@ function resolveImageUrls(body: RoomClipRequest): string[] {
   return [];
 }
 
-function resolveFalModel(body: RoomClipRequest, imageUrls: string[]): string {
-  if (
-    body.fal_model === FAL_MODEL_SEEDANCE_2 ||
-    body.fal_model === FAL_MODEL_SEEDANCE_15
-  ) {
-    return body.fal_model;
-  }
-  if (imageUrls.length > 1) {
-    return FAL_MODEL_SEEDANCE_2;
+function resolveFalModel(body: RoomClipRequest, _imageUrls: string[]): string {
+  // Only honour an explicit Seedance 1.5 override; ignore anything else.
+  if (body.fal_model === FAL_MODEL_SEEDANCE_15) {
+    return FAL_MODEL_SEEDANCE_15;
   }
   return FAL_MODEL_SEEDANCE_15;
 }
@@ -264,14 +262,11 @@ export async function startRoomClip(
   try {
     configureFal();
 
-    const input =
-      falModel === FAL_MODEL_SEEDANCE_2
-        ? buildSeedance2Input(image_urls, higgsfield_prompt, duration_seconds)
-        : buildSeedance15Input(
-            image_urls[0],
-            higgsfield_prompt,
-            duration_seconds,
-          );
+    const input = buildSeedance15Input(
+      image_urls[0],
+      higgsfield_prompt,
+      duration_seconds,
+    );
 
     const submitted = await withTimeout(
       fal.queue.submit(falModel, { input }),
@@ -453,11 +448,8 @@ export async function fetchRoomClipResult(
 }
 
 export function resolveFalModelForTask(
-  imageUrls: string[],
-  falModel?: string,
+  _imageUrls: string[],
+  _falModel?: string,
 ): string {
-  return resolveFalModel(
-    { blueprint_id: "", label: "", higgsfield_prompt: "", fal_model: falModel },
-    imageUrls,
-  );
+  return FAL_MODEL_SEEDANCE_15;
 }
