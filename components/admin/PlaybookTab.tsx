@@ -10,14 +10,13 @@ import { getPlaybookAgentOptions } from "@/lib/playbook/agent-attribution";
 import { resolveThumbnail, resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import type { PlaybookTopic } from "@/lib/data/playbook";
-import { PlaybookArticleEditor } from "@/components/admin/PlaybookArticleEditor";
+import { RichArticleEditor } from "@/components/admin/RichArticleEditor";
 import { createClient } from "@/lib/supabase/client";
 import {
   uploadPlaybookArticleImage,
   uploadPlaybookThumbnail,
   uploadPlaybookVideoFile,
 } from "@/lib/playbook/storage";
-import { PLAYBOOK_ARTICLE_TEMPLATE } from "@/lib/playbook/article-format";
 import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 import {
   isSheetCatalogueAdminId,
@@ -283,7 +282,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     setForm({
       ...emptyForm,
       topic: "upgraders",
-      article: isVideoMode ? "" : PLAYBOOK_ARTICLE_TEMPLATE,
+      article: "",
     });
     setFaq([]);
     setError(null);
@@ -393,14 +392,6 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
 
     if (mode === "article" && !hasArticle) {
       setError("Article body is required.");
-      return;
-    }
-    if (mode === "article" && /^\s*</.test(form.article.trim())) {
-      setError("Article contains HTML formatting. Please rewrite using plain Markdown format (see the format guide in the editor).");
-      return;
-    }
-    if (mode === "article" && !/^How HomeUp Approaches This:/im.test(form.article)) {
-      setError("Article is missing the required 'How HomeUp Approaches This:' section. See the format guide in the editor.");
       return;
     }
     if (mode === "video" && !hasVideo) {
@@ -873,11 +864,10 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
               </div>
 
               <div>
-                <FieldLabel required>Article (Markdown)</FieldLabel>
-                <PlaybookArticleEditor
+                <FieldLabel required>Article</FieldLabel>
+                <RichArticleEditor
                   value={form.article}
                   onChange={(article) => set("article", article)}
-                  textareaClassName={cn(inputClass, "font-mono text-xs leading-relaxed")}
                 />
               </div>
 
