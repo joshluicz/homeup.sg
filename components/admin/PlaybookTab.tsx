@@ -11,6 +11,7 @@ import { resolveThumbnail, resolveVideoThumbnailCandidatesForDisplay } from "@/l
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import type { PlaybookTopic } from "@/lib/data/playbook";
 import { RichArticleEditor } from "@/components/admin/RichArticleEditor";
+import { ArticleFormatGuide } from "@/components/admin/ArticleFormatGuide";
 import { createClient } from "@/lib/supabase/client";
 import {
   uploadPlaybookArticleImage,
@@ -862,6 +863,8 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                 />
                 <p className="mt-1 text-xs font-normal text-neutral-400">{form.meta_description.length}/155 recommended</p>
               </div>
+
+              <ArticleFormatGuide />
 
               <div>
                 <FieldLabel required>Article</FieldLabel>
