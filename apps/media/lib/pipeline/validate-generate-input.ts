@@ -66,11 +66,11 @@ export function validateGenerateInput(body: unknown): GenerateBlueprintInput {
         Number(raw.seconds_per_room) ||
         5;
       const urlLines = urls
-        .map((url, index) => `  - @Image${index + 1}: ${url}`)
+        .map((url, index) => `  - Photo ${index + 1}: ${url}`)
         .join("\n");
       const multiNote =
         urls.length > 1
-          ? `\n  (${urls.length} reference photos — write higgsfield_prompt using @Image1, @Image2, etc.)`
+          ? `\n  (${urls.length} photos — each photo gets its own separate Seedance 1.5 clip. Write ONE higgsfield_prompt that works for any single photo of this room, referencing only @Image1.)`
           : "";
       return `- ${photo.label} (${duration}s):\n${urlLines}${multiNote}`;
     })
