@@ -1329,6 +1329,70 @@ export default function GeneratePage() {
     }
   }
 
+  /**
+   * Map clip labels (including sub-labels like "Living Room (2)") back to
+   * individual room photo entries suitable for re-submission to the API.
+   * Sub-labels resolve to the base blueprint room and the specific photo URL
+   * at that photo's index.
+   */
+  function resolveRetryRoomPhotos(labels: string[]): Array<{
+    label: string;
+    r2_url: string;
+    image_urls: string[];
+    higgsfield_prompt: string;
+    duration_seconds: number;
+  }> {
+    if (!blueprint) return [];
+
+    return labels.flatMap((label) => {
+      const match = label.match(/^(.+)\s+\((\d+)\)$/);
+      const baseLabel = match ? match[1] : label;
+      const photoIndex = match ? parseInt(match[2]) - 1 : 0;
+
+      const room = (blueprint.rooms ?? []).find((r) => r.label === baseLabel);
+      if (!room) return [];
+
+      const entry = roomEntries.find((e) => e.label === baseLabel);
+      const allUrls = entry
+        ? roomUrlsForVideo(entry)
+        : roomImageUrls({ r2_url: room.r2_url, image_urls: room.image_urls });
+
+      const specificUrl = allUrls[photoIndex] ?? allUrls[0] ?? room.r2_url ?? "";
+      if (!specificUrl) return [];
+
+      return [
+        {
+          label,
+          r2_url: specificUrl,
+          image_urls: [specificUrl],
+          higgsfield_prompt: room.higgsfield_prompt ?? "",
+          duration_seconds: room.duration_seconds ?? secondsPerRoom ?? 6,
+        },
+      ];
+    });
+  }
+
+  async function handleRetryClip(label: string) {
+    if (!blueprint || approving) return;
+
+    setApproving(true);
+    setError(null);
+
+    try {
+      const roomPhotos = resolveRetryRoomPhotos([label]);
+      if (roomPhotos.length === 0 || !roomPhotos[0].r2_url) {
+        throw new Error(
+          "Cannot retry — photo URL is missing. Try reloading the blueprint.",
+        );
+      }
+      await startClipGeneration(roomPhotos);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Retry failed.");
+    } finally {
+      setApproving(false);
+    }
+  }
+
   async function handleRetryFailedClips() {
     if (!blueprint) return;
 
@@ -1342,11 +1406,10 @@ export default function GeneratePage() {
     setError(null);
 
     try {
-      const roomPhotos = buildRoomPhotos(blueprint.rooms ?? [], failedLabels);
-      const missingPhotos = roomPhotos.filter((room) => !room.r2_url);
-      if (missingPhotos.length > 0) {
+      const roomPhotos = resolveRetryRoomPhotos(failedLabels);
+      if (roomPhotos.length === 0) {
         throw new Error(
-          `Cannot retry — room photos are missing for: ${missingPhotos.map((room) => room.label).join(", ")}. Generate a new blueprint instead.`,
+          "Cannot retry — room photos are missing. Try reloading the blueprint.",
         );
       }
 
@@ -1588,8 +1651,8 @@ export default function GeneratePage() {
             ) : (
               <>
                 <p className="mb-4 text-sm text-neutral-600">
-                  Approve this blueprint to generate {blueprintRooms.length} room
-                  clips with fal Seedance 2 multi-reference video.
+                  Approve this blueprint to generate room clips with Seedance 1.5.
+                  Each photo produces one clip.
                 </p>
                 <button
                   type="button"
@@ -1729,8 +1792,20 @@ export default function GeneratePage() {
                   </>
                 )}
 
-                {clip.status === "failed" && clip.errorMessage && (
-                  <p className="text-sm text-red-600">{clip.errorMessage}</p>
+                {clip.status === "failed" && (
+                  <div className="space-y-2">
+                    {clip.errorMessage && (
+                      <p className="text-sm text-red-600">{clip.errorMessage}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRetryClip(clip.label)}
+                      disabled={approving}
+                      className={TERTIARY_BTN_CLASS}
+                    >
+                      {approving ? "Retrying…" : "Retry this clip"}
+                    </button>
+                  </div>
                 )}
               </div>
             ))}
