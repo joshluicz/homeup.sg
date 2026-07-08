@@ -1,3 +1,8 @@
+import {
+  assignUniqueClipSlugs,
+  clipFileNameForSlug,
+  clipR2KeyForSlug,
+} from "@/lib/pipeline/room-label";
 import type {
   ApproveRoomPhoto,
   ApproveBlueprintResult,
@@ -36,15 +41,13 @@ export function validateApproveInput(body: unknown): {
   };
 }
 
-function labelToSlug(label: string): string {
-  return label.toLowerCase().replace(/ /g, "_");
-}
-
 export function splitRoomsForProcessing(
   blueprint_id: string,
   room_photos: ApproveRoomPhoto[],
 ): RoomClipTask[] {
-  return room_photos.map((photo) => {
+  const slugs = assignUniqueClipSlugs(room_photos.map((photo) => photo.label));
+
+  return room_photos.map((photo, index) => {
     const image_urls =
       Array.isArray(photo.image_urls) && photo.image_urls.length > 0
         ? photo.image_urls
@@ -52,7 +55,7 @@ export function splitRoomsForProcessing(
           ? [photo.r2_url]
           : [];
     const r2_url = image_urls[0] ?? photo.r2_url;
-    const slug = labelToSlug(photo.label);
+    const slug = slugs[index]!;
 
     return {
       blueprint_id,
@@ -61,8 +64,8 @@ export function splitRoomsForProcessing(
       image_urls,
       higgsfield_prompt: photo.higgsfield_prompt,
       duration_seconds: photo.duration_seconds || 6,
-      file_name: `room_clip_${slug}.mp4`,
-      r2_key: `room-clips/${blueprint_id}/${slug}.mp4`,
+      file_name: clipFileNameForSlug(slug),
+      r2_key: clipR2KeyForSlug(blueprint_id, slug),
     };
   });
 }

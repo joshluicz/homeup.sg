@@ -45,6 +45,12 @@ export async function runApproveBlueprint(
   body: unknown,
   execution?: PipelineRunLogger,
 ): Promise<ApproveBlueprintResult> {
+  if (!process.env.FAL_API_KEY?.trim()) {
+    throw new Error(
+      "FAL_API_KEY is not configured on the server. Clip generation cannot start.",
+    );
+  }
+
   const logger = execution ?? null;
   const { blueprint_id, room_photos } = await logger?.step(
     "validate_approval",
@@ -78,7 +84,11 @@ export async function runApproveBlueprint(
     throw new Error(statusError.message);
   }
 
-  for (const task of tasks) {
+  for (const [index, task] of tasks.entries()) {
+    if (index > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+
     const start = await logger?.step(
       `start_clip:${task.label}`,
       `Start clip: ${task.label}`,

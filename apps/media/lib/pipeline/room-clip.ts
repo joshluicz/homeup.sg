@@ -201,6 +201,17 @@ function withTimeout<T>(
   ]);
 }
 
+function formatFalError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+  if (message === "Forbidden" || /\b403\b/.test(message)) {
+    return (
+      "fal.ai rejected the request (403 Forbidden). " +
+      "Check FAL_API_KEY, account credits, and model access on Vercel, then retry."
+    );
+  }
+  return message;
+}
+
 function isRetryableError(message: string): boolean {
   return (
     message.includes("timed out") ||
@@ -282,7 +293,7 @@ export async function startRoomClip(
       },
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = formatFalError(err);
     return {
       success: false,
       status: "failed",
@@ -365,7 +376,7 @@ export async function checkRoomClipStatus(
       },
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = formatFalError(err);
     return {
       success: false,
       status: "processing",
@@ -423,7 +434,7 @@ export async function fetchRoomClipResult(
       },
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = formatFalError(err);
     return {
       success: false,
       label,

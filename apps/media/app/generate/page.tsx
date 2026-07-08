@@ -14,6 +14,7 @@ import {
   roomImageUrls,
 } from "@/lib/blueprint";
 import { EMPTY_WEBHOOK_RESPONSE_MESSAGE, readResponseJson } from "@/lib/read-response-json";
+import { clipFileNameForLabel } from "@/lib/pipeline/room-label";
 
 const WEBHOOK_GENERATE_BLUEPRINT = "/api/generate-blueprint";
 const WEBHOOK_APPROVE_BLUEPRINT = "/api/approve-blueprint";
@@ -226,11 +227,11 @@ function findMediaFileForLabel(
   rows: MediaFileRow[],
   label: string,
 ): MediaFileRow | undefined {
-  const slug = labelToFileSlug(label);
+  const exactFileName = clipFileNameForLabel(label).toLowerCase();
   const matches = rows.filter((file) => {
     const metaLabel = file.metadata?.label;
     if (metaLabel && metaLabel === label) return true;
-    return file.file_name.toLowerCase().includes(slug);
+    return file.file_name.toLowerCase() === exactFileName;
   });
 
   if (matches.length === 0) return undefined;
@@ -275,7 +276,7 @@ function buildClipCardsFromRows(
     return {
       label,
       status: mapFileStatus(row.status),
-      videoUrl: row.status === "done" ? row.r2_url : undefined,
+      videoUrl: row.status === "done" ? `${row.r2_url}?v=${row.id}` : undefined,
       errorMessage:
         row.status === "error"
           ? (row.error_message ?? "Generation failed")
@@ -355,10 +356,6 @@ function slugifyLabel(label: string): string {
 
 function buildPhotoKey(label: string, file: File, index = 0): string {
   return `room-photos/${Date.now()}-${slugifyLabel(label)}-${index}.${fileExtension(file)}`;
-}
-
-function labelToFileSlug(label: string): string {
-  return label.toLowerCase().replace(/\s+/g, "_");
 }
 
 function requiredField(value: string, fallback: string): string {
@@ -1252,7 +1249,7 @@ export default function GeneratePage() {
         return {
           label: room.label,
           status: "queued" as const,
-          fileName: `room_clip_${labelToFileSlug(room.label)}.mp4`,
+          fileName: clipFileNameForLabel(room.label),
           previewUrl:
             existing?.previewUrl ??
             roomPrimaryPreviewUrl(
