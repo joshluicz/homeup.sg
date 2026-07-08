@@ -2,13 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  height: 100%;
-}
-
 body {
   @apply bg-neutral-50 text-neutral-900 antialiased;
-  /* iPhone safe area: pad the bottom for the home indicator */
+  /* iPhone home indicator safe area */
   padding-bottom: env(safe-area-inset-bottom);
 }

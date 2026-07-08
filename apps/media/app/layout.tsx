@@ -27,9 +27,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body className="flex min-h-full flex-col">
+      <body>
         {user && <AppNav email={user.email ?? "Signed in"} />}
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main>{children}</main>
       </body>
     </html>
   );
