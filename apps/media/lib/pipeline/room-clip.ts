@@ -136,11 +136,11 @@ function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
   }
 
   const singleRefSuffix =
-    "Animate the still photo with visible but controlled in-frame motion: slow pan, slight parallax, or gentle push within @Image1 only. " +
-    "Ignore any static locked-off or tripod wording if present. " +
-    "Do not freeze the shot; the camera motion should be noticeable while staying realistic. " +
-    "Do not invent new walls, doors, windows, furniture, or rooms. " +
-    "Keep architecture, layout, colours, and objects identical to the reference image. " +
+    "Camera motion must be smooth and continuous throughout — no static or frozen shot. " +
+    "Use a slow pan (left to right, or right to left) OR a gentle push-in within @Image1. " +
+    "Do not cut, jump, or reveal space outside @Image1. " +
+    "Keep all architecture, layout, colours, and objects identical to @Image1. " +
+    "Do not invent walls, doors, windows, or furniture not visible in @Image1. " +
     "Empty room, no people.";
 
   return `${trimmed} ${singleRefSuffix}`;

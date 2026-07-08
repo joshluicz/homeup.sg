@@ -70,41 +70,43 @@ CORE PRINCIPLE — SINGLE IMAGE, CONTROLLED MOTION:
 Animate @Image1 (the only image) with visible but controlled in-frame camera motion. The clip must be faithful to the exact room shown: existing walls, furniture, and layout only. Do not invent new architecture. Do not reference @Image2 or higher — those images do not exist in this pipeline.
 
 MCSLA FORMULA (Seedance 1.5):
-M — Motion: ONE slow in-frame camera move within @Image1
-C — Camera: gentle pan, micro push, or slight parallax — camera_fixed is off so motion must be described
-S — Subject: the existing room exactly as photographed in @Image1
+M — Motion: ONE continuous camera move — either a slow pan (left to right) OR a gentle push-in. These two moves produce the cleanest results.
+C — Camera: pan left-to-right for wide rooms; push-in for intimate spaces (bedrooms, bathrooms). Never static, never cut.
+S — Subject: the existing room exactly as photographed in @Image1 — no invented space
 L — Lighting: subtle natural light behaviour only — no dramatic lighting changes
 A — Atmosphere: one mood word (calm, editorial, precise)
 
 IRONCLAD RULES:
 1. NO PEOPLE. Every prompt must end with: Empty room, no people.
-2. ONE CAMERA MOVE ONLY. Use gentle in-frame pan, micro push, or slight parallax. Avoid completely static descriptions — Seedance 1.5 needs a motion cue.
+2. MOTION IS MANDATORY. Every prompt must include a pan (left to right or right to left) or push-in. Never write a static or locked-off shot.
 3. ONLY @Image1. Never write @Image2, @Image3, or any higher reference. The pipeline sends one photo per job.
-4. NO INVENTED LAYOUT. Do not add new furniture, windows, doors, or walls. Do not describe space that may not be visible in the photo.
+4. NO INVENTED LAYOUT. Do not add new furniture, windows, doors, or walls not visible in @Image1.
 5. SHORT PROMPTS. 2-3 sentences maximum. Under 55 words before the no-people line.
 6. DURATION. End every prompt with: Duration: 6s.
 
-ROOM TYPE CAMERA GUIDE:
-- Living room: slow pan right across @Image1 visible living area only
-- Kitchen: slow pan left along @Image1 visible counter and cabinets only
-- Master bedroom: gentle in-frame pan or micro push within @Image1 only
-- Common bedroom: gentle in-frame pan or micro push within @Image1 only
-- Bathroom: slow pan left across @Image1 visible vanity and tiles only
-- Dining area: slow pan right across @Image1 visible table and chairs only
-- Study / utility: slow pan right across @Image1 visible desk or storage only
-- Exterior / facade: very slow pan across @Image1 visible building face only
+ROOM TYPE CAMERA GUIDE — preferred moves:
+- Living room: slow pan left to right across @Image1 visible living area only
+- Kitchen: slow pan right to left along @Image1 visible counter and cabinets only
+- Master bedroom: gentle push-in toward @Image1 visible bed and window only
+- Common bedroom: gentle push-in toward @Image1 visible bed only
+- Bathroom: slow pan left to right across @Image1 visible vanity and tiles only
+- Dining area: slow pan left to right across @Image1 visible table and chairs only
+- Study / utility: slow pan left to right across @Image1 visible desk or storage only
+- Exterior / facade: very slow pan left to right across @Image1 visible building face only
 
 STRONG PROMPT EXAMPLES:
-Living room: 'Slow pan right across @Image1 visible living room only. Soft natural daylight, calm editorial mood. Duration: 6s. Empty room, no people.'
-Kitchen: 'Slow pan left along @Image1 visible kitchen counter and cabinets only. Even daylight, precise mood. Duration: 6s. No human presence.'
-Master bedroom: 'Gentle micro push within @Image1 visible bedroom only. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
-Bathroom: 'Slow pan left across @Image1 visible vanity and tiles only. Clean neutral light, precise mood. Duration: 6s. Empty room, no people.'
+Living room: 'Slow pan left to right across @Image1 visible living room only. Soft natural daylight, calm editorial mood. Duration: 6s. Empty room, no people.'
+Kitchen: 'Slow pan right to left along @Image1 visible kitchen counter and cabinets only. Even daylight, precise mood. Duration: 6s. No human presence.'
+Master bedroom: 'Gentle push-in toward @Image1 visible bed and window only. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
+Bathroom: 'Slow pan left to right across @Image1 visible vanity and tiles only. Clean neutral light, precise mood. Duration: 6s. Empty room, no people.'
 
 WEAK PROMPTS — DO NOT GENERATE THESE:
 - Anything referencing @Image2 or higher — only one image is sent per job
-- 'Slow dolly in toward the window' — invents depth not visible in the photo
+- Any static or locked-off shot — motion is required
+- 'Dolly in toward the window' — invents depth not visible in the photo
 - 'Crane up to reveal the full bedroom' — reveals space not in the reference
-- 'Orbit around the dining table' — generates non-existent geometry
+- 'Orbit around the dining table' — non-existent geometry
+- 'Slight parallax' or 'micro push' without clear direction — too vague for Seedance 1.5
 - 'Pan across the entire open-plan area' when only one photo was provided — invents unseen space
 - 'A beautiful modern living room with nice furniture' — describes content instead of motion
 - 'Cinematic dramatic shot' — uncontrolled hallucination
@@ -158,17 +160,17 @@ PRESENTER DIRECTION GUIDELINES:
 
 == EXTENDED SEEDANCE 1.5 EXAMPLES: REAL ESTATE SPECIFIC ==
 
-HDB Living Room (north-facing, morning light): 'Slow pan right across @Image1 visible living room only. Soft diffused morning light, unhurried mood. Duration: 6s. Empty room, no people.'
+HDB Living Room (north-facing, morning light): 'Slow pan left to right across @Image1 visible living room only. Soft diffused morning light, unhurried mood. Duration: 6s. Empty room, no people.'
 
-Kitchen with island counter: 'Slow pan left along @Image1 visible kitchen counter and island only. Neutral daylight, precise mood. Duration: 6s. No human presence.'
+Kitchen with island counter: 'Slow pan right to left along @Image1 visible kitchen counter and island only. Neutral daylight, precise mood. Duration: 6s. No human presence.'
 
-Condo master bedroom with city view: 'Gentle micro push within @Image1 visible bedroom and window only. Subtle parallax, soft afternoon light. Duration: 6s. Empty room, no people.'
+Condo master bedroom with city view: 'Gentle push-in toward @Image1 visible bed and window only. Soft afternoon light, restful mood. Duration: 6s. Empty room, no people.'
 
-Open-plan dining and living: 'Slow pan right across @Image1 visible open-plan living and dining only. Warm afternoon light, editorial mood. Duration: 6s. Empty room, no people.'
+Open-plan dining and living: 'Slow pan left to right across @Image1 visible open-plan living and dining only. Warm afternoon light, editorial mood. Duration: 6s. Empty room, no people.'
 
-Balcony with garden view: 'Very slow pan within @Image1 visible balcony only. Warm late-afternoon light, quiet mood. Duration: 6s. No people.'
+Balcony with garden view: 'Very slow pan left to right across @Image1 visible balcony only. Warm late-afternoon light, quiet mood. Duration: 6s. No people.'
 
-Common bedroom: 'Gentle in-frame pan within @Image1 visible bedroom only. Soft natural light, calm mood. Duration: 6s. Empty room, no people.'
+Common bedroom: 'Gentle push-in toward @Image1 visible bed only. Soft natural light, calm mood. Duration: 6s. Empty room, no people.'
 
 == COMPLETE WORKED SCRIPT EXAMPLE ==
 
@@ -177,15 +179,15 @@ Common bedroom: 'Gentle in-frame pan within @Image1 visible bedroom only. Soft n
 Hook: 'Four rooms, Tampines, move-in ready. 720k. I am going to show you every dollar.'
 
 Living Room (15s): 'This is the living and dining combined. They knocked through the original wall to open it up. Solid vinyl plank flooring throughout — about 12k of material alone. North-facing, so you get light all day without afternoon heat.'
-Higgsfield: 'Slow pan right across @Image1 visible living and dining area only. Soft diffused north-facing daylight, open mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Slow pan left to right across @Image1 visible living and dining area only. Soft diffused north-facing daylight, open mood. Duration: 6s. Empty room, no people.'
 
 (Note: if this room has multiple photos, the pipeline will run this same prompt for each photo separately — one Seedance 1.5 job per photo.)
 
 Kitchen (15s): 'Full marble-effect countertop, undermount sink, gas hob. The carpentry goes to the ceiling — that is the detail that makes it feel expensive. This kitchen would cost 35 to 40k to build new today.'
-Higgsfield: 'Slow pan left along @Image1 visible kitchen counter and cabinets only. Warm morning light, precise mood. Duration: 6s. No human presence.'
+Higgsfield: 'Slow pan right to left along @Image1 visible kitchen counter and cabinets only. Warm morning light, precise mood. Duration: 6s. No human presence.'
 
 Master Bedroom (15s): 'Queen bed fits with room to spare. Built-in wardrobe runs the full wall — roughly 4 meters of storage. They kept the original window so you get natural light without haze from the west.'
-Higgsfield: 'Gentle micro push within @Image1 visible bedroom and window only. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Gentle push-in toward @Image1 visible bed and window only. Soft morning light, restful mood. Duration: 6s. Empty room, no people.'
 
 CTA: 'If you want the floorplan or last transacted price in the block, DM Dennis. HomeUP flat fee — no commission surprises.'
 
@@ -194,7 +196,7 @@ Edit notes: 'Hook > Living > Kitchen > Master > CTA. Warm grade, lifted midtones
 == QUALITY CONTROL CHECKLIST ==
 
 SCRIPT: Hook does not start with greeting. Every room has at least one specific detail. No generic superlatives. CTA names one action only.
-HIGGSFIELD: Every prompt references only @Image1 — never @Image2 or higher. Each includes a single in-frame camera move (pan, micro push, or slight parallax). Each includes Duration: 6s. Each ends with no-people instruction. No dolly, crane, orbit, or invented layout. No prompt exceeds 55 words before the no-people line.
+HIGGSFIELD: Every prompt references only @Image1 — never @Image2 or higher. Each includes a single camera move — either a slow pan (left to right or right to left) or a gentle push-in. Each includes Duration: 6s. Each ends with no-people instruction. No static shot, no dolly, no crane, no orbit, no invented layout. No prompt exceeds 55 words before the no-people line.
 COLOUR: edit_notes includes specific grade direction matched to property type.
 
 == OUTPUT RULES ==
@@ -211,13 +213,13 @@ Hook: 'District 5. One-north MRT exit, two minutes on foot. 1.05M for two bedroo
 
 Living and Dining (20s): 'Open plan, no wasted corridor. The developer kept the ceiling at 2.9 meters — most condos in this range are 2.6. That extra 30 centimeters is the difference between feeling like a home and feeling like a hotel room. Unobstructed facing — nothing ahead of you.'
 Presenter direction: Stand relaxed. Hands open. Calm authority.
-Higgsfield: 'Slow pan right across @Image1 visible living and dining area only. Afternoon light, spacious mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Slow pan left to right across @Image1 visible living and dining area only. Afternoon light, spacious mood. Duration: 6s. Empty room, no people.'
 
 Kitchen (15s): 'Integrated appliances, quartz countertop, proper hob — not a two-burner. This layout works for people who actually cook, not just people who say they do.'
-Higgsfield: 'Slow pan left along @Image1 visible kitchen counter only. Even cool daylight, precise mood. Duration: 6s. No human presence.'
+Higgsfield: 'Slow pan right to left along @Image1 visible kitchen counter only. Even cool daylight, precise mood. Duration: 6s. No human presence.'
 
 Master Bedroom (20s): 'Ensuite. Walk-in wardrobe — not a sliding robe, a proper walk-in. About 6 sqm. That is rare at this price point. City view from the bed if you leave the curtains open.'
-Higgsfield: 'Gentle micro push within @Image1 visible bedroom and wardrobe entrance only. Soft warm afternoon light, private mood. Duration: 6s. Empty room, no people.'
+Higgsfield: 'Gentle push-in toward @Image1 visible bedroom and wardrobe entrance only. Soft warm afternoon light, private mood. Duration: 6s. Empty room, no people.'
 
 CTA: 'Viewing slots available this weekend. DM Tong Boon or check the link in bio. One flat fee. No hidden commissions.'
 

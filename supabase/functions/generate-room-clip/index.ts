@@ -139,9 +139,11 @@ function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
   }
 
   const singleRefSuffix =
-    "Photo-faithful animation only: slow camera movement across the visible scene in @Image1. " +
-    "Do not invent new walls, doors, windows, furniture, or rooms. " +
-    "Keep architecture, layout, colours, and objects identical to the reference image. " +
+    "Camera motion must be smooth and continuous throughout — no static or frozen shot. " +
+    "Use a slow pan (left to right, or right to left) OR a gentle push-in within @Image1. " +
+    "Do not cut, jump, or reveal space outside @Image1. " +
+    "Keep all architecture, layout, colours, and objects identical to @Image1. " +
+    "Do not invent walls, doors, windows, or furniture not visible in @Image1. " +
     "Empty room, no people.";
 
   return `${trimmed} ${singleRefSuffix}`;
