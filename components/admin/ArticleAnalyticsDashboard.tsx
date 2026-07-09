@@ -7,6 +7,7 @@ import {
   AlertCircle,
   ArrowUpRight,
   BarChart2,
+  BotMessageSquare,
   CheckCircle2,
   ExternalLink,
   Loader2,
@@ -19,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { SlugMetric } from "@/lib/analytics/gsc";
 import type { LeadCount } from "@/app/api/admin/analytics/leads/route";
+import type { CitationSummary } from "@/lib/analytics/aiCitations";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ interface RowData {
   metric: SlugMetric | null;
   leads: number;
   lastLead: string | null;
+  citation: CitationSummary | null;
 }
 
 // ── Mini sparkline (inline SVG) ───────────────────────────────────────────────
@@ -121,20 +124,24 @@ export function ArticleAnalyticsDashboard() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [metrics, setMetrics] = useState<SlugMetric[]>([]);
   const [leads, setLeads] = useState<LeadCount[]>([]);
+  const [citations, setCitations] = useState<CitationSummary[]>([]);
+  const [citationsConfigured, setCitationsConfigured] = useState(false);
   const [gscConfigured, setGscConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [artRes, gscRes, leadsRes] = await Promise.all([
+      const [artRes, gscRes, leadsRes, citRes] = await Promise.all([
         fetch("/api/admin/playbook"),
         fetch("/api/admin/analytics/gsc"),
         fetch("/api/admin/analytics/leads"),
+        fetch("/api/admin/analytics/citations"),
       ]);
 
       const artData = artRes.ok ? (await artRes.json() as Article[]) : [];
@@ -149,6 +156,12 @@ export function ArticleAnalyticsDashboard() {
 
       if (leadsRes.ok) {
         setLeads(await leadsRes.json() as LeadCount[]);
+      }
+
+      if (citRes.ok) {
+        const citData = await citRes.json() as { configured: boolean; summaries: CitationSummary[] };
+        setCitationsConfigured(citData.configured);
+        setCitations(citData.summaries ?? []);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -181,13 +194,34 @@ export function ArticleAnalyticsDashboard() {
 
   const metricBySlug = new Map(metrics.map((m) => [m.slug, m]));
   const leadsBySlug = new Map(leads.map((l) => [l.slug, l]));
+  const citationBySlug = new Map(citations.map((c) => [c.slug, c]));
 
   const rows: RowData[] = articles.map((a) => ({
     article: a,
     metric: metricBySlug.get(a.slug) ?? null,
     leads: leadsBySlug.get(a.slug)?.count ?? 0,
     lastLead: leadsBySlug.get(a.slug)?.lastClick ?? null,
+    citation: citationBySlug.get(a.slug) ?? null,
   }));
+
+  // Per-article citation check handler
+  const handleCheckCitation = useCallback(async (slug: string) => {
+    setCheckingSlug(slug);
+    const res = await fetch("/api/admin/analytics/citations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+    });
+    if (res.ok) {
+      // Refresh citation data
+      const citRes = await fetch("/api/admin/analytics/citations");
+      if (citRes.ok) {
+        const citData = await citRes.json() as { configured: boolean; summaries: CitationSummary[] };
+        setCitations(citData.summaries ?? []);
+      }
+    }
+    setCheckingSlug(null);
+  }, []);
 
   // Sort: most clicks first, then most leads
   rows.sort((a, b) => (b.metric?.clicks ?? 0) - (a.metric?.clicks ?? 0) || b.leads - a.leads);
@@ -232,8 +266,18 @@ export function ArticleAnalyticsDashboard() {
         )}
       </div>
 
-      {/* Setup guide */}
+      {/* Setup guides */}
       {!loading && !gscConfigured && <GscSetupGuide />}
+      {!loading && !citationsConfigured && (
+        <div className="flex items-start gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3">
+          <BotMessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-violet-500" />
+          <p className="text-xs text-violet-800">
+            <span className="font-semibold">AI citation tracking disabled.</span>{" "}
+            Set <code className="rounded bg-violet-100 px-1">PERPLEXITY_API_KEY</code> to track
+            whether HomeUP is cited by AI answer engines for each article&apos;s target questions.
+          </p>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -298,7 +342,7 @@ export function ArticleAnalyticsDashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-t border-neutral-100 bg-neutral-50">
-                  {["Article", "Clicks (28d)", "Impressions", "Avg position", "Trend", "WA Leads", ""].map((h) => (
+                  {["Article", "Clicks (28d)", "Impressions", "Avg position", "Trend", "WA Leads", "AI Citations", ""].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-neutral-500 whitespace-nowrap">
                       {h}
                     </th>
@@ -306,7 +350,7 @@ export function ArticleAnalyticsDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map(({ article, metric, leads: leadCount }) => (
+                {rows.map(({ article, metric, leads: leadCount, citation }) => (
                   <tr key={article.slug} className="border-t border-neutral-100 hover:bg-neutral-50/60">
                     {/* Title */}
                     <td className="px-4 py-3 max-w-xs">
@@ -353,6 +397,45 @@ export function ArticleAnalyticsDashboard() {
                         </span>
                       ) : (
                         <span className="text-xs text-neutral-300">0</span>
+                      )}
+                    </td>
+
+                    {/* AI Citations */}
+                    <td className="px-4 py-3">
+                      {citationsConfigured ? (
+                        citation ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn(
+                              "text-xs font-semibold tabular-nums",
+                              citation.citedCount > 0 ? "text-violet-700" : "text-neutral-400",
+                            )}>
+                              {citation.citedCount}/{citation.totalQuestions}
+                            </span>
+                            <button
+                              onClick={() => handleCheckCitation(article.slug)}
+                              disabled={checkingSlug === article.slug}
+                              className="rounded p-0.5 text-neutral-300 hover:text-violet-500 disabled:opacity-40"
+                              title="Re-check citations"
+                            >
+                              {checkingSlug === article.slug
+                                ? <Loader2 className="h-3 w-3 animate-spin" />
+                                : <RefreshCw className="h-3 w-3" />}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleCheckCitation(article.slug)}
+                            disabled={checkingSlug === article.slug}
+                            className="flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-600 hover:bg-violet-100 disabled:opacity-40"
+                          >
+                            {checkingSlug === article.slug
+                              ? <Loader2 className="h-3 w-3 animate-spin" />
+                              : <BotMessageSquare className="h-3 w-3" />}
+                            Check
+                          </button>
+                        )
+                      ) : (
+                        <span className="text-xs text-neutral-300">—</span>
                       )}
                     </td>
 
