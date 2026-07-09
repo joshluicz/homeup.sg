@@ -24,7 +24,15 @@ export async function generateArticle(topic: TopicCandidate): Promise<PackagedAr
     getTransactionStats(topic.category).catch(() => null),
   ]);
 
-  const draft = await draftArticle(brief, transactionStats);
+  // Derive a slug hint from the topic title so the draft gets a tracked WhatsApp CTA
+  const slugHint = topic.title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 80);
+
+  const draft = await draftArticle(brief, transactionStats, slugHint);
   const compliance = await checkCompliance(draft);
   return packageArticle(draft, compliance);
 }

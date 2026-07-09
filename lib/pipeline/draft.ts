@@ -9,11 +9,11 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
  * @param transactionStats  Aggregate-only HomeUP transaction data to inject into the prompt.
  *                          Pass null/undefined when no data is available — degrades gracefully.
  */
-export async function draftArticle(brief: Brief, transactionStats?: string | null): Promise<Draft> {
+export async function draftArticle(brief: Brief, transactionStats?: string | null, slugHint?: string): Promise<Draft> {
   const message = await client.messages.create({
     model: "claude-sonnet-5",
     max_tokens: 4096,
-    messages: [{ role: "user", content: draftPrompt(brief, transactionStats) }],
+    messages: [{ role: "user", content: draftPrompt(brief, transactionStats, slugHint) }],
   });
 
   const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "{}";

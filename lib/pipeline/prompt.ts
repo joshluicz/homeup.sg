@@ -1,4 +1,4 @@
-import { BRAND } from "./brand";
+import { BRAND, trackedWhatsappUrl } from "./brand";
 import { SG_FACTS } from "./sgFacts";
 import type { Brief, TopicCandidate } from "./types";
 
@@ -68,7 +68,13 @@ Produce a structured article brief. Return valid JSON only (no markdown fences):
  *                          When present, Claude is instructed to cite the data naturally.
  *                          When null/undefined, the block is omitted — no error, no placeholder.
  */
-export function draftPrompt(brief: Brief, transactionStats?: string | null): string {
+/**
+ * Prompt to draft the full article body from a brief.
+ * @param transactionStats  Aggregate-only HomeUP transaction data to inject into the prompt.
+ * @param slugHint          Slug used to generate a tracked WhatsApp CTA link. If omitted,
+ *                          falls back to the plain wa.me URL.
+ */
+export function draftPrompt(brief: Brief, transactionStats?: string | null, slugHint?: string): string {
   const sgGlossary = Object.entries(SG_FACTS.glossary)
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n");
@@ -100,7 +106,8 @@ ${FORMAT_RULES}
 
 In "How HomeUp Approaches This:" mention:
 - HomeUp is a fixed-fee agency: HDB from ${BRAND.fees.hdb}, Condo/EC from ${BRAND.fees.condoEc}, Landed from ${BRAND.fees.landed}
-- Encourage WhatsApp or link to /playbook for more guides
+- Include a WhatsApp CTA using EXACTLY this link: ${trackedWhatsappUrl(slugHint ?? "")}
+- Also link to ${BRAND.cta.playbook} for more guides
 
 Return valid JSON only (no markdown fences):
 {

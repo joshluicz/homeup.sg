@@ -12,6 +12,7 @@ export const BRAND = {
     landed: "$9,999",
   },
   cta: {
+    /** Base WhatsApp number — use trackedWhatsappUrl(slug) in article prompts */
     whatsapp: "https://wa.me/6580877015",
     sellHdb: "/sell-hdb",
     buyCondo: "/buy-condo",
@@ -72,3 +73,13 @@ export const BRAND = {
 } as const;
 
 export type BrandAuthor = (typeof BRAND.authors)[number];
+
+/**
+ * Returns a slug-tracked WhatsApp URL for use in article CTAs.
+ * Routes through /go/whatsapp so each click is logged to lead_events.
+ * Falls back to the bare wa.me link if no slug is provided.
+ */
+export function trackedWhatsappUrl(slug: string): string {
+  if (!slug) return BRAND.cta.whatsapp;
+  return `/go/whatsapp?slug=${encodeURIComponent(slug)}`;
+}
