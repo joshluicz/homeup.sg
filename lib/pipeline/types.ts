@@ -44,10 +44,19 @@ export interface ComplianceResult {
 }
 
 export interface AuditScores {
-  structure: number; // 0–100: required sections present
-  seo: number; // 0–100: keyword usage, meta length
-  compliance: number; // 0–100: CEA rule adherence
-  overall: number; // weighted average
+  structure: number;   // 0–100: required sections present (heuristic)
+  seo: number;         // 0–100: keyword usage, meta length (heuristic, or llm.seo * 10)
+  compliance: number;  // 0–100: CEA rule adherence (heuristic)
+  overall: number;     // 0–100 weighted average (heuristic) OR llm.overall * 10
+  /** Present when the real LLM audit succeeded — used for the publish gate */
+  llm?: {
+    seo: number;       // 0–10
+    geo: number;       // 0–10
+    aeo: number;       // 0–10
+    overall: number;   // 0–10 weighted
+    fixes: string[];
+    passesGate: boolean;
+  };
 }
 
 export interface PackagedArticle {

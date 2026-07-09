@@ -1,4 +1,5 @@
 import type { AuditScores, ComplianceResult, Draft, PackagedArticle } from "./types";
+import type { LlmAuditResult } from "./audit";
 
 const REQUIRED_SECTIONS = ["Quick Answer:", "How HomeUp Approaches This:", "Conclusion:", "FAQ:"];
 
@@ -45,14 +46,34 @@ function slugify(title: string): string {
     .replace(/-+/g, "-");
 }
 
-/** Assembles the final packaged article with audit scores and suggested slug. */
-export function packageArticle(draft: Draft, compliance: ComplianceResult): PackagedArticle {
+/**
+ * Assembles the final packaged article with audit scores and suggested slug.
+ * @param llmAudit  Real LLM audit result (Phase 4). When provided, its scores
+ *                  drive the headline numbers; heuristic scores remain as structure/compliance.
+ */
+export function packageArticle(
+  draft: Draft,
+  compliance: ComplianceResult,
+  llmAudit?: LlmAuditResult | null,
+): PackagedArticle {
   const structure = scoreStructure(compliance.patchedArticle || draft.article);
-  const seo = scoreSeo(draft);
+  const heuristicSeo = scoreSeo(draft);
   const comp = scoreCompliance(compliance);
-  const overall = Math.round(structure * 0.4 + seo * 0.35 + comp * 0.25);
 
-  const audit: AuditScores = { structure, seo, compliance: comp, overall };
+  // Prefer real LLM overall (×10 to convert 0–10 → 0–100 scale), fall back to heuristic
+  const overall = llmAudit
+    ? Math.round(llmAudit.overall * 10)
+    : Math.round(structure * 0.4 + heuristicSeo * 0.35 + comp * 0.25);
+
+  const seo = llmAudit ? Math.round(llmAudit.seo * 10) : heuristicSeo;
+
+  const audit: AuditScores = {
+    structure,
+    seo,
+    compliance: comp,
+    overall,
+    ...(llmAudit ? { llm: llmAudit } : {}),
+  };
 
   // Combine topic tags with detected property terms
   const tags = Array.from(

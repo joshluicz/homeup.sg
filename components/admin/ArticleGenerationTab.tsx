@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PackagedArticle, TopicCandidate } from "@/lib/pipeline/types";
+import { PUBLISH_THRESHOLD } from "@/lib/pipeline/audit";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,6 +135,7 @@ export function ArticleGenerationTab() {
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<{ slug: string; id: string } | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [auditOverride, setAuditOverride] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -638,7 +640,12 @@ export function ArticleGenerationTab() {
           {/* Audit scores */}
           <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center gap-2">
-              <h2 className="text-sm font-bold text-neutral-900">Audit scores</h2>
+              <h2 className="text-sm font-bold text-neutral-900">
+                Audit scores
+                {result.audit.llm && (
+                  <span className="ml-1.5 text-xs font-normal text-neutral-400">(LLM)</span>
+                )}
+              </h2>
               <span
                 className={cn(
                   "ml-auto rounded-full px-2.5 py-0.5 text-xs font-bold tabular-nums",
@@ -652,11 +659,97 @@ export function ArticleGenerationTab() {
                 {result.audit.overall}/100 overall
               </span>
             </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <AuditBar label="Structure" score={result.audit.structure} />
-              <AuditBar label="SEO" score={result.audit.seo} />
-              <AuditBar label="Compliance" score={result.audit.compliance} />
-            </div>
+
+            {result.audit.llm ? (
+              // Real LLM audit — show SEO / GEO / AEO on 0–10 scale
+              <div className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {(
+                    [
+                      { label: "SEO", score: result.audit.llm.seo, desc: "keywords, title, meta" },
+                      { label: "GEO", score: result.audit.llm.geo, desc: "clarity, local specificity" },
+                      { label: "AEO", score: result.audit.llm.aeo, desc: "Quick Answer, FAQ, citations" },
+                    ] as const
+                  ).map(({ label, score, desc }) => (
+                    <div key={label} className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-semibold text-neutral-700">{label}</span>
+                          <span className="ml-1.5 text-xs text-neutral-400">{desc}</span>
+                        </div>
+                        <span
+                          className={cn(
+                            "text-sm font-bold tabular-nums",
+                            score >= 8 ? "text-emerald-600" : score >= 6 ? "text-amber-600" : "text-red-500",
+                          )}
+                        >
+                          {score}/10
+                        </span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            score >= 8 ? "bg-emerald-500" : score >= 6 ? "bg-amber-400" : "bg-red-400",
+                          )}
+                          style={{ width: `${score * 10}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Fixes */}
+                {result.audit.llm.fixes.length > 0 && (
+                  <div className="rounded-lg border border-neutral-100 bg-neutral-50 p-3">
+                    <p className="mb-1.5 text-xs font-semibold text-neutral-600">
+                      Suggested improvements
+                    </p>
+                    <ul className="space-y-1">
+                      {result.audit.llm.fixes.map((fix, i) => (
+                        <li key={i} className="flex gap-1.5 text-xs text-neutral-600">
+                          <span className="mt-0.5 shrink-0 text-neutral-300">→</span>
+                          {fix}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Gate warning */}
+                {!result.audit.llm.passesGate && (
+                  <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                    <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+                    <div className="flex-1">
+                      <p className="text-xs font-semibold text-amber-800">
+                        Below publish threshold ({result.audit.llm.overall.toFixed(1)}/10 — need ≥{PUBLISH_THRESHOLD})
+                      </p>
+                      <p className="mt-0.5 text-xs text-amber-700">
+                        Apply the fixes above, then regenerate — or use the admin override below.
+                      </p>
+                      <label className="mt-2 flex cursor-pointer items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={auditOverride}
+                          onChange={(e) => setAuditOverride(e.target.checked)}
+                          className="h-3.5 w-3.5 rounded"
+                        />
+                        <span className="text-xs font-medium text-amber-800">
+                          Override — publish anyway (admin only)
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Heuristic fallback
+              <div className="grid gap-4 sm:grid-cols-3">
+                <AuditBar label="Structure" score={result.audit.structure} />
+                <AuditBar label="SEO" score={result.audit.seo} />
+                <AuditBar label="Compliance" score={result.audit.compliance} />
+              </div>
+            )}
           </div>
 
           {/* FAQ preview */}
@@ -712,7 +805,12 @@ export function ArticleGenerationTab() {
                   </p>
                   <Button
                     onClick={handlePublish}
-                    disabled={publishing || !allStepsDone || editedMeta.length > 155}
+                    disabled={
+                      publishing ||
+                      !allStepsDone ||
+                      editedMeta.length > 155 ||
+                      (!!result?.audit?.llm && !result.audit.llm.passesGate && !auditOverride)
+                    }
                     className="shrink-0"
                   >
                     {publishing ? (

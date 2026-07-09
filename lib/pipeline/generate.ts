@@ -3,6 +3,8 @@ import { checkCompliance } from "./compliance";
 import { draftArticle } from "./draft";
 import { packageArticle } from "./packageArticle";
 import { getTransactionStats } from "./transactions";
+import { addInternalLinks } from "./internalLinks";
+import { runLlmAudit } from "./audit";
 import type { PackagedArticle, TopicCandidate } from "./types";
 
 export interface GenerateProgress {
@@ -12,13 +14,14 @@ export interface GenerateProgress {
 
 /**
  * Orchestrates the full article generation pipeline:
- * topic → brief → transaction stats → draft → compliance → package
+ * topic → brief + transaction stats → draft → compliance
+ *       → internal links + LLM audit (concurrent) → package
  *
- * Transaction stats are fetched in parallel with brief generation.
- * If unavailable (empty DB, network error), the draft proceeds without them.
+ * Every step degrades gracefully: missing data or Claude failures never abort
+ * the pipeline — they produce a slightly less rich result.
  */
 export async function generateArticle(topic: TopicCandidate): Promise<PackagedArticle> {
-  // Fetch brief and transaction stats concurrently
+  // Step 1: brief + transaction stats (concurrent)
   const [brief, transactionStats] = await Promise.all([
     generateBrief(topic),
     getTransactionStats(topic.category).catch(() => null),
@@ -32,7 +35,33 @@ export async function generateArticle(topic: TopicCandidate): Promise<PackagedAr
     .replace(/\s+/g, "-")
     .slice(0, 80);
 
+  // Step 2: draft
   const draft = await draftArticle(brief, transactionStats, slugHint);
+
+  // Step 3: compliance gate (must be sequential — patches the article)
   const compliance = await checkCompliance(draft);
-  return packageArticle(draft, compliance);
+  const patchedArticle = compliance.patchedArticle || draft.article;
+
+  // Step 4: internal links + LLM audit (concurrent — both read but don't mutate draft)
+  const [{ article: linkedArticle, links }, llmAudit] = await Promise.all([
+    addInternalLinks(patchedArticle, draft.title, slugHint).catch(() => ({
+      article: patchedArticle,
+      links: [],
+    })),
+    runLlmAudit(brief, patchedArticle, draft.metaDescription).catch(() => null),
+  ]);
+
+  // Merge linked article back into draft/compliance
+  const finalDraft = { ...draft, article: linkedArticle };
+  const finalCompliance = { ...compliance, patchedArticle: linkedArticle };
+
+  // Step 5: package
+  const packaged = packageArticle(finalDraft, finalCompliance, llmAudit);
+
+  // Attach internal link list to tags for UI display (non-breaking addition)
+  if (links.length > 0) {
+    packaged.tags = Array.from(new Set([...packaged.tags, "internal-links"]));
+  }
+
+  return packaged;
 }
