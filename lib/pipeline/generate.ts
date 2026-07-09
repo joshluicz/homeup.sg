@@ -2,6 +2,7 @@ import { generateBrief } from "./brief";
 import { checkCompliance } from "./compliance";
 import { draftArticle } from "./draft";
 import { packageArticle } from "./packageArticle";
+import { getTransactionStats } from "./transactions";
 import type { PackagedArticle, TopicCandidate } from "./types";
 
 export interface GenerateProgress {
@@ -11,11 +12,19 @@ export interface GenerateProgress {
 
 /**
  * Orchestrates the full article generation pipeline:
- * topic → brief → draft → compliance → package
+ * topic → brief → transaction stats → draft → compliance → package
+ *
+ * Transaction stats are fetched in parallel with brief generation.
+ * If unavailable (empty DB, network error), the draft proceeds without them.
  */
 export async function generateArticle(topic: TopicCandidate): Promise<PackagedArticle> {
-  const brief = await generateBrief(topic);
-  const draft = await draftArticle(brief);
+  // Fetch brief and transaction stats concurrently
+  const [brief, transactionStats] = await Promise.all([
+    generateBrief(topic),
+    getTransactionStats(topic.category).catch(() => null),
+  ]);
+
+  const draft = await draftArticle(brief, transactionStats);
   const compliance = await checkCompliance(draft);
   return packageArticle(draft, compliance);
 }

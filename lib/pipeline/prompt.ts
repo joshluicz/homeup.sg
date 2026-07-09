@@ -62,11 +62,20 @@ Produce a structured article brief. Return valid JSON only (no markdown fences):
 }`;
 }
 
-/** Prompt to draft the full article body from a brief. */
-export function draftPrompt(brief: Brief): string {
+/**
+ * Prompt to draft the full article body from a brief.
+ * @param transactionStats  Optional aggregate stats string from lib/pipeline/transactions.ts.
+ *                          When present, Claude is instructed to cite the data naturally.
+ *                          When null/undefined, the block is omitted — no error, no placeholder.
+ */
+export function draftPrompt(brief: Brief, transactionStats?: string | null): string {
   const sgGlossary = Object.entries(SG_FACTS.glossary)
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n");
+
+  const transactionBlock = transactionStats
+    ? `\nHOMEUP FIRST-PARTY DATA — use 1–2 of these stats naturally where relevant. Cite as "based on our [N] sales in [Town]". Do not invent or extrapolate beyond what is listed:\n${transactionStats}\n`
+    : "";
 
   return `You are writing a Playbook article for ${BRAND.name} (${BRAND.tagline}).
 Author: ${brief.authorName}
@@ -78,7 +87,7 @@ ${sgGlossary}
 
 CEA COMPLIANCE — NEVER say:
 ${BRAND.voice.avoid.map((a) => `• ${a}`).join("\n")}
-
+${transactionBlock}
 SEO TITLE: ${brief.seoTitle}
 PRIMARY KEYWORDS: ${brief.primaryKeywords.join(", ")}
 H2 QUESTIONS TO ANSWER: ${brief.h2Questions.join(" | ")}
