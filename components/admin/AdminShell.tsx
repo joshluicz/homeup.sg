@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/admin/transactions", label: "Transaction Data" },
   { href: "/admin/agent-profiles", label: "Agent Videos" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
+  { href: "/admin/sync-kit-handoff", label: "Sync Kit Handoff" },
 ];
 
 function AdminNav() {

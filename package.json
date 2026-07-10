@@ -24,7 +24,8 @@
     "indexnow:listings": "node scripts/submit-indexnow.mjs --listings",
     "indexnow:playbook": "node scripts/submit-indexnow.mjs --playbook",
     "indexnow:all": "node scripts/submit-indexnow.mjs --all",
-    "playbook:warm": "node scripts/warm-playbook-pages.mjs"
+    "playbook:warm": "node scripts/warm-playbook-pages.mjs",
+    "build:sync-kit": "python scripts/build-listings-sync-kit.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

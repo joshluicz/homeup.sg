@@ -153,6 +153,12 @@ export default function ListingsSyncKitPage() {
 
       <div className="flex flex-wrap gap-3">
         <Link
+          href="/admin/sync-kit-handoff"
+          className="inline-flex rounded-xl border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-900 hover:bg-primary-100"
+        >
+          Full handoff guide →
+        </Link>
+        <Link
           href="/admin/listings/pg-sources"
           className="inline-flex rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
         >
