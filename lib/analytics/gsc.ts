@@ -51,9 +51,21 @@ async function getGscAccessToken(sa: ServiceAccount): Promise<string> {
   );
 
   const signingInput = `${header}.${payload}`;
-  const key = createPrivateKey(sa.private_key);
-  const sig = sign("RSA-SHA256", Buffer.from(signingInput), key);
-  const jwt = `${signingInput}.${b64url(sig)}`;
+  let jwt: string;
+  try {
+    const key = createPrivateKey(sa.private_key);
+    const sig = sign("RSA-SHA256", Buffer.from(signingInput), key);
+    jwt = `${signingInput}.${b64url(sig)}`;
+  } catch (err) {
+    // NEVER log sa.private_key. Only the error message is surfaced.
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `[GSC] Failed to sign JWT with the service account private key. ` +
+        `This usually means the private_key newlines in GSC_SERVICE_ACCOUNT_JSON are malformed. ` +
+        `Underlying error: ${msg}`,
+    );
+    throw new Error(`GSC auth failed: could not load private key (${msg})`);
+  }
 
   const resp = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -73,15 +85,70 @@ async function getGscAccessToken(sa: ServiceAccount): Promise<string> {
 
 // ── Config helpers ────────────────────────────────────────────────────────────
 
+/**
+ * Normalizes a PEM private key that has passed through env-var mangling.
+ * Converts escaped "\n" (and "\r\n") sequences back into real newlines and strips
+ * any accidental surrounding quotes. This is what fixes the classic
+ * `error:1E08010C:DECODER routines::unsupported` crypto failure.
+ */
+function normalizePrivateKey(key: string): string {
+  let k = key.trim();
+  // Strip a single layer of surrounding quotes if the key itself got wrapped.
+  if ((k.startsWith('"') && k.endsWith('"')) || (k.startsWith("'") && k.endsWith("'"))) {
+    k = k.slice(1, -1);
+  }
+  // Turn literal escape sequences into actual newlines.
+  return k
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n");
+}
+
+/**
+ * Parses the GSC_SERVICE_ACCOUNT_JSON env var into a ServiceAccount.
+ * Tolerates: surrounding whitespace, an extra wrapping layer of quotes, and
+ * double-encoded JSON (a JSON string that itself contains JSON).
+ */
+function parseServiceAccount(raw: string): ServiceAccount {
+  let text = raw.trim();
+
+  // Some deploy setups wrap the whole value in an extra pair of single quotes.
+  if (text.startsWith("'") && text.endsWith("'")) {
+    text = text.slice(1, -1).trim();
+  }
+
+  let parsed: unknown = JSON.parse(text);
+
+  // If the value was double-encoded (JSON-stringified JSON), it parses to a
+  // string on the first pass — parse once more to reach the object.
+  if (typeof parsed === "string") {
+    parsed = JSON.parse(parsed);
+  }
+
+  const sa = parsed as ServiceAccount;
+  if (sa.private_key) {
+    sa.private_key = normalizePrivateKey(sa.private_key);
+  }
+  return sa;
+}
+
 function loadConfig(): { sa: ServiceAccount; siteUrl: string } | null {
   const raw = process.env.GSC_SERVICE_ACCOUNT_JSON;
   const siteUrl = process.env.GSC_SITE_URL;
   if (!raw || !siteUrl) return null;
   try {
-    const sa = JSON.parse(raw) as ServiceAccount;
-    if (!sa.client_email || !sa.private_key) return null;
+    const sa = parseServiceAccount(raw);
+    if (!sa.client_email || !sa.private_key) {
+      console.error(
+        "[GSC] GSC_SERVICE_ACCOUNT_JSON parsed but is missing client_email or private_key.",
+      );
+      return null;
+    }
     return { sa, siteUrl };
-  } catch {
+  } catch (err) {
+    // NEVER log the raw value — it contains the private key.
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[GSC] Failed to parse GSC_SERVICE_ACCOUNT_JSON: ${msg}`);
     return null;
   }
 }
