@@ -20,7 +20,7 @@ PropertyGuru blocks HomeUP’s cloud server. The **sync kit** is a small app you
 | | Workflow A — Admin UI | Workflow B — Full auto |
 |---|----------------------|------------------------|
 | **Best for** | First time, or when you want to review counts | Routine batch sync |
-| **What you do** | Run `start-agent` → use Listings Sync in browser | Double-click `run-full-sync` |
+| **What you do** | Run agent (`start-agent` or `npm run pg:agent`) → Listings Sync in browser | Run `run-full-sync` or `npm run pg:automation` |
 | **Admin login** | Yes | No |
 
 Imports **publish to the live site immediately** — there is no separate publish step.
@@ -50,24 +50,22 @@ Do these steps **once** on each admin computer.
 ### 3. Add credentials
 
 1. Joshua sends **`.env.local`** via 1Password or similar
-2. Copy it into the **unzipped kit folder** (same folder as `SETUP.html`)
+2. Copy it into the **unzipped kit folder** (same folder as `index.html`)
 3. Never email, WhatsApp, or upload this file
 
-### 4. Run first-time setup
+### 4. Open the kit guide and run first-time setup
 
-| OS | Action |
-|----|--------|
-| **Windows** | Double-click `first-time-setup.bat` |
-| **Mac** | Right-click `first-time-setup.command` → **Open** → **Open** again (first time only) |
+1. Double-click **`index.html`** in the kit folder (same pattern as the roadshow kit)
+2. Follow the steps on that page
 
-Wait 5–15 minutes until you see **Setup complete** and a `node_modules` folder appears.
+| OS | If scripts work | If antivirus blocks `.bat` / Smart App Control |
+|----|-----------------|-----------------------------------------------|
+| **Windows** | Double-click `first-time-setup.bat` | Open Command Prompt in the kit folder and run: `npm install` then `npm run pg:install` |
+| **Mac** | Right-click `first-time-setup.command` → **Open** | Open Terminal in the kit folder and run the same two commands |
 
-### 5. (Mac / Windows only) If a script is blocked
+Wait 5–15 minutes until a `node_modules` folder appears.
 
-- **Windows:** Only run `.bat` files from the unzipped kit folder
-- **Mac:** Right-click `.command` → Open → Open again (once per script)
-
-**Offline copy:** After unzipping, open `SETUP.html` in the kit folder for the same steps without internet.
+> **Note:** Unlike the roadshow kit, this sync kit **must** run Node.js commands — `index.html` is the guide, not the app itself. If `.bat` files are blocked (as with Dennis’s roadshow PC), use the manual commands above.
 
 ---
 
@@ -77,7 +75,7 @@ Use this when you want to **review** import/archive counts before syncing. **Rec
 
 | Step | What to do |
 |------|------------|
-| **1** | Double-click `start-agent` (`.bat` or `.command`). **Keep the window open.** You should see `Listening on http://127.0.0.1:3921` |
+| **1** | Start the agent — **either** double-click `start-agent` **or** in Command Prompt / Terminal: `npm run pg:agent`. **Keep the window open.** You should see `Listening on http://127.0.0.1:3921` |
 | **2** | Open https://homeup.sg/admin → **Listings Sync** |
 | **3** | Confirm the **green banner**: “Local agent is running”. If amber → go back to step 1 |
 | **4** | Click **Refresh from Google Sheet** and wait for success |
@@ -93,7 +91,7 @@ Use this for a **routine full sync** without the admin UI. First-time setup (abo
 
 | Step | What to do |
 |------|------------|
-| **1** | Double-click `run-full-sync` (`.bat` or `.command`) |
+| **1** | **Either** double-click `run-full-sync` **or** run `npm run pg:automation` in Command Prompt / Terminal |
 | **2** | **Do not close** the window until you see **Done** (may take several minutes) |
 | **3** | Open https://homeup.sg/listings to verify |
 
@@ -111,7 +109,7 @@ This runs: sheet refresh → archive removed listings → import new → auto-pu
 | Amber banner: agent not running | Run `start-agent` and keep window open |
 | `PropertyGuru blocked server fetch` | Agent not running — start `start-agent` and sync again |
 | `npm install failed` | Check internet; run `first-time-setup` again |
-| Windows Smart App Control blocked script | Only run scripts from the unzipped kit folder |
+| Windows Smart App Control blocked script | Open `index.html` only; use manual `npm` commands (see kit guide) |
 | Mac “cannot be opened” | Right-click `.command` → Open → Open again |
 | Some URLs fail during sync | Note the URL and tell Joshua — may be a bad sheet row |
 
@@ -158,10 +156,10 @@ Ensure Batam staff can sign in at https://homeup.sg/admin (required for Workflow
 
 | File (in ZIP) | When to use |
 |---------------|-------------|
-| `first-time-setup` | Once per PC, after unzip + `.env.local` |
-| `start-agent` | Keep open during Workflow A |
-| `run-full-sync` | Workflow B |
-| `SETUP.html` | Offline copy of these instructions |
+| `index.html` | **Open first** — full step-by-step guide (antivirus-safe) |
+| `first-time-setup` | Optional shortcut if `.bat` / `.command` work |
+| `start-agent` | Optional shortcut for Workflow A |
+| `run-full-sync` | Optional shortcut for Workflow B |
 
 | URL | Purpose |
 |-----|---------|

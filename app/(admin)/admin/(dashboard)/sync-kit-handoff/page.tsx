@@ -46,7 +46,8 @@ export default function SyncKitHandoffPage() {
         <div className="rounded-2xl border border-primary-200 bg-primary-50 p-5">
           <h2 className="text-sm font-bold text-primary-950">Workflow A — Admin UI</h2>
           <p className="mt-2 text-sm text-primary-900">
-            Review counts before syncing. Run <code className="text-xs">start-agent</code>, then use{" "}
+            Review counts before syncing. Open <code className="text-xs">index.html</code> in the kit, then run{" "}
+            <code className="text-xs">start-agent</code> or <code className="text-xs">npm run pg:agent</code>, then use{" "}
             <Link href="/admin/listings/pg-sources" className="font-semibold underline">
               Listings Sync
             </Link>
@@ -57,8 +58,8 @@ export default function SyncKitHandoffPage() {
         <div className="rounded-2xl border border-neutral-200 bg-white p-5">
           <h2 className="text-sm font-bold text-neutral-900">Workflow B — Full auto</h2>
           <p className="mt-2 text-sm text-neutral-700">
-            Double-click <code className="text-xs">run-full-sync</code> in the kit folder and wait for
-            Done. No browser needed.
+            In the kit folder: <code className="text-xs">run-full-sync</code> or{" "}
+            <code className="text-xs">npm run pg:automation</code>. No browser needed.
           </p>
           <p className="mt-2 text-xs font-medium text-neutral-500">Best for routine syncs</p>
         </div>

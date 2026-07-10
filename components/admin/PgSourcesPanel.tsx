@@ -270,9 +270,8 @@ export function PgSourcesPanel() {
       <section className="rounded-xl border border-primary-200 bg-primary-50 p-5">
         <h2 className="text-sm font-semibold text-primary-950">Local sync kit (Batam / remote admin)</h2>
         <p className="mt-1 text-sm text-primary-900">
-          PropertyGuru blocks cloud servers. Download the sync kit to your PC, run the local agent,
-          then use this page — or run a full automated sync from the kit without clicking through
-          the admin UI.
+          PropertyGuru blocks cloud servers. Download the sync kit, open <code className="text-xs">index.html</code> in
+          the unzipped folder, then run the local agent or a full automated sync.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
@@ -296,11 +295,9 @@ export function PgSourcesPanel() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="font-medium">Imports need the local agent on this PC</p>
           <p className="mt-1 text-amber-800">
-            PropertyGuru blocks Vercel from fetching listing pages. Unzip the sync kit, then
-            double-click <code className="text-xs">start-agent</code> (Windows:{" "}
-            <code className="text-xs">start-agent.bat</code>, Mac:{" "}
-            <code className="text-xs">start-agent.command</code>) and keep that window open before
-            syncing.
+            PropertyGuru blocks Vercel from fetching listing pages. Unzip the kit, open{" "}
+            <code className="text-xs">index.html</code>, then run <code className="text-xs">start-agent</code> or{" "}
+            <code className="text-xs">npm run pg:agent</code> and keep that window open before syncing.
           </p>
         </div>
       )}
