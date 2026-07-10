@@ -82,7 +82,7 @@ export function AgentProfileVideos({
       ? "landscape"
       : "portrait";
 
-  const showTabs = availableCategories.length > 1;
+  const showTabs = availableCategories.length > 0;
 
   return (
     <>
