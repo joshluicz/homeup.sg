@@ -557,10 +557,31 @@ h2 {
 /* ─── Rich HTML article body (WYSIWYG-authored content) ─────────────────── */
 
 .playbook-article-html {
-  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-family: var(--font-jakarta), system-ui, sans-serif !important;
   font-size: 1rem;
   line-height: 1.8;
   color: #262626;
+}
+
+/* Force brand font on ALL descendants — overrides any inline style from pasted content */
+.playbook-article-html * {
+  font-family: inherit !important;
+}
+
+/* Section eyebrow labels (e.g. "Quick Answer", "Introduction") */
+.playbook-article-html .article-section-eyebrow {
+  font-size: 0.6875rem !important; /* 11px */
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: #737373 !important;
+  margin: 3.5rem 0 1rem !important;
+  padding-top: 0 !important;
+  border: none !important;
+  line-height: 1.4 !important;
+}
+.playbook-article-html .article-section-eyebrow:first-child {
+  margin-top: 0 !important;
 }
 .playbook-article-html h1 {
   font-size: 1.75rem;
@@ -568,7 +589,6 @@ h2 {
   margin: 2.5rem 0 0.75rem;
   line-height: 1.25;
   color: #171717;
-  font-family: var(--font-jakarta), system-ui, sans-serif;
 }
 .playbook-article-html h1:first-child { margin-top: 0; }
 .playbook-article-html h2 {
@@ -708,4 +728,21 @@ h2 {
   border: 1px solid #e5e7eb;
   background: #ffffff;
   margin: 2rem 0;
+}
+
+/* ─── Quick Answer callout: first blockquote after the Quick Answer eyebrow ─── */
+.playbook-article-html .article-section-eyebrow[class*="quick"] + blockquote,
+.playbook-article-html blockquote.quick-answer-callout {
+  border: 1px solid #baf5d8;
+  background: linear-gradient(135deg, rgba(240,253,245,0.8), #ffffff);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin: 0 0 3.5rem;
+}
+
+/* ─── Editor font enforcement — ProseMirror mirrors public rendering ─── */
+.ProseMirror [style*="font-family"],
+.ProseMirror [style*="font-size"] {
+  font-family: inherit !important;
+  font-size: inherit !important;
 }

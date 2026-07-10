@@ -771,7 +771,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                   type="date"
                   value={form.published_at}
                   onChange={(e) => set("published_at", e.target.value)}
-                  className={inputClass}
+                  className={cn(inputClass, "leading-normal [&::-webkit-date-and-time-value]:text-left")}
                 />
               </div>
             </div>
