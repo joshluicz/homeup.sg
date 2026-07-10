@@ -16,10 +16,11 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import type { Brief } from "./types";
+import { PUBLISH_THRESHOLD } from "./types";
+
+export { PUBLISH_THRESHOLD };
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-export const PUBLISH_THRESHOLD = 8;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
