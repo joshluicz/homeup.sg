@@ -5,10 +5,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { PlaybookAutoVideoRail } from "@/components/playbook/PlaybookAutoVideoRail";
 import { PlaybookExclusiveWatch, PlaybookVideoModalOverlay } from "@/components/playbook/PlaybookExclusiveWatch";
-import type { AgentProfileVideo } from "@/lib/agents/profile-videos";
-import { rowToAgentProfileVideo, type AgentProfileVideoRow } from "@/lib/agents/profile-videos";
+import type { AgentProfileVideo, AgentVideoCategory } from "@/lib/agents/profile-videos";
+import { AGENT_VIDEO_CATEGORIES, rowToAgentProfileVideo, type AgentProfileVideoRow } from "@/lib/agents/profile-videos";
 import { getVideoPlatform } from "@/lib/playbook/embed";
 import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
 type AgentProfileVideosProps = {
   agentSlug: string;
@@ -32,6 +33,7 @@ export function AgentProfileVideos({
 }: AgentProfileVideosProps) {
   const [videos, setVideos] = useState<AgentProfileVideo[]>(initialVideos);
   const [activeVideo, setActiveVideo] = useState<AgentProfileVideo | null>(null);
+  const [activeCategory, setActiveCategory] = useState<"all" | AgentVideoCategory>("all");
 
   useEffect(() => {
     setVideos(initialVideos);
@@ -52,7 +54,18 @@ export function AgentProfileVideos({
       });
   }, [agentSlug]);
 
-  const railItems = useMemo(() => videos.map(toRailItem), [videos]);
+  // Only show tabs for categories that actually have at least one video
+  const availableCategories = useMemo(
+    () => AGENT_VIDEO_CATEGORIES.filter((cat) => videos.some((v) => v.category === cat.value)),
+    [videos],
+  );
+
+  const filteredVideos = useMemo(
+    () => (activeCategory === "all" ? videos : videos.filter((v) => v.category === activeCategory)),
+    [videos, activeCategory],
+  );
+
+  const railItems = useMemo(() => filteredVideos.map(toRailItem), [filteredVideos]);
 
   const openVideo = useCallback((video: AgentProfileVideo) => {
     setActiveVideo(video);
@@ -69,6 +82,8 @@ export function AgentProfileVideos({
       ? "landscape"
       : "portrait";
 
+  const showTabs = availableCategories.length > 1;
+
   return (
     <>
       <section
@@ -82,6 +97,7 @@ export function AgentProfileVideos({
 
         <div className="container-page relative">
           <PlaybookAutoVideoRail
+            key={activeCategory}
             inverted
             videos={railItems}
             intro={
@@ -94,6 +110,56 @@ export function AgentProfileVideos({
                   Short-form tips and real-world property advice. Tap a video to watch here — or
                   open it in TikTok / YouTube if you prefer.
                 </p>
+
+                {showTabs && (
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      onClick={() => setActiveCategory("all")}
+                      className={cn(
+                        "shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
+                        activeCategory === "all"
+                          ? "border-primary-500 bg-primary-500 text-white shadow-sm"
+                          : "border-neutral-700 bg-neutral-800 text-neutral-300 hover:border-neutral-600 hover:bg-neutral-700",
+                      )}
+                    >
+                      All
+                      <span
+                        className={cn(
+                          "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                          activeCategory === "all"
+                            ? "bg-white/20 text-white"
+                            : "bg-neutral-700 text-neutral-400",
+                        )}
+                      >
+                        {videos.length}
+                      </span>
+                    </button>
+                    {availableCategories.map((cat) => (
+                      <button
+                        key={cat.value}
+                        onClick={() => setActiveCategory(cat.value)}
+                        className={cn(
+                          "shrink-0 rounded-full border px-4 py-1.5 text-xs font-semibold transition-all",
+                          activeCategory === cat.value
+                            ? "border-primary-500 bg-primary-500 text-white shadow-sm"
+                            : "border-neutral-700 bg-neutral-800 text-neutral-300 hover:border-neutral-600 hover:bg-neutral-700",
+                        )}
+                      >
+                        {cat.label}
+                        <span
+                          className={cn(
+                            "ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                            activeCategory === cat.value
+                              ? "bg-white/20 text-white"
+                              : "bg-neutral-700 text-neutral-400",
+                          )}
+                        >
+                          {videos.filter((v) => v.category === cat.value).length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             }
             onVideoSelect={(item) => {
