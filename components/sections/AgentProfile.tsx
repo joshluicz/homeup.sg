@@ -3,10 +3,12 @@ import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import type { Agent, AgentAccoladeFootnote } from "@/lib/data/agents";
 import type { AgentProfileVideo } from "@/lib/agents/profile-videos";
+import { agentIntroWatchSlug } from "@/lib/agents/intro-videos";
 import { AgentProfileVideos } from "@/components/agents/AgentProfileVideos";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { PlaybookEmbeddedVideoPlayer } from "@/components/playbook/PlaybookEmbeddedVideoPlayer";
+import { youtubeWatchUrl } from "@/lib/youtube";
 
 interface AgentProfileProps {
   agent: Agent;
@@ -143,16 +145,25 @@ export function AgentProfile({ agent, profileVideos }: AgentProfileProps) {
               >
                 <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-md">
                   <div className="relative aspect-video">
-                    <YoutubeEmbed
-                      videoId={agent.introYoutubeVideoId!}
+                    <PlaybookEmbeddedVideoPlayer
+                      videoUrl={youtubeWatchUrl(agent.introYoutubeVideoId!)}
                       title={`Introduction from ${agent.name}`}
                       autoplay
+                      aspect="landscape"
+                      showExternalLink={false}
                       className="absolute inset-0 h-full w-full"
+                      playerClassName="h-full w-full"
                     />
                   </div>
                 </div>
                 <p className="mt-3 text-sm font-normal text-neutral-500">
-                  Introduction from {firstName}
+                  Introduction from {firstName}.{" "}
+                  <Link
+                    href={`/playbook/watch/${agentIntroWatchSlug(agent.slug)}`}
+                    className="font-medium text-primary-700 underline decoration-primary-200 underline-offset-2 transition hover:text-primary-800 hover:decoration-primary-400"
+                  >
+                    Open watch page
+                  </Link>
                 </p>
                 {agent.social && (
                   <AgentSocialLinks
