@@ -11,19 +11,79 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Search,
   Star,
   Trash2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { AGENTS } from "@/lib/data/agents";
 import type { AgentProfileVideoRow } from "@/lib/agents/profile-videos";
+import { AGENT_VIDEO_CATEGORIES } from "@/lib/agents/profile-videos";
+import type { AgentVideoCategory } from "@/lib/agents/profile-videos";
 import { SITE_URL } from "@/lib/seo/constants";
 import { getVideoPlatform } from "@/lib/playbook/embed";
 import { resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { cn } from "@/lib/utils";
 
 type VideoRow = AgentProfileVideoRow;
+
+// ─── Category helpers ──────────────────────────────────────────────────────
+
+const CATEGORY_COLORS: Record<AgentVideoCategory, string> = {
+  home_tour: "bg-violet-100 text-violet-900 ring-violet-300",
+  property_tips: "bg-emerald-100 text-emerald-900 ring-emerald-300",
+  landed: "bg-amber-100 text-amber-900 ring-amber-300",
+  others: "bg-neutral-100 text-neutral-700 ring-neutral-300",
+};
+
+function CategoryBadge({ category }: { category: AgentVideoCategory | null }) {
+  const cat = category ?? "others";
+  const label = AGENT_VIDEO_CATEGORIES.find((c) => c.value === cat)?.label ?? "Others";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1",
+        CATEGORY_COLORS[cat],
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function CategorySelect({
+  value,
+  onChange,
+  disabled,
+  className,
+}: {
+  value: AgentVideoCategory;
+  onChange: (v: AgentVideoCategory) => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value as AgentVideoCategory)}
+      className={cn(
+        "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 disabled:opacity-50",
+        className,
+      )}
+    >
+      {AGENT_VIDEO_CATEGORIES.map((c) => (
+        <option key={c.value} value={c.value}>
+          {c.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// ─── Display badges ────────────────────────────────────────────────────────
 
 function DisplayBadge({ variant }: { variant: "a" | "b" }) {
   if (variant === "b") {
@@ -121,13 +181,18 @@ function DisplayPlacementPicker({
   );
 }
 
+// ─── Form defaults ─────────────────────────────────────────────────────────
+
 const emptyForm = {
   title: "",
   videoUrl: "",
   slug: "",
   featuredInDisplayA: false,
   featuredInDisplayB: false,
+  category: "others" as AgentVideoCategory,
 };
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
 
 function watchUrl(slug: string): string {
   return `${SITE_URL}/playbook/watch/${slug}`;
@@ -165,6 +230,12 @@ function FormSection({
   );
 }
 
+// ─── Display filter type ───────────────────────────────────────────────────
+
+type DisplayFilter = "all" | "display_a" | "display_b";
+
+// ─── Main component ────────────────────────────────────────────────────────
+
 export function AgentVideosTab() {
   const [agentSlug, setAgentSlug] = useState(AGENTS[0]?.slug ?? "dennis-lim");
   const [videos, setVideos] = useState<VideoRow[]>([]);
@@ -180,8 +251,14 @@ export function AgentVideosTab() {
     slug: "",
     featuredInDisplayA: false,
     featuredInDisplayB: false,
+    category: "others" as AgentVideoCategory,
   });
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // ── Search & filter state ────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<AgentVideoCategory | "all">("all");
+  const [displayFilter, setDisplayFilter] = useState<DisplayFilter>("all");
 
   const agent = useMemo(
     () => AGENTS.find((entry) => entry.slug === agentSlug),
@@ -190,6 +267,27 @@ export function AgentVideosTab() {
   const agentName = agent?.name ?? agentSlug;
   const agentFirstName = agent?.name.split(" ")[0] ?? agentName;
   const profileUrl = `${SITE_URL}/agents/${agentSlug}`;
+
+  // ── Filtered video list (client-side) ────────────────────────────────────
+  const filteredVideos = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return videos.filter((video) => {
+      if (q) {
+        const inTitle = video.title.toLowerCase().includes(q);
+        const inUrl = video.video_url.toLowerCase().includes(q);
+        if (!inTitle && !inUrl) return false;
+      }
+      if (categoryFilter !== "all") {
+        const cat = video.category ?? "others";
+        if (cat !== categoryFilter) return false;
+      }
+      if (displayFilter === "display_a" && !video.featured_in_display_a) return false;
+      if (displayFilter === "display_b" && !video.featured_in_display_b) return false;
+      return true;
+    });
+  }, [videos, searchQuery, categoryFilter, displayFilter]);
+
+  const isFiltered = searchQuery.trim() !== "" || categoryFilter !== "all" || displayFilter !== "all";
 
   const loadVideos = useCallback(async () => {
     setLoading(true);
@@ -220,7 +318,11 @@ export function AgentVideosTab() {
     loadVideos();
     setEditingId(null);
     setForm(emptyForm);
-  }, [loadVideos]);
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setDisplayFilter("all");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentSlug]);
 
   useEffect(() => {
     if (!success) return;
@@ -256,6 +358,7 @@ export function AgentVideosTab() {
           slug: form.slug.trim(),
           featuredInDisplayA: form.featuredInDisplayA,
           featuredInDisplayB: form.featuredInDisplayB,
+          category: form.category,
           sortOrder: videos.length,
         }),
       });
@@ -279,6 +382,7 @@ export function AgentVideosTab() {
       slug: video.slug ?? "",
       featuredInDisplayA: video.featured_in_display_a,
       featuredInDisplayB: video.featured_in_display_b,
+      category: (video.category as AgentVideoCategory) ?? "others",
     });
     setError(null);
   }
@@ -321,6 +425,7 @@ export function AgentVideosTab() {
           slug: editForm.slug.trim(),
           featuredInDisplayA: editForm.featuredInDisplayA,
           featuredInDisplayB: editForm.featuredInDisplayB,
+          category: editForm.category,
         }),
       });
       const data = await res.json();
@@ -378,11 +483,13 @@ export function AgentVideosTab() {
   }
 
   async function moveVideo(index: number, direction: -1 | 1) {
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= videos.length) return;
+    // Moving uses the global (unfiltered) index so order stays stable
+    const globalIndex = videos.indexOf(filteredVideos[index]!);
+    const globalTarget = videos.indexOf(filteredVideos[index + direction]!);
+    if (globalIndex < 0 || globalTarget < 0) return;
 
-    const current = videos[index];
-    const target = videos[targetIndex];
+    const current = videos[globalIndex];
+    const target = videos[globalTarget];
     if (!current || !target) return;
 
     setError(null);
@@ -422,6 +529,12 @@ export function AgentVideosTab() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete video");
     }
+  }
+
+  function clearFilters() {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setDisplayFilter("all");
   }
 
   return (
@@ -534,22 +647,33 @@ export function AgentVideosTab() {
             </div>
           </div>
 
-          <div className="mt-4">
-            <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
-              Custom link <span className="font-normal text-neutral-500">(optional)</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <span className="shrink-0 text-sm text-neutral-500">{SITE_URL}/playbook/watch/</span>
-              <Input
-                value={form.slug}
-                onChange={(e) => setForm((current) => ({ ...current, slug: e.target.value }))}
-                placeholder="why-pay-3k-for-condo"
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
+                Category
+              </label>
+              <CategorySelect
+                value={form.category}
+                onChange={(v) => setForm((current) => ({ ...current, category: v }))}
+                disabled={saving}
               />
             </div>
-            <p className="mt-1.5 text-xs text-neutral-500">
-              Leave blank to generate one from the title. This is the link you can send to
-              clients instead of the TikTok/YouTube one.
-            </p>
+            <div>
+              <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
+                Custom link <span className="font-normal text-neutral-500">(optional)</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <span className="shrink-0 text-sm text-neutral-500">{SITE_URL}/playbook/watch/</span>
+                <Input
+                  value={form.slug}
+                  onChange={(e) => setForm((current) => ({ ...current, slug: e.target.value }))}
+                  placeholder="why-pay-3k-for-condo"
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-neutral-500">
+                Leave blank to auto-generate from the title.
+              </p>
+            </div>
           </div>
 
           <DisplayPlacementPicker
@@ -590,16 +714,88 @@ export function AgentVideosTab() {
         </p>
       )}
 
+      {/* ── Video list with search & filters ─────────────────────────── */}
       <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
         <div className="border-b border-neutral-100 px-5 py-4">
-          <h2 className="text-sm font-bold text-neutral-900">
-            {agentName}&apos;s profile videos ({videos.length})
-          </h2>
-          <p className="mt-1 text-xs text-neutral-500">
-            <strong>Display B:</strong> shown on this agent&apos;s profile page.{" "}
-            <strong>Display A:</strong> shown in the Playbook top rail. Toggle either
-            independently per video. Use the arrows to change order.
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-neutral-900">
+                {agentName}&apos;s profile videos ({videos.length})
+              </h2>
+              <p className="mt-1 text-xs text-neutral-500">
+                <strong>Display B:</strong> shown on this agent&apos;s profile page.{" "}
+                <strong>Display A:</strong> shown in the Playbook top rail. Toggle either
+                independently per video. Use the arrows to change order.
+              </p>
+            </div>
+          </div>
+
+          {/* Search & filter bar */}
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            {/* Search input */}
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search ${agentFirstName}'s videos by title…`}
+                className="w-full rounded-lg border border-neutral-200 bg-neutral-50 py-2.5 pl-9 pr-9 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:border-primary-400 focus:bg-white focus:ring-2 focus:ring-primary-100"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-neutral-400 hover:text-neutral-700"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Category filter */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as AgentVideoCategory | "all")}
+              className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:w-44"
+            >
+              <option value="all">All categories</option>
+              {AGENT_VIDEO_CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Display filter */}
+            <select
+              value={displayFilter}
+              onChange={(e) => setDisplayFilter(e.target.value as DisplayFilter)}
+              className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 outline-none transition-colors focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:w-40"
+            >
+              <option value="all">All displays</option>
+              <option value="display_a">Display A on</option>
+              <option value="display_b">Display B on</option>
+            </select>
+          </div>
+
+          {/* Active filters summary */}
+          {isFiltered && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-xs text-neutral-500">
+                Showing {filteredVideos.length} of {videos.length} videos
+              </span>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-primary-600 hover:bg-primary-50"
+              >
+                <X className="h-3 w-3" />
+                Clear filters
+              </button>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -607,15 +803,34 @@ export function AgentVideosTab() {
             <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             Loading…
           </div>
-        ) : videos.length === 0 ? (
-          <p className="px-5 py-12 text-center text-sm text-neutral-500">
-            No videos yet for {agentFirstName}. Add a TikTok or YouTube link above, then choose
-            whether it shows on their profile (<strong>Display B</strong>), the Playbook top
-            strip (<strong>Display A</strong>), either, or both.
-          </p>
+        ) : filteredVideos.length === 0 ? (
+          <div className="px-5 py-12 text-center">
+            {isFiltered ? (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-neutral-700">No videos match your search</p>
+                <p className="text-xs text-neutral-500">
+                  Try different keywords or clear the filters.
+                </p>
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-neutral-50"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-neutral-500">
+                No videos yet for {agentFirstName}. Add a TikTok or YouTube link above, then choose
+                whether it shows on their profile (<strong>Display B</strong>), the Playbook top
+                strip (<strong>Display A</strong>), either, or both.
+              </p>
+            )}
+          </div>
         ) : (
           <ul className="divide-y divide-neutral-100">
-            {videos.map((video, index) => {
+            {filteredVideos.map((video, index) => {
               const thumb = resolveVideoThumbnailCandidatesForDisplay(
                 video.thumbnail,
                 video.video_url,
@@ -651,24 +866,38 @@ export function AgentVideosTab() {
                           />
                         </div>
                       </div>
-                      <div>
-                        <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
-                          Custom link
-                        </label>
-                        <div className="flex items-center gap-2">
-                          <span className="shrink-0 text-sm text-neutral-500">
-                            {SITE_URL}/playbook/watch/
-                          </span>
-                          <Input
-                            value={editForm.slug}
-                            onChange={(e) =>
-                              setEditForm((current) => ({ ...current, slug: e.target.value }))
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
+                            Category
+                          </label>
+                          <CategorySelect
+                            value={editForm.category}
+                            onChange={(v) =>
+                              setEditForm((current) => ({ ...current, category: v }))
                             }
+                            disabled={saving}
                           />
                         </div>
-                        <p className="mt-1.5 text-xs text-neutral-500">
-                          Changing this breaks any copy of the old link you&apos;ve already sent out.
-                        </p>
+                        <div>
+                          <label className="mb-1.5 block text-sm font-semibold text-neutral-900">
+                            Custom link
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <span className="shrink-0 text-sm text-neutral-500">
+                              {SITE_URL}/playbook/watch/
+                            </span>
+                            <Input
+                              value={editForm.slug}
+                              onChange={(e) =>
+                                setEditForm((current) => ({ ...current, slug: e.target.value }))
+                              }
+                            />
+                          </div>
+                          <p className="mt-1.5 text-xs text-neutral-500">
+                            Changing this breaks any copy of the old link you&apos;ve already sent out.
+                          </p>
+                        </div>
                       </div>
                       <DisplayPlacementPicker
                         featuredInDisplayA={editForm.featuredInDisplayA}
@@ -744,7 +973,8 @@ export function AgentVideosTab() {
                               )}
                             </button>
                           )}
-                          <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                            <CategoryBadge category={(video.category as AgentVideoCategory) ?? "others"} />
                             {video.featured_in_display_b ? (
                               <DisplayBadge variant="b" />
                             ) : (
@@ -822,7 +1052,7 @@ export function AgentVideosTab() {
                           <button
                             type="button"
                             onClick={() => moveVideo(index, 1)}
-                            disabled={index === videos.length - 1}
+                            disabled={index === filteredVideos.length - 1}
                             aria-label="Move down"
                             className="rounded-lg border border-neutral-200 p-2 text-neutral-600 transition hover:bg-neutral-50 disabled:opacity-40"
                           >

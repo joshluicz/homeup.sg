@@ -6,6 +6,15 @@ import { resolveThumbnail } from "@/lib/playbook/embed";
 import { enrichVideoThumbnails } from "@/lib/playbook/oembed";
 import { slugify, uniqueSlug } from "@/lib/playbook/slugify";
 
+export type AgentVideoCategory = "home_tour" | "property_tips" | "landed" | "others";
+
+export const AGENT_VIDEO_CATEGORIES: { value: AgentVideoCategory; label: string }[] = [
+  { value: "home_tour", label: "Home Tour" },
+  { value: "property_tips", label: "Property Tips" },
+  { value: "landed", label: "Landed" },
+  { value: "others", label: "Others" },
+];
+
 export type AgentProfileVideo = {
   id: string;
   agentSlug: string;
@@ -17,6 +26,7 @@ export type AgentProfileVideo = {
   sortOrder: number;
   /** Powers the shareable /playbook/watch/[slug] page for this video. */
   slug: string;
+  category: AgentVideoCategory;
 };
 
 export type AgentProfileVideoRow = {
@@ -29,6 +39,7 @@ export type AgentProfileVideoRow = {
   featured_in_display_b: boolean;
   sort_order: number;
   slug: string | null;
+  category: AgentVideoCategory | null;
 };
 
 export function rowToAgentProfileVideo(row: AgentProfileVideoRow): AgentProfileVideo {
@@ -45,6 +56,7 @@ export function rowToAgentProfileVideo(row: AgentProfileVideoRow): AgentProfileV
     featuredInDisplayB: row.featured_in_display_b,
     sortOrder: row.sort_order,
     slug: row.slug?.trim() || `agent-${row.id}`,
+    category: row.category ?? "others",
   };
 }
 
@@ -60,6 +72,7 @@ export function staticAgentProfileVideos(agent: Agent): AgentProfileVideo[] {
     featuredInDisplayB: true,
     sortOrder: index,
     slug: `agent-${video.id}`,
+    category: "property_tips" as const,
   }));
 }
 
@@ -167,6 +180,7 @@ export function youtubeVideosToProfileVideos(
     featuredInDisplayB: true,
     sortOrder: index,
     slug: `agent-${video.id}`,
+    category: "property_tips" as const,
   }));
 }
 

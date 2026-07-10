@@ -58,6 +58,18 @@ function isImageFile(file: File): boolean {
 /** Detect whether a string is HTML or plain Markdown. */
 export { isHtmlContent } from "@/lib/playbook/is-html-content";
 import { isHtmlContent } from "@/lib/playbook/is-html-content";
+import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
+
+/**
+ * Prepare article content for loading into the editor.
+ * HTML articles get Markdown-syntax fragments converted to proper HTML so
+ * editors see the correct visual layout. Plain Markdown is wrapped in <p>
+ * tags as before.
+ */
+function prepareEditorContent(value: string): string {
+  if (isHtmlContent(value)) return normalizeHtmlArticle(value);
+  return `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`;
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -142,42 +154,14 @@ function HeadingSelect({ editor }: { editor: Editor }) {
   );
 }
 
-const FONTS = [
-  { label: "Default", value: "" },
-  { label: "Georgia", value: "Georgia, serif" },
-  { label: "Arial", value: "Arial, sans-serif" },
-  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
-  { label: "Courier New", value: "'Courier New', monospace" },
-  { label: "Times New Roman", value: "'Times New Roman', serif" },
-] as const;
-
-function FontSelect({ editor }: { editor: Editor }) {
-  const activeFont =
-    FONTS.find((f) => f.value && editor.isActive("textStyle", { fontFamily: f.value }))?.value ??
-    "";
-
-  return (
-    <div className="relative">
-      <select
-        value={activeFont}
-        title="Font"
-        onChange={(e) => {
-          const val = e.target.value;
-          if (!val) editor.chain().focus().unsetFontFamily().run();
-          else editor.chain().focus().setFontFamily(val).run();
-        }}
-        className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
-      >
-        {FONTS.map((f) => (
-          <option key={f.value} value={f.value} style={{ fontFamily: f.value || undefined }}>
-            {f.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-neutral-400" />
-    </div>
-  );
-}
+/**
+ * FontFamily is intentionally NOT exposed in the toolbar.
+ * All articles must use the brand font (Plus Jakarta Sans).
+ * The FontFamily extension is still loaded so that TipTap can round-trip
+ * existing content that may contain font-family marks, but editors cannot
+ * apply new font overrides — and pasted font-family styles are stripped
+ * automatically via transformPastedHTML below.
+ */
 
 const TEXT_COLORS = [
   { label: "Default", value: "" },
@@ -319,7 +303,6 @@ function Toolbar({
       <ToolbarDivider />
 
       <HeadingSelect editor={editor} />
-      <FontSelect editor={editor} />
       <ColorSelect editor={editor} />
 
       <ToolbarDivider />
@@ -431,8 +414,78 @@ function Toolbar({
 
       <ToolbarDivider />
 
+      {/* Section labels */}
+      <InsertSectionMenu editor={editor} />
+
+      <ToolbarDivider />
+
       {/* Table */}
       <TableMenu editor={editor} />
+    </div>
+  );
+}
+
+// ─── Section label insert menu ───────────────────────────────────────────────
+
+const ARTICLE_SECTION_LABELS = [
+  { label: "Quick Answer", desc: "Green callout box — required" },
+  { label: "Introduction", desc: "Opening paragraph" },
+  { label: "How HomeUp Approaches This", desc: "Neutral info box — required" },
+  { label: "Conclusion", desc: "Closing paragraph" },
+  { label: "FAQ", desc: "Frequently asked questions" },
+] as const;
+
+function InsertSectionMenu({ editor }: { editor: Editor }) {
+  const [open, setOpen] = useState(false);
+
+  function insertSection(label: string) {
+    editor
+      .chain()
+      .focus()
+      .insertContent([
+        { type: "paragraph", content: [{ type: "text", text: label }] },
+        { type: "paragraph" },
+      ])
+      .run();
+    setOpen(false);
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setOpen((v) => !v);
+        }}
+        title="Insert section label (Quick Answer, Introduction, etc.)"
+        className="flex h-7 items-center gap-1 rounded border border-neutral-200 bg-white px-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+      >
+        § Section
+        <ChevronDown className="h-3 w-3 text-neutral-400" />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-9 z-50 min-w-[230px] rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+          <p className="px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wide text-neutral-400">
+            Insert section label
+          </p>
+          {ARTICLE_SECTION_LABELS.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              className="flex w-full flex-col px-3 py-2 text-left hover:bg-neutral-50"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                insertSection(s.label);
+              }}
+            >
+              <span className="text-xs font-semibold text-neutral-800">{s.label}</span>
+              <span className="text-[11px] text-neutral-400">{s.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -543,7 +596,7 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       }),
     ],
     // Accept HTML (new articles) or plain text/Markdown (legacy) as initial content
-    content: isHtmlContent(value) ? value : `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`,
+    content: prepareEditorContent(value),
     onUpdate({ editor: ed }) {
       internalChange.current = true;
       onChange(ed.getHTML());
@@ -552,6 +605,27 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       attributes: {
         class:
           "prose prose-neutral max-w-none min-h-[420px] px-8 py-6 outline-none focus:outline-none [&>*:first-child]:mt-0",
+      },
+      /**
+       * Strip all inline styles except text-align and color when content is
+       * pasted from Google Docs (or any external source).
+       * This allowlist is intentionally identical to cleanInlineStyles() in
+       * PlaybookArticleHtml so what editors see in the editor exactly matches
+       * what readers see on the published article page.
+       */
+      transformPastedHTML(html: string) {
+        const ALLOWED = new Set(["text-align", "color"]);
+        return html.replace(/\bstyle="([^"]*)"/gi, (_match: string, styleContent: string) => {
+          const kept = styleContent
+            .split(";")
+            .map((r: string) => r.trim())
+            .filter((r: string) => {
+              const prop = r.split(":")[0]?.trim().toLowerCase() ?? "";
+              return ALLOWED.has(prop) && r.includes(":");
+            });
+          if (!kept.length) return "";
+          return `style="${kept.join("; ")}"`;
+        });
       },
     },
   });
@@ -565,10 +639,7 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
     }
     const current = editor.getHTML();
     if (current !== value) {
-      const html = isHtmlContent(value)
-        ? value
-        : `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`;
-      editor.commands.setContent(html);
+      editor.commands.setContent(prepareEditorContent(value));
     }
   }, [value, editor]);
 

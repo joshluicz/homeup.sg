@@ -557,10 +557,65 @@ h2 {
 /* ─── Rich HTML article body (WYSIWYG-authored content) ─────────────────── */
 
 .playbook-article-html {
-  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-family: var(--font-jakarta), system-ui, sans-serif !important;
   font-size: 1rem;
   line-height: 1.8;
   color: #262626;
+}
+
+/* Force brand font on ALL descendants — overrides any inline style from pasted content */
+.playbook-article-html * {
+  font-family: inherit !important;
+}
+
+/* Section eyebrow labels (e.g. "Quick Answer", "Introduction") */
+.playbook-article-html .article-section-eyebrow {
+  font-size: 0.6875rem !important; /* 11px */
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  color: #737373 !important;
+  margin: 3.5rem 0 1rem !important;
+  padding-top: 0 !important;
+  border: none !important;
+  line-height: 1.4 !important;
+}
+.playbook-article-html .article-section-eyebrow:first-child,
+.playbook-article-html .article-section-box .article-section-eyebrow {
+  margin-top: 0 !important;
+}
+
+/* Card containers for Quick Answer and How HomeUp Approaches This sections */
+.playbook-article-html .article-section-box {
+  margin: 3.5rem 0;
+}
+.playbook-article-html .article-section-box:first-child {
+  margin-top: 0;
+}
+.playbook-article-html .article-section-box .article-section-eyebrow:first-child {
+  margin-top: 0 !important;
+}
+.playbook-article-html .article-section-box--quick-answer {
+  border: 1px solid #baf5d8; /* primary-200 */
+  background: linear-gradient(135deg, rgba(240, 253, 245, 0.8), #ffffff); /* primary-50/80 → white */
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+@media (min-width: 640px) {
+  .playbook-article-html .article-section-box--quick-answer {
+    padding: 1.75rem 2rem;
+  }
+}
+.playbook-article-html .article-section-box--how-homeup-approaches-this {
+  border: 1px solid #e5e5e5; /* neutral-200 */
+  background: #fafafa; /* neutral-50 */
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+@media (min-width: 640px) {
+  .playbook-article-html .article-section-box--how-homeup-approaches-this {
+    padding: 1.75rem 2rem;
+  }
 }
 .playbook-article-html h1 {
   font-size: 1.75rem;
@@ -568,7 +623,6 @@ h2 {
   margin: 2.5rem 0 0.75rem;
   line-height: 1.25;
   color: #171717;
-  font-family: var(--font-jakarta), system-ui, sans-serif;
 }
 .playbook-article-html h1:first-child { margin-top: 0; }
 .playbook-article-html h2 {
@@ -631,12 +685,18 @@ h2 {
   border: 1px solid #e5e7eb;
   background: #ffffff;
   margin: 2rem 0;
+  /* Prevent the wrapper itself from overflowing the article column */
+  max-width: 100%;
 }
 .playbook-article-html table {
   width: 100%;
-  min-width: 640px;
+  min-width: 480px; /* reduced from 640px — fits 2-column tables on most phones */
   border-collapse: collapse;
   font-size: 0.875rem;
+}
+/* Safety net: contain any table that escaped the wrapper */
+.playbook-article-html {
+  overflow-x: hidden;
 }
 .playbook-article-html thead { border-bottom: 2px solid #171717; background: #ffffff; }
 .playbook-article-html th {
@@ -708,4 +768,30 @@ h2 {
   border: 1px solid #e5e7eb;
   background: #ffffff;
   margin: 2rem 0;
+}
+
+/* ─── Quick Answer callout: blockquote directly inside the Quick Answer box ─── */
+.playbook-article-html .article-section-box--quick-answer blockquote,
+.playbook-article-html blockquote.quick-answer-callout {
+  border: 1px solid #baf5d8;
+  background: linear-gradient(135deg, rgba(240,253,245,0.8), #ffffff);
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  margin: 0 0 3.5rem;
+}
+
+/* ─── Editor font enforcement — ProseMirror mirrors public rendering ─── */
+.ProseMirror [style*="font-family"],
+.ProseMirror [style*="font-size"] {
+  font-family: inherit !important;
+  font-size: inherit !important;
+}
+
+/* ─── Admin date input alignment ─────────────────────────────────────────── */
+/* Browsers inject extra internal padding inside the date-edit fields wrapper  */
+/* which makes the displayed date appear vertically off-center. Strip it.      */
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+  line-height: inherit;
 }
