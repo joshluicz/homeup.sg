@@ -15,7 +15,7 @@ import {
   Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MIN_SAMPLE } from "@/lib/pipeline/transactions";
+import { MIN_SAMPLE } from "@/lib/pipeline/constants";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

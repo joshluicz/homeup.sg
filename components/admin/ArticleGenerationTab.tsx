@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PackagedArticle, TopicCandidate } from "@/lib/pipeline/types";
-import { PUBLISH_THRESHOLD } from "@/lib/pipeline/audit";
+import { PUBLISH_THRESHOLD } from "@/lib/pipeline/constants";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
