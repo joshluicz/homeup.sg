@@ -56,8 +56,98 @@ const DEMAND_BADGE: Record<string, string> = {
   low: "bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200",
 };
 
-const SCORE_COLOR = (s: number) =>
-  s >= 80 ? "text-emerald-600" : s >= 60 ? "text-amber-600" : "text-red-500";
+const SCORE_BADGE = (s: number) =>
+  s >= 8
+    ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+    : s >= 6
+      ? "bg-amber-50 text-amber-700 ring-amber-200"
+      : "bg-red-50 text-red-600 ring-red-200";
+
+function qualityVerdict(overall: number): string {
+  if (overall >= 8) return "Excellent — ready to publish";
+  if (overall >= 6) return "Good — minor polish recommended";
+  return "Needs work — review before publishing";
+}
+
+function QualityScorePanel({ result }: { result: PackagedArticle }) {
+  const llm = result.audit.llm;
+
+  if (llm) {
+    const overall = (llm.seo + llm.geo + llm.aeo) / 3;
+    const verdict = qualityVerdict(overall);
+    const verdictColor =
+      overall >= 8 ? "text-emerald-700" : overall >= 6 ? "text-amber-700" : "text-red-600";
+
+    return (
+      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          Worth posting?
+        </p>
+        <div className="mt-3 flex flex-wrap items-end gap-4">
+          <div>
+            <p className={cn("font-display text-4xl font-bold tabular-nums", verdictColor)}>
+              {overall.toFixed(1)}
+              <span className="text-xl font-normal text-neutral-400"> / 10</span>
+            </p>
+            <p className={cn("mt-1 text-sm font-semibold", verdictColor)}>{verdict}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { label: "SEO", score: llm.seo },
+                { label: "GEO", score: llm.geo },
+                { label: "AEO", score: llm.aeo },
+              ] as const
+            ).map(({ label, score }) => (
+              <span
+                key={label}
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-xs font-bold tabular-nums ring-1",
+                  SCORE_BADGE(score),
+                )}
+              >
+                {label} {score}/10
+              </span>
+            ))}
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-bold ring-1",
+                result.compliance.passed
+                  ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                  : "bg-red-50 text-red-600 ring-red-200",
+              )}
+            >
+              Compliance {result.compliance.passed ? "PASS" : "FAIL"}
+            </span>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-neutral-500">
+          SEO = search rankings · GEO = AI/search clarity for Singapore · AEO = answer engines
+          (Quick Answer, FAQ). Scored by Claude against a strict rubric — 8+ is genuinely strong.
+        </p>
+      </div>
+    );
+  }
+
+  // Heuristic fallback when LLM audit did not run
+  const overall = result.audit.overall / 10;
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+        Worth posting? (estimated)
+      </p>
+      <p className="mt-2 font-display text-3xl font-bold tabular-nums text-amber-800">
+        {(result.audit.overall / 10).toFixed(1)}
+        <span className="text-lg font-normal text-amber-600"> / 10</span>
+      </p>
+      <p className="mt-1 text-sm font-semibold text-amber-800">{qualityVerdict(overall)}</p>
+      <p className="mt-2 text-xs text-amber-700">
+        LLM audit unavailable — showing heuristic scores only. Regenerate if you need SEO/GEO/AEO
+        breakdown.
+      </p>
+    </div>
+  );
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -84,11 +174,13 @@ function StepBadge({ state, label }: { state: StepState; label: string }) {
 }
 
 function AuditBar({ label, score }: { label: string; score: number }) {
+  const color =
+    score >= 80 ? "text-emerald-600" : score >= 60 ? "text-amber-600" : "text-red-500";
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between">
         <span className="text-xs text-neutral-500">{label}</span>
-        <span className={cn("text-xs font-bold tabular-nums", SCORE_COLOR(score))}>{score}</span>
+        <span className={cn("text-xs font-bold tabular-nums", color)}>{score}</span>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100">
         <div
@@ -110,6 +202,7 @@ export function ArticleGenerationTab() {
   const [topics, setTopics] = useState<TopicCandidate[]>([]);
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState<TopicCandidate | null>(null);
+  const [autoSelectedTopic, setAutoSelectedTopic] = useState<TopicCandidate | null>(null);
   const [customTitle, setCustomTitle] = useState("");
   const [showTopicList, setShowTopicList] = useState(true);
 
@@ -121,6 +214,7 @@ export function ArticleGenerationTab() {
     package: "idle",
   });
   const [generating, setGenerating] = useState(false);
+  const [autoGenerating, setAutoGenerating] = useState(false);
   const [result, setResult] = useState<PackagedArticle | null>(null);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
@@ -151,17 +245,16 @@ export function ArticleGenerationTab() {
   }, []);
 
   // ── Generate article ────────────────────────────────────────────────────────
-  const handleGenerate = useCallback(async () => {
-    if (!selectedTopic) return;
-
+  const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false) => {
     setGenerateError(null);
     setResult(null);
     setPublishResult(null);
     setPublishError(null);
+    setAutoSelectedTopic(null);
+    setAutoGenerating(auto);
     setGenerating(true);
     setShowTopicList(false);
 
-    // Animate pipeline steps
     const steps: PipelineStep[] = ["brief", "draft", "compliance", "package"];
     let stepIdx = 0;
 
@@ -186,7 +279,7 @@ export function ArticleGenerationTab() {
       const res = await fetch("/api/admin/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: selectedTopic }),
+        body: JSON.stringify(topic ? { topic } : {}),
       });
 
       clearInterval(interval);
@@ -196,8 +289,15 @@ export function ArticleGenerationTab() {
         throw new Error(err.detail || err.error || "Generation failed");
       }
 
-      const data: PackagedArticle = await res.json();
+      const data = (await res.json()) as PackagedArticle & { selectedTopic?: TopicCandidate };
       setPipelineStatus({ brief: "done", draft: "done", compliance: "done", package: "done" });
+
+      if (data.selectedTopic) {
+        setAutoSelectedTopic(data.selectedTopic);
+        setSelectedTopic(data.selectedTopic);
+      } else if (topic) {
+        setSelectedTopic(topic);
+      }
 
       setResult(data);
       setEditedArticle(data.draft.article);
@@ -205,7 +305,6 @@ export function ArticleGenerationTab() {
       setEditedDescription(data.draft.description);
       setEditedMeta(data.draft.metaDescription);
 
-      // Default playbook topic by category
       const cat = data.draft.brief.topic.category;
       if (cat === "buying_first" || cat === "hdb_bto" || cat === "hdb_resale") {
         setPlaybookTopic("buying_first");
@@ -228,8 +327,18 @@ export function ArticleGenerationTab() {
       });
     } finally {
       setGenerating(false);
+      setAutoGenerating(false);
     }
-  }, [selectedTopic]);
+  }, []);
+
+  const handleGenerate = useCallback(() => {
+    if (!selectedTopic) return;
+    void runGenerate(selectedTopic, false);
+  }, [selectedTopic, runGenerate]);
+
+  const handleAutoGenerate = useCallback(() => {
+    void runGenerate(null, true);
+  }, [runGenerate]);
 
   // ── Add custom topic ────────────────────────────────────────────────────────
   const handleCustomTopic = useCallback(async () => {
@@ -289,9 +398,11 @@ export function ArticleGenerationTab() {
   const handleReset = () => {
     setResult(null);
     setSelectedTopic(null);
+    setAutoSelectedTopic(null);
     setGenerateError(null);
     setPublishResult(null);
     setPublishError(null);
+    setAutoGenerating(false);
     setShowTopicList(true);
     setPipelineStatus({ brief: "idle", draft: "idle", compliance: "idle", package: "idle" });
   };
@@ -318,6 +429,31 @@ export function ArticleGenerationTab() {
             Start over
           </Button>
         )}
+      </div>
+
+      {/* ── Auto-generate (primary action) ── */}
+      <div className="rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white p-5 shadow-sm">
+        <Button
+          onClick={handleAutoGenerate}
+          disabled={generating}
+          className="w-full py-3 text-base font-semibold sm:w-auto"
+        >
+          {generating && autoGenerating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              AI is picking the best trending topic and writing…
+            </>
+          ) : (
+            <>
+              <Zap className="mr-2 h-4 w-4" />
+              Auto-Generate Best Article
+            </>
+          )}
+        </Button>
+        <p className="mt-2 text-xs text-neutral-500">
+          Picks the top radar topic that isn&apos;t already live on /playbook, then runs the full
+          pipeline. Or choose a topic manually below.
+        </p>
       </div>
 
       {/* ── Step 1: Topic selection ── */}
@@ -379,8 +515,10 @@ export function ArticleGenerationTab() {
                   <button
                     key={topic.id}
                     onClick={() => setSelectedTopic(topic)}
+                    disabled={topic.alreadyPublished}
                     className={cn(
                       "group flex flex-col gap-1.5 rounded-xl border p-3.5 text-left transition-all",
+                      topic.alreadyPublished && "cursor-not-allowed opacity-50",
                       selectedTopic?.id === topic.id
                         ? "border-primary-500 bg-primary-50 shadow-sm"
                         : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 hover:bg-white",
@@ -398,6 +536,11 @@ export function ArticleGenerationTab() {
                         {topic.title}
                       </span>
                       <div className="flex shrink-0 items-center gap-1.5">
+                        {topic.alreadyPublished && (
+                          <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-medium text-neutral-600">
+                            Published
+                          </span>
+                        )}
                         {topic.source === "custom" && (
                           <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
                             Custom
@@ -467,9 +610,11 @@ export function ArticleGenerationTab() {
 
         {generating && (
           <div className="mt-3 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-xs text-primary-700">
-            Running {Object.values(pipelineStatus).filter((s) => s === "running").length > 0
-              ? PIPELINE_STEPS.find((s) => pipelineStatus[s.id] === "running")?.description
-              : "pipeline"}… this takes ~30–60 seconds.
+            {autoGenerating
+              ? "AI is picking the best trending topic and writing…"
+              : `Running ${Object.values(pipelineStatus).filter((s) => s === "running").length > 0
+                  ? PIPELINE_STEPS.find((s) => pipelineStatus[s.id] === "running")?.description
+                  : "pipeline"}… this takes ~30–60 seconds.`}
           </div>
         )}
 
@@ -487,6 +632,14 @@ export function ArticleGenerationTab() {
       {/* ── Result preview ── */}
       {result && (
         <div ref={previewRef} className="space-y-4">
+          {autoSelectedTopic && (
+            <div className="rounded-lg border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+              <span className="font-semibold">AI selected:</span> {autoSelectedTopic.title}
+            </div>
+          )}
+
+          <QualityScorePanel result={result} />
+
           {/* Compliance notices */}
           {result.compliance.issues.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
@@ -808,6 +961,7 @@ export function ArticleGenerationTab() {
                     disabled={
                       publishing ||
                       !allStepsDone ||
+                      !result.compliance.passed ||
                       editedMeta.length > 155 ||
                       (!!result?.audit?.llm && !result.audit.llm.passesGate && !auditOverride)
                     }

@@ -19,6 +19,8 @@ export interface TopicCandidate {
   score?: number;
   /** "radar" = curated list; "custom" = user-entered */
   source: "radar" | "custom";
+  /** True when a matching article is already live on /playbook */
+  alreadyPublished?: boolean;
 }
 
 export interface Brief {

@@ -1,12 +1,17 @@
 import { RADAR_TOPICS, RADAR_WEIGHTS } from "./radarConfig";
+import {
+  getPublishedArticles,
+  isTopicAlreadyPublished,
+} from "./publishTarget";
 import type { TopicCandidate } from "./types";
 
 /**
  * Returns scored topic candidates sorted by relevance.
- * Currently uses the curated list + composite scoring.
- * Future: plug in a Google Trends / SerpAPI call here.
+ * Marks topics that match a live /playbook article as alreadyPublished.
  */
 export async function runRadar(): Promise<TopicCandidate[]> {
+  const published = await getPublishedArticles();
+
   const scored: TopicCandidate[] = RADAR_TOPICS.map((t) => {
     const demandScore = RADAR_WEIGHTS.demand[t.demand] * 80;
     const evergreenBonus = t.evergreen ? RADAR_WEIGHTS.evergreen * 100 : 0;
@@ -16,11 +21,16 @@ export async function runRadar(): Promise<TopicCandidate[]> {
       ...t,
       score,
       source: "radar" as const,
+      alreadyPublished: isTopicAlreadyPublished(t.title, published),
     };
   });
 
-  // Sort highest score first
   return scored.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+}
+
+/** Highest-scored radar topic that is not already published. */
+export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidate | null {
+  return topics.find((t) => !t.alreadyPublished) ?? null;
 }
 
 /** Creates a custom topic candidate from user input. */

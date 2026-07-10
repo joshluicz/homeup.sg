@@ -1,6 +1,103 @@
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
 
+export interface PublishedArticleRef {
+  slug: string;
+  title: string;
+}
+
+const DEDUP_STOPWORDS = new Set([
+  "a", "an", "the", "to", "for", "in", "of", "and", "or", "your", "how", "when",
+  "what", "is", "it", "do", "you", "can", "i", "my", "singapore", "guide", "2026",
+]);
+
+function slugifyForDedup(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+/** Normalizes a slug or title for duplicate detection (case, suffixes, stopwords). */
+export function normalizeSlugForDedup(raw: string): string {
+  let s = slugifyForDedup(raw);
+  s = s.replace(/-2026-guide$/, "");
+  // publishArticle() appends a millisecond timestamp to slugs
+  s = s.replace(/-\d{10,13}$/, "");
+  const tokens = s.split("-").filter((t) => t && !DEDUP_STOPWORDS.has(t));
+  return tokens.join("-");
+}
+
+function slugKeysMatch(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const minLen = Math.min(a.length, b.length);
+  return minLen >= 12 && (a.includes(b) || b.includes(a));
+}
+
+/** True when a radar topic title overlaps a live /playbook article slug or title. */
+export function isTopicAlreadyPublished(
+  topicTitle: string,
+  published: PublishedArticleRef[],
+): boolean {
+  const topicKey = normalizeSlugForDedup(topicTitle);
+  if (!topicKey) return false;
+
+  for (const { slug, title } of published) {
+    for (const pubKey of [normalizeSlugForDedup(slug), normalizeSlugForDedup(title)]) {
+      if (slugKeysMatch(topicKey, pubKey)) return true;
+    }
+  }
+  return false;
+}
+
+function serviceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars.");
+  }
+  return createClient(supabaseUrl, serviceKey);
+}
+
+/**
+ * All live /playbook articles that have body content — same source as GSC analytics.
+ * Used by the topic radar to skip duplicates.
+ */
+export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
+  try {
+    const supabase = serviceClient();
+    const { data, error } = await supabase
+      .from("playbook_videos")
+      .select("slug, title")
+      .neq("article", "");
+
+    if (error) {
+      console.error("[pipeline] getPublishedArticles failed:", error.message);
+      return [];
+    }
+
+    return (data ?? []).filter(
+      (row): row is PublishedArticleRef =>
+        typeof row.slug === "string" &&
+        row.slug.length > 0 &&
+        typeof row.title === "string" &&
+        row.title.length > 0,
+    );
+  } catch (err) {
+    console.error("[pipeline] getPublishedArticles error:", err);
+    return [];
+  }
+}
+
+/** Slugs of all published playbook articles (convenience wrapper). */
+export async function getPublishedSlugs(): Promise<string[]> {
+  const articles = await getPublishedArticles();
+  return articles.map((a) => a.slug);
+}
+
 function slugify(title: string): string {
   return (
     title
