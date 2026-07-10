@@ -10,7 +10,7 @@ This document describes how to run **automated listings sync** on an always-on d
 
 HomeUP listings are maintained in a **Google Sheet** (source of truth) and synced to Supabase / the public site. The sync pipeline must **fetch PropertyGuru listing pages** to import data via Claude. PropertyGuru **blocks datacenter IPs** (Vercel, most cloud VPS), so imports fail from the cloud. A device on a **home/residential internet connection** can fetch PG reliably.
 
-The admin UI on Vercel can refresh the sheet and archive listings, but **full import requires a home IP** (or the optional local agent for browser-based admin sync). Remote admins (e.g. Batam) should use the **Listings Sync Kit** — see `/admin/listings/sync-kit` or `scripts/build-listings-sync-kit.py`.
+The admin UI on Vercel can refresh the sheet and archive listings, but **full import requires a home IP** (or the optional local agent for browser-based admin sync). Remote admins (e.g. Batam) should use the **Listings Sync Kit** — see `/admin/sync-kit-handoff` or `scripts/build-listings-sync-kit.py`.
 
 ---
 
@@ -185,7 +185,7 @@ crontab -l
 
 For admins who do not run a Pi but need to sync from their laptop:
 
-1. Download from **Admin → Listings Sync → Setup instructions** (`/admin/listings/sync-kit`)
+1. Download from **Admin → Sync Kit Guide** (`/admin/sync-kit-handoff`) or **Listings Sync → Step-by-step guide**
 2. Unzip, copy `.env.local` from team lead (never in the ZIP)
 3. Run `first-time-setup` once (Windows `.bat`, Mac `.command`)
 4. **Workflow A:** `start-agent` + use `/admin/listings/pg-sources` in the browser
