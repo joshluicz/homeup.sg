@@ -28,6 +28,70 @@ export interface SlugMetric {
   dates: string[];
   /** clicks per day, aligned with dates */
   clicksByDay: number[];
+  /** impressions per day, aligned with dates */
+  impressionsByDay: number[];
+}
+
+/** Set GSC_DEBUG=1 on Vercel for verbose URL/slug matching logs. */
+const GSC_DEBUG =
+  process.env.GSC_DEBUG === "1" || process.env.GSC_DEBUG === "true";
+
+function gscLog(message: string, extra?: Record<string, unknown>): void {
+  if (extra) {
+    console.log(`[GSC] ${message}`, extra);
+  } else {
+    console.log(`[GSC] ${message}`);
+  }
+}
+
+/**
+ * Canonical slug key used for both cache writes and dashboard reads.
+ * Must stay identical on both paths.
+ */
+export function normalizeArticleSlug(slug: string): string {
+  try {
+    return decodeURIComponent(slug.trim()).toLowerCase();
+  } catch {
+    return slug.trim().toLowerCase();
+  }
+}
+
+/**
+ * Extract the article slug from a GSC page URL.
+ *
+ * Accepts full URLs (https://homeup.sg/playbook/foo) or path-only (/playbook/foo).
+ * Strips scheme+domain, trailing slashes, lowercases, and only matches direct
+ * article pages (/playbook/<slug>) — not /playbook/watch/* or /playbook/topic/*.
+ */
+export function extractPlaybookArticleSlug(pageUrl: string): string | null {
+  if (!pageUrl?.trim()) return null;
+
+  let pathname: string;
+  const raw = pageUrl.trim();
+
+  if (raw.startsWith("http://") || raw.startsWith("https://")) {
+    try {
+      pathname = new URL(raw).pathname;
+    } catch {
+      return null;
+    }
+  } else {
+    pathname = raw.split("?")[0].split("#")[0];
+  }
+
+  pathname = pathname.replace(/\/+$/, "").toLowerCase();
+  if (!pathname.startsWith("/")) pathname = `/${pathname}`;
+
+  const match = pathname.match(/^\/playbook\/([^/]+)$/);
+  if (!match) return null;
+
+  const slug = normalizeArticleSlug(match[1]);
+  if (!slug) return null;
+
+  // Reserved single-segment playbook routes — not article pages.
+  if (slug === "watch" || slug === "topic") return null;
+
+  return slug;
 }
 
 // ── JWT auth (same pattern as lib/ga4/server.ts) ─────────────────────────────
@@ -177,7 +241,8 @@ interface GscResponse {
 }
 
 /**
- * Fetches per-URL search analytics from GSC for /playbook/* URLs.
+ * Fetches per-URL search analytics from GSC for the whole property.
+ * Filters to /playbook/<slug> article pages locally after the response.
  * Returns one row per (page, date) pair.
  */
 async function queryGsc(
@@ -199,18 +264,7 @@ async function queryGsc(
       startDate,
       endDate,
       dimensions: ["page", "date"],
-      dimensionFilterGroups: [
-        {
-          filters: [
-            {
-              dimension: "page",
-              operator: "contains",
-              expression: "/playbook/",
-            },
-          ],
-        },
-      ],
-      rowLimit: 5000,
+      rowLimit: 25000,
     }),
   });
 
@@ -221,11 +275,25 @@ async function queryGsc(
 
 // ── Main public function ──────────────────────────────────────────────────────
 
+export interface GscFetchSummary {
+  metrics: SlugMetric[];
+  rowCount: number;
+  slugsExtracted: number;
+  slugsMatched: number;
+  totalClicks: number;
+}
+
 /**
- * Fetches GSC data for all published playbook articles and returns per-slug metrics.
+ * Fetches GSC data for playbook article pages and returns per-slug metrics.
  * Returns null if GSC is not configured (caller handles gracefully).
+ *
+ * @param knownSlugs  Article slugs from playbook_videos — used for match logging
+ *                    and to verify write/read keys align with the dashboard.
  */
-export async function fetchGscMetrics(days = 28): Promise<SlugMetric[] | null> {
+export async function fetchGscMetrics(
+  days = 28,
+  knownSlugs: string[] = [],
+): Promise<GscFetchSummary | null> {
   const config = loadConfig();
   if (!config) return null;
 
@@ -237,26 +305,43 @@ export async function fetchGscMetrics(days = 28): Promise<SlugMetric[] | null> {
   const token = await getGscAccessToken(config.sa);
   const rows = await queryGsc(token, config.siteUrl, startDate, endDate);
 
-  // Group by slug
+  gscLog(
+    `searchAnalytics.query returned ${rows.length} rows (${startDate} → ${endDate}, dimensions=[page,date])`,
+  );
+
+  const knownSet = new Set(knownSlugs.map(normalizeArticleSlug));
+  const sampleUrls: { page: string; slug: string | null }[] = [];
+
+  // Group by normalized slug
   const map = new Map<
     string,
     { dates: Map<string, { clicks: number; impressions: number; position: number }> }
   >();
 
   for (const row of rows) {
-    const pageUrl = row.keys[0]; // e.g. https://homeup.sg/playbook/my-slug-1234567890
-    const date = row.keys[1]; // e.g. 2024-07-01
+    const pageUrl = row.keys[0];
+    const date = row.keys[1];
 
-    const match = pageUrl.match(/\/playbook\/([^/?#]+)/);
-    if (!match) continue;
-    const slug = match[1];
+    if (GSC_DEBUG && sampleUrls.length < 5) {
+      sampleUrls.push({ page: pageUrl, slug: extractPlaybookArticleSlug(pageUrl) });
+    }
+
+    const slug = extractPlaybookArticleSlug(pageUrl);
+    if (!slug) continue;
 
     if (!map.has(slug)) map.set(slug, { dates: new Map() });
+    const day = map.get(slug)!.dates.get(date);
     map.get(slug)!.dates.set(date, {
-      clicks: row.clicks,
-      impressions: row.impressions,
+      clicks: (day?.clicks ?? 0) + row.clicks,
+      impressions: (day?.impressions ?? 0) + row.impressions,
       position: row.position,
     });
+  }
+
+  if (GSC_DEBUG) {
+    for (const sample of sampleUrls) {
+      gscLog(`sample page URL → slug: "${sample.page}" → "${sample.slug ?? "(no match)"}"`);
+    }
   }
 
   const results: SlugMetric[] = [];
@@ -278,10 +363,46 @@ export async function fetchGscMetrics(days = 28): Promise<SlugMetric[] | null> {
       position: avgPosition,
       dates: sorted.map(([d]) => d),
       clicksByDay: sorted.map(([, v]) => v.clicks),
+      impressionsByDay: sorted.map(([, v]) => v.impressions),
     });
   }
 
-  return results.sort((a, b) => b.clicks - a.clicks);
+  const sortedResults = results.sort((a, b) => b.clicks - a.clicks);
+  const slugsMatched =
+    knownSet.size > 0
+      ? sortedResults.filter((m) => knownSet.has(m.slug)).length
+      : sortedResults.length;
+  const totalClicks = sortedResults.reduce((s, m) => s + m.clicks, 0);
+
+  gscLog(
+    `extracted ${sortedResults.length} playbook article slug(s)` +
+      (knownSet.size > 0 ? `, ${slugsMatched}/${knownSet.size} match known articles` : "") +
+      `, ${totalClicks} total clicks`,
+  );
+
+  if (GSC_DEBUG && knownSet.size > 0) {
+    const extracted = new Set(sortedResults.map((m) => m.slug));
+    const unmatchedKnown = [...knownSet].filter((s) => !extracted.has(s));
+    const unmatchedGsc = [...extracted].filter((s) => !knownSet.has(s));
+    if (unmatchedKnown.length) {
+      gscLog(`known article slugs with no GSC data (${unmatchedKnown.length})`, {
+        sample: unmatchedKnown.slice(0, 5),
+      });
+    }
+    if (unmatchedGsc.length) {
+      gscLog(`GSC slugs not in known articles (${unmatchedGsc.length})`, {
+        sample: unmatchedGsc.slice(0, 5),
+      });
+    }
+  }
+
+  return {
+    metrics: sortedResults,
+    rowCount: rows.length,
+    slugsExtracted: sortedResults.length,
+    slugsMatched,
+    totalClicks,
+  };
 }
 
 // ── Cache layer (Supabase article_metrics table) ──────────────────────────────
@@ -290,7 +411,7 @@ export async function fetchGscMetrics(days = 28): Promise<SlugMetric[] | null> {
  * Persists fetched GSC metrics into the article_metrics cache table.
  * Uses upsert so re-running doesn't duplicate rows.
  */
-export async function cacheGscMetrics(metrics: SlugMetric[]): Promise<void> {
+export async function cacheGscMetrics(metrics: SlugMetric[]): Promise<number> {
   const supabase = createServiceClient();
 
   const rows: {
@@ -305,26 +426,39 @@ export async function cacheGscMetrics(metrics: SlugMetric[]): Promise<void> {
   const now = new Date().toISOString();
 
   for (const m of metrics) {
+    const slug = normalizeArticleSlug(m.slug);
     for (let i = 0; i < m.dates.length; i++) {
       rows.push({
-        slug: m.slug,
+        slug,
         date: m.dates[i],
-        clicks: m.clicksByDay[i],
-        impressions: m.impressions, // We store total per date row (GSC gives per-day already)
+        clicks: m.clicksByDay[i] ?? 0,
+        impressions: m.impressionsByDay[i] ?? 0,
         position: m.position,
         cached_at: now,
       });
     }
   }
 
-  if (rows.length === 0) return;
-
-  // Upsert in batches of 500
-  for (let i = 0; i < rows.length; i += 500) {
-    await supabase
-      .from("article_metrics")
-      .upsert(rows.slice(i, i + 500), { onConflict: "slug,date" });
+  if (rows.length === 0) {
+    gscLog("cache: no rows to upsert");
+    return 0;
   }
+
+  let upserted = 0;
+  for (let i = 0; i < rows.length; i += 500) {
+    const batch = rows.slice(i, i + 500);
+    const { error } = await supabase
+      .from("article_metrics")
+      .upsert(batch, { onConflict: "slug,date" });
+    if (error) {
+      console.error(`[GSC] cache upsert failed (batch ${i / 500 + 1}): ${error.message}`);
+      throw new Error(`GSC cache upsert failed: ${error.message}`);
+    }
+    upserted += batch.length;
+  }
+
+  gscLog(`cache: upserted ${upserted} row(s) for ${metrics.length} slug(s)`);
+  return upserted;
 }
 
 /**
@@ -335,32 +469,47 @@ export async function getCachedMetrics(slugs: string[]): Promise<SlugMetric[]> {
   if (slugs.length === 0) return [];
 
   const supabase = createServiceClient();
-  const { data } = await supabase
+  const normalizedSlugs = [...new Set(slugs.map(normalizeArticleSlug))];
+
+  const { data, error } = await supabase
     .from("article_metrics")
     .select("slug, date, clicks, impressions, position")
-    .in("slug", slugs)
+    .in("slug", normalizedSlugs)
     .order("date", { ascending: true });
 
-  if (!data) return [];
+  if (error) {
+    console.error(`[GSC] getCachedMetrics query failed: ${error.message}`);
+    return [];
+  }
 
-  // Re-group by slug
-  const map = new Map<string, { dates: string[]; clicks: number[]; impressions: number[]; positions: number[] }>();
+  if (!data?.length) return [];
+
+  // Re-group by normalized slug — same key used when writing the cache.
+  const map = new Map<
+    string,
+    { dates: string[]; clicks: number[]; impressions: number[]; positions: number[] }
+  >();
 
   for (const row of data) {
-    if (!map.has(row.slug)) {
-      map.set(row.slug, { dates: [], clicks: [], impressions: [], positions: [] });
+    const key = normalizeArticleSlug(row.slug);
+    if (!map.has(key)) {
+      map.set(key, { dates: [], clicks: [], impressions: [], positions: [] });
     }
-    const g = map.get(row.slug)!;
+    const g = map.get(key)!;
     g.dates.push(row.date);
     g.clicks.push(row.clicks);
     g.impressions.push(row.impressions);
-    if (row.position) g.positions.push(Number(row.position));
+    if (row.position != null && Number(row.position) > 0) {
+      g.positions.push(Number(row.position));
+    }
   }
 
   return slugs
-    .filter((s) => map.has(s))
     .map((slug) => {
-      const g = map.get(slug)!;
+      const key = normalizeArticleSlug(slug);
+      const g = map.get(key);
+      if (!g) return null;
+
       const totalClicks = g.clicks.reduce((s, c) => s + c, 0);
       const totalImpressions = g.impressions.reduce((s, i) => s + i, 0);
       const avgPos =
@@ -374,6 +523,8 @@ export async function getCachedMetrics(slugs: string[]): Promise<SlugMetric[]> {
         position: avgPos,
         dates: g.dates,
         clicksByDay: g.clicks,
+        impressionsByDay: g.impressions,
       };
-    });
+    })
+    .filter((m): m is SlugMetric => m !== null);
 }

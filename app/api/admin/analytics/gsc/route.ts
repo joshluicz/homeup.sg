@@ -59,12 +59,23 @@ export async function POST(request: Request) {
   } catch { /* no body — use default */ }
 
   try {
-    const metrics = await fetchGscMetrics(days);
-    if (!metrics) {
+    const slugs = await getArticleSlugs();
+    const result = await fetchGscMetrics(days, slugs);
+    if (!result) {
       return NextResponse.json({ error: "GSC fetch returned null" }, { status: 500 });
     }
-    await cacheGscMetrics(metrics);
-    return NextResponse.json({ ok: true, slugsRefreshed: metrics.length, days });
+
+    const rowsCached = await cacheGscMetrics(result.metrics);
+
+    return NextResponse.json({
+      ok: true,
+      slugsRefreshed: result.slugsMatched,
+      slugsExtracted: result.slugsExtracted,
+      rowsFromGsc: result.rowCount,
+      rowsCached,
+      totalClicks: result.totalClicks,
+      days,
+    });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: "GSC_FETCH_FAILED", detail: msg }, { status: 500 });

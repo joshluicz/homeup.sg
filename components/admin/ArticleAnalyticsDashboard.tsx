@@ -189,9 +189,19 @@ export function ArticleAnalyticsDashboard() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ days: 28 }),
     });
-    const data = await res.json() as { ok?: boolean; slugsRefreshed?: number; error?: string; detail?: string };
+    const data = await res.json() as {
+      ok?: boolean;
+      slugsRefreshed?: number;
+      totalClicks?: number;
+      error?: string;
+      detail?: string;
+    };
     if (res.ok) {
-      setRefreshMsg(`Refreshed GSC data for ${data.slugsRefreshed ?? 0} articles.`);
+      const matched = data.slugsRefreshed ?? 0;
+      const clicks = data.totalClicks ?? 0;
+      setRefreshMsg(
+        `Refreshed GSC data for ${matched} article${matched === 1 ? "" : "s"} (${clicks.toLocaleString()} clicks).`,
+      );
       await load();
     } else {
       setRefreshMsg(`Error: ${data.detail ?? data.error}`);
