@@ -276,10 +276,10 @@ export function PgSourcesPanel() {
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
-            href="/admin/listings/sync-kit"
+            href="/admin/sync-kit-handoff"
             className="inline-flex items-center rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
           >
-            Setup instructions
+            Step-by-step guide
           </Link>
           <a
             href={SYNC_KIT_ZIP}
