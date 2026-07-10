@@ -1,0 +1,8 @@
+# Rename this file to .env.local after filling in values.
+# Team lead: copy real values from Vercel env vars or Supabase/Anthropic dashboards.
+# Send the completed .env.local to Batam via 1Password or encrypted share — NOT email.
+
+NEXT_PUBLIC_SUPABASE_URL=https://ixhikkbytusikgjiuvqa.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=PASTE_ANON_KEY_HERE
+SUPABASE_SERVICE_ROLE_KEY=PASTE_SERVICE_ROLE_KEY_HERE
+ANTHROPIC_API_KEY=PASTE_ANTHROPIC_KEY_HERE
