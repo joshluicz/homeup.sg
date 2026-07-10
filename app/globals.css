@@ -685,12 +685,18 @@ h2 {
   border: 1px solid #e5e7eb;
   background: #ffffff;
   margin: 2rem 0;
+  /* Prevent the wrapper itself from overflowing the article column */
+  max-width: 100%;
 }
 .playbook-article-html table {
   width: 100%;
-  min-width: 640px;
+  min-width: 480px; /* reduced from 640px — fits 2-column tables on most phones */
   border-collapse: collapse;
   font-size: 0.875rem;
+}
+/* Safety net: contain any table that escaped the wrapper */
+.playbook-article-html {
+  overflow-x: hidden;
 }
 .playbook-article-html thead { border-bottom: 2px solid #171717; background: #ffffff; }
 .playbook-article-html th {

@@ -170,10 +170,11 @@ function convertMarkdownTables(html: string): string {
 
 /**
  * Wrap bare <table> elements in a scroll container to match the Markdown renderer.
+ * Uses a lookahead so it matches both <table> and <table ...attributes...>.
  */
 function wrapTables(html: string): string {
   return html
-    .replace(/<table(\s)/gi, '<div class="table-wrapper"><table$1')
+    .replace(/<table(?=[\s>])/gi, '<div class="table-wrapper"><table')
     .replace(/<\/table>/gi, "</table></div>");
 }
 
