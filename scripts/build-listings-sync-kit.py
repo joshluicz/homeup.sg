@@ -275,19 +275,19 @@ can be fetched from a normal internet connection, then synced to homeup.sg.
 
 WHAT IS INSIDE
 --------------
-- SETUP.html          Step-by-step guide (open in Chrome, Edge, or Safari)
-- first-time-setup    Run once after unzipping (Windows: .bat, Mac: .command)
-- start-agent         Keep open while using the admin Listings Sync page
-- run-full-sync       Full automated sync without using the admin UI
+- index.html          Open this first (step-by-step guide; works offline)
+- first-time-setup    Optional shortcut if .bat/.command are not blocked
+- start-agent         Optional shortcut for Workflow A
+- run-full-sync       Optional shortcut for Workflow B
 - .env.local.example  Template only — ask team lead for the real .env.local
 
 ONE-TIME SETUP
 --------------
 1. Install Node.js 20+ from https://nodejs.org
 2. Unzip this folder (e.g. Desktop/homeup-listings-sync-kit)
-3. Ask your team lead for .env.local and copy it into this folder
-4. Run first-time-setup (Windows: first-time-setup.bat, Mac: right-click
-   first-time-setup.command → Open — see SETUP.html for Gatekeeper help)
+3. Double-click index.html and follow the steps
+4. Ask your team lead for .env.local and copy it into this folder
+5. Run setup via first-time-setup OR manual commands in index.html (if antivirus blocks scripts)
 
 WORKFLOW A — Admin UI (step-by-step control)
 --------------------------------------------
@@ -309,7 +309,7 @@ TROUBLESHOOTING
 - "Missing .env.local" → ask team lead; never put keys in email or chat
 - "PropertyGuru blocked" → start-agent must be running for Workflow A
 - Agent offline on admin page → run start-agent before syncing
-- Windows Smart App Control → only run scripts from this unzipped folder
+- Windows Smart App Control → open index.html only; use manual npm commands (see index.html)
 - Mac "cannot be opened" → right-click the .command file → Open
 
 SECURITY
@@ -322,7 +322,7 @@ SETUP_HTML = """<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HomeUP Listings Sync Kit — Setup</title>
+  <title>HomeUP Listings Sync Kit</title>
   <style>
     :root { --green: #008f52; }
     * { box-sizing: border-box; }
@@ -376,7 +376,28 @@ SETUP_HTML = """<!doctype html>
       border-color: #6ee7b7;
     }
     .warn { background: #fef2f2; border-color: #fca5a5; }
-    a { color: var(--green); font-weight: 600; }
+    .cmd {
+      display: block;
+      margin: 10px 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: ui-monospace, monospace;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .hero {
+      margin: 16px 0 0;
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: #0f172a;
+      color: #f8fafc;
+      font-size: 0.95rem;
+    }
+    .hero strong { color: #6ee7b7; }
   </style>
 </head>
 <body>
@@ -389,18 +410,30 @@ SETUP_HTML = """<!doctype html>
         <strong>homeup.sg</strong>. PropertyGuru blocks our cloud server — your PC fetches the pages instead.
       </p>
 
+      <div class="hero">
+        <strong>Start here:</strong> keep this page open while you work. If Windows antivirus or Smart App Control
+        blocks <span class="file">.bat</span> files (same as the roadshow kit), <strong>do not run any script files</strong>
+        — use the <strong>manual commands</strong> below instead.
+      </div>
+
       <h2>Part 1 — One-time setup</h2>
       <ol>
         <li>Install <strong>Node.js 20 or newer</strong> from <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>.</li>
-        <li>Unzip this folder. Keep everything together — do not move scripts out of the folder.</li>
-        <li>Ask your team lead for the file <span class="file">.env.local</span> and copy it into this folder.
+        <li>Unzip this folder. Keep everything together — do not move files out of the folder.</li>
+        <li>Ask your team lead for <span class="file">.env.local</span> and copy it into this folder.
           <strong>Never</strong> share this file or commit it to git.</li>
         <li>
-          <strong>Windows:</strong> double-click <span class="file">first-time-setup.bat</span><br />
-          <strong>Mac:</strong> right-click <span class="file">first-time-setup.command</span> → <strong>Open</strong>
-          (first time only; see security note below)
+          <strong>Option A (if scripts work):</strong><br />
+          Windows: double-click <span class="file">first-time-setup.bat</span><br />
+          Mac: right-click <span class="file">first-time-setup.command</span> → <strong>Open</strong>
         </li>
-        <li>Wait until you see <strong>Setup complete</strong>. This installs packages and Chrome for Patchright (may take a few minutes).</li>
+        <li>
+          <strong>Option B (antivirus blocked scripts — use this):</strong><br />
+          Open <strong>Command Prompt</strong> (Windows) or <strong>Terminal</strong> (Mac) in this folder, then run:
+          <code class="cmd">npm install
+npm run pg:install</code>
+        </li>
+        <li>Wait until setup finishes (5–15 min). A <span class="file">node_modules</span> folder should appear.</li>
       </ol>
 
       <div class="note ok">
@@ -411,34 +444,47 @@ SETUP_HTML = """<!doctype html>
       <h2>Part 2 — Workflow A (admin UI)</h2>
       <p>Use this when you want to review counts before syncing.</p>
       <ol>
-        <li>Double-click <span class="file">start-agent</span> (<span class="file">.bat</span> on Windows, <span class="file">.command</span> on Mac). <strong>Keep this window open.</strong></li>
+        <li>
+          <strong>Option A:</strong> double-click <span class="file">start-agent</span> (<span class="file">.bat</span> / <span class="file">.command</span>). <strong>Keep the window open.</strong><br />
+          <strong>Option B (antivirus):</strong> in Command Prompt / Terminal in this folder:
+          <code class="cmd">npm run pg:agent</code>
+        </li>
+        <li>You should see <span class="file">Listening on http://127.0.0.1:3921</span></li>
         <li>Open <a href="https://homeup.sg/admin/listings/pg-sources" target="_blank" rel="noopener">homeup.sg/admin → Listings Sync</a> and sign in.</li>
-        <li>You should see a green banner: <em>Local agent is running</em>. If not, go back to step 1.</li>
-        <li>Click <strong>Refresh from Google Sheet</strong>.</li>
-        <li>Review the preview: how many will import, how many will archive.</li>
-        <li>Click <strong>Sync to HomeUP</strong>. Listings are <strong>published immediately</strong> — no separate publish step.</li>
+        <li>Green banner: <em>Local agent is running</em>. If amber → agent not running (step 1).</li>
+        <li>Click <strong>Refresh from Google Sheet</strong> → review counts → <strong>Sync to HomeUP</strong>.</li>
       </ol>
 
       <h2>Part 3 — Workflow B (full auto sync)</h2>
-      <p>Use this for a one-click sync without opening the admin UI.</p>
+      <p>One-click sync without the admin UI.</p>
       <ol>
-        <li>Double-click <span class="file">run-full-sync</span>.</li>
-        <li>Wait for the log to finish (several minutes if many new listings).</li>
+        <li>
+          <strong>Option A:</strong> double-click <span class="file">run-full-sync</span><br />
+          <strong>Option B (antivirus):</strong>
+          <code class="cmd">npm run pg:automation</code>
+        </li>
+        <li>Wait for <strong>Done</strong> (several minutes if many listings).</li>
         <li>Open <a href="https://homeup.sg/listings" target="_blank" rel="noopener">homeup.sg/listings</a> to verify.</li>
       </ol>
 
-      <h2>Security notes</h2>
-      <h3>Windows</h3>
-      <p>Only run <span class="file">.bat</span> files from this unzipped folder. If Smart App Control blocks something, close the dialog and open files from this folder only.</p>
+      <h2>Windows security (same as roadshow kit)</h2>
+      <p>
+        Open <span class="file">index.html</span> only — do not rely on script files if Smart App Control blocks them.
+        Close any block dialog and use the manual commands above in Command Prompt opened in this folder.
+      </p>
+      <p>
+        To open Command Prompt here: click the folder address bar, type <span class="file">cmd</span>, press Enter.
+      </p>
       <h3>Mac</h3>
-      <p>If macOS says the app “cannot be opened”, right-click the <span class="file">.command</span> file → <strong>Open</strong> → <strong>Open</strong> again. You only need to do this once per file.</p>
+      <p>If macOS says a <span class="file">.command</span> file “cannot be opened”, right-click → <strong>Open</strong> → <strong>Open</strong> again, or use Terminal with the manual commands above.</p>
 
       <h2>Troubleshooting</h2>
       <ul>
         <li><strong>Missing .env.local</strong> — ask team lead; copy the file into this folder.</li>
         <li><strong>Imports need the local agent</strong> — run <span class="file">start-agent</span> before Workflow A.</li>
         <li><strong>PropertyGuru blocked</strong> — agent not running, or run Workflow B from this PC instead.</li>
-        <li><strong>npm install failed</strong> — check internet; re-run <span class="file">first-time-setup</span>.</li>
+        <li><strong>npm install failed</strong> — check internet; re-run setup commands.</li>
+        <li><strong>Antivirus blocked .bat</strong> — open <span class="file">index.html</span> and use manual commands (Option B) in each section.</li>
       </ul>
 
       <div class="note warn">
@@ -494,7 +540,7 @@ def main() -> None:
     )
     (BUILD_DIR / ".env.local.example").write_text(ENV_EXAMPLE, encoding="utf-8")
     (BUILD_DIR / "README.txt").write_text(README, encoding="utf-8")
-    (BUILD_DIR / "SETUP.html").write_text(SETUP_HTML, encoding="utf-8")
+    (BUILD_DIR / "index.html").write_text(SETUP_HTML, encoding="utf-8")
 
     write_executable(BUILD_DIR / "first-time-setup.bat", FIRST_TIME_SETUP_BAT)
     write_executable(BUILD_DIR / "start-agent.bat", START_AGENT_BAT)
