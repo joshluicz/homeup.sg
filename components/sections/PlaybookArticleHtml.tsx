@@ -41,18 +41,44 @@ const SECTION_LABEL_RE =
 
 /**
  * Convert section-label-only <p> elements into eyebrow headings.
+ * Adds a slug-specific modifier class (e.g. article-section-eyebrow--quick-answer)
+ * so downstream CSS and wrapSectionBoxes can target individual sections.
  * Handles labels that may be wrapped in inline tags like <strong> or <em>.
  */
 function applySectionEyebrows(html: string): string {
   return html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (_match, attrs, inner) => {
-    // Strip inner tags to get bare text for label detection
     const text = inner.replace(/<[^>]+>/g, "").trim();
     if (SECTION_LABEL_RE.test(text)) {
       const label = text.replace(/:$/, "").trim();
-      return `<p${attrs} class="article-section-eyebrow">${label}</p>`;
+      const slug = label.toLowerCase().replace(/\s+/g, "-");
+      // Remove any existing class from attrs to avoid duplicate class attributes
+      const cleanAttrs = attrs.replace(/\s*class="[^"]*"/, "");
+      return `<p${cleanAttrs} class="article-section-eyebrow article-section-eyebrow--${slug}">${label}</p>`;
     }
     return _match;
   });
+}
+
+/**
+ * Sections that should be rendered inside a card-style container box,
+ * matching the PlaybookStructuredArticle visual treatment.
+ */
+const BOX_SECTION_SLUGS = new Set(["quick-answer", "how-homeup-approaches-this"]);
+
+/**
+ * Wrap Quick Answer and "How HomeUp Approaches This" sections in a styled
+ * container div so they match the card layout in PlaybookStructuredArticle.
+ * Each box spans from its eyebrow paragraph to just before the next eyebrow,
+ * h2, or end of content.
+ */
+function wrapSectionBoxes(html: string): string {
+  return html.replace(
+    /(<p[^>]*class="article-section-eyebrow article-section-eyebrow--([^"\s]+)"[^>]*>[\s\S]*?<\/p>)([\s\S]*?)(?=<p[^>]*class="article-section-eyebrow|<h[2-6][\s>]|$)/gi,
+    (match, eyebrowTag, slug, content) => {
+      if (!BOX_SECTION_SLUGS.has(slug)) return match;
+      return `<div class="article-section-box article-section-box--${slug}">${eyebrowTag}${content}</div>`;
+    },
+  );
 }
 
 /**
@@ -81,10 +107,13 @@ export function PlaybookArticleHtml({ html }: Props) {
   // 2. Promote section-label paragraphs to eyebrow headings
   const sectioned = applySectionEyebrows(stylesCleaned);
 
-  // 3. Wrap tables in scroll containers
-  const withWrappedTables = wrapTables(sectioned);
+  // 3. Wrap Quick Answer / HomeUp sections in card containers
+  const withBoxes = wrapSectionBoxes(sectioned);
 
-  // 4. Sanitise with DOMPurify
+  // 4. Wrap tables in scroll containers
+  const withWrappedTables = wrapTables(withBoxes);
+
+  // 5. Sanitise with DOMPurify
   const clean = DOMPurify.sanitize(withWrappedTables, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "b", "em", "i", "u", "s", "del",

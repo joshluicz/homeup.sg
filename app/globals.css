@@ -580,8 +580,42 @@ h2 {
   border: none !important;
   line-height: 1.4 !important;
 }
-.playbook-article-html .article-section-eyebrow:first-child {
+.playbook-article-html .article-section-eyebrow:first-child,
+.playbook-article-html .article-section-box .article-section-eyebrow {
   margin-top: 0 !important;
+}
+
+/* Card containers for Quick Answer and How HomeUp Approaches This sections */
+.playbook-article-html .article-section-box {
+  margin: 3.5rem 0;
+}
+.playbook-article-html .article-section-box:first-child {
+  margin-top: 0;
+}
+.playbook-article-html .article-section-box .article-section-eyebrow:first-child {
+  margin-top: 0 !important;
+}
+.playbook-article-html .article-section-box--quick-answer {
+  border: 1px solid #baf5d8; /* primary-200 */
+  background: linear-gradient(135deg, rgba(240, 253, 245, 0.8), #ffffff); /* primary-50/80 → white */
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+@media (min-width: 640px) {
+  .playbook-article-html .article-section-box--quick-answer {
+    padding: 1.75rem 2rem;
+  }
+}
+.playbook-article-html .article-section-box--how-homeup-approaches-this {
+  border: 1px solid #e5e5e5; /* neutral-200 */
+  background: #fafafa; /* neutral-50 */
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+@media (min-width: 640px) {
+  .playbook-article-html .article-section-box--how-homeup-approaches-this {
+    padding: 1.75rem 2rem;
+  }
 }
 .playbook-article-html h1 {
   font-size: 1.75rem;
@@ -730,8 +764,8 @@ h2 {
   margin: 2rem 0;
 }
 
-/* ─── Quick Answer callout: first blockquote after the Quick Answer eyebrow ─── */
-.playbook-article-html .article-section-eyebrow[class*="quick"] + blockquote,
+/* ─── Quick Answer callout: blockquote directly inside the Quick Answer box ─── */
+.playbook-article-html .article-section-box--quick-answer blockquote,
 .playbook-article-html blockquote.quick-answer-callout {
   border: 1px solid #baf5d8;
   background: linear-gradient(135deg, rgba(240,253,245,0.8), #ffffff);
