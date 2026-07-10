@@ -40,13 +40,15 @@ const SECTION_LABEL_RE =
   /^(Quick Answer|Introduction|How HomeUp Approaches This|Conclusion|FAQ):?$/i;
 
 /**
- * Convert section-label-only <p> elements into eyebrow headings.
+ * Convert section-label-only block elements into eyebrow headings.
+ * Matches <p> and <h1>–<h6> so labels pasted from Google Docs (which may
+ * arrive as heading nodes) are normalised to eyebrows in the same pass.
  * Adds a slug-specific modifier class (e.g. article-section-eyebrow--quick-answer)
  * so downstream CSS and wrapSectionBoxes can target individual sections.
- * Handles labels that may be wrapped in inline tags like <strong> or <em>.
+ * Handles labels wrapped in inline tags like <strong> or <em>.
  */
 function applySectionEyebrows(html: string): string {
-  return html.replace(/<p([^>]*)>([\s\S]*?)<\/p>/gi, (_match, attrs, inner) => {
+  return html.replace(/<(p|h[1-6])([^>]*)>([\s\S]*?)<\/\1>/gi, (_match, _tag, attrs, inner) => {
     const text = inner.replace(/<[^>]+>/g, "").trim();
     if (SECTION_LABEL_RE.test(text)) {
       const label = text.replace(/:$/, "").trim();

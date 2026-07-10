@@ -402,8 +402,78 @@ function Toolbar({
 
       <ToolbarDivider />
 
+      {/* Section labels */}
+      <InsertSectionMenu editor={editor} />
+
+      <ToolbarDivider />
+
       {/* Table */}
       <TableMenu editor={editor} />
+    </div>
+  );
+}
+
+// ─── Section label insert menu ───────────────────────────────────────────────
+
+const ARTICLE_SECTION_LABELS = [
+  { label: "Quick Answer", desc: "Green callout box — required" },
+  { label: "Introduction", desc: "Opening paragraph" },
+  { label: "How HomeUp Approaches This", desc: "Neutral info box — required" },
+  { label: "Conclusion", desc: "Closing paragraph" },
+  { label: "FAQ", desc: "Frequently asked questions" },
+] as const;
+
+function InsertSectionMenu({ editor }: { editor: Editor }) {
+  const [open, setOpen] = useState(false);
+
+  function insertSection(label: string) {
+    editor
+      .chain()
+      .focus()
+      .insertContent([
+        { type: "paragraph", content: [{ type: "text", text: label }] },
+        { type: "paragraph" },
+      ])
+      .run();
+    setOpen(false);
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          setOpen((v) => !v);
+        }}
+        title="Insert section label (Quick Answer, Introduction, etc.)"
+        className="flex h-7 items-center gap-1 rounded border border-neutral-200 bg-white px-2 text-xs font-semibold text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
+      >
+        § Section
+        <ChevronDown className="h-3 w-3 text-neutral-400" />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-9 z-50 min-w-[230px] rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+          <p className="px-3 pb-1 pt-1.5 text-[10px] font-bold uppercase tracking-wide text-neutral-400">
+            Insert section label
+          </p>
+          {ARTICLE_SECTION_LABELS.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              className="flex w-full flex-col px-3 py-2 text-left hover:bg-neutral-50"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                insertSection(s.label);
+              }}
+            >
+              <span className="text-xs font-semibold text-neutral-800">{s.label}</span>
+              <span className="text-[11px] text-neutral-400">{s.desc}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -525,22 +595,21 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
           "prose prose-neutral max-w-none min-h-[420px] px-8 py-6 outline-none focus:outline-none [&>*:first-child]:mt-0",
       },
       /**
-       * Strip font-family, font-size and background-color from all inline
-       * styles when content is pasted from Google Docs (or any external source).
-       * This ensures pasted content always renders with the brand typography.
+       * Strip all inline styles except text-align and color when content is
+       * pasted from Google Docs (or any external source).
+       * This allowlist is intentionally identical to cleanInlineStyles() in
+       * PlaybookArticleHtml so what editors see in the editor exactly matches
+       * what readers see on the published article page.
        */
       transformPastedHTML(html: string) {
+        const ALLOWED = new Set(["text-align", "color"]);
         return html.replace(/\bstyle="([^"]*)"/gi, (_match: string, styleContent: string) => {
           const kept = styleContent
             .split(";")
             .map((r: string) => r.trim())
             .filter((r: string) => {
               const prop = r.split(":")[0]?.trim().toLowerCase() ?? "";
-              return (
-                prop &&
-                !["font-family", "font-size", "background-color", "background", "line-height"].includes(prop) &&
-                r.includes(":")
-              );
+              return ALLOWED.has(prop) && r.includes(":");
             });
           if (!kept.length) return "";
           return `style="${kept.join("; ")}"`;

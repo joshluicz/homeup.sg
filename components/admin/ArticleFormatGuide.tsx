@@ -8,35 +8,36 @@ const SECTIONS = [
     icon: "💬",
     label: "Quick Answer",
     required: true,
-    tip: 'Write 2–4 sentences that directly answer the main question. Then select that text and click the quote icon (❝) in the toolbar to turn it into a highlighted green callout box.',
+    tip: 'Click "§ Section" in the toolbar and choose Quick Answer. Write 2–4 sentences directly answering the main question — the website automatically wraps this in a green callout box.',
   },
   {
     icon: "📖",
     label: "Introduction",
     required: false,
-    tip: "Who is this article for? Why should they keep reading? A short paragraph is enough.",
+    tip: 'Click "§ Section" → Introduction. Who is this article for? Why should they keep reading? A short paragraph is enough.',
   },
   {
     icon: "📌",
     label: "Main Sections",
     required: true,
-    tip: 'Use Heading 2 (H2) from the toolbar dropdown for each main topic. Add as many sections as you like — aim for 3–5.',
+    tip: "Use Heading 2 (H2) from the toolbar dropdown for each main topic. Aim for 3–5 H2 sections.",
   },
   {
     icon: "🏠",
     label: "How HomeUp Approaches This",
     required: true,
-    tip: "Explain how HomeUp can help the reader. Include a link to your WhatsApp or a booking page.",
+    tip: 'Click "§ Section" → How HomeUp Approaches This. Explain how HomeUp helps the reader. Include a WhatsApp or booking link.',
   },
   {
     icon: "✅",
     label: "Conclusion",
     required: false,
-    tip: "Wrap up the key points in 2–3 sentences. Optional but recommended.",
+    tip: 'Click "§ Section" → Conclusion. Wrap up the key points in 2–3 sentences. Optional but recommended.',
   },
 ];
 
 const TIPS = [
+  { icon: "§", label: "Add a section label", desc: 'Click "§ Section" in the toolbar → choose Quick Answer, Introduction, etc.' },
   { icon: "B", label: "Bold text", desc: "Select text → click B in the toolbar" },
   { icon: "🖼", label: "Add a photo", desc: "Click the image icon in the toolbar, or drag a photo straight into the editor" },
   { icon: "⊞", label: "Add a table", desc: "Click the table icon in the toolbar" },
@@ -75,7 +76,8 @@ export function ArticleFormatGuide() {
               📋 Pasting from Google Docs?
             </p>
             <p className="mt-0.5 text-xs font-normal leading-relaxed text-amber-700">
-              Font and size overrides are automatically removed on paste so your article always uses the HomeUP brand font. After pasting, use the H2 heading button in the toolbar to create section headings — do not rely on Google Docs heading styles.
+              Font and size overrides are automatically stripped on paste so the article always uses the HomeUP brand font. After pasting, use the{" "}
+              <strong className="font-semibold">§ Section</strong> button in the toolbar to add Quick Answer, Introduction, and other section labels — do not rely on Google Docs heading styles for these.
             </p>
           </div>
 
