@@ -6,16 +6,14 @@
 
 ---
 
-## Is it live yet?
+## Is it live?
 
 | Item | Status |
 |------|--------|
-| Code on GitHub | Yes — branch `cursor/listings-sync-kit-0811`, PR #29 |
-| Live on homeup.sg | **No** — merge PR #29 and wait for Vercel production deploy |
-| Download ZIP on production | **No** until deployed — will be `https://homeup.sg/downloads/homeup-listings-sync-kit.zip` |
-| Setup page | **No** until deployed — will be `https://homeup.sg/admin/listings/sync-kit` |
-
-After deploy, Batam can use the live URLs above.
+| Live on homeup.sg | **Yes** — merged July 2026 |
+| Download ZIP | https://homeup.sg/downloads/homeup-listings-sync-kit.zip |
+| Setup page | https://homeup.sg/admin/listings/sync-kit |
+| Full handoff (admin login) | https://homeup.sg/admin/sync-kit-handoff |
 
 ---
 
@@ -57,7 +55,8 @@ You should see `v20.x.x` or higher.
 
 1. Sign in to https://homeup.sg/admin
 2. Go to **Listings Sync** → **Setup instructions**  
-   Or open https://homeup.sg/admin/listings/sync-kit
+   Or open https://homeup.sg/admin/listings/sync-kit  
+   (Full guide after admin login: https://homeup.sg/admin/sync-kit-handoff)
 3. Click **Download sync kit (ZIP)**
 4. Save the file (e.g. Downloads)
 
@@ -191,11 +190,11 @@ After unzipping, open **`SETUP.html`** in Chrome, Edge, or Safari for the same i
 
 ### 1. Deploy to production
 
-1. Review and **merge PR #29**: https://github.com/joshluicz/homeup.sg/pull/29  
-2. Confirm Vercel production deploy succeeds for `homeup-sg`
-3. Verify:
-   - https://homeup.sg/downloads/homeup-listings-sync-kit.zip returns **200** (not 404)
-   - https://homeup.sg/admin/listings/sync-kit loads after admin login
+Deployed July 2026. Verify if needed:
+
+1. https://homeup.sg/downloads/homeup-listings-sync-kit.zip returns **200**
+2. https://homeup.sg/admin/listings/sync-kit loads after admin login
+3. https://homeup.sg/admin/sync-kit-handoff shows the full handoff guide
 
 ### 2. Prepare `.env.local` for each admin PC
 
@@ -215,7 +214,7 @@ Send the completed file to Batam via **1Password**, **Bitwarden send**, or simil
 ### 3. Optional: rebuild kit after future code changes
 
 ```bash
-python3 scripts/build-listings-sync-kit.py
+npm run build:sync-kit
 git add public/downloads/homeup-listings-sync-kit.zip
 git commit && git push
 ```
@@ -241,5 +240,6 @@ Ensure Batam staff have **admin login** to https://homeup.sg/admin (Workflow A).
 |-----|---------|
 | https://homeup.sg/admin/listings/pg-sources | Listings Sync (Workflow A) |
 | https://homeup.sg/admin/listings/sync-kit | Download + setup guide |
+| https://homeup.sg/admin/sync-kit-handoff | Full handoff guide (admin login) |
 | https://homeup.sg/listings | Public site to verify |
 | https://docs.google.com/spreadsheets/d/1CpaVMBfq6fJRb2ymeeBOfLYYeyfJ2hB8QzdlxdZN0io/edit | Listings Google Sheet |
