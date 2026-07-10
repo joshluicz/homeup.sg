@@ -58,6 +58,18 @@ function isImageFile(file: File): boolean {
 /** Detect whether a string is HTML or plain Markdown. */
 export { isHtmlContent } from "@/lib/playbook/is-html-content";
 import { isHtmlContent } from "@/lib/playbook/is-html-content";
+import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
+
+/**
+ * Prepare article content for loading into the editor.
+ * HTML articles get Markdown-syntax fragments converted to proper HTML so
+ * editors see the correct visual layout. Plain Markdown is wrapped in <p>
+ * tags as before.
+ */
+function prepareEditorContent(value: string): string {
+  if (isHtmlContent(value)) return normalizeHtmlArticle(value);
+  return `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`;
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -584,7 +596,7 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       }),
     ],
     // Accept HTML (new articles) or plain text/Markdown (legacy) as initial content
-    content: isHtmlContent(value) ? value : `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`,
+    content: prepareEditorContent(value),
     onUpdate({ editor: ed }) {
       internalChange.current = true;
       onChange(ed.getHTML());
@@ -627,10 +639,7 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
     }
     const current = editor.getHTML();
     if (current !== value) {
-      const html = isHtmlContent(value)
-        ? value
-        : `<p>${value.replace(/\n/g, "</p><p>") || ""}</p>`;
-      editor.commands.setContent(html);
+      editor.commands.setContent(prepareEditorContent(value));
     }
   }, [value, editor]);
 

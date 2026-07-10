@@ -1,6 +1,7 @@
 "use client";
 
 import DOMPurify from "isomorphic-dompurify";
+import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
 
 type Props = { html: string };
 
@@ -193,16 +194,20 @@ export function PlaybookArticleHtml({ html }: Props) {
   // 2. Promote section-label paragraphs to eyebrow headings
   const sectioned = applySectionEyebrows(stylesCleaned);
 
-  // 3. Convert Markdown pipe-table syntax in <p> elements to real <table> HTML
-  const withRealTables = convertMarkdownTables(sectioned);
+  // 3. Convert Markdown syntax that got saved as plain text inside <p> elements
+  //    (## headings, ![images](url), **bold** / *italic*)
+  const mdNormalised = normalizeHtmlArticle(sectioned);
 
-  // 4. Wrap Quick Answer / HomeUp sections in card containers
+  // 4. Convert Markdown pipe-table syntax in <p> elements to real <table> HTML
+  const withRealTables = convertMarkdownTables(mdNormalised);
+
+  // 5. Wrap Quick Answer / HomeUp sections in card containers
   const withBoxes = wrapSectionBoxes(withRealTables);
 
-  // 5. Wrap tables in scroll containers
+  // 6. Wrap tables in scroll containers
   const withWrappedTables = wrapTables(withBoxes);
 
-  // 6. Sanitise with DOMPurify
+  // 7. Sanitise with DOMPurify
   const clean = DOMPurify.sanitize(withWrappedTables, {
     ALLOWED_TAGS: [
       "p", "br", "strong", "b", "em", "i", "u", "s", "del",
@@ -214,7 +219,7 @@ export function PlaybookArticleHtml({ html }: Props) {
       "table", "thead", "tbody", "tr", "th", "td",
       "code", "pre",
     ],
-    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "style", "class"],
+    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "style", "class", "loading"],
     ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|\/)/i,
     ADD_ATTR: ["target"],
   });
