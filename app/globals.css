@@ -786,3 +786,12 @@ h2 {
   font-family: inherit !important;
   font-size: inherit !important;
 }
+
+/* ─── Admin date input alignment ─────────────────────────────────────────── */
+/* Browsers inject extra internal padding inside the date-edit fields wrapper  */
+/* which makes the displayed date appear vertically off-center. Strip it.      */
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+  line-height: inherit;
+}

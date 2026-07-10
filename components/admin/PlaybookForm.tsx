@@ -447,7 +447,7 @@ export function PlaybookForm({ video }: PlaybookFormProps) {
             type="date"
             value={form.publishedAt}
             onChange={(e) => set("publishedAt", e.target.value)}
-            className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+            className="w-full rounded-lg border border-neutral-200 px-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-100 leading-normal [&::-webkit-date-and-time-value]:text-left [&::-webkit-datetime-edit-fields-wrapper]:p-0 [&::-webkit-datetime-edit]:p-0"
           />
         </div>
         <div className="flex items-end">
