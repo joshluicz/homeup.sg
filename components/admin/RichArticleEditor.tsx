@@ -142,42 +142,14 @@ function HeadingSelect({ editor }: { editor: Editor }) {
   );
 }
 
-const FONTS = [
-  { label: "Default", value: "" },
-  { label: "Georgia", value: "Georgia, serif" },
-  { label: "Arial", value: "Arial, sans-serif" },
-  { label: "Trebuchet MS", value: "'Trebuchet MS', sans-serif" },
-  { label: "Courier New", value: "'Courier New', monospace" },
-  { label: "Times New Roman", value: "'Times New Roman', serif" },
-] as const;
-
-function FontSelect({ editor }: { editor: Editor }) {
-  const activeFont =
-    FONTS.find((f) => f.value && editor.isActive("textStyle", { fontFamily: f.value }))?.value ??
-    "";
-
-  return (
-    <div className="relative">
-      <select
-        value={activeFont}
-        title="Font"
-        onChange={(e) => {
-          const val = e.target.value;
-          if (!val) editor.chain().focus().unsetFontFamily().run();
-          else editor.chain().focus().setFontFamily(val).run();
-        }}
-        className="h-7 cursor-pointer appearance-none rounded border border-neutral-200 bg-white pl-2 pr-6 text-xs font-medium text-neutral-700 outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-100"
-      >
-        {FONTS.map((f) => (
-          <option key={f.value} value={f.value} style={{ fontFamily: f.value || undefined }}>
-            {f.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-1 top-1/2 h-3 w-3 -translate-y-1/2 text-neutral-400" />
-    </div>
-  );
-}
+/**
+ * FontFamily is intentionally NOT exposed in the toolbar.
+ * All articles must use the brand font (Plus Jakarta Sans).
+ * The FontFamily extension is still loaded so that TipTap can round-trip
+ * existing content that may contain font-family marks, but editors cannot
+ * apply new font overrides — and pasted font-family styles are stripped
+ * automatically via transformPastedHTML below.
+ */
 
 const TEXT_COLORS = [
   { label: "Default", value: "" },
@@ -319,7 +291,6 @@ function Toolbar({
       <ToolbarDivider />
 
       <HeadingSelect editor={editor} />
-      <FontSelect editor={editor} />
       <ColorSelect editor={editor} />
 
       <ToolbarDivider />
@@ -552,6 +523,28 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       attributes: {
         class:
           "prose prose-neutral max-w-none min-h-[420px] px-8 py-6 outline-none focus:outline-none [&>*:first-child]:mt-0",
+      },
+      /**
+       * Strip font-family, font-size and background-color from all inline
+       * styles when content is pasted from Google Docs (or any external source).
+       * This ensures pasted content always renders with the brand typography.
+       */
+      transformPastedHTML(html: string) {
+        return html.replace(/\bstyle="([^"]*)"/gi, (_match: string, styleContent: string) => {
+          const kept = styleContent
+            .split(";")
+            .map((r: string) => r.trim())
+            .filter((r: string) => {
+              const prop = r.split(":")[0]?.trim().toLowerCase() ?? "";
+              return (
+                prop &&
+                !["font-family", "font-size", "background-color", "background", "line-height"].includes(prop) &&
+                r.includes(":")
+              );
+            });
+          if (!kept.length) return "";
+          return `style="${kept.join("; ")}"`;
+        });
       },
     },
   });

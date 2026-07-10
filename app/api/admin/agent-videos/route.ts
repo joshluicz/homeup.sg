@@ -65,6 +65,9 @@ export async function POST(request: Request) {
   const featuredInDisplayA = Boolean(body.featuredInDisplayA);
   const featuredInDisplayB = Boolean(body.featuredInDisplayB);
   const sortOrder = Number.isFinite(body.sortOrder) ? Number(body.sortOrder) : 0;
+  const category = ["home_tour", "property_tips", "landed", "others"].includes(body.category)
+    ? String(body.category)
+    : "others";
 
   if (!agentSlug || !getAgentBySlug(agentSlug)) {
     return NextResponse.json({ error: "Choose a valid agent." }, { status: 400 });
@@ -107,6 +110,7 @@ export async function POST(request: Request) {
       featured_in_display_b: featuredInDisplayB,
       sort_order: sortOrder,
       slug,
+      category,
       updated_at: new Date().toISOString(),
     })
     .select("*")
@@ -146,6 +150,12 @@ export async function PATCH(request: Request) {
   }
   if (body.sortOrder !== undefined && Number.isFinite(body.sortOrder)) {
     updates.sort_order = Number(body.sortOrder);
+  }
+  if (body.category !== undefined) {
+    const cat = String(body.category).trim();
+    if (["home_tour", "property_tips", "landed", "others"].includes(cat)) {
+      updates.category = cat;
+    }
   }
   if (body.slug !== undefined) {
     const requested = slugify(String(body.slug).trim());

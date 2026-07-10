@@ -1,5 +1,12 @@
 import type { TopicCategory } from "./radarConfig";
 
+/**
+ * Minimum LLM audit score (0–10) required to publish an article.
+ * Defined here (not in audit.ts) so client components can import it
+ * without pulling in the server-only @anthropic-ai/sdk dependency.
+ */
+export const PUBLISH_THRESHOLD = 8;
+
 export interface TopicCandidate {
   id: string;
   title: string;

@@ -8,7 +8,7 @@ const SECTIONS = [
     icon: "💬",
     label: "Quick Answer",
     required: true,
-    tip: 'Write 2–4 sentences that directly answer the main question. Then select that text and click the quote icon (❝) in the toolbar to turn it into a highlighted callout box.',
+    tip: 'Write 2–4 sentences that directly answer the main question. Then select that text and click the quote icon (❝) in the toolbar to turn it into a highlighted green callout box.',
   },
   {
     icon: "📖",
@@ -69,6 +69,16 @@ export function ArticleFormatGuide() {
 
       {open && (
         <div className="border-t border-primary-200 px-4 pb-4 pt-3 space-y-4">
+          {/* Google Docs paste notice */}
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+            <p className="text-xs font-semibold text-amber-800">
+              📋 Pasting from Google Docs?
+            </p>
+            <p className="mt-0.5 text-xs font-normal leading-relaxed text-amber-700">
+              Font and size overrides are automatically removed on paste so your article always uses the HomeUP brand font. After pasting, use the H2 heading button in the toolbar to create section headings — do not rely on Google Docs heading styles.
+            </p>
+          </div>
+
           {/* Section structure */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary-700">
