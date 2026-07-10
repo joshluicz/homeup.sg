@@ -111,7 +111,7 @@ export async function importOnePgListing(
     return { ok: false, error: validationError };
   }
 
-  const listingStatus = options?.publish ? "active" : "draft";
+  const listingStatus = options?.publish === false ? "draft" : "active";
 
   const payload = formDataToDbPayload(formData, listingStatus, {
     source_pg_url: pgUrl,
@@ -170,10 +170,9 @@ export async function importOnePgListing(
     }
 
     if (!activeBySlug.source_pg_listing_id) {
-      const existingStatus = activeBySlug.status === "draft" ? "draft" : "active";
       const payloadForManualListing = formDataToDbPayload(
         formData,
-        existingStatus,
+        listingStatus,
         {
           source_pg_url: pgUrl,
           source_pg_listing_id: pgListingId,
