@@ -11,9 +11,8 @@
  */
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { MIN_SAMPLE } from "./constants";
 import type { TopicCategory } from "./radarConfig";
-
-const MIN_SAMPLE = 5;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -191,4 +190,3 @@ export async function getTransactionCohortSummary(): Promise<
   }
 }
 
-export { MIN_SAMPLE };

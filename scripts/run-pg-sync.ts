@@ -56,6 +56,7 @@ async function main() {
     const fetched = await fetchListingPage(item.pg_url);
     const outcome = await importOnePgListing(supabase, item.pg_url, item.pg_listing_id, {
       html: fetched.ok ? fetched.html : undefined,
+      publish: true,
     });
     if (outcome.ok) {
       added.push({ title: outcome.title, slug: outcome.slug, pg_url: item.pg_url });

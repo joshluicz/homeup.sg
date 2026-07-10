@@ -15,8 +15,8 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import type { Brief } from "./types";
 import { PUBLISH_THRESHOLD } from "./types";
+import type { Brief } from "./types";
 
 export { PUBLISH_THRESHOLD };
 

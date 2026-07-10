@@ -13,11 +13,7 @@ import {
 } from "@/lib/listings/pg-fetch-agent-client";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
-import {
-  countDraftListings,
-  publishAllDraftListings,
-} from "@/lib/listings/publish-all-drafts";
-import { CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
+import { CheckCircle2, Download, ExternalLink, Loader2 } from "lucide-react";
 
 type SyncResponse = {
   success: boolean;
@@ -69,6 +65,7 @@ type SheetRefreshResponse = {
 };
 
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${LISTINGS_SHEET_ID}/edit`;
+const SYNC_KIT_ZIP = "/downloads/homeup-listings-sync-kit.zip";
 
 export function PgSourcesPanel() {
   const [refreshing, setRefreshing] = useState(false);
@@ -81,8 +78,6 @@ export function PgSourcesPanel() {
   const [syncProgress, setSyncProgress] = useState<{ current: number; total: number } | null>(
     null,
   );
-  const [draftCount, setDraftCount] = useState(0);
-  const [publishingAll, setPublishingAll] = useState(false);
   const [agentOnline, setAgentOnline] = useState(false);
   const [agentChecking, setAgentChecking] = useState(true);
 
@@ -97,9 +92,6 @@ export function PgSourcesPanel() {
 
   useEffect(() => {
     void refreshPreview();
-    countDraftListings()
-      .then(setDraftCount)
-      .catch(() => setDraftCount(0));
   }, [refreshPreview]);
 
   useEffect(() => {
@@ -243,7 +235,7 @@ export function PgSourcesPanel() {
         } else {
           const err =
             json.error === "FETCH_BLOCKED"
-              ? "PropertyGuru blocked server fetch — run npm run pg:agent on this PC and sync again"
+              ? "PropertyGuru blocked server fetch — run start-agent from the sync kit on this PC and sync again"
               : (json.error ?? "Import failed");
           failed.push({ pg_url: item.pg_url, error: err });
         }
@@ -251,32 +243,14 @@ export function PgSourcesPanel() {
 
       setSyncResult({ success: true, added, failed, skipped, archived, purged });
       setStatusMessage(
-        `Sync complete — ${added.length} new draft(s)${failed.length > 0 ? `, ${failed.length} failed` : ""}, ${archived.length} archived${purged > 0 ? `, ${purged} old archive(s) deleted` : ""}.`,
+        `Sync complete — ${added.length} imported and published${failed.length > 0 ? `, ${failed.length} failed` : ""}, ${archived.length} archived${purged > 0 ? `, ${purged} old archive(s) deleted` : ""}.`,
       );
       await refreshPreview();
-      setDraftCount(await countDraftListings());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sync failed");
     } finally {
       setSyncing(false);
       setSyncProgress(null);
-    }
-  }
-
-  async function handlePublishAllDrafts() {
-    if (draftCount === 0) return;
-    if (!window.confirm(`Publish all ${draftCount} draft listing(s)?`)) return;
-
-    setPublishingAll(true);
-    setError(null);
-    try {
-      const n = await publishAllDraftListings();
-      setStatusMessage(`Published ${n} listing(s) to the live site.`);
-      setDraftCount(await countDraftListings());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to publish");
-    } finally {
-      setPublishingAll(false);
     }
   }
 
@@ -288,24 +262,53 @@ export function PgSourcesPanel() {
       <div>
         <h1 className="text-xl font-bold text-neutral-900">Listings sync</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Google Sheet is the source of truth for active listings and prices. Refresh → review → sync →
-          publish.
+          Google Sheet is the source of truth for active listings and prices. Refresh → review →
+          sync. New imports are published to the live site immediately.
         </p>
       </div>
+
+      <section className="rounded-xl border border-primary-200 bg-primary-50 p-5">
+        <h2 className="text-sm font-semibold text-primary-950">Local sync kit (Batam / remote admin)</h2>
+        <p className="mt-1 text-sm text-primary-900">
+          PropertyGuru blocks cloud servers. Download the sync kit to your PC, run the local agent,
+          then use this page — or run a full automated sync from the kit without clicking through
+          the admin UI.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href="/admin/listings/sync-kit"
+            className="inline-flex items-center rounded-xl bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
+          >
+            Setup instructions
+          </Link>
+          <a
+            href={SYNC_KIT_ZIP}
+            download="homeup-listings-sync-kit.zip"
+            className="inline-flex items-center gap-2 rounded-xl border border-primary-300 bg-white px-5 py-2.5 text-sm font-semibold text-primary-900 hover:bg-primary-100/50"
+          >
+            <Download className="h-4 w-4" />
+            Download sync kit
+          </a>
+        </div>
+      </section>
 
       {!agentChecking && !agentOnline && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="font-medium">Imports need the local agent on this PC</p>
           <p className="mt-1 text-amber-800">
-            PropertyGuru blocks Vercel from fetching listing pages. Before syncing new imports, run{" "}
-            <code className="text-xs">npm run pg:agent</code> on this computer and keep it open.
+            PropertyGuru blocks Vercel from fetching listing pages. Unzip the sync kit, then
+            double-click <code className="text-xs">start-agent</code> (Windows:{" "}
+            <code className="text-xs">start-agent.bat</code>, Mac:{" "}
+            <code className="text-xs">start-agent.command</code>) and keep that window open before
+            syncing.
           </p>
         </div>
       )}
 
       {agentOnline && (
         <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          Local agent is running — imports will fetch PropertyGuru pages from this PC.
+          Local agent is running — imports will fetch PropertyGuru pages from this PC and publish
+          immediately.
         </div>
       )}
 
@@ -447,18 +450,12 @@ export function PgSourcesPanel() {
             Sheet has <strong>{preview.source_count}</strong> listings for HomeUP.{" "}
             <strong>{preview.on_site_active}</strong> are live;{" "}
             <strong>{preview.to_import.length}</strong> still need importing.
-            {preview.unchanged !== preview.on_site_active + preview.on_site_drafts && (
-              <span className="block mt-1 text-xs text-neutral-500">
-                PG ID in database ({preview.unchanged}) counts rows linked by PropertyGuru ID —
-                not the same as live count until all are published.
-              </span>
-            )}
           </p>
 
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-lg bg-green-50 px-4 py-3">
               <p className="text-2xl font-bold text-green-800">{preview.to_import.length}</p>
-              <p className="text-sm text-green-700">New → import as drafts</p>
+              <p className="text-sm text-green-700">New → import and publish</p>
             </div>
             <div className="rounded-lg bg-primary-50 px-4 py-3">
               <p className="text-2xl font-bold text-primary-800">{preview.on_site_active}</p>
@@ -467,10 +464,6 @@ export function PgSourcesPanel() {
             <div className="rounded-lg bg-neutral-100 px-4 py-3">
               <p className="text-2xl font-bold text-neutral-800">{preview.unchanged}</p>
               <p className="text-sm text-neutral-600">PG ID in database</p>
-              <p className="mt-1 text-xs text-neutral-500">
-                {preview.on_site_drafts} draft
-                {preview.on_site_drafts === 1 ? "" : "s"} waiting to publish
-              </p>
             </div>
             <div className="rounded-lg bg-amber-50 px-4 py-3">
               <p className="text-2xl font-bold text-amber-800">{preview.to_archive.length}</p>
@@ -524,10 +517,10 @@ export function PgSourcesPanel() {
 
       {syncResult && (
         <section className="rounded-xl border border-neutral-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-neutral-900">Step 3 — Approve &amp; publish</h2>
+          <h2 className="text-sm font-semibold text-neutral-900">Step 3 — Sync results</h2>
           <div className="mt-4 rounded-lg bg-neutral-50 px-4 py-3 text-sm text-neutral-800">
             <p>
-              <strong>Imported:</strong> {syncResult.added?.length ?? 0} draft(s)
+              <strong>Imported and published:</strong> {syncResult.added?.length ?? 0}
             </p>
             <p>
               <strong>Archived:</strong> {syncResult.archived?.length ?? 0}
@@ -550,18 +543,12 @@ export function PgSourcesPanel() {
               ))}
             </ul>
           )}
-          <div className="mt-4 flex flex-wrap gap-3">
-            {draftCount > 0 && (
-              <Button type="button" disabled={publishingAll} onClick={handlePublishAllDrafts}>
-                {publishingAll ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Publish all drafts ({draftCount})
-              </Button>
-            )}
+          <div className="mt-4">
             <Link
-              href="/admin/listings?filter=draft"
+              href="/admin/listings"
               className="inline-flex items-center rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
             >
-              Review drafts →
+              View listings →
             </Link>
           </div>
         </section>

@@ -10,7 +10,7 @@ This document describes how to run **automated listings sync** on an always-on d
 
 HomeUP listings are maintained in a **Google Sheet** (source of truth) and synced to Supabase / the public site. The sync pipeline must **fetch PropertyGuru listing pages** to import data via Claude. PropertyGuru **blocks datacenter IPs** (Vercel, most cloud VPS), so imports fail from the cloud. A device on a **home/residential internet connection** can fetch PG reliably.
 
-The admin UI on Vercel can refresh the sheet and archive listings, but **full import requires a home IP** (or the optional local agent for browser-based admin sync).
+The admin UI on Vercel can refresh the sheet and archive listings, but **full import requires a home IP** (or the optional local agent for browser-based admin sync). Remote admins (e.g. Batam) should use the **Listings Sync Kit** — see `/admin/listings/sync-kit` or `scripts/build-listings-sync-kit.py`.
 
 ---
 
@@ -62,7 +62,7 @@ Supabase listings  →  public site (homeup.sg / Vercel)
 | `npm run pg:automation -- --dry-run` | Preview counts only, no writes |
 | `npm run pg:watch` | Loop automation every 6h (`PG_SYNC_INTERVAL_HOURS` to change) |
 | `npm run pg:sheet` | Sheet refresh only |
-| `npm run pg:sync` | Archive + import only (no sheet refresh; imports as draft unless using automation) |
+| `npm run pg:sync` | Archive + import only (no sheet refresh; auto-publishes) |
 
 ### Important code paths
 
@@ -181,6 +181,28 @@ crontab -l
 
 ---
 
+## Batam / remote admin — Listings Sync Kit
+
+For admins who do not run a Pi but need to sync from their laptop:
+
+1. Download from **Admin → Listings Sync → Setup instructions** (`/admin/listings/sync-kit`)
+2. Unzip, copy `.env.local` from team lead (never in the ZIP)
+3. Run `first-time-setup` once (Windows `.bat`, Mac `.command`)
+4. **Workflow A:** `start-agent` + use `/admin/listings/pg-sources` in the browser
+5. **Workflow B:** `run-full-sync` for full `pg:automation` without the admin UI
+
+Rebuild the ZIP after sync code changes:
+
+```bash
+python3 scripts/build-listings-sync-kit.py
+```
+
+Output: `public/downloads/homeup-listings-sync-kit.zip`
+
+All PG sync imports (admin UI, `pg:sync`, `pg:automation`) **auto-publish** — there is no draft review step for sheet-driven imports.
+
+---
+
 ## Windows alternative (desktop always on)
 
 Use Task Scheduler to run:
@@ -220,7 +242,7 @@ No need to re-run `install-home-sync-server.sh` unless the cron schedule changes
 
 - Sync sheet → database
 - Archive listings removed from sheet
-- Import new listings and **publish live** (no draft step)
+- Import new listings and **publish live** (no draft step) — applies to Pi cron, sync kit, and admin Listings Sync page
 - Delete archived rows after 7 days
 
 **Manual admin still useful for:**
@@ -274,5 +296,6 @@ When asked to implement or change home sync:
 
 ## Related (legacy / optional)
 
-- `npm run pg:agent` — local HTTP agent for PG fetch from **Vercel admin UI** in the browser; **not required** for Pi cron automation
+- **Listings Sync Kit** — downloadable ZIP for Batam/remote admins; `scripts/build-listings-sync-kit.py` → `public/downloads/homeup-listings-sync-kit.zip`
+- `npm run pg:agent` — local HTTP agent for PG fetch from **Vercel admin UI** in the browser; included in the sync kit as `start-agent`
 - `npm run pg:fetch` — old Patchright PG crawl; **deprecated** in favor of Google Sheet

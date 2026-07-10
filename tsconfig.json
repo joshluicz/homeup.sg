@@ -23,5 +23,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.json", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "supabase/functions", "apps"]
+  "exclude": ["node_modules", "supabase/functions", "apps", "tmp-kit-smoke", "batam-handoff", "tmp-listings-sync-kit"]
 }
