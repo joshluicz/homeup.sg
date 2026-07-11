@@ -24,6 +24,6 @@ export async function POST(request: Request) {
 
   const topic = makeCustomTopic(title);
   const published = await getPublishedArticles();
-  topic.alreadyPublished = isTopicAlreadyPublished(topic.title, published);
+  topic.alreadyPublished = isTopicAlreadyPublished(topic.title, published, topic.id);
   return NextResponse.json(topic);
 }

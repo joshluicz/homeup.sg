@@ -232,17 +232,27 @@ export function ArticleGenerationTab() {
   const [auditOverride, setAuditOverride] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const pipelineRef = useRef<HTMLDivElement>(null);
+
+  const loadTopics = useCallback(async () => {
+    setLoadingTopics(true);
+    try {
+      const res = await fetch("/api/admin/topics");
+      if (!res.ok) throw new Error("Failed to load topics");
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) throw new Error("Invalid topics response");
+      setTopics(data as TopicCandidate[]);
+    } catch {
+      setTopics([]);
+    } finally {
+      setLoadingTopics(false);
+    }
+  }, []);
 
   // ── Load topics on mount ────────────────────────────────────────────────────
   useEffect(() => {
-    fetch("/api/admin/topics")
-      .then((r) => r.json())
-      .then((data: TopicCandidate[]) => {
-        setTopics(data);
-        setLoadingTopics(false);
-      })
-      .catch(() => setLoadingTopics(false));
-  }, []);
+    void loadTopics();
+  }, [loadTopics]);
 
   // ── Generate article ────────────────────────────────────────────────────────
   const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false) => {
@@ -253,7 +263,9 @@ export function ArticleGenerationTab() {
     setAutoSelectedTopic(null);
     setAutoGenerating(auto);
     setGenerating(true);
-    setShowTopicList(false);
+    setPipelineStatus({ brief: "idle", draft: "idle", compliance: "idle", package: "idle" });
+
+    setTimeout(() => pipelineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 
     const steps: PipelineStep[] = ["brief", "draft", "compliance", "package"];
     let stepIdx = 0;
@@ -279,18 +291,27 @@ export function ArticleGenerationTab() {
       const res = await fetch("/api/admin/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(topic ? { topic } : {}),
+        body: JSON.stringify(auto ? { auto: true } : { topic }),
       });
 
       clearInterval(interval);
 
+      const data = (await res.json()) as PackagedArticle & {
+        selectedTopic?: TopicCandidate;
+        detail?: string;
+        error?: string;
+      };
+
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || err.error || "Generation failed");
+        throw new Error(data.detail || data.error || "Generation failed");
       }
 
-      const data = (await res.json()) as PackagedArticle & { selectedTopic?: TopicCandidate };
+      if (!data.draft?.article?.trim()) {
+        throw new Error("Generation completed but the draft body was empty. Check ANTHROPIC_API_KEY and try again.");
+      }
+
       setPipelineStatus({ brief: "done", draft: "done", compliance: "done", package: "done" });
+      setShowTopicList(false);
 
       if (data.selectedTopic) {
         setAutoSelectedTopic(data.selectedTopic);
@@ -314,11 +335,13 @@ export function ArticleGenerationTab() {
         setPlaybookTopic("upgraders");
       }
 
+      void loadTopics();
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (err) {
       clearInterval(interval);
       const msg = err instanceof Error ? err.message : "Unknown error";
       setGenerateError(msg);
+      setShowTopicList(true);
       setPipelineStatus((prev) => {
         const updated = { ...prev };
         const running = Object.entries(updated).find(([, v]) => v === "running");
@@ -329,7 +352,7 @@ export function ArticleGenerationTab() {
       setGenerating(false);
       setAutoGenerating(false);
     }
-  }, []);
+  }, [loadTopics]);
 
   const handleGenerate = useCallback(() => {
     if (!selectedTopic) return;
@@ -434,6 +457,7 @@ export function ArticleGenerationTab() {
       {/* ── Auto-generate (primary action) ── */}
       <div className="rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white p-5 shadow-sm">
         <Button
+          type="button"
           onClick={handleAutoGenerate}
           disabled={generating}
           className="w-full py-3 text-base font-semibold sm:w-auto"
@@ -453,7 +477,28 @@ export function ArticleGenerationTab() {
         <p className="mt-2 text-xs text-neutral-500">
           Picks the top radar topic that isn&apos;t already live on /playbook, then runs the full
           pipeline. Or choose a topic manually below.
+          {!loadingTopics && topics.length > 0 && (
+            <>
+              {" "}
+              <span className="font-medium text-neutral-700">
+                ({topics.filter((t) => !t.alreadyPublished).length} of {topics.length} topics
+                available)
+              </span>
+            </>
+          )}
         </p>
+        {!loadingTopics && topics.length > 0 && topics.every((t) => t.alreadyPublished) && (
+          <p className="mt-2 text-xs font-medium text-amber-700">
+            All radar topics match articles already on the site — add a custom topic below to
+            generate something new.
+          </p>
+        )}
+        {generateError && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            {generateError}
+          </div>
+        )}
       </div>
 
       {/* ── Step 1: Topic selection ── */}
@@ -576,7 +621,7 @@ export function ArticleGenerationTab() {
       </div>
 
       {/* ── Generate button + pipeline status ── */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <div ref={pipelineRef} className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 overflow-x-auto">
             {PIPELINE_STEPS.map((step, i) => (
@@ -590,6 +635,7 @@ export function ArticleGenerationTab() {
           </div>
 
           <Button
+            type="button"
             onClick={handleGenerate}
             disabled={!selectedTopic || generating}
             className="shrink-0"

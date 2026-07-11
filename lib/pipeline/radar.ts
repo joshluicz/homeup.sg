@@ -21,7 +21,7 @@ export async function runRadar(): Promise<TopicCandidate[]> {
       ...t,
       score,
       source: "radar" as const,
-      alreadyPublished: isTopicAlreadyPublished(t.title, published),
+      alreadyPublished: isTopicAlreadyPublished(t.title, published, t.id),
     };
   });
 
@@ -30,7 +30,27 @@ export async function runRadar(): Promise<TopicCandidate[]> {
 
 /** Highest-scored radar topic that is not already published. */
 export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidate | null {
-  return topics.find((t) => !t.alreadyPublished) ?? null;
+  const pick = topics.find((t) => !t.alreadyPublished);
+  if (pick) return pick;
+
+  console.warn(
+    `[radar] All ${topics.length} radar topics matched published articles — auto-pick unavailable.`,
+  );
+  return null;
+}
+
+/** Resolve which topic to generate: explicit pick, or top unpublished from radar. */
+export async function resolveGenerationTopic(
+  explicit?: TopicCandidate | null,
+): Promise<{ topic: TopicCandidate; autoSelected: boolean } | null> {
+  if (explicit?.title?.trim()) {
+    return { topic: explicit, autoSelected: false };
+  }
+
+  const topics = await runRadar();
+  const topic = pickTopUnpublishedTopic(topics);
+  if (!topic) return null;
+  return { topic, autoSelected: true };
 }
 
 /** Creates a custom topic candidate from user input. */

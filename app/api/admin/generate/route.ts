@@ -1,6 +1,6 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { generateArticle } from "@/lib/pipeline/generate";
-import { pickTopUnpublishedTopic, runRadar } from "@/lib/pipeline/radar";
+import { resolveGenerationTopic } from "@/lib/pipeline/radar";
 import { NextResponse } from "next/server";
 import type { TopicCandidate } from "@/lib/pipeline/types";
 
@@ -9,36 +9,37 @@ export const maxDuration = 90;
 
 /**
  * POST /api/admin/generate
- * Body: { topic?: TopicCandidate } — omit topic for auto-pick (top unpublished radar topic)
+ * Body: { topic?: TopicCandidate, auto?: boolean }
+ *   - Pass { auto: true } or omit topic → radar picks top unpublished topic
  * Returns: PackagedArticle + optional selectedTopic when auto-picked
  */
 export async function POST(request: Request) {
   const { error } = await requireAuth();
   if (error) return error;
 
-  let topic: TopicCandidate | undefined;
-  let autoSelected = false;
-
+  let body: { topic?: TopicCandidate; auto?: boolean } = {};
   try {
-    const body = await request.json().catch(() => ({}));
-    topic = body.topic;
-    if (!topic?.title) {
-      const topics = await runRadar();
-      topic = pickTopUnpublishedTopic(topics) ?? undefined;
-      autoSelected = true;
-      if (!topic) {
-        return NextResponse.json(
-          { error: "No unpublished topics available", detail: "All radar topics match live articles." },
-          { status: 404 },
-        );
-      }
-    }
+    body = await request.json();
   } catch {
+    // Empty body is valid for auto-generate
+    body = {};
+  }
+
+  const wantsAuto = body.auto === true || !body.topic?.title?.trim();
+  const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic);
+
+  if (!resolved) {
     return NextResponse.json(
-      { error: "Request body must be { topic?: TopicCandidate }" },
-      { status: 400 },
+      {
+        error: "NO_UNPUBLISHED_TOPICS",
+        detail:
+          "Every radar topic matches an article already live on /playbook. Add a custom topic below, or publish new radar seeds in radarConfig.ts.",
+      },
+      { status: 404 },
     );
   }
+
+  const { topic, autoSelected } = resolved;
 
   try {
     const result = await generateArticle(topic);
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[generate] pipeline failed:", message);
     return NextResponse.json({ error: "Generation failed", detail: message }, { status: 500 });
   }
 }

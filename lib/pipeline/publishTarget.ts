@@ -33,22 +33,43 @@ export function normalizeSlugForDedup(raw: string): string {
 function slugKeysMatch(a: string, b: string): boolean {
   if (!a || !b) return false;
   if (a === b) return true;
-  const minLen = Math.min(a.length, b.length);
-  return minLen >= 12 && (a.includes(b) || b.includes(a));
+
+  // Near-duplicate: high token overlap (same topic, slightly different title/slug)
+  const overlap = tokenOverlapRatio(a, b);
+  return overlap >= 0.85 && Math.min(a.length, b.length) >= 10;
+}
+
+function tokenOverlapRatio(a: string, b: string): number {
+  const ta = a.split("-").filter(Boolean);
+  const tb = b.split("-").filter(Boolean);
+  if (!ta.length || !tb.length) return 0;
+  const setB = new Set(tb);
+  let inter = 0;
+  for (const t of ta) if (setB.has(t)) inter++;
+  return inter / Math.max(ta.length, tb.length);
 }
 
 /** True when a radar topic title overlaps a live /playbook article slug or title. */
 export function isTopicAlreadyPublished(
   topicTitle: string,
   published: PublishedArticleRef[],
+  topicId?: string,
 ): boolean {
   const topicKey = normalizeSlugForDedup(topicTitle);
   if (!topicKey) return false;
 
+  const idKey = topicId ? normalizeSlugForDedup(topicId) : "";
+
   for (const { slug, title } of published) {
-    for (const pubKey of [normalizeSlugForDedup(slug), normalizeSlugForDedup(title)]) {
+    const slugKey = normalizeSlugForDedup(slug);
+    const titleKey = normalizeSlugForDedup(title);
+
+    for (const pubKey of [slugKey, titleKey]) {
       if (slugKeysMatch(topicKey, pubKey)) return true;
     }
+
+    // Radar topic id often matches the slug stem before publish timestamp
+    if (idKey && (slugKey === idKey || slugKey.startsWith(`${idKey}-`))) return true;
   }
   return false;
 }
@@ -71,7 +92,8 @@ export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
     const supabase = serviceClient();
     const { data, error } = await supabase
       .from("playbook_videos")
-      .select("slug, title")
+      .select("slug, title, article")
+      .not("article", "is", null)
       .neq("article", "");
 
     if (error) {
@@ -84,7 +106,9 @@ export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
         typeof row.slug === "string" &&
         row.slug.length > 0 &&
         typeof row.title === "string" &&
-        row.title.length > 0,
+        row.title.length > 0 &&
+        typeof row.article === "string" &&
+        row.article.trim().length > 0,
     );
   } catch (err) {
     console.error("[pipeline] getPublishedArticles error:", err);
