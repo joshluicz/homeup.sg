@@ -16,11 +16,7 @@ import { cn } from "@/lib/utils";
 import { trackButtonClick } from "@/lib/analytics";
 import { ListingImage } from "@/components/listings/ListingImage";
 
-const typeBadge: Record<string, string> = {
-  HDB: "bg-blue-50 text-blue-700 border-blue-200",
-  Condo: "bg-primary-50 text-primary-700 border-primary-200",
-  Landed: "bg-amber-50 text-amber-700 border-amber-200",
-};
+import { badgeClassForFlatType } from "@/lib/data/property-type-styles";
 
 type ListingCardProps = {
   listing: Listing;
@@ -66,7 +62,7 @@ export function ListingCard({
           <span
             className={cn(
               "rounded-full border px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm",
-              typeBadge[typeLabel],
+              badgeClassForFlatType(listing.flat_type),
             )}
           >
             {typeLabel}

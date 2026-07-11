@@ -107,7 +107,7 @@ function BreakdownBar({
 }
 
 export function ListingAffordabilityCalculator({ propertyPrice, flatType }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const [propertyPriceInput, setPropertyPriceInput] = useState(propertyPrice);
   const [loanAmount, setLoanAmount] = useState(maxLoanAmount(propertyPrice));
   const [interestRate, setInterestRate] = useState(defaultInterestRate());
@@ -158,7 +158,7 @@ export function ListingAffordabilityCalculator({ propertyPrice, flatType }: Prop
               onClick={() => setExpanded((value) => !value)}
               className="shrink-0 rounded-xl"
             >
-              {expanded ? "Hide calculator" : "Check affordability"}
+              {expanded ? "Hide calculator" : "Show calculator"}
             </Button>
           </div>
 

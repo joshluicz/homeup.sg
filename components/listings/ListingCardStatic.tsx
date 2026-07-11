@@ -1,20 +1,16 @@
 import Link from "next/link";
+import { BedDouble, Bath, Maximize2, MapPin } from "lucide-react";
 import type { Listing } from "@/lib/listings/types";
 import {
   flatTypeBadgeLabel,
   formatListingPrice,
   formatListingSize,
   getListingImage,
-  listedAsLabel,
 } from "@/lib/listings/public-utils";
 import { getPublicListingPath } from "@/lib/listings/utils";
 import { ListingImage } from "@/components/listings/ListingImage";
-
-const typeBadge: Record<string, string> = {
-  HDB: "bg-blue-50 text-blue-700 border-blue-200",
-  Condo: "bg-primary-50 text-primary-700 border-primary-200",
-  Landed: "bg-amber-50 text-amber-700 border-amber-200",
-};
+import { badgeClassForFlatType } from "@/lib/data/property-type-styles";
+import { cn } from "@/lib/utils";
 
 type ListingCardStaticProps = {
   listing: Listing;
@@ -39,7 +35,10 @@ export function ListingCardStatic({ listing, compact = false, priority = false }
         />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <span
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm ${typeBadge[typeLabel] ?? typeBadge.Condo}`}
+            className={cn(
+              "rounded-full border px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm",
+              badgeClassForFlatType(listing.flat_type),
+            )}
           >
             {typeLabel}
           </span>
@@ -51,22 +50,40 @@ export function ListingCardStatic({ listing, compact = false, priority = false }
         </div>
       </Link>
 
-      <div className={`flex flex-1 flex-col gap-2 ${compact ? "p-3" : "p-4"}`}>
-        <h3 className="text-sm font-semibold leading-snug text-neutral-900">
+      <div className={cn("flex flex-1 flex-col gap-3", compact ? "p-3" : "p-4")}>
+        {listing.address_line_1 && (
+          <div className="flex items-center gap-1 text-xs text-neutral-400">
+            <MapPin className="h-3 w-3 shrink-0" />
+            {listing.address_line_1}
+          </div>
+        )}
+
+        <h3 className="font-display text-sm font-bold leading-snug text-neutral-900">
           <Link href={href} className="hover:text-primary-700">
             {listing.title}
           </Link>
         </h3>
-        {listing.address_line_1 && (
-          <p className="text-xs text-neutral-500">{listing.address_line_1}</p>
-        )}
-        <p className="font-display text-sm font-bold text-primary-600">{priceLabel}</p>
-        <p className="text-xs text-neutral-400">
-          {listedAsLabel(listing.listed_as)}
-          {listing.rooms != null ? ` · ${listing.rooms} bed` : ""}
-          {listing.bathrooms != null ? ` · ${listing.bathrooms} bath` : ""}
-          {listing.area_sqft ? ` · ${formatListingSize(Number(listing.area_sqft))}` : ""}
-        </p>
+
+        <p className="font-display text-base font-extrabold text-primary-600">{priceLabel}</p>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-neutral-100 pt-3">
+          {listing.rooms != null && (
+            <span className="inline-flex items-center gap-1 text-xs text-neutral-500">
+              <BedDouble className="h-3.5 w-3.5 shrink-0" />
+              {listing.rooms} {listing.rooms === 1 ? "bed" : "beds"}
+            </span>
+          )}
+          {listing.bathrooms != null && (
+            <span className="inline-flex items-center gap-1 text-xs text-neutral-500">
+              <Bath className="h-3.5 w-3.5 shrink-0" />
+              {listing.bathrooms} {listing.bathrooms === 1 ? "bath" : "baths"}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1 text-xs text-neutral-500">
+            <Maximize2 className="h-3.5 w-3.5 shrink-0" />
+            {formatListingSize(Number(listing.area_sqft))}
+          </span>
+        </div>
       </div>
     </article>
   );

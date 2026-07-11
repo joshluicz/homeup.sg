@@ -10,6 +10,12 @@ import {
   type BuyPropertyType,
 } from "@/lib/data/buy-pricing";
 import {
+  getPropertyTypeStyle,
+  propertyTypeFromBuyType,
+  propertyTypeFromSellType,
+  type PropertyTypePalette,
+} from "@/lib/data/property-type-styles";
+import {
   SELL_DEFAULT_BY_TYPE,
   SELL_MAX_BY_TYPE,
   type SellPropertyType,
@@ -40,11 +46,12 @@ const BUY_FEES: Record<BuyPropertyType, FeeConfig> = {
 const SELL_TYPES: SellPropertyType[] = ["HDB", "Condo", "Landed"];
 const BUY_TYPES: BuyPropertyType[] = ["HDB", "CondoLanded", "NewLaunch"];
 
-type SliderPalette = "blue" | "green" | "amber";
+type SliderPalette = PropertyTypePalette;
 
 interface SliderSectionTheme {
   tabRail: string;
   tabInactive: string;
+  tabActive: string;
   valueInput: string;
   valuePrefix: string;
   feeCard: string;
@@ -55,37 +62,40 @@ interface SliderSectionTheme {
 }
 
 const SLIDER_THEMES: Record<SliderPalette, SliderSectionTheme> = {
-  blue: {
-    tabRail: "bg-slate-50 ring-1 ring-blue-100/80",
-    tabInactive: "text-neutral-600 hover:bg-blue-50 hover:text-blue-900",
-    valueInput: "bg-slate-50 ring-1 ring-blue-100/80",
-    valuePrefix: "text-blue-800",
-    feeCard: "border-blue-100 bg-slate-50",
+  sky: {
+    tabRail: "bg-sky-50 ring-1 ring-sky-100",
+    tabInactive: "text-neutral-600 hover:bg-sky-100/80 hover:text-sky-900",
+    tabActive: "bg-sky-600 text-white hover:bg-sky-700 hover:text-white",
+    valueInput: "bg-sky-50 ring-1 ring-sky-100",
+    valuePrefix: "text-sky-800",
+    feeCard: "border-sky-100 bg-sky-50/60",
     feeCardLabel: "text-neutral-600",
     feeCardPrice: "text-neutral-900",
     feeCardMeta: "text-neutral-500",
-    trackInactive: "#e8eef5",
+    trackInactive: "#e0f2fe",
   },
-  green: {
-    tabRail: "bg-[#eef5f0] ring-1 ring-[#c5ddd0]",
-    tabInactive: "text-primary-800/75 hover:bg-[#e2efe6] hover:text-primary-900",
-    valueInput: "bg-[#eef5f0] ring-1 ring-[#c5ddd0]",
-    valuePrefix: "text-primary-800",
-    feeCard: "border-[#c5ddd0] bg-[#eef5f0]",
-    feeCardLabel: "text-primary-800",
+  indigo: {
+    tabRail: "bg-indigo-50 ring-1 ring-indigo-100",
+    tabInactive: "text-neutral-600 hover:bg-indigo-100/80 hover:text-indigo-900",
+    tabActive: "bg-indigo-600 text-white hover:bg-indigo-700 hover:text-white",
+    valueInput: "bg-indigo-50 ring-1 ring-indigo-100",
+    valuePrefix: "text-indigo-800",
+    feeCard: "border-indigo-100 bg-indigo-50/60",
+    feeCardLabel: "text-neutral-600",
     feeCardPrice: "text-neutral-900",
-    feeCardMeta: "text-primary-800/65",
-    trackInactive: "#d4e8dc",
+    feeCardMeta: "text-neutral-500",
+    trackInactive: "#e0e7ff",
   },
   amber: {
     tabRail: "bg-amber-50 ring-1 ring-amber-100",
-    tabInactive: "text-amber-700/70 hover:bg-amber-100/80 hover:text-amber-900",
+    tabInactive: "text-neutral-600 hover:bg-amber-100/80 hover:text-amber-900",
+    tabActive: "bg-amber-600 text-white hover:bg-amber-700 hover:text-white",
     valueInput: "bg-amber-50 ring-1 ring-amber-100",
-    valuePrefix: "text-amber-600",
-    feeCard: "border-amber-200 bg-amber-50",
-    feeCardLabel: "text-amber-700",
-    feeCardPrice: "text-amber-950",
-    feeCardMeta: "text-amber-700/70",
+    valuePrefix: "text-amber-800",
+    feeCard: "border-amber-100 bg-amber-50/60",
+    feeCardLabel: "text-neutral-600",
+    feeCardPrice: "text-neutral-900",
+    feeCardMeta: "text-neutral-500",
     trackInactive: "#fef3c7",
   },
 };
@@ -95,13 +105,9 @@ function paletteForType(
   isBuy: boolean,
 ): SliderPalette {
   if (isBuy) {
-    if (propertyType === "HDB") return "blue";
-    if (propertyType === "CondoLanded") return "green";
-    return "amber";
+    return getPropertyTypeStyle(propertyTypeFromBuyType(propertyType as BuyPropertyType)).palette;
   }
-  if (propertyType === "HDB") return "blue";
-  if (propertyType === "Condo") return "green";
-  return "amber";
+  return getPropertyTypeStyle(propertyTypeFromSellType(propertyType as SellPropertyType)).palette;
 }
 
 function formatSGD(value: number): string {
@@ -292,7 +298,7 @@ export function SavingsSlider({
                   className={cn(
                     "h-auto min-h-0 flex-1 rounded-lg border-0 px-2 py-2.5 text-xs font-semibold shadow-none ring-0 transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 sm:px-3 sm:text-sm",
                     propertyType === t
-                      ? "bg-primary-600 text-white hover:bg-primary-700 hover:text-white"
+                      ? sectionTheme.tabActive
                       : sectionTheme.tabInactive,
                   )}
                 >

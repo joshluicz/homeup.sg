@@ -172,7 +172,7 @@ export function Testimonials() {
     <section
       id="testimonials"
       aria-label="Client testimonials"
-      className="section-padding bg-neutral-50"
+      className="section-padding border-y border-primary-100 bg-primary-50/70"
     >
       <div className="container-page">
         <motion.div

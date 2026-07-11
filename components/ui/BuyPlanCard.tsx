@@ -37,10 +37,13 @@ export function BuyPlanCard({
         className,
       )}
     >
-      <div className={cn("h-1.5 w-full", t.topBar)} />
-
       <div className={cn("p-6", t.header)}>
-        <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold", t.badge)}>
+        <span
+          className={cn(
+            "inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide",
+            t.badgeSolid,
+          )}
+        >
           {plan.tag}
         </span>
         <h3 className="mt-3 text-lg font-semibold text-neutral-900">{plan.name}</h3>
@@ -60,7 +63,14 @@ export function BuyPlanCard({
         <ul className="flex-1 space-y-2.5">
           {plan.includes.map((feature) => (
             <li key={feature} className="flex items-center gap-2.5 text-sm text-neutral-700">
-              <Check aria-hidden="true" className={cn("h-4 w-4 shrink-0", t.check)} />
+              <span
+                className={cn(
+                  "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full",
+                  t.checkBg,
+                )}
+              >
+                <Check aria-hidden="true" className={cn("h-3 w-3", t.check)} strokeWidth={3} />
+              </span>
               {feature}
             </li>
           ))}

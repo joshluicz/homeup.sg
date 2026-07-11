@@ -46,20 +46,28 @@ export function SellPlanCard({
         className,
       )}
     >
-      <div className={cn("h-1.5 w-full", t.topBar)} />
-
-      <div className={cn("p-6", t.header)}>
-        <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold", t.badge)}>
-          {plan.tag}
-        </span>
-        <h3 className="mt-3 text-lg font-semibold text-neutral-900">{plan.name}</h3>
-        <div className="mt-3 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-          <span className={cn("font-display text-4xl font-bold tracking-tight", t.price)}>
+      <div className={cn("shrink-0 p-6 pb-5", t.header)}>
+        <div className="flex min-h-6 items-center">
+          <span
+            className={cn(
+              "inline-flex rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide",
+              t.badgeSolid,
+            )}
+          >
+            {plan.tag}
+          </span>
+        </div>
+        <h3 className="mt-3 min-h-7 text-lg font-semibold leading-tight text-neutral-900">{plan.name}</h3>
+        <div className="mt-3 flex min-h-10 items-baseline gap-x-1.5">
+          <span className={cn("font-display text-4xl font-bold leading-none tracking-tight", t.price)}>
             $
             <HydrationSafeNumberFlow format={{ style: "decimal" }} value={plan.price} />
-            {plan.footnote && (
-              <sup className="ml-0.5 align-super text-xl font-bold">*</sup>
-            )}
+            <sup
+              className={cn("ml-0.5 align-super text-xl font-bold", !plan.footnote && "invisible")}
+              aria-hidden={!plan.footnote}
+            >
+              *
+            </sup>
           </span>
           <span className="text-sm font-medium text-neutral-500">+ GST</span>
         </div>
@@ -70,7 +78,14 @@ export function SellPlanCard({
         <ul className="flex-1 space-y-2.5">
           {PACKAGE_FEATURES.map((feature) => (
             <li key={feature.id} className="flex items-start gap-2.5 text-sm text-neutral-700">
-              <Check aria-hidden="true" className={cn("mt-0.5 h-4 w-4 shrink-0", t.check)} />
+              <span
+                className={cn(
+                  "mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full",
+                  t.checkBg,
+                )}
+              >
+                <Check aria-hidden="true" className={cn("h-3 w-3", t.check)} strokeWidth={3} />
+              </span>
               <span className="flex flex-wrap items-center">
                 {feature.id === "listing" ? (
                   <>

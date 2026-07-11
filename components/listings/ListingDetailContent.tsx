@@ -21,6 +21,8 @@ import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
 import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { buildListingLocationQuery } from "@/lib/listings/nearby-places";
+import { badgeClassForFlatType } from "@/lib/data/property-type-styles";
+import { cn } from "@/lib/utils";
 
 type ListingDetailContentProps = {
   listing: Listing;
@@ -102,7 +104,12 @@ export function ListingDetailContent({ listing, related = [] }: ListingDetailCon
 
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-0.5 text-xs font-semibold text-primary-700">
+              <span
+                className={cn(
+                  "rounded-full px-3 py-0.5 text-xs font-semibold",
+                  badgeClassForFlatType(listing.flat_type),
+                )}
+              >
                 {typeLabel}
               </span>
               <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-0.5 text-xs font-semibold text-neutral-700">
