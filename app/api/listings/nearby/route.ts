@@ -1,4 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { geocodeLocation } from "@/lib/listings/geocode";
+import {
+  findNearestMrtStation,
+  findNearestMrtStations,
+  mrtStationToNearbyPlace,
+} from "@/lib/listings/mrt-proximity";
 import {
   categoryLabel,
   DEFAULT_SEARCH_RADIUS_M,
@@ -6,6 +12,7 @@ import {
   fetchPlacesForCategory,
   SEARCH_RADIUS_OPTIONS,
   type NearbyCategory,
+  type NearbyPlace,
   type SearchRadiusM,
 } from "@/lib/listings/nearby-places";
 
@@ -19,68 +26,24 @@ const VALID_CATEGORIES = new Set<NearbyCategory>([
   "food",
 ]);
 
-type NominatimResult = {
-  lat: string;
-  lon: string;
-  display_name: string;
-};
-
-async function geocodeQuery(query: string): Promise<{ lat: number; lng: number } | null> {
-  const url = new URL("https://nominatim.openstreetmap.org/search");
-  url.searchParams.set("q", query);
-  url.searchParams.set("format", "json");
-  url.searchParams.set("limit", "1");
-  url.searchParams.set("countrycodes", "sg");
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
-  try {
-    const response = await fetch(url.toString(), {
-      headers: {
-        "User-Agent": "HomeUP/1.0 (homeup.sg listings nearby)",
-        Accept: "application/json",
-      },
-      next: { revalidate: 86400 },
-      signal: controller.signal,
-    });
-
-    if (!response.ok) return null;
-
-    const results = (await response.json()) as NominatimResult[];
-    const hit = results[0];
-    if (!hit) return null;
-
-    return { lat: Number(hit.lat), lng: Number(hit.lon) };
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-async function geocodeLocation(
-  location: string,
-  title?: string | null,
-): Promise<{ lat: number; lng: number; resolvedQuery: string } | null> {
-  const attempts = [
-    location.includes("Singapore") ? location : `${location}, Singapore`,
-    title ? `${title}, Singapore` : null,
-    title && location !== title ? `${title} ${location}, Singapore` : null,
-  ].filter((value, index, array): value is string => Boolean(value) && array.indexOf(value) === index);
-
-  for (const query of attempts) {
-    const coords = await geocodeQuery(query);
-    if (coords) return { ...coords, resolvedQuery: query };
-  }
-
-  return null;
-}
-
 function parseRadius(value: string | null): SearchRadiusM {
   const parsed = Number(value);
   return SEARCH_RADIUS_OPTIONS.includes(parsed as SearchRadiusM)
     ? (parsed as SearchRadiusM)
     : DEFAULT_SEARCH_RADIUS_M;
+}
+
+function mergeStaticMrtIntoNearest(
+  places: NearbyPlace[],
+  lat: number,
+  lng: number,
+): NearbyPlace[] {
+  const nearestMrt = findNearestMrtStation(lat, lng);
+  if (!nearestMrt) return places;
+
+  const staticMrt = mrtStationToNearbyPlace(nearestMrt);
+  const withoutMrt = places.filter((place) => place.category !== "mrt");
+  return [...withoutMrt, staticMrt].sort((a, b) => a.distanceM - b.distanceM);
 }
 
 export async function GET(request: NextRequest) {
@@ -113,14 +76,23 @@ export async function GET(request: NextRequest) {
     }
 
     const places =
-      category === "nearest"
-        ? await fetchNearestAcrossCategories(geocoded.lat, geocoded.lng, radiusM)
-        : (await fetchPlacesForCategory(geocoded.lat, geocoded.lng, category, radiusM)).slice(0, 12);
+      category === "mrt"
+        ? findNearestMrtStations(geocoded.lat, geocoded.lng, 12, radiusM).map(mrtStationToNearbyPlace)
+        : category === "nearest"
+          ? mergeStaticMrtIntoNearest(
+              await fetchNearestAcrossCategories(geocoded.lat, geocoded.lng, radiusM),
+              geocoded.lat,
+              geocoded.lng,
+            )
+          : (await fetchPlacesForCategory(geocoded.lat, geocoded.lng, category, radiusM)).slice(0, 12);
+
+    const nearestMrt = findNearestMrtStation(geocoded.lat, geocoded.lng);
 
     return NextResponse.json({
       coords: { lat: geocoded.lat, lng: geocoded.lng },
       resolvedQuery: geocoded.resolvedQuery,
       places,
+      nearestMrt,
       location: searchLocation,
       category,
       radiusM,

@@ -286,18 +286,11 @@ export async function fetchNearestAcrossCategories(
   return [...nearestByCategory.values()].sort((a, b) => a.distanceM - b.distanceM);
 }
 
-export function buildGoogleMapsEmbedUrl(query: string): string {
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY;
-  const q = encodeURIComponent(query);
-  if (key) {
-    return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${q}&zoom=15`;
-  }
-  return `https://maps.google.com/maps?q=${q}&hl=en&z=15&output=embed`;
-}
-
-export function buildGoogleMapsSearchUrl(query: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
+export {
+  buildGoogleMapsEmbedUrl,
+  buildGoogleMapsSearchUrl,
+  buildMapEmbedUrl,
+} from "@/lib/listings/map-embed";
 
 export function categoryLabel(category: NearbyCategory): string {
   return NEARBY_CATEGORIES.find((item) => item.id === category)?.label ?? category;

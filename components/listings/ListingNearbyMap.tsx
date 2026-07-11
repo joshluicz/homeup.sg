@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
-  buildGoogleMapsEmbedUrl,
   buildGoogleMapsSearchUrl,
+  buildMapEmbedUrl,
+} from "@/lib/listings/map-embed";
+import {
   categoryLabel,
   DEFAULT_SEARCH_RADIUS_M,
   NEARBY_CATEGORIES,
@@ -50,17 +52,27 @@ type Props = {
   locationQuery: string;
   displayAddress: string;
   title: string;
+  initialCoords?: { lat: number; lng: number } | null;
 };
 
-export function ListingNearbyMap({ locationQuery, displayAddress, title }: Props) {
+export function ListingNearbyMap({
+  locationQuery,
+  displayAddress,
+  title,
+  initialCoords = null,
+}: Props) {
   const [category, setCategory] = useState<NearbyCategory>("nearest");
   const [radiusM, setRadiusM] = useState<SearchRadiusM>(DEFAULT_SEARCH_RADIUS_M);
   const [places, setPlaces] = useState<NearbyPlace[]>([]);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(initialCoords);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [panelOpen, setPanelOpen] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialCoords) setCoords(initialCoords);
+  }, [initialCoords]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +91,7 @@ export function ListingNearbyMap({ locationQuery, displayAddress, title }: Props
       .then((data: Partial<NearbyResponse> & { error?: string }) => {
         if (cancelled) return;
         const nextPlaces = Array.isArray(data.places) ? data.places : [];
-        setCoords(data.coords ?? null);
+        setCoords(data.coords ?? initialCoords ?? null);
         setPlaces(nextPlaces);
         setSelectedId(nextPlaces[0]?.id ?? null);
         if (data.error) setError("Could not load nearby places.");
@@ -97,16 +109,22 @@ export function ListingNearbyMap({ locationQuery, displayAddress, title }: Props
     return () => {
       cancelled = true;
     };
-  }, [locationQuery, title, category, radiusM]);
+  }, [locationQuery, title, category, radiusM, initialCoords]);
 
   const selected = places.find((place) => place.id === selectedId) ?? places[0] ?? null;
 
+  const mapCoords = useMemo(() => {
+    if (selected) return { lat: selected.lat, lng: selected.lng };
+    return coords;
+  }, [coords, selected]);
+
   const mapQuery = useMemo(() => {
     if (selected) return `${selected.name}, Singapore`;
-    return `${locationQuery}`;
+    return locationQuery;
   }, [locationQuery, selected]);
 
-  const mapSrc = buildGoogleMapsEmbedUrl(mapQuery);
+  const mapSrc = buildMapEmbedUrl(mapQuery, mapCoords);
+  const usesOsmFallback = !process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY && Boolean(mapCoords);
 
   const emptyLabel =
     category === "nearest"
@@ -168,14 +186,20 @@ export function ListingNearbyMap({ locationQuery, displayAddress, title }: Props
 
         <div className="relative mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 shadow-sm">
           <div className="relative aspect-[16/10] w-full sm:aspect-[16/9]">
-            <iframe
-              title={`Map showing ${title}`}
-              src={mapSrc}
-              className="absolute inset-0 h-full w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              allowFullScreen
-            />
+            {mapCoords ? (
+              <iframe
+                title={`Map showing ${title}`}
+                src={mapSrc}
+                className="absolute inset-0 h-full w-full border-0"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 px-6 text-center text-sm text-neutral-500">
+                Map unavailable for this listing. Try opening the address in Google Maps below.
+              </div>
+            )}
 
             {panelOpen && (
               <div className="absolute left-3 top-3 z-10 w-[min(100%-1.5rem,20rem)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg sm:left-4 sm:top-4">
@@ -249,7 +273,7 @@ export function ListingNearbyMap({ locationQuery, displayAddress, title }: Props
 
                 <div className="border-t border-neutral-100 px-4 py-3">
                   <a
-                    href={buildGoogleMapsSearchUrl(`${locationQuery}`)}
+                    href={buildGoogleMapsSearchUrl(locationQuery, coords)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-semibold text-primary-600 hover:underline"
@@ -270,6 +294,12 @@ export function ListingNearbyMap({ locationQuery, displayAddress, title }: Props
             </button>
           </div>
         </div>
+
+        {usesOsmFallback && (
+          <p className="mt-2 text-xs text-neutral-400">
+            Map powered by OpenStreetMap. Add a Google Maps Embed API key for Google map tiles.
+          </p>
+        )}
 
         {coords && selected && !loading && (
           <p className="mt-3 text-sm text-neutral-500">
