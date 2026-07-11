@@ -1,4 +1,5 @@
 import type { PlaybookVideo } from "@/lib/data/playbook";
+import { playbookVideoHref } from "@/lib/playbook/embed";
 
 export type PlaybookContentKind = "article" | "video";
 
@@ -27,4 +28,16 @@ export function isPlaybookArticle(row: PlaybookRow): boolean {
 
 export function isPlaybookVideo(row: PlaybookRow): boolean {
   return resolvePlaybookContentKind(row) === "video" && Boolean(row.videoUrl?.trim());
+}
+
+/** Crawlable path for a playbook row — article page or on-site watch page. */
+export function playbookItemPath(row: PlaybookRow & { slug: string }): string {
+  if (isPlaybookVideo(row)) {
+    return playbookVideoHref({ slug: row.slug, videoUrl: row.videoUrl }).href;
+  }
+  return `/playbook/${row.slug}`;
+}
+
+export function playbookItemCtaLabel(row: PlaybookRow): string {
+  return isPlaybookVideo(row) ? "Watch in Playbook" : "Read in Playbook";
 }

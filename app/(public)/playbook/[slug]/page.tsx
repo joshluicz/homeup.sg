@@ -18,6 +18,7 @@ import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import { getPlaybookAgentName, inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
 import { getAgentBySlug } from "@/lib/data/agents";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { playbookArticleUrl } from "@/lib/seo/indexnow";
 import {
   articleSchema,
   breadcrumbSchema,
@@ -103,6 +104,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             <PlaybookArticleHeader
               video={video}
               hideDescription={articleBlocks.some((block) => block.kind === "quick_answer")}
+              shareUrl={playbookArticleUrl(video.slug)}
             />
             <PlaybookArticleHeroMedia video={video} />
 
