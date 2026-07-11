@@ -14,6 +14,10 @@ import {
 } from "@/lib/playbook/public-videos";
 import { PLAYBOOK_SHEET_VIDEOS } from "@/lib/data/playbook-sheet-videos";
 import {
+  getAllAgentIntroWatchSlugs,
+  getAgentIntroVideoForWatchServer,
+} from "@/lib/agents/intro-videos";
+import {
   getAgentProfileVideoBySlugServer,
   getAllAgentProfileVideoSlugsServer,
 } from "@/lib/agents/profile-videos";
@@ -93,6 +97,9 @@ export async function getPlaybookVideosByTopicServer(): Promise<
 export async function getPlaybookVideoForWatchServer(
   slug: string,
 ): Promise<PlaybookVideo | null> {
+  const introVideo = getAgentIntroVideoForWatchServer(slug);
+  if (introVideo?.videoUrl?.trim()) return introVideo;
+
   const { data, error } = await fetchPlaybookRows();
   const dbVideos = error || !data ? [] : data.map(rowToVideo);
   const merged = mergePlaybookVideos(dbVideos);
@@ -117,8 +124,20 @@ export async function getAllWatchSlugsServer(): Promise<string[]> {
           .map((v) => v.slug);
 
   const agentSlugs = await getAllAgentProfileVideoSlugsServer();
+  const introSlugs = getAllAgentIntroWatchSlugs();
 
-  return [...new Set([...sheetSlugs, ...dbSlugs, ...agentSlugs])];
+  return [...new Set([...sheetSlugs, ...dbSlugs, ...agentSlugs, ...introSlugs])];
+}
+
+export type WatchPageSitemapEntry = {
+  slug: string;
+  updatedAt: string | null;
+};
+
+/** All shareable watch pages for sitemap.xml (playbook, agent profile, and intro videos). */
+export async function getWatchPageSitemapEntries(): Promise<WatchPageSitemapEntry[]> {
+  const slugs = await getAllWatchSlugsServer();
+  return slugs.map((slug) => ({ slug, updatedAt: null }));
 }
 
 function filterPublishedPlaybookArticleRows(
@@ -152,32 +171,10 @@ export async function getAllPlaybookSlugs(): Promise<string[]> {
   return filterPublishedPlaybookArticleRows(data ?? []).map((row) => row.slug as string);
 }
 
-export type PlaybookArticleSitemapEntry = {
-  slug: string;
-  updatedAt: string | null;
-};
-
-/** Published playbook articles for sitemap.xml (slug + last modified). */
-export async function getPlaybookArticleSitemapEntries(): Promise<PlaybookArticleSitemapEntry[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
-
-  const supabase = createClient(url, key);
-  const { data, error } = await supabase
-    .from("playbook_videos")
-    .select("slug, article, video_url, updated_at");
-
-  if (error) {
-    console.warn("getPlaybookArticleSitemapEntries:", error.message);
-    return [];
-  }
-
-  return filterPublishedPlaybookArticleRows(data ?? []).map((row) => ({
-    slug: row.slug as string,
-    updatedAt: (row.updated_at as string | null) ?? null,
-  }));
-}
+export {
+  getPlaybookArticleSitemapEntries,
+  type PlaybookArticleSitemapEntry,
+} from "@/lib/playbook/sitemap-entries";
 
 async function fetchPlaybookVideoBySlug(slug: string): Promise<PlaybookVideo | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -2,7 +2,8 @@ import type { MetadataRoute } from "next";
 import { getAllAgentSlugs } from "@/lib/data/agents";
 import { PLAYBOOK_TOPICS } from "@/lib/data/playbook";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
-import { getPlaybookArticleSitemapEntries } from "@/lib/playbook/server-queries";
+import { getPlaybookArticleSitemapEntries } from "@/lib/playbook/sitemap-entries";
+import { getWatchPageSitemapEntries } from "@/lib/playbook/server-queries";
 import { SITE_URL } from "@/lib/seo/constants";
 
 /** Refresh listing URLs hourly so new inventory appears without a full redeploy. */
@@ -53,11 +54,24 @@ function playbookSitemapEntries(
   }));
 }
 
+function watchPageSitemapEntries(
+  videos: { slug: string; updatedAt: string | null }[],
+  fallbackDate: Date,
+): MetadataRoute.Sitemap {
+  return videos.map((video) => ({
+    url: `${SITE_URL}/playbook/watch/${video.slug}`,
+    lastModified: video.updatedAt ? new Date(video.updatedAt) : fallbackDate,
+    changeFrequency: "monthly" as const,
+    priority: 0.65,
+  }));
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
   const core = coreSitemapEntries(now);
   let listingPages: MetadataRoute.Sitemap = [];
   let playbookPages: MetadataRoute.Sitemap = [];
+  let watchPages: MetadataRoute.Sitemap = [];
 
   try {
     const listingSlugs = (await getAllListingSlugsServer()).filter(Boolean);
@@ -78,5 +92,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("sitemap: playbook article fetch failed", error);
   }
 
-  return [...core, ...listingPages, ...playbookPages];
+  try {
+    const watchVideos = await getWatchPageSitemapEntries();
+    watchPages = watchPageSitemapEntries(watchVideos, now);
+  } catch (error) {
+    console.error("sitemap: watch page fetch failed", error);
+  }
+
+  return [...core, ...listingPages, ...playbookPages, ...watchPages];
 }

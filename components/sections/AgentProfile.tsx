@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Play } from "lucide-react";
 import type { Agent, AgentAccoladeFootnote } from "@/lib/data/agents";
 import type { AgentProfileVideo } from "@/lib/agents/profile-videos";
+import { agentIntroWatchSlug } from "@/lib/agents/intro-videos";
 import { AgentProfileVideos } from "@/components/agents/AgentProfileVideos";
 import { AgentSocialLinks } from "@/components/ui/AgentSocialLinks";
 import { Eyebrow } from "@/components/ui/Eyebrow";
-import { YoutubeEmbed } from "@/components/ui/YoutubeEmbed";
+import { youtubeThumbnail } from "@/lib/youtube";
 
 interface AgentProfileProps {
   agent: Agent;
@@ -141,18 +142,33 @@ export function AgentProfile({ agent, profileVideos }: AgentProfileProps) {
               <div
                 className={`w-full min-w-0 lg:sticky lg:top-24${hasProfileVideos ? " max-lg:mb-0.5" : ""}`}
               >
-                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-md">
+                <Link
+                  href={`/playbook/watch/${agentIntroWatchSlug(agent.slug)}`}
+                  className="group block overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-950 shadow-md transition hover:border-primary-200 hover:shadow-lg"
+                >
                   <div className="relative aspect-video">
-                    <YoutubeEmbed
-                      videoId={agent.introYoutubeVideoId!}
-                      title={`Introduction from ${agent.name}`}
-                      autoplay
-                      className="absolute inset-0 h-full w-full"
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={youtubeThumbnail(agent.introYoutubeVideoId!)}
+                      alt={`Introduction from ${agent.name}`}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
                     />
+                    <div className="absolute inset-0 bg-neutral-950/20 transition group-hover:bg-neutral-950/35" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-neutral-900 shadow-lg transition group-hover:scale-105 group-hover:bg-white">
+                        <Play className="ml-0.5 h-6 w-6 fill-current" aria-hidden="true" />
+                      </span>
+                    </div>
                   </div>
-                </div>
+                </Link>
                 <p className="mt-3 text-sm font-normal text-neutral-500">
-                  Introduction from {firstName}
+                  Introduction from {firstName}.{" "}
+                  <Link
+                    href={`/playbook/watch/${agentIntroWatchSlug(agent.slug)}`}
+                    className="font-medium text-primary-700 underline decoration-primary-200 underline-offset-2 transition hover:text-primary-800 hover:decoration-primary-400"
+                  >
+                    Watch introduction
+                  </Link>
                 </p>
                 {agent.social && (
                   <AgentSocialLinks

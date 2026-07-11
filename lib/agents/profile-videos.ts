@@ -116,10 +116,15 @@ export async function getAllAgentProfileVideoSlugsServer(): Promise<string[]> {
   if (!url || !key) return [];
 
   const supabase = createClient(url, key);
-  const { data, error } = await supabase.from("agent_profile_videos").select("slug");
+  const { data, error } = await supabase.from("agent_profile_videos").select("id, slug");
   if (error || !data) return [];
 
-  return data.map((row) => (row.slug as string | null)?.trim()).filter((s): s is string => !!s);
+  return data
+    .map((row) => {
+      const slug = (row.slug as string | null)?.trim();
+      return slug || `agent-${row.id as string}`;
+    })
+    .filter(Boolean);
 }
 
 /** Slugify a title for a new agent profile video, avoiding collisions with `taken`. */
