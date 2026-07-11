@@ -36,14 +36,25 @@ export async function POST(request: Request) {
   const wantsAuto = body.auto === true || !body.topic?.title?.trim();
   const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic);
 
-  if (!resolved) {
+  if (resolved.status === "all_covered") {
     return NextResponse.json(
       {
         error: "NO_UNPUBLISHED_TOPICS",
         detail:
-          "Every radar topic matches an article already live on /playbook. Add a custom topic below, or publish new radar seeds in radarConfig.ts.",
+          "Every trending topic is already on the Playbook — add new seeds in radarConfig.ts or enter a custom topic below.",
       },
       { status: 404 },
+    );
+  }
+
+  if (resolved.status === "topic_covered") {
+    return NextResponse.json(
+      {
+        error: "TOPIC_ALREADY_COVERED",
+        detail: `This topic is already covered by "${resolved.matchedArticle.title}".`,
+        matchedArticle: resolved.matchedArticle,
+      },
+      { status: 409 },
     );
   }
 

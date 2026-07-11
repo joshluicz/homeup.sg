@@ -513,8 +513,8 @@ export function ArticleGenerationTab() {
         </p>
         {!loadingTopics && topics.length > 0 && topics.every((t) => t.alreadyPublished) && (
           <p className="mt-2 text-xs font-medium text-amber-700">
-            All radar topics match articles already on the site — add a custom topic below to
-            generate something new.
+            Every trending topic is already on the Playbook — add a custom topic below to generate
+            something new.
           </p>
         )}
         {generateError && (
@@ -581,64 +581,92 @@ export function ArticleGenerationTab() {
               </div>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2">
-                {topics.map((topic) => (
-                  <button
-                    key={topic.id}
-                    onClick={() => setSelectedTopic(topic)}
-                    disabled={topic.alreadyPublished}
-                    className={cn(
-                      "group flex flex-col gap-1.5 rounded-xl border p-3.5 text-left transition-all",
-                      topic.alreadyPublished && "cursor-not-allowed opacity-50",
-                      selectedTopic?.id === topic.id
-                        ? "border-primary-500 bg-primary-50 shadow-sm"
-                        : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 hover:bg-white",
-                    )}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span
-                        className={cn(
-                          "text-sm font-semibold leading-snug",
-                          selectedTopic?.id === topic.id
-                            ? "text-primary-900"
-                            : "text-neutral-800 group-hover:text-neutral-900",
-                        )}
-                      >
-                        {topic.title}
-                      </span>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        {topic.alreadyPublished && (
-                          <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-medium text-neutral-600">
-                            Published
-                          </span>
-                        )}
-                        {topic.source === "custom" && (
-                          <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
-                            Custom
-                          </span>
-                        )}
+                {topics.map((topic) =>
+                  topic.alreadyPublished ? (
+                    <div
+                      key={topic.id}
+                      className="flex flex-col gap-1.5 rounded-xl border border-neutral-200 bg-neutral-50 p-3.5 opacity-60"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-sm font-semibold leading-snug text-neutral-700">
+                          {topic.title}
+                        </span>
                         <span
                           className={cn(
-                            "rounded-full px-2 py-0.5 text-xs font-semibold capitalize",
+                            "shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold capitalize",
                             DEMAND_BADGE[topic.demand],
                           )}
                         >
                           {topic.demand}
                         </span>
                       </div>
-                    </div>
-                    <p className="text-xs text-neutral-500 line-clamp-2">{topic.searchIntent}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {topic.tags.slice(0, 4).map((tag) => (
-                        <span
-                          key={tag}
-                          className="rounded-md bg-white px-1.5 py-0.5 text-xs text-neutral-500 ring-1 ring-neutral-200"
+                      <p className="text-xs text-neutral-500 line-clamp-2">{topic.searchIntent}</p>
+                      {topic.matchedArticle ? (
+                        <Link
+                          href={`/playbook/${topic.matchedArticle.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-800"
                         >
-                          {tag}
-                        </span>
-                      ))}
+                          Already covered → view
+                          <ExternalLink className="h-3 w-3" />
+                        </Link>
+                      ) : (
+                        <span className="text-xs font-medium text-neutral-500">Already covered</span>
+                      )}
                     </div>
-                  </button>
-                ))}
+                  ) : (
+                    <button
+                      key={topic.id}
+                      type="button"
+                      onClick={() => setSelectedTopic(topic)}
+                      className={cn(
+                        "group flex flex-col gap-1.5 rounded-xl border p-3.5 text-left transition-all",
+                        selectedTopic?.id === topic.id
+                          ? "border-primary-500 bg-primary-50 shadow-sm"
+                          : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 hover:bg-white",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span
+                          className={cn(
+                            "text-sm font-semibold leading-snug",
+                            selectedTopic?.id === topic.id
+                              ? "text-primary-900"
+                              : "text-neutral-800 group-hover:text-neutral-900",
+                          )}
+                        >
+                          {topic.title}
+                        </span>
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {topic.source === "custom" && (
+                            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700">
+                              Custom
+                            </span>
+                          )}
+                          <span
+                            className={cn(
+                              "rounded-full px-2 py-0.5 text-xs font-semibold capitalize",
+                              DEMAND_BADGE[topic.demand],
+                            )}
+                          >
+                            {topic.demand}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-neutral-500 line-clamp-2">{topic.searchIntent}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {topic.tags.slice(0, 4).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-md bg-white px-1.5 py-0.5 text-xs text-neutral-500 ring-1 ring-neutral-200"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  ),
+                )}
               </div>
             )}
           </div>

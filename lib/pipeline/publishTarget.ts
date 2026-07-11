@@ -6,74 +6,6 @@ export interface PublishedArticleRef {
   title: string;
 }
 
-const DEDUP_STOPWORDS = new Set([
-  "a", "an", "the", "to", "for", "in", "of", "and", "or", "your", "how", "when",
-  "what", "is", "it", "do", "you", "can", "i", "my", "singapore", "guide", "2026",
-]);
-
-function slugifyForDedup(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
-/** Normalizes a slug or title for duplicate detection (case, suffixes, stopwords). */
-export function normalizeSlugForDedup(raw: string): string {
-  let s = slugifyForDedup(raw);
-  s = s.replace(/-2026-guide$/, "");
-  // publishArticle() appends a millisecond timestamp to slugs
-  s = s.replace(/-\d{10,13}$/, "");
-  const tokens = s.split("-").filter((t) => t && !DEDUP_STOPWORDS.has(t));
-  return tokens.join("-");
-}
-
-function slugKeysMatch(a: string, b: string): boolean {
-  if (!a || !b) return false;
-  if (a === b) return true;
-
-  // Near-duplicate: high token overlap (same topic, slightly different title/slug)
-  const overlap = tokenOverlapRatio(a, b);
-  return overlap >= 0.85 && Math.min(a.length, b.length) >= 10;
-}
-
-function tokenOverlapRatio(a: string, b: string): number {
-  const ta = a.split("-").filter(Boolean);
-  const tb = b.split("-").filter(Boolean);
-  if (!ta.length || !tb.length) return 0;
-  const setB = new Set(tb);
-  let inter = 0;
-  for (const t of ta) if (setB.has(t)) inter++;
-  return inter / Math.max(ta.length, tb.length);
-}
-
-/** True when a radar topic title overlaps a live /playbook article slug or title. */
-export function isTopicAlreadyPublished(
-  topicTitle: string,
-  published: PublishedArticleRef[],
-  topicId?: string,
-): boolean {
-  const topicKey = normalizeSlugForDedup(topicTitle);
-  if (!topicKey) return false;
-
-  const idKey = topicId ? normalizeSlugForDedup(topicId) : "";
-
-  for (const { slug, title } of published) {
-    const slugKey = normalizeSlugForDedup(slug);
-    const titleKey = normalizeSlugForDedup(title);
-
-    for (const pubKey of [slugKey, titleKey]) {
-      if (slugKeysMatch(topicKey, pubKey)) return true;
-    }
-
-    // Radar topic id often matches the slug stem before publish timestamp
-    if (idKey && (slugKey === idKey || slugKey.startsWith(`${idKey}-`))) return true;
-  }
-  return false;
-}
-
 function serviceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -101,15 +33,17 @@ export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
       return [];
     }
 
-    return (data ?? []).filter(
-      (row): row is PublishedArticleRef =>
-        typeof row.slug === "string" &&
-        row.slug.length > 0 &&
-        typeof row.title === "string" &&
-        row.title.length > 0 &&
-        typeof row.article === "string" &&
-        row.article.trim().length > 0,
-    );
+    return (data ?? [])
+      .filter(
+        (row) =>
+          typeof row.slug === "string" &&
+          row.slug.length > 0 &&
+          typeof row.title === "string" &&
+          row.title.length > 0 &&
+          typeof row.article === "string" &&
+          row.article.trim().length > 0,
+      )
+      .map(({ slug, title }) => ({ slug, title }));
   } catch (err) {
     console.error("[pipeline] getPublishedArticles error:", err);
     return [];

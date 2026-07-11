@@ -21,6 +21,8 @@ export interface TopicCandidate {
   source: "radar" | "custom";
   /** True when a matching article is already live on /playbook */
   alreadyPublished?: boolean;
+  /** Live /playbook article that covers this topic (when alreadyPublished) */
+  matchedArticle?: { slug: string; title: string };
 }
 
 export interface Brief {

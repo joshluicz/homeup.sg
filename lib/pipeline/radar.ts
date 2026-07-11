@@ -1,31 +1,52 @@
+import { matchTopicAgainstCatalog } from "./dedup";
 import { RADAR_TOPICS, RADAR_WEIGHTS } from "./radarConfig";
-import {
-  getPublishedArticles,
-  isTopicAlreadyPublished,
-} from "./publishTarget";
+import { getPublishedArticles, type PublishedArticleRef } from "./publishTarget";
 import type { TopicCandidate } from "./types";
 
-/**
- * Returns scored topic candidates sorted by relevance.
- * Marks topics that match a live /playbook article as alreadyPublished.
- */
-export async function runRadar(): Promise<TopicCandidate[]> {
-  const published = await getPublishedArticles();
+export type GenerationTopicResolution =
+  | { status: "ok"; topic: TopicCandidate; autoSelected: boolean }
+  | { status: "all_covered" }
+  | { status: "topic_covered"; matchedArticle: PublishedArticleRef };
 
+function applyCoverage(
+  topic: TopicCandidate,
+  published: PublishedArticleRef[],
+): TopicCandidate {
+  const match = matchTopicAgainstCatalog(topic.title, published, topic.id);
+  return {
+    ...topic,
+    alreadyPublished: match.covered,
+    matchedArticle: match.matchedArticle,
+  };
+}
+
+/** Score radar seeds and mark topics already covered on /playbook. */
+export function scoreRadarTopics(published: PublishedArticleRef[]): TopicCandidate[] {
   const scored: TopicCandidate[] = RADAR_TOPICS.map((t) => {
     const demandScore = RADAR_WEIGHTS.demand[t.demand] * 80;
     const evergreenBonus = t.evergreen ? RADAR_WEIGHTS.evergreen * 100 : 0;
     const score = Math.round(demandScore + evergreenBonus);
 
-    return {
-      ...t,
-      score,
-      source: "radar" as const,
-      alreadyPublished: isTopicAlreadyPublished(t.title, published, t.id),
-    };
+    return applyCoverage(
+      {
+        ...t,
+        score,
+        source: "radar" as const,
+      },
+      published,
+    );
   });
 
   return scored.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+}
+
+/**
+ * Returns scored topic candidates sorted by relevance.
+ * Marks topics that semantically match a live /playbook article as alreadyPublished.
+ */
+export async function runRadar(): Promise<TopicCandidate[]> {
+  const published = await getPublishedArticles();
+  return scoreRadarTopics(published);
 }
 
 /** Highest-scored radar topic that is not already published. */
@@ -34,7 +55,7 @@ export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidat
   if (pick) return pick;
 
   console.warn(
-    `[radar] All ${topics.length} radar topics matched published articles — auto-pick unavailable.`,
+    `[radar] All ${topics.length} radar topics match articles on /playbook — auto-pick unavailable.`,
   );
   return null;
 }
@@ -42,15 +63,21 @@ export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidat
 /** Resolve which topic to generate: explicit pick, or top unpublished from radar. */
 export async function resolveGenerationTopic(
   explicit?: TopicCandidate | null,
-): Promise<{ topic: TopicCandidate; autoSelected: boolean } | null> {
+): Promise<GenerationTopicResolution> {
+  const published = await getPublishedArticles();
+
   if (explicit?.title?.trim()) {
-    return { topic: explicit, autoSelected: false };
+    const match = matchTopicAgainstCatalog(explicit.title, published, explicit.id);
+    if (match.covered && match.matchedArticle) {
+      return { status: "topic_covered", matchedArticle: match.matchedArticle };
+    }
+    return { status: "ok", topic: explicit, autoSelected: false };
   }
 
-  const topics = await runRadar();
+  const topics = scoreRadarTopics(published);
   const topic = pickTopUnpublishedTopic(topics);
-  if (!topic) return null;
-  return { topic, autoSelected: true };
+  if (!topic) return { status: "all_covered" };
+  return { status: "ok", topic, autoSelected: true };
 }
 
 /** Creates a custom topic candidate from user input. */

@@ -1,6 +1,7 @@
 import { requireAuth } from "@/lib/supabase/auth";
+import { matchTopicAgainstCatalog } from "@/lib/pipeline/dedup";
 import { runRadar, makeCustomTopic } from "@/lib/pipeline/radar";
-import { getPublishedArticles, isTopicAlreadyPublished } from "@/lib/pipeline/publishTarget";
+import { getPublishedArticles } from "@/lib/pipeline/publishTarget";
 import { NextResponse } from "next/server";
 
 /** GET /api/admin/topics — returns scored radar topic candidates */
@@ -24,6 +25,8 @@ export async function POST(request: Request) {
 
   const topic = makeCustomTopic(title);
   const published = await getPublishedArticles();
-  topic.alreadyPublished = isTopicAlreadyPublished(topic.title, published, topic.id);
+  const match = matchTopicAgainstCatalog(topic.title, published, topic.id);
+  topic.alreadyPublished = match.covered;
+  topic.matchedArticle = match.matchedArticle;
   return NextResponse.json(topic);
 }
