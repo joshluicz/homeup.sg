@@ -51,3 +51,9 @@ export function getAllPlaybookArticleSlugsFromJson(): string[] {
     .map((row) => row.slug)
     .filter(Boolean);
 }
+
+export function getAllPlaybookArticlesFromJson(): { slug: string; title: string; article: string }[] {
+  return (finalTenArticles as JsonArticleEntry[])
+    .filter((row) => Boolean(row.article?.trim()))
+    .map((row) => ({ slug: row.slug, title: row.title, article: row.article as string }));
+}

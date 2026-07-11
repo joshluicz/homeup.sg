@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import {
   AlertCircle,
@@ -123,6 +124,10 @@ function GscSetupGuide() {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function ArticleAnalyticsDashboard() {
+  const searchParams = useSearchParams();
+  const highlightSlug = searchParams.get("slug");
+  const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
+
   const [articles, setArticles] = useState<Article[]>([]);
   const [metrics, setMetrics] = useState<SlugMetric[]>([]);
   const [leads, setLeads] = useState<LeadCount[]>([]);
@@ -180,6 +185,14 @@ export function ArticleAnalyticsDashboard() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!highlightSlug || loading) return;
+    const row = rowRefs.current[highlightSlug];
+    if (row) {
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlightSlug, loading, articles.length]);
 
   const handleRefreshGsc = useCallback(async () => {
     setRefreshing(true);
@@ -259,6 +272,10 @@ export function ArticleAnalyticsDashboard() {
   const totalClicks = metrics.reduce((s, m) => s + m.clicks, 0);
   const totalImpressions = metrics.reduce((s, m) => s + m.impressions, 0);
   const totalLeads = leads.reduce((s, l) => s + l.count, 0);
+  const titleBySlug = new Map(articles.map((a) => [a.slug, a.title]));
+
+  const generationPrefillUrl = (title: string) =>
+    `/admin/article-generation?topic=${encodeURIComponent(title)}`;
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
@@ -372,7 +389,7 @@ export function ArticleAnalyticsDashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-t border-neutral-100 bg-neutral-50">
-                  {["Article", "Clicks (28d)", "Impressions", "Avg position", "Trend", "WA Leads", "AI Citations", ""].map((h) => (
+                  {["Article", "Clicks (28d)", "Impressions", "Avg position", "Trend", "WA Leads", "AI Citations", "Actions"].map((h) => (
                     <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-neutral-500 whitespace-nowrap">
                       {h}
                     </th>
@@ -381,7 +398,16 @@ export function ArticleAnalyticsDashboard() {
               </thead>
               <tbody>
                 {rows.map(({ article, metric, leads: leadCount, citation }) => (
-                  <tr key={article.slug} className="border-t border-neutral-100 hover:bg-neutral-50/60">
+                  <tr
+                    key={article.slug}
+                    ref={(el) => {
+                      rowRefs.current[article.slug] = el;
+                    }}
+                    className={cn(
+                      "border-t border-neutral-100 hover:bg-neutral-50/60",
+                      highlightSlug === article.slug && "bg-primary-50 ring-2 ring-inset ring-primary-200",
+                    )}
+                  >
                     {/* Title */}
                     <td className="px-4 py-3 max-w-xs">
                       <p className="truncate font-medium text-neutral-900">{article.title}</p>
@@ -469,15 +495,25 @@ export function ArticleAnalyticsDashboard() {
                       )}
                     </td>
 
-                    {/* Link */}
+                    {/* Actions */}
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/playbook/${article.slug}`}
-                        target="_blank"
-                        className="inline-flex items-center gap-0.5 text-xs text-neutral-400 hover:text-primary-600"
-                      >
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </Link>
+                      <div className="flex min-w-[7rem] flex-col gap-1">
+                        <Link
+                          href={`/playbook/${article.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600 hover:text-primary-600"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          View live
+                        </Link>
+                        <Link
+                          href={generationPrefillUrl(article.title)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-800"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          Regenerate
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -507,7 +543,13 @@ export function ArticleAnalyticsDashboard() {
                       target="_blank"
                       className="text-sm font-medium text-amber-900 underline-offset-2 hover:underline"
                     >
-                      {item.slug}
+                      {titleBySlug.get(item.slug) ?? item.slug}
+                    </Link>
+                    <Link
+                      href={generationPrefillUrl(titleBySlug.get(item.slug) ?? item.slug)}
+                      className="text-xs font-medium text-amber-800 hover:underline"
+                    >
+                      Regenerate
                     </Link>
                     <span className={cn(
                       "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",

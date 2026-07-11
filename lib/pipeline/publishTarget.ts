@@ -1,9 +1,11 @@
+import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
 
 export interface PublishedArticleRef {
   slug: string;
   title: string;
+  article: string;
 }
 
 function serviceClient() {
@@ -15,9 +17,18 @@ function serviceClient() {
   return createClient(supabaseUrl, serviceKey);
 }
 
+function mergePublishedWithJson(dbRows: PublishedArticleRef[]): PublishedArticleRef[] {
+  const bySlug = new Map<string, PublishedArticleRef>();
+  for (const row of dbRows) bySlug.set(row.slug, row);
+  for (const jsonRow of getAllPlaybookArticlesFromJson()) {
+    if (!bySlug.has(jsonRow.slug)) bySlug.set(jsonRow.slug, jsonRow);
+  }
+  return [...bySlug.values()];
+}
+
 /**
- * All live /playbook articles that have body content — same source as GSC analytics.
- * Used by the topic radar to skip duplicates.
+ * All live /playbook articles that have body content — Supabase rows plus JSON fallback
+ * articles not yet in the DB. Used by the topic radar to skip duplicates.
  */
 export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
   try {
@@ -30,10 +41,10 @@ export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
 
     if (error) {
       console.error("[pipeline] getPublishedArticles failed:", error.message);
-      return [];
+      return mergePublishedWithJson([]);
     }
 
-    return (data ?? [])
+    const dbRows = (data ?? [])
       .filter(
         (row) =>
           typeof row.slug === "string" &&
@@ -43,10 +54,12 @@ export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
           typeof row.article === "string" &&
           row.article.trim().length > 0,
       )
-      .map(({ slug, title }) => ({ slug, title }));
+      .map(({ slug, title, article }) => ({ slug, title, article }));
+
+    return mergePublishedWithJson(dbRows);
   } catch (err) {
     console.error("[pipeline] getPublishedArticles error:", err);
-    return [];
+    return mergePublishedWithJson([]);
   }
 }
 

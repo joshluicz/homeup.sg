@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/admin/listings?tab=playbook&view=articles", label: "Articles" },
   { href: "/admin/article-generation", label: "Article Generation" },
   { href: "/admin/article-analytics", label: "Article Analytics" },
+  { href: "/playbook", label: "Playbook" },
   { href: "/admin/transactions", label: "Transaction Data" },
   { href: "/admin/agent-profiles", label: "Agent Videos" },
   { href: "/admin/listings?tab=analytics", label: "Analytics" },
@@ -37,6 +38,9 @@ function AdminNav() {
     }
     if (item.href === "/admin/agent-profiles") {
       return pathname.startsWith("/admin/agent-profiles");
+    }
+    if (item.href === "/playbook") {
+      return pathname.startsWith("/playbook");
     }
     if (item.href === "/admin/listings") {
       return (

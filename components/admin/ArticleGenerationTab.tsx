@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import {
+  BarChart2,
   BookOpen,
   CheckCircle2,
   ChevronDown,
@@ -233,8 +235,12 @@ function GenerateErrorBanner({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ArticleGenerationTab() {
+  const searchParams = useSearchParams();
+
   // Topic list
   const [topics, setTopics] = useState<TopicCandidate[]>([]);
+  const [publishedCoverage, setPublishedCoverage] = useState<{ slug: string; title: string }[]>([]);
+  const [loadingCoverage, setLoadingCoverage] = useState(true);
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState<TopicCandidate | null>(null);
   const [autoSelectedTopic, setAutoSelectedTopic] = useState<TopicCandidate | null>(null);
@@ -288,10 +294,34 @@ export function ArticleGenerationTab() {
     }
   }, []);
 
+  const loadCoverage = useCallback(async () => {
+    setLoadingCoverage(true);
+    try {
+      const res = await fetch("/api/admin/published-articles");
+      if (!res.ok) throw new Error("Failed to load coverage");
+      const data: unknown = await res.json();
+      if (!Array.isArray(data)) throw new Error("Invalid coverage response");
+      setPublishedCoverage(data as { slug: string; title: string }[]);
+    } catch {
+      setPublishedCoverage([]);
+    } finally {
+      setLoadingCoverage(false);
+    }
+  }, []);
+
   // ── Load topics on mount ────────────────────────────────────────────────────
   useEffect(() => {
     void loadTopics();
-  }, [loadTopics]);
+    void loadCoverage();
+  }, [loadTopics, loadCoverage]);
+
+  // ── Prefill custom topic from ?topic= (analytics → regenerate deep link) ───
+  useEffect(() => {
+    const topicParam = searchParams.get("topic")?.trim();
+    if (!topicParam) return;
+    setCustomTitle(topicParam);
+    setShowTopicList(true);
+  }, [searchParams]);
 
   // ── Generate article ────────────────────────────────────────────────────────
   const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false) => {
@@ -361,6 +391,7 @@ export function ArticleGenerationTab() {
       }
 
       void loadTopics();
+      void loadCoverage();
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
@@ -371,7 +402,7 @@ export function ArticleGenerationTab() {
       setGenerating(false);
       setAutoGenerating(false);
     }
-  }, [loadTopics]);
+  }, [loadTopics, loadCoverage]);
 
   const handleGenerate = useCallback(() => {
     if (!selectedTopic) return;
@@ -480,6 +511,51 @@ export function ArticleGenerationTab() {
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
             Start over
           </Button>
+        )}
+      </div>
+
+      {/* ── Playbook coverage at a glance ── */}
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold text-neutral-900">
+            <BookOpen className="h-4 w-4 text-primary-600" />
+            Already on Playbook
+            {!loadingCoverage && (
+              <span className="font-normal text-neutral-500">({publishedCoverage.length})</span>
+            )}
+          </h2>
+          <Link
+            href="/admin/article-analytics"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-800"
+          >
+            <BarChart2 className="h-3.5 w-3.5" />
+            Article Analytics
+          </Link>
+        </div>
+        {loadingCoverage ? (
+          <div className="flex items-center gap-2 text-xs text-neutral-400">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Loading coverage…
+          </div>
+        ) : publishedCoverage.length === 0 ? (
+          <p className="text-xs text-neutral-500">No published articles yet.</p>
+        ) : (
+          <ul className="max-h-40 space-y-1 overflow-y-auto">
+            {publishedCoverage.map((article) => (
+              <li key={article.slug}>
+                <Link
+                  href={`/playbook/${article.slug}`}
+                  target="_blank"
+                  className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-neutral-50"
+                >
+                  <span className="truncate font-medium text-neutral-800 group-hover:text-primary-700">
+                    {article.title}
+                  </span>
+                  <ExternalLink className="h-3 w-3 shrink-0 text-neutral-300 group-hover:text-primary-500" />
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 
@@ -1025,22 +1101,31 @@ export function ArticleGenerationTab() {
           {/* Publish bar */}
           <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
             {publishResult ? (
-              <div className="flex items-center gap-3">
-                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                <div>
-                  <p className="text-sm font-bold text-emerald-700">Published successfully!</p>
-                  <p className="text-xs text-neutral-500">
-                    Slug:{" "}
-                    <Link
-                      href={`/playbook/${publishResult.slug}`}
-                      target="_blank"
-                      className="inline-flex items-center gap-0.5 text-primary-600 hover:underline"
-                    >
-                      /playbook/{publishResult.slug}
-                      <ExternalLink className="ml-0.5 h-3 w-3" />
-                    </Link>
-                  </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  <div>
+                    <p className="text-sm font-bold text-emerald-700">Published successfully!</p>
+                    <p className="text-xs text-neutral-500">
+                      Slug:{" "}
+                      <Link
+                        href={`/playbook/${publishResult.slug}`}
+                        target="_blank"
+                        className="inline-flex items-center gap-0.5 text-primary-600 hover:underline"
+                      >
+                        /playbook/{publishResult.slug}
+                        <ExternalLink className="ml-0.5 h-3 w-3" />
+                      </Link>
+                    </p>
+                  </div>
                 </div>
+                <Link
+                  href={`/admin/article-analytics?slug=${encodeURIComponent(publishResult.slug)}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-xs font-semibold text-primary-700 hover:bg-primary-100"
+                >
+                  <BarChart2 className="h-3.5 w-3.5" />
+                  View analytics
+                </Link>
               </div>
             ) : (
               <>
