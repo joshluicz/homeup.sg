@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/supabase/auth";
 import { importOnePgListing } from "@/lib/listings/sync-pg-sources";
+import { revalidateListingPaths } from "@/lib/listings/revalidate-listings";
 
 export const maxDuration = 120;
 
@@ -36,6 +37,7 @@ export async function POST(request: Request) {
         error: outcome.error,
       });
     }
+    revalidateListingPaths([outcome.slug]);
     return NextResponse.json({
       success: true,
       title: outcome.title,

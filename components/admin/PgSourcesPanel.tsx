@@ -13,6 +13,7 @@ import {
 } from "@/lib/listings/pg-fetch-agent-client";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
+import { triggerListingRevalidate } from "@/lib/listings/revalidate-listings-client";
 import { CheckCircle2, Download, ExternalLink, Loader2 } from "lucide-react";
 
 type SyncResponse = {
@@ -242,6 +243,12 @@ export function PgSourcesPanel() {
       }
 
       setSyncResult({ success: true, added, failed, skipped, archived, purged });
+      if (added.length > 0 || archived.length > 0) {
+        await triggerListingRevalidate([
+          ...added.map((item) => item.slug),
+          ...archived.map((item) => item.slug),
+        ]);
+      }
       setStatusMessage(
         `Sync complete — ${added.length} imported and published${failed.length > 0 ? `, ${failed.length} failed` : ""}, ${archived.length} archived${purged > 0 ? `, ${purged} old archive(s) deleted` : ""}.`,
       );
