@@ -19,7 +19,7 @@ export function MrtCodePill({ code, className }: MrtCodePillProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-full px-2.5 py-1 text-center text-[11px] font-extrabold leading-none tracking-wide text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)]",
+        "inline-flex h-5 min-w-[2.75rem] items-center justify-center rounded-full px-2 py-0.5 text-center text-[10px] font-extrabold leading-none tracking-wide text-white shadow-[0_1px_2px_rgba(0,0,0,0.18)]",
         className,
       )}
       style={{ backgroundColor: style.bg, border: `1.5px solid ${style.border}` }}

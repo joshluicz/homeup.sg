@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import L from "leaflet";
 import {
   Circle,
@@ -32,14 +32,18 @@ type ListingLeafletMapProps = {
   fitAllPlaces?: boolean;
   showRadiusCircle?: boolean;
   radiusM?: number;
+  denseMarkers?: boolean;
 };
 
 const CARTO_VOYAGER =
   "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
 
 const BASE_ZOOM = 15;
-const PROPERTY_PIN_BASE = 40;
-const AMENITY_PIN_BASE = 28;
+const PROPERTY_PIN_SIZE = 30;
+const AMENITY_DOT_SIZE = 10;
+const AMENITY_DOT_SIZE_SELECTED = 14;
+const DENSE_DOT_SIZE = 7;
+const DENSE_DOT_SIZE_SELECTED = 11;
 
 function createPinIcon(fill: string, size: number) {
   const height = Math.round(size * 1.35);
@@ -51,48 +55,29 @@ function createPinIcon(fill: string, size: number) {
   });
 }
 
-function pinSizeForZoom(baseSize: number, zoom: number): number {
-  const scaled = Math.round(baseSize * 2 ** (BASE_ZOOM - zoom));
-  return Math.min(Math.max(scaled, Math.round(baseSize * 0.75)), baseSize * 3);
+function createDotIcon(fill: string, size: number) {
+  const border = Math.max(1, Math.round(size * 0.2));
+  return L.divIcon({
+    className: "listing-map-dot-icon",
+    html: `<span style="display:block;width:${size}px;height:${size}px;border-radius:9999px;background:${fill};border:${border}px solid #fff;box-shadow:0 1px 2px rgba(15,23,42,0.35);"></span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
 }
 
-function useFixedPinIcon(fill: string, baseSize: number) {
-  const map = useMap();
-  const [icon, setIcon] = useState(() => createPinIcon(fill, pinSizeForZoom(baseSize, BASE_ZOOM)));
-
-  useEffect(() => {
-    const sync = () => {
-      setIcon(createPinIcon(fill, pinSizeForZoom(baseSize, map.getZoom())));
-    };
-
-    sync();
-    map.on("zoom", sync);
-    map.on("zoomend", sync);
-    return () => {
-      map.off("zoom", sync);
-      map.off("zoomend", sync);
-    };
-  }, [map, fill, baseSize]);
-
-  return icon;
-}
-
-function FixedPinMarker({
+function MapMarker({
   position,
-  fill,
-  baseSize,
+  icon,
   zIndexOffset = 0,
   openPopup = false,
   label,
 }: {
   position: [number, number];
-  fill: string;
-  baseSize: number;
+  icon: L.DivIcon;
   zIndexOffset?: number;
   openPopup?: boolean;
   label: string;
 }) {
-  const icon = useFixedPinIcon(fill, baseSize);
   const markerRef = useRef<L.Marker>(null);
 
   useEffect(() => {
@@ -207,7 +192,25 @@ export function ListingLeafletMap({
   fitAllPlaces = false,
   showRadiusCircle = false,
   radiusM,
+  denseMarkers = false,
 }: ListingLeafletMapProps) {
+  const propertyIcon = useMemo(
+    () => createPinIcon("#dc2626", PROPERTY_PIN_SIZE),
+    [],
+  );
+
+  const amenityDotSize = denseMarkers ? DENSE_DOT_SIZE : AMENITY_DOT_SIZE;
+  const amenityDotSizeSelected = denseMarkers ? DENSE_DOT_SIZE_SELECTED : AMENITY_DOT_SIZE_SELECTED;
+
+  const amenityIcon = useMemo(
+    () => createDotIcon("#3b82f6", amenityDotSize),
+    [amenityDotSize],
+  );
+  const amenityIconSelected = useMemo(
+    () => createDotIcon("#1d4ed8", amenityDotSizeSelected),
+    [amenityDotSizeSelected],
+  );
+
   return (
     <div className={cn("listing-nearby-map-shell", className)}>
       <MapContainer
@@ -246,25 +249,26 @@ export function ListingLeafletMap({
           />
         )}
 
-        <FixedPinMarker
+        <MapMarker
           position={[property.lat, property.lng]}
-          fill="#dc2626"
-          baseSize={PROPERTY_PIN_BASE}
+          icon={propertyIcon}
           zIndexOffset={1000}
           label={property.label}
         />
 
-        {places.map((place) => (
-          <FixedPinMarker
-            key={place.id}
-            position={[place.lat, place.lng]}
-            fill={place.id === selectedPlaceId ? "#1d4ed8" : "#3b82f6"}
-            baseSize={AMENITY_PIN_BASE}
-            zIndexOffset={place.id === selectedPlaceId ? 800 : 0}
-            openPopup={place.id === selectedPlaceId}
-            label={place.label}
-          />
-        ))}
+        {places.map((place) => {
+          const selected = place.id === selectedPlaceId;
+          return (
+            <MapMarker
+              key={place.id}
+              position={[place.lat, place.lng]}
+              icon={selected ? amenityIconSelected : amenityIcon}
+              zIndexOffset={selected ? 800 : 0}
+              openPopup={selected}
+              label={place.label}
+            />
+          );
+        })}
       </MapContainer>
     </div>
   );

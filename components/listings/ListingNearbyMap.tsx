@@ -201,6 +201,7 @@ export function ListingNearbyMap({
                 fitAllPlaces={category === "bus" && places.length > 0}
                 showRadiusCircle={category === "bus" && radiusM > 0}
                 radiusM={category === "bus" ? radiusM : undefined}
+                denseMarkers={category === "bus"}
                 className="absolute inset-0 z-0 h-full w-full"
               />
             ) : (

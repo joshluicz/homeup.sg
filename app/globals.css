@@ -811,7 +811,8 @@ input[type="date"]::-webkit-datetime-edit {
   touch-action: none;
 }
 
-.listing-map-pin-icon {
+.listing-map-pin-icon,
+.listing-map-dot-icon {
   background: transparent;
   border: none;
 }
