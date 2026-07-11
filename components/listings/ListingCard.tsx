@@ -25,18 +25,36 @@ const typeBadge: Record<string, string> = {
 type ListingCardProps = {
   listing: Listing;
   compact?: boolean;
+  layout?: "grid" | "list";
   /** First visible cards load eagerly for faster LCP on /listings. */
   priority?: boolean;
 };
 
-export function ListingCard({ listing, compact = false, priority = false }: ListingCardProps) {
+export function ListingCard({
+  listing,
+  compact = false,
+  layout = "grid",
+  priority = false,
+}: ListingCardProps) {
   const typeLabel = flatTypeBadgeLabel(listing.flat_type);
   const priceLabel = formatListingPrice(listing);
   const href = getPublicListingPath(listing.slug);
+  const isList = layout === "list";
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:border-primary-600/40 hover:shadow-md">
-      <Link href={href} className="relative block aspect-[4/3] w-full overflow-hidden bg-neutral-100">
+    <article
+      className={cn(
+        "group overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:border-primary-600/40 hover:shadow-md",
+        isList ? "flex flex-col sm:flex-row" : "flex flex-col",
+      )}
+    >
+      <Link
+        href={href}
+        className={cn(
+          "relative block overflow-hidden bg-neutral-100",
+          isList ? "aspect-[4/3] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-52 sm:self-stretch" : "aspect-[4/3] w-full",
+        )}
+      >
         <ListingImage
           src={getListingImage(listing)}
           alt={listing.title}
@@ -61,7 +79,13 @@ export function ListingCard({ listing, compact = false, priority = false }: List
         </div>
       </Link>
 
-      <div className={cn("flex flex-1 flex-col gap-3", compact ? "p-3" : "p-4")}>
+      <div
+        className={cn(
+          "flex flex-1 flex-col gap-3",
+          compact ? "p-3" : "p-4",
+          isList && "sm:justify-center",
+        )}
+      >
         {listing.address_line_1 && (
           <div className="flex items-center gap-1 text-xs text-neutral-400">
             <MapPin className="h-3 w-3 shrink-0" />

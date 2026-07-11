@@ -2,6 +2,8 @@ import type { ComponentType } from "react";
 import Link from "next/link";
 import { BedDouble, Bath, Maximize2, MapPin, ArrowLeft } from "lucide-react";
 import { ListingImageGallery } from "@/components/listings/ListingImageGallery";
+import { ListingAffordabilityCalculator } from "@/components/listings/ListingAffordabilityCalculator";
+import { ListingNearbyMap } from "@/components/listings/ListingNearbyMap";
 import { ListingCardStatic } from "@/components/listings/ListingCardStatic";
 import { ListingWhatsAppButton } from "@/components/listings/ListingWhatsAppButton";
 import type { Listing } from "@/lib/listings/types";
@@ -18,6 +20,7 @@ import {
 import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
 import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
+import { buildListingLocationQuery } from "@/lib/listings/nearby-places";
 
 type ListingDetailContentProps = {
   listing: Listing;
@@ -141,6 +144,19 @@ export function ListingDetailContent({ listing, related = [] }: ListingDetailCon
           </div>
         </div>
       </div>
+
+      <ListingNearbyMap
+        locationQuery={buildListingLocationQuery(listing)}
+        displayAddress={listing.address_line_1 ?? listing.title}
+        title={listing.title}
+      />
+
+      {listing.listed_as === "sell" && listing.price > 0 && (
+        <ListingAffordabilityCalculator
+          propertyPrice={Number(listing.price)}
+          flatType={listing.flat_type}
+        />
+      )}
 
       {related.length > 0 && (
         <section className="border-t border-neutral-100 bg-neutral-50 section-padding">

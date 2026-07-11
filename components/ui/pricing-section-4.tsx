@@ -1,5 +1,6 @@
 "use client";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionBlendTop } from "@/components/ui/SectionBlend";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
 import { SavingsSlider } from "@/components/ui/SavingsSlider";
 import { SellPlanCard } from "@/components/ui/SellPlanCard";
@@ -165,8 +166,9 @@ export default function PricingSection4({
     <section
       aria-label="Fixed-fee pricing packages"
       id={id}
-      className="section-padding bg-neutral-50"
+      className="relative overflow-hidden section-padding bg-neutral-50"
     >
+      <SectionBlendTop from="primary-50" />
       <div className="container-page">
         {showSlider && (
           <FadeInUp delay={0.06}>

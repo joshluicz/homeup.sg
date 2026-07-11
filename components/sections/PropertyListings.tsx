@@ -5,6 +5,7 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp } from "@/components/ui/motion-primitives";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingCount } from "@/components/listings/ListingCount";
+import { SectionBlendTop } from "@/components/ui/SectionBlend";
 import type { Listing } from "@/lib/listings/types";
 import type { FlatTypeFilter } from "@/lib/listings/public-utils";
 import { flatTypeFilterMatches } from "@/lib/listings/public-utils";
@@ -51,7 +52,8 @@ export function PropertyListings({
   const hasMore = filtered.length > PREVIEW_COUNT;
 
   return (
-    <section aria-label="Current property listings" className="bg-white section-padding">
+    <section aria-label="Current property listings" className="relative overflow-hidden bg-white section-padding">
+      <SectionBlendTop from="neutral-50" />
       <div className="container-page">
         <FadeInUp className="section-header">
           <Eyebrow>Current Listings</Eyebrow>
