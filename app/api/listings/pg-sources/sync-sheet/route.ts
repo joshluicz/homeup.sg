@@ -13,8 +13,15 @@ export async function POST() {
   try {
     const result = await refreshPgSourcesFromGoogleSheet(supabase);
     const { purged } = await purgeExpiredArchivedListings(supabase);
-    if (result.price_updates.length > 0 || purged > 0) {
-      revalidateListingPaths(result.price_updates.map((update) => update.slug));
+    if (
+      result.price_updates.length > 0 ||
+      result.linked_manual.length > 0 ||
+      purged > 0
+    ) {
+      revalidateListingPaths([
+        ...result.price_updates.map((update) => update.slug),
+        ...result.linked_manual.map((linked) => linked.slug),
+      ]);
     }
     return NextResponse.json({ success: true, ...result, purged });
   } catch (err) {
