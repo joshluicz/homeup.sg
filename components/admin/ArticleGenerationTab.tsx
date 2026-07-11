@@ -429,8 +429,13 @@ export function ArticleGenerationTab() {
         body: JSON.stringify({ article: patched, topic: playbookTopic }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || err.error || "Publish failed");
+        const err = (await res.json()) as {
+          detail?: string;
+          error?: string;
+          issues?: string[];
+        };
+        const issueList = err.issues?.length ? `: ${err.issues.join("; ")}` : "";
+        throw new Error(err.detail || err.error || `Publish failed${issueList}`);
       }
       const data = await res.json();
       setPublishResult(data);
@@ -1051,29 +1056,41 @@ export function ArticleGenerationTab() {
                     Playbook under{" "}
                     <strong>{VALID_TOPICS.find((t) => t.value === playbookTopic)?.label}</strong>.
                   </p>
-                  <Button
-                    onClick={handlePublish}
-                    disabled={
-                      publishing ||
-                      !allStepsDone ||
-                      !result.compliance.passed ||
-                      editedMeta.length > 155 ||
-                      (!!result?.audit?.llm && !result.audit.llm.passesGate && !auditOverride)
-                    }
-                    className="shrink-0"
-                  >
-                    {publishing ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Publishing…
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Publish to Playbook
-                      </>
-                    )}
-                  </Button>
+                  {!result.compliance.passed ? (
+                    <div className="shrink-0 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-right">
+                      <p className="text-xs font-semibold text-red-700">Blocked — fix compliance</p>
+                      <ul className="mt-1 space-y-0.5 text-left">
+                        {result.compliance.issues.map((issue, i) => (
+                          <li key={i} className="text-xs text-red-600">
+                            {issue}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={handlePublish}
+                      disabled={
+                        publishing ||
+                        !allStepsDone ||
+                        editedMeta.length > 155 ||
+                        (!!result?.audit?.llm && !result.audit.llm.passesGate && !auditOverride)
+                      }
+                      className="shrink-0"
+                    >
+                      {publishing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Publishing…
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          Publish to Playbook
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </>
             )}

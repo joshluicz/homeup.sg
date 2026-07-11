@@ -65,6 +65,11 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
   const articleBlocks = parsePlaybookArticleBlocks(video.article!);
   const showStructuredFaq = articleHasInlineFaq(articleBlocks);
   const showDbFaq = hasFaq && !showStructuredFaq;
+  const inlineFaqBlock = articleBlocks.find(
+    (block): block is Extract<typeof articleBlocks[number], { kind: "faq" }> => block.kind === "faq",
+  );
+  const faqSchemaItems =
+    hasFaq ? video.faq! : inlineFaqBlock?.items?.length ? inlineFaqBlock.items : [];
   const authorSlug = inferPlaybookAgentSlug(video);
   const author = getAgentBySlug(authorSlug);
 
@@ -79,7 +84,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
           ]),
           articleSchema(video, authorSlug),
           ...(author ? [personSchema(author)] : []),
-          ...(showDbFaq ? [faqSchema(video.faq!)] : []),
+          ...(faqSchemaItems.length > 0 ? [faqSchema(faqSchemaItems)] : []),
           speakableWebPageSchema({
             path: `/playbook/${video.slug}`,
             name: video.title,

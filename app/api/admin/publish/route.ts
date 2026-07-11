@@ -30,6 +30,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
+  if (article.compliance?.passed !== true) {
+    return NextResponse.json(
+      {
+        error: "COMPLIANCE_FAILED",
+        detail: "Article failed compliance review and cannot be published.",
+        issues: article.compliance?.issues ?? [],
+        warnings: article.compliance?.warnings ?? [],
+      },
+      { status: 422 },
+    );
+  }
+
   try {
     const { slug, id } = await publishArticle(article, topic);
 
