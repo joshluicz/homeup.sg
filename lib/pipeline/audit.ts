@@ -14,13 +14,11 @@
  * If this call fails, the caller falls back to the heuristic audit.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 import { PUBLISH_THRESHOLD } from "./types";
 import type { Brief } from "./types";
 
 export { PUBLISH_THRESHOLD };
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -80,8 +78,9 @@ export async function runLlmAudit(
   metaDescription: string,
 ): Promise<LlmAuditResult | null> {
   try {
+    const client = getAnthropicClient();
     const message = await client.messages.create({
-      model: "claude-sonnet-5",
+      model: getLlmModel(),
       max_tokens: 1024,
       messages: [
         {
@@ -91,10 +90,8 @@ export async function runLlmAudit(
       ],
     });
 
-    const raw =
-      message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
-
-    const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim()) as {
+    const raw = extractTextContent(message);
+    const parsed = JSON.parse(stripJsonFences(raw || "{}")) as {
       seo?: number;
       geo?: number;
       aeo?: number;

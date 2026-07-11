@@ -10,10 +10,8 @@
  * articles are found — always degrades gracefully.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
 import { createServiceClient } from "@/lib/supabase/service";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -62,8 +60,9 @@ async function selectRelevantLinks(
     .map((c, i) => `${i + 1}. ${c.title} (/playbook/${c.slug})`)
     .join("\n");
 
+  const client = getAnthropicClient();
   const message = await client.messages.create({
-    model: "claude-sonnet-5",
+    model: getLlmModel(),
     max_tokens: 512,
     messages: [
       {
@@ -86,10 +85,10 @@ Return an empty array [] if fewer than 3 genuinely relevant articles exist.`,
     ],
   });
 
-  const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
+  const raw = extractTextContent(message) || "[]";
 
   try {
-    const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim()) as {
+    const parsed = JSON.parse(stripJsonFences(raw)) as {
       slug?: string;
       title?: string;
     }[];

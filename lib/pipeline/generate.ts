@@ -17,8 +17,8 @@ export interface GenerateProgress {
  * topic → brief + transaction stats → draft → compliance
  *       → internal links + LLM audit (concurrent) → package
  *
- * Every step degrades gracefully: missing data or Claude failures never abort
- * the pipeline — they produce a slightly less rich result.
+ * Draft failures abort the pipeline. Optional enrichments (transaction stats,
+ * internal links, LLM audit) degrade gracefully when unavailable.
  */
 export async function generateArticle(topic: TopicCandidate): Promise<PackagedArticle> {
   // Step 1: brief + transaction stats (concurrent)

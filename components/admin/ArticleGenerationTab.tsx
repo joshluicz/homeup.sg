@@ -195,6 +195,41 @@ function AuditBar({ label, score }: { label: string; score: number }) {
   );
 }
 
+function GenerateErrorBanner({
+  message,
+  onRetry,
+  retrying,
+}: {
+  message: string;
+  onRetry: () => void;
+  retrying: boolean;
+}) {
+  return (
+    <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+      <div className="flex items-start gap-2">
+        <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+        <div>
+          <p className="text-sm font-semibold text-red-700">Generation failed</p>
+          <p className="text-xs text-red-600">{message}</p>
+        </div>
+      </div>
+      <Button type="button" variant="outline" size="sm" onClick={onRetry} disabled={retrying} className="shrink-0">
+        {retrying ? (
+          <>
+            <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            Retrying…
+          </>
+        ) : (
+          <>
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+            Retry
+          </>
+        )}
+      </Button>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function ArticleGenerationTab() {
@@ -233,6 +268,10 @@ export function ArticleGenerationTab() {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const pipelineRef = useRef<HTMLDivElement>(null);
+  const lastGenerateRef = useRef<{ topic: TopicCandidate | null; auto: boolean }>({
+    topic: null,
+    auto: false,
+  });
 
   const loadTopics = useCallback(async () => {
     setLoadingTopics(true);
@@ -256,6 +295,7 @@ export function ArticleGenerationTab() {
 
   // ── Generate article ────────────────────────────────────────────────────────
   const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false) => {
+    lastGenerateRef.current = { topic, auto };
     setGenerateError(null);
     setResult(null);
     setPublishResult(null);
@@ -263,29 +303,14 @@ export function ArticleGenerationTab() {
     setAutoSelectedTopic(null);
     setAutoGenerating(auto);
     setGenerating(true);
-    setPipelineStatus({ brief: "idle", draft: "idle", compliance: "idle", package: "idle" });
+    setPipelineStatus({
+      brief: "running",
+      draft: "running",
+      compliance: "running",
+      package: "running",
+    });
 
     setTimeout(() => pipelineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-
-    const steps: PipelineStep[] = ["brief", "draft", "compliance", "package"];
-    let stepIdx = 0;
-
-    const tick = () => {
-      if (stepIdx < steps.length) {
-        const step = steps[stepIdx];
-        setPipelineStatus((prev) => ({ ...prev, [step]: "running" }));
-        stepIdx++;
-      }
-    };
-
-    tick();
-    const interval = setInterval(() => {
-      if (stepIdx < steps.length) {
-        const prev = steps[stepIdx - 1];
-        setPipelineStatus((s) => ({ ...s, [prev]: "done" }));
-        tick();
-      }
-    }, 12000);
 
     try {
       const res = await fetch("/api/admin/generate", {
@@ -293,8 +318,6 @@ export function ArticleGenerationTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(auto ? { auto: true } : { topic }),
       });
-
-      clearInterval(interval);
 
       const data = (await res.json()) as PackagedArticle & {
         selectedTopic?: TopicCandidate;
@@ -307,7 +330,9 @@ export function ArticleGenerationTab() {
       }
 
       if (!data.draft?.article?.trim()) {
-        throw new Error("Generation completed but the draft body was empty. Check ANTHROPIC_API_KEY and try again.");
+        throw new Error(
+          "Generation completed but the draft body was empty. Check server logs and ANTHROPIC_API_KEY.",
+        );
       }
 
       setPipelineStatus({ brief: "done", draft: "done", compliance: "done", package: "done" });
@@ -338,16 +363,10 @@ export function ArticleGenerationTab() {
       void loadTopics();
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (err) {
-      clearInterval(interval);
       const msg = err instanceof Error ? err.message : "Unknown error";
       setGenerateError(msg);
       setShowTopicList(true);
-      setPipelineStatus((prev) => {
-        const updated = { ...prev };
-        const running = Object.entries(updated).find(([, v]) => v === "running");
-        if (running) (updated as Record<string, StepState>)[running[0]] = "error";
-        return updated;
-      });
+      setPipelineStatus({ brief: "idle", draft: "idle", compliance: "idle", package: "idle" });
     } finally {
       setGenerating(false);
       setAutoGenerating(false);
@@ -361,6 +380,11 @@ export function ArticleGenerationTab() {
 
   const handleAutoGenerate = useCallback(() => {
     void runGenerate(null, true);
+  }, [runGenerate]);
+
+  const handleRetryGenerate = useCallback(() => {
+    const { topic, auto } = lastGenerateRef.current;
+    void runGenerate(topic, auto);
   }, [runGenerate]);
 
   // ── Add custom topic ────────────────────────────────────────────────────────
@@ -494,10 +518,11 @@ export function ArticleGenerationTab() {
           </p>
         )}
         {generateError && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
-            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-            {generateError}
-          </div>
+          <GenerateErrorBanner
+            message={generateError}
+            onRetry={handleRetryGenerate}
+            retrying={generating}
+          />
         )}
       </div>
 
@@ -657,21 +682,17 @@ export function ArticleGenerationTab() {
         {generating && (
           <div className="mt-3 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-xs text-primary-700">
             {autoGenerating
-              ? "AI is picking the best trending topic and writing…"
-              : `Running ${Object.values(pipelineStatus).filter((s) => s === "running").length > 0
-                  ? PIPELINE_STEPS.find((s) => pipelineStatus[s.id] === "running")?.description
-                  : "pipeline"}… this takes ~30–60 seconds.`}
+              ? "AI is picking the best trending topic and writing… (~30–60 seconds)"
+              : "Running brief → draft → compliance → package… (~30–60 seconds)"}
           </div>
         )}
 
-        {generateError && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
-            <div>
-              <p className="text-sm font-semibold text-red-700">Generation failed</p>
-              <p className="text-xs text-red-600">{generateError}</p>
-            </div>
-          </div>
+        {generateError && !generating && (
+          <GenerateErrorBanner
+            message={generateError}
+            onRetry={handleRetryGenerate}
+            retrying={generating}
+          />
         )}
       </div>
 

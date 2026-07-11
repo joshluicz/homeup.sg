@@ -1,43 +1,56 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { draftPrompt } from "./prompt";
+import {
+  assertDraftLength,
+  extractTextContent,
+  getAnthropicClient,
+  getLlmModel,
+  parseModelJson,
+} from "./llm";
 import type { Brief, Draft } from "./types";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+interface DraftJson {
+  title?: string;
+  description?: string;
+  metaDescription?: string;
+  article?: string;
+  faq?: { q: string; a: string }[];
+}
 
 /**
  * Calls Claude to write the full article draft from a brief.
- * @param transactionStats  Aggregate-only HomeUP transaction data to inject into the prompt.
- *                          Pass null/undefined when no data is available — degrades gracefully.
+ * Throws on API failure, JSON parse failure, or body shorter than MIN_DRAFT_WORDS.
  */
-export async function draftArticle(brief: Brief, transactionStats?: string | null, slugHint?: string): Promise<Draft> {
+export async function draftArticle(
+  brief: Brief,
+  transactionStats?: string | null,
+  slugHint?: string,
+): Promise<Draft> {
+  const client = getAnthropicClient();
+
   const message = await client.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 4096,
+    model: getLlmModel(),
+    max_tokens: 8192,
     messages: [{ role: "user", content: draftPrompt(brief, transactionStats, slugHint) }],
   });
 
-  const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
-
-  let parsed: {
-    title?: string;
-    description?: string;
-    metaDescription?: string;
-    article?: string;
-    faq?: { q: string; a: string }[];
-  };
-
-  try {
-    parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-  } catch {
-    parsed = {};
+  const raw = extractTextContent(message);
+  if (!raw) {
+    throw new Error(
+      `draft generation returned no text content (stop_reason=${message.stop_reason ?? "unknown"})`,
+    );
   }
+
+  const parsed = parseModelJson<DraftJson>(raw, "draft generation failed");
+  const article = typeof parsed.article === "string" ? parsed.article.trim() : "";
+
+  assertDraftLength(article, message.stop_reason);
 
   return {
     brief,
     title: parsed.title ?? brief.seoTitle,
     description: parsed.description ?? "",
     metaDescription: parsed.metaDescription ?? "",
-    article: parsed.article ?? "",
+    article,
     faq: Array.isArray(parsed.faq)
       ? parsed.faq.filter((f): f is { q: string; a: string } => !!f?.q && !!f?.a)
       : [],

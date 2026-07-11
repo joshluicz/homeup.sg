@@ -1,9 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { BRAND } from "./brand";
+import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 import { briefPrompt } from "./prompt";
 import type { Brief, TopicCandidate } from "./types";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 /** Routes a topic to the most relevant author by expertise match. */
 function assignAuthor(topic: TopicCandidate): (typeof BRAND.authors)[number] {
@@ -16,13 +14,14 @@ function assignAuthor(topic: TopicCandidate): (typeof BRAND.authors)[number] {
 
 /** Calls Claude to generate a structured article brief for the given topic. */
 export async function generateBrief(topic: TopicCandidate): Promise<Brief> {
+  const client = getAnthropicClient();
   const message = await client.messages.create({
-    model: "claude-sonnet-5",
+    model: getLlmModel(),
     max_tokens: 1024,
     messages: [{ role: "user", content: briefPrompt(topic) }],
   });
 
-  const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
+  const raw = extractTextContent(message);
 
   let parsed: {
     seoTitle?: string;
@@ -33,7 +32,7 @@ export async function generateBrief(topic: TopicCandidate): Promise<Brief> {
   };
 
   try {
-    parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    parsed = raw ? JSON.parse(stripJsonFences(raw)) : {};
   } catch {
     parsed = {};
   }

@@ -1,8 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { compliancePrompt } from "./prompt";
+import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 import type { ComplianceResult, Draft } from "./types";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const REQUIRED_SECTIONS = [
   "Quick Answer:",
@@ -50,13 +48,14 @@ export async function checkCompliance(draft: Draft): Promise<ComplianceResult> {
     };
   }
 
+  const client = getAnthropicClient();
   const message = await client.messages.create({
-    model: "claude-sonnet-5",
+    model: getLlmModel(),
     max_tokens: 4096,
     messages: [{ role: "user", content: compliancePrompt(draft.article) }],
   });
 
-  const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
+  const raw = extractTextContent(message);
 
   let parsed: {
     passed?: boolean;
@@ -66,7 +65,7 @@ export async function checkCompliance(draft: Draft): Promise<ComplianceResult> {
   };
 
   try {
-    parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    parsed = raw ? JSON.parse(stripJsonFences(raw)) : { passed: true, issues: [], warnings: [], patchedArticle: draft.article };
   } catch {
     parsed = { passed: true, issues: [], warnings: [], patchedArticle: draft.article };
   }

@@ -1,5 +1,6 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { generateArticle } from "@/lib/pipeline/generate";
+import { requireAnthropicApiKey } from "@/lib/pipeline/llm";
 import { resolveGenerationTopic } from "@/lib/pipeline/radar";
 import { NextResponse } from "next/server";
 import type { TopicCandidate } from "@/lib/pipeline/types";
@@ -16,6 +17,13 @@ export const maxDuration = 90;
 export async function POST(request: Request) {
   const { error } = await requireAuth();
   if (error) return error;
+
+  try {
+    requireAnthropicApiKey();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "ANTHROPIC_API_KEY is not configured";
+    return NextResponse.json({ error: "Configuration error", detail: message }, { status: 503 });
+  }
 
   let body: { topic?: TopicCandidate; auto?: boolean } = {};
   try {
