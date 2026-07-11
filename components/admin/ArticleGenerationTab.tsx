@@ -274,10 +274,12 @@ export function ArticleGenerationTab() {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const pipelineRef = useRef<HTMLDivElement>(null);
-  const lastGenerateRef = useRef<{ topic: TopicCandidate | null; auto: boolean }>({
+  const lastGenerateRef = useRef<{ topic: TopicCandidate | null; auto: boolean; refresh: boolean }>({
     topic: null,
     auto: false,
+    refresh: false,
   });
+  const [refreshOverride, setRefreshOverride] = useState(false);
 
   const loadTopics = useCallback(async () => {
     setLoadingTopics(true);
@@ -315,17 +317,39 @@ export function ArticleGenerationTab() {
     void loadCoverage();
   }, [loadTopics, loadCoverage]);
 
-  // ── Prefill custom topic from ?topic= (analytics → regenerate deep link) ───
+  // ── Prefill custom topic from ?topic= (+ optional ?refresh=1 Regenerate deep link) ─
   useEffect(() => {
     const topicParam = searchParams.get("topic")?.trim();
     if (!topicParam) return;
+
+    const isRefresh = searchParams.get("refresh") === "1";
     setCustomTitle(topicParam);
-    setShowTopicList(true);
+    setRefreshOverride(isRefresh);
+
+    if (isRefresh) {
+      const refreshTopic: TopicCandidate = {
+        id: `refresh-${Date.now()}`,
+        title: topicParam,
+        searchIntent: `Refresh existing Playbook article: ${topicParam}`,
+        category: "hdb_upgrade",
+        demand: "medium",
+        evergreen: true,
+        tags: [],
+        score: 60,
+        source: "custom",
+        alreadyPublished: true,
+      };
+      setSelectedTopic(refreshTopic);
+      setShowTopicList(false);
+    } else {
+      setShowTopicList(true);
+    }
   }, [searchParams]);
 
   // ── Generate article ────────────────────────────────────────────────────────
-  const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false) => {
-    lastGenerateRef.current = { topic, auto };
+  const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false, refresh = false) => {
+    const useRefresh = refresh || refreshOverride;
+    lastGenerateRef.current = { topic, auto, refresh: useRefresh };
     setGenerateError(null);
     setResult(null);
     setPublishResult(null);
@@ -346,7 +370,9 @@ export function ArticleGenerationTab() {
       const res = await fetch("/api/admin/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(auto ? { auto: true } : { topic }),
+        body: JSON.stringify(
+          auto ? { auto: true } : { topic, ...(useRefresh ? { refresh: true } : {}) },
+        ),
       });
 
       const data = (await res.json()) as PackagedArticle & {
@@ -402,7 +428,7 @@ export function ArticleGenerationTab() {
       setGenerating(false);
       setAutoGenerating(false);
     }
-  }, [loadTopics, loadCoverage]);
+  }, [loadTopics, loadCoverage, refreshOverride]);
 
   const handleGenerate = useCallback(() => {
     if (!selectedTopic) return;
@@ -414,8 +440,8 @@ export function ArticleGenerationTab() {
   }, [runGenerate]);
 
   const handleRetryGenerate = useCallback(() => {
-    const { topic, auto } = lastGenerateRef.current;
-    void runGenerate(topic, auto);
+    const { topic, auto, refresh } = lastGenerateRef.current;
+    void runGenerate(topic, auto, refresh);
   }, [runGenerate]);
 
   // ── Add custom topic ────────────────────────────────────────────────────────
@@ -486,6 +512,8 @@ export function ArticleGenerationTab() {
     setPublishResult(null);
     setPublishError(null);
     setAutoGenerating(false);
+    setRefreshOverride(false);
+    setCustomTitle("");
     setShowTopicList(true);
     setPipelineStatus({ brief: "idle", draft: "idle", compliance: "idle", package: "idle" });
   };
@@ -558,6 +586,17 @@ export function ArticleGenerationTab() {
           </ul>
         )}
       </div>
+
+      {refreshOverride && selectedTopic && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="font-semibold">Refresh mode</p>
+          <p className="mt-0.5 text-xs text-amber-800">
+            Regenerating a topic already on the Playbook — coverage gate bypassed via explicit
+            Regenerate link. Click <strong>Generate</strong> to draft an updated version of:{" "}
+            {selectedTopic.title}
+          </p>
+        </div>
+      )}
 
       {/* ── Auto-generate (primary action) ── */}
       <div className="rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white p-5 shadow-sm">

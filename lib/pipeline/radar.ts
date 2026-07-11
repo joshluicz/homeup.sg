@@ -63,13 +63,16 @@ export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidat
 /** Resolve which topic to generate: explicit pick, or top unpublished from radar. */
 export async function resolveGenerationTopic(
   explicit?: TopicCandidate | null,
+  options?: { allowCovered?: boolean },
 ): Promise<GenerationTopicResolution> {
   const published = await getPublishedArticles();
 
   if (explicit?.title?.trim()) {
-    const match = matchTopicAgainstCatalog(explicit.title, published, explicit.id);
-    if (match.covered && match.matchedArticle) {
-      return { status: "topic_covered", matchedArticle: match.matchedArticle };
+    if (!options?.allowCovered) {
+      const match = matchTopicAgainstCatalog(explicit.title, published, explicit.id);
+      if (match.covered && match.matchedArticle) {
+        return { status: "topic_covered", matchedArticle: match.matchedArticle };
+      }
     }
     return { status: "ok", topic: explicit, autoSelected: false };
   }

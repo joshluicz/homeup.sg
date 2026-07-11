@@ -275,7 +275,7 @@ export function ArticleAnalyticsDashboard() {
   const titleBySlug = new Map(articles.map((a) => [a.slug, a.title]));
 
   const generationPrefillUrl = (title: string) =>
-    `/admin/article-generation?topic=${encodeURIComponent(title)}`;
+    `/admin/article-generation?topic=${encodeURIComponent(title)}&refresh=1`;
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (

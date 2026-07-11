@@ -10,8 +10,9 @@ export const maxDuration = 90;
 
 /**
  * POST /api/admin/generate
- * Body: { topic?: TopicCandidate, auto?: boolean }
+ * Body: { topic?: TopicCandidate, auto?: boolean, refresh?: boolean }
  *   - Pass { auto: true } or omit topic → radar picks top unpublished topic
+ *   - Pass { refresh: true } with an explicit topic → skip already-covered gate (Regenerate flow)
  * Returns: PackagedArticle + optional selectedTopic when auto-picked
  */
 export async function POST(request: Request) {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Configuration error", detail: message }, { status: 503 });
   }
 
-  let body: { topic?: TopicCandidate; auto?: boolean } = {};
+  let body: { topic?: TopicCandidate; auto?: boolean; refresh?: boolean } = {};
   try {
     body = await request.json();
   } catch {
@@ -34,7 +35,12 @@ export async function POST(request: Request) {
   }
 
   const wantsAuto = body.auto === true || !body.topic?.title?.trim();
-  const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic);
+  const allowCoveredRefresh =
+    body.refresh === true && !wantsAuto && Boolean(body.topic?.title?.trim());
+
+  const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic, {
+    allowCovered: allowCoveredRefresh,
+  });
 
   if (resolved.status === "all_covered") {
     return NextResponse.json(
