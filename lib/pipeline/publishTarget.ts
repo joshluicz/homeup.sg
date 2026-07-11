@@ -3,7 +3,7 @@ import {
   normalizeArticleSections,
   serializeArticleSectionsToMarkdown,
 } from "@/lib/playbook/article-sections";
-import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/server-queries";
+import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/published-articles";
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
 

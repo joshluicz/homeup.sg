@@ -19,9 +19,12 @@ import {
 } from "@/lib/agents/profile-videos";
 import { agentProfileVideoToPlaybookVideo } from "@/lib/playbook/public-videos";
 import {
-  getAllPlaybookArticlesFromJson,
   getPlaybookArticleFromJson,
 } from "@/lib/playbook/json-fallback";
+import {
+  getPublishedPlaybookArticlesServer,
+  type PlaybookPublishedArticleRef,
+} from "@/lib/playbook/published-articles";
 
 function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
   const topic = row.topic as PlaybookTopic | null;
@@ -127,48 +130,7 @@ function filterPublishedPlaybookArticleRows(
   });
 }
 
-export type PlaybookPublishedArticleRef = {
-  slug: string;
-  title: string;
-  article?: string;
-};
-
-function mergePublishedArticlesWithJson(
-  dbRows: PlaybookPublishedArticleRef[],
-): PlaybookPublishedArticleRef[] {
-  const bySlug = new Map<string, PlaybookPublishedArticleRef>();
-  for (const row of dbRows) bySlug.set(row.slug, row);
-  for (const jsonRow of getAllPlaybookArticlesFromJson()) {
-    if (!bySlug.has(jsonRow.slug)) {
-      bySlug.set(jsonRow.slug, {
-        slug: jsonRow.slug,
-        title: jsonRow.title,
-        article: jsonRow.article,
-      });
-    }
-  }
-  return [...bySlug.values()].sort((a, b) => a.title.localeCompare(b.title));
-}
-
-/** Published playbook articles — anon Supabase read + isPlaybookArticle filter + JSON fallback. */
-export async function getPublishedPlaybookArticlesServer(): Promise<PlaybookPublishedArticleRef[]> {
-  const { data, error } = await fetchPlaybookRows();
-  if (error) {
-    console.warn("getPublishedPlaybookArticlesServer:", error.message);
-    return mergePublishedArticlesWithJson([]);
-  }
-
-  const dbRows = filterPublishedPlaybookArticleRows(data ?? []).map((row) => {
-    const entry = rowToVideo(row);
-    return {
-      slug: entry.slug,
-      title: entry.title,
-      article: entry.article?.trim() || undefined,
-    };
-  });
-
-  return mergePublishedArticlesWithJson(dbRows);
-}
+export { getPublishedPlaybookArticlesServer, type PlaybookPublishedArticleRef };
 
 /** Server/build-time Supabase queries (no cookies). Used by generateStaticParams and the
  *  static-rendered /playbook/[slug] article pages. Mirrors lib/listings/server-queries.ts. */

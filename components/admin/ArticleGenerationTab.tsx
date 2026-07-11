@@ -244,6 +244,7 @@ export function ArticleGenerationTab() {
   const [topics, setTopics] = useState<TopicCandidate[]>([]);
   const [publishedCoverage, setPublishedCoverage] = useState<{ slug: string; title: string }[]>([]);
   const [loadingCoverage, setLoadingCoverage] = useState(true);
+  const [coverageError, setCoverageError] = useState<string | null>(null);
   const [loadingTopics, setLoadingTopics] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState<TopicCandidate | null>(null);
   const [autoSelectedTopic, setAutoSelectedTopic] = useState<TopicCandidate | null>(null);
@@ -307,14 +308,25 @@ export function ArticleGenerationTab() {
 
   const loadCoverage = useCallback(async () => {
     setLoadingCoverage(true);
+    setCoverageError(null);
     try {
       const res = await fetch("/api/admin/published-articles");
-      if (!res.ok) throw new Error("Failed to load coverage");
       const data: unknown = await res.json();
+      if (!res.ok) {
+        const detail =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof (data as { error?: unknown }).error === "string"
+            ? (data as { error: string }).error
+            : `Failed to load coverage (${res.status})`;
+        throw new Error(detail);
+      }
       if (!Array.isArray(data)) throw new Error("Invalid coverage response");
       setPublishedCoverage(data as { slug: string; title: string }[]);
-    } catch {
+    } catch (err) {
       setPublishedCoverage([]);
+      setCoverageError(err instanceof Error ? err.message : "Failed to load coverage");
     } finally {
       setLoadingCoverage(false);
     }
@@ -575,6 +587,17 @@ export function ArticleGenerationTab() {
           <div className="flex items-center gap-2 text-xs text-neutral-400">
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Loading coverage…
+          </div>
+        ) : coverageError ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <p>{coverageError}</p>
+            <button
+              type="button"
+              onClick={() => void loadCoverage()}
+              className="mt-1 font-semibold text-amber-800 underline"
+            >
+              Retry
+            </button>
           </div>
         ) : publishedCoverage.length === 0 ? (
           <p className="text-xs text-neutral-500">No published articles yet.</p>
