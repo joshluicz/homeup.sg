@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AGENTS } from "@/lib/data/agents";
 import type { PackagedArticle, TopicCandidate } from "@/lib/pipeline/types";
 import { PUBLISH_THRESHOLD } from "@/lib/pipeline/types";
 
@@ -49,6 +50,8 @@ const VALID_TOPICS = [
   { value: "buying_first", label: "Buy Tips" },
   { value: "condo_tips", label: "Insights" },
 ] as const;
+
+const AUTHOR_OPTIONS = [...AGENTS].sort((a, b) => a.name.localeCompare(b.name));
 
 type PlaybookTopic = "upgraders" | "buying_first" | "condo_tips";
 
@@ -246,6 +249,7 @@ export function ArticleGenerationTab() {
   const [autoSelectedTopic, setAutoSelectedTopic] = useState<TopicCandidate | null>(null);
   const [customTitle, setCustomTitle] = useState("");
   const [showTopicList, setShowTopicList] = useState(true);
+  const [selectedAuthorSlug, setSelectedAuthorSlug] = useState("");
 
   // Pipeline state
   const [pipelineStatus, setPipelineStatus] = useState<PipelineStatus>({
@@ -274,7 +278,12 @@ export function ArticleGenerationTab() {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const pipelineRef = useRef<HTMLDivElement>(null);
-  const lastGenerateRef = useRef<{ topic: TopicCandidate | null; auto: boolean; refresh: boolean }>({
+  const lastGenerateRef = useRef<{
+    topic: TopicCandidate | null;
+    auto: boolean;
+    refresh: boolean;
+    authorSlug?: string;
+  }>({
     topic: null,
     auto: false,
     refresh: false,
@@ -349,7 +358,8 @@ export function ArticleGenerationTab() {
   // ── Generate article ────────────────────────────────────────────────────────
   const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false, refresh = false) => {
     const useRefresh = refresh || refreshOverride;
-    lastGenerateRef.current = { topic, auto, refresh: useRefresh };
+    const authorSlug = selectedAuthorSlug.trim() || undefined;
+    lastGenerateRef.current = { topic, auto, refresh: useRefresh, authorSlug };
     setGenerateError(null);
     setResult(null);
     setPublishResult(null);
@@ -370,9 +380,10 @@ export function ArticleGenerationTab() {
       const res = await fetch("/api/admin/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          auto ? { auto: true } : { topic, ...(useRefresh ? { refresh: true } : {}) },
-        ),
+        body: JSON.stringify({
+          ...(auto ? { auto: true } : { topic, ...(useRefresh ? { refresh: true } : {}) }),
+          ...(authorSlug ? { authorSlug } : {}),
+        }),
       });
 
       const data = (await res.json()) as PackagedArticle & {
@@ -428,7 +439,7 @@ export function ArticleGenerationTab() {
       setGenerating(false);
       setAutoGenerating(false);
     }
-  }, [loadTopics, loadCoverage, refreshOverride]);
+  }, [loadTopics, loadCoverage, refreshOverride, selectedAuthorSlug]);
 
   const handleGenerate = useCallback(() => {
     if (!selectedTopic) return;
@@ -598,6 +609,31 @@ export function ArticleGenerationTab() {
         </div>
       )}
 
+      {/* ── Author (applies to auto + manual generate) ── */}
+      <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+        <label htmlFor="article-author" className="mb-1.5 block text-xs font-semibold text-neutral-700">
+          Author
+        </label>
+        <select
+          id="article-author"
+          value={selectedAuthorSlug}
+          onChange={(e) => setSelectedAuthorSlug(e.target.value)}
+          disabled={generating}
+          className="w-full max-w-md rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 disabled:opacity-60 sm:w-auto sm:min-w-[16rem]"
+        >
+          <option value="">Auto (assign by topic)</option>
+          {AUTHOR_OPTIONS.map((agent) => (
+            <option key={agent.slug} value={agent.slug}>
+              {agent.name}
+            </option>
+          ))}
+        </select>
+        <p className="mt-1.5 text-xs text-neutral-500">
+          Sets the byline and CEA registration for this session&apos;s generations. Auto picks by topic
+          expertise.
+        </p>
+      </div>
+
       {/* ── Auto-generate (primary action) ── */}
       <div className="rounded-xl border border-primary-200 bg-gradient-to-br from-primary-50 to-white p-5 shadow-sm">
         <Button
@@ -619,8 +655,8 @@ export function ArticleGenerationTab() {
           )}
         </Button>
         <p className="mt-2 text-xs text-neutral-500">
-          Picks the top radar topic that isn&apos;t already live on /playbook, then runs the full
-          pipeline. Or choose a topic manually below.
+          Picks randomly from the top uncovered radar topics, then runs the full pipeline. Or choose a
+          topic manually below.
           {!loadingTopics && topics.length > 0 && (
             <>
               {" "}
@@ -912,7 +948,11 @@ export function ArticleGenerationTab() {
                 <input
                   type="text"
                   readOnly
-                  value={result.draft.brief.authorName}
+                  value={
+                    result.draft.brief.authorCea
+                      ? `${result.draft.brief.authorName} (${result.draft.brief.authorCea})`
+                      : result.draft.brief.authorName
+                  }
                   className="w-full rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-500"
                 />
               </div>

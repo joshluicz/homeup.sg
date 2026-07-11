@@ -5,7 +5,10 @@ import { packageArticle } from "./packageArticle";
 import { getTransactionStats } from "./transactions";
 import { addInternalLinks } from "./internalLinks";
 import { runLlmAudit } from "./audit";
+import type { BriefOptions } from "./brief";
 import type { PackagedArticle, TopicCandidate } from "./types";
+
+export interface GenerateArticleOptions extends BriefOptions {}
 
 export interface GenerateProgress {
   step: "brief" | "draft" | "compliance" | "package" | "done";
@@ -20,10 +23,13 @@ export interface GenerateProgress {
  * Draft failures abort the pipeline. Optional enrichments (transaction stats,
  * internal links, LLM audit) degrade gracefully when unavailable.
  */
-export async function generateArticle(topic: TopicCandidate): Promise<PackagedArticle> {
+export async function generateArticle(
+  topic: TopicCandidate,
+  opts?: GenerateArticleOptions,
+): Promise<PackagedArticle> {
   // Step 1: brief + transaction stats (concurrent)
   const [brief, transactionStats] = await Promise.all([
-    generateBrief(topic),
+    generateBrief(topic, opts),
     getTransactionStats(topic.category).catch(() => null),
   ]);
 

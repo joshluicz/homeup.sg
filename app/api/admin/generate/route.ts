@@ -10,8 +10,9 @@ export const maxDuration = 90;
 
 /**
  * POST /api/admin/generate
- * Body: { topic?: TopicCandidate, auto?: boolean, refresh?: boolean }
- *   - Pass { auto: true } or omit topic → radar picks top unpublished topic
+ * Body: { topic?: TopicCandidate, auto?: boolean, refresh?: boolean, authorSlug?: string }
+ *   - Pass { auto: true } or omit topic → radar picks a random top unpublished topic
+ *   - Pass { authorSlug } to override auto author assignment (omit for topic-based auto)
  *   - Pass { refresh: true } with an explicit topic → skip already-covered gate (Regenerate flow)
  * Returns: PackagedArticle + optional selectedTopic when auto-picked
  */
@@ -26,7 +27,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Configuration error", detail: message }, { status: 503 });
   }
 
-  let body: { topic?: TopicCandidate; auto?: boolean; refresh?: boolean } = {};
+  let body: {
+    topic?: TopicCandidate;
+    auto?: boolean;
+    refresh?: boolean;
+    authorSlug?: string;
+  } = {};
   try {
     body = await request.json();
   } catch {
@@ -65,9 +71,13 @@ export async function POST(request: Request) {
   }
 
   const { topic, autoSelected } = resolved;
+  const authorSlug =
+    typeof body.authorSlug === "string" && body.authorSlug.trim()
+      ? body.authorSlug.trim()
+      : undefined;
 
   try {
-    const result = await generateArticle(topic);
+    const result = await generateArticle(topic, authorSlug ? { authorSlug } : undefined);
     return NextResponse.json({
       ...result,
       ...(autoSelected ? { selectedTopic: topic } : {}),

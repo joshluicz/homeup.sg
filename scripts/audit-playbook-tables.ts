@@ -63,7 +63,9 @@ function scanSections(sections: Record<string, unknown> | null): Hit[] {
     ["introduction", s.introduction ?? ""],
     ["homeup", s.homeup ?? ""],
     ["conclusion", s.conclusion ?? ""],
-    ...(s.sections ?? []).map((sec) => [`section:${sec.title}`, sec.body ?? ""]),
+    ...(s.sections ?? []).map(
+      (sec): [string, string] => [`section:${sec.title}`, sec.body ?? ""],
+    ),
   ];
 
   return chunks.flatMap(([label, body]) => scanText(label, body));

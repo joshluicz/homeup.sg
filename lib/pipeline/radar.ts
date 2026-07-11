@@ -49,15 +49,19 @@ export async function runRadar(): Promise<TopicCandidate[]> {
   return scoreRadarTopics(published);
 }
 
-/** Highest-scored radar topic that is not already published. */
-export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidate | null {
-  const pick = topics.find((t) => !t.alreadyPublished);
-  if (pick) return pick;
+const AUTO_PICK_POOL_SIZE = 5;
 
-  console.warn(
-    `[radar] All ${topics.length} radar topics match articles on /playbook — auto-pick unavailable.`,
-  );
-  return null;
+/** Random pick among the top N highest-scored uncovered radar topics. */
+export function pickTopUnpublishedTopic(topics: TopicCandidate[]): TopicCandidate | null {
+  const pool = topics.filter((t) => !t.alreadyPublished).slice(0, AUTO_PICK_POOL_SIZE);
+  if (pool.length === 0) {
+    console.warn(
+      `[radar] All ${topics.length} radar topics match articles on /playbook — auto-pick unavailable.`,
+    );
+    return null;
+  }
+
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 /** Resolve which topic to generate: explicit pick, or top unpublished from radar. */
