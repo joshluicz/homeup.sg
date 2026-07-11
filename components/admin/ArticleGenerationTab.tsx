@@ -579,18 +579,21 @@ export function ArticleGenerationTab() {
         ) : publishedCoverage.length === 0 ? (
           <p className="text-xs text-neutral-500">No published articles yet.</p>
         ) : (
-          <ul className="max-h-40 space-y-1 overflow-y-auto">
+          <ul className="max-h-56 space-y-0.5 overflow-y-auto rounded-lg border border-neutral-100 bg-neutral-50/50 p-1">
             {publishedCoverage.map((article) => (
-              <li key={article.slug}>
+              <li
+                key={article.slug}
+                className="flex items-center justify-between gap-3 rounded-md px-2.5 py-2 text-xs hover:bg-white"
+              >
+                <span className="min-w-0 truncate font-medium text-neutral-800">{article.title}</span>
                 <Link
                   href={`/playbook/${article.slug}`}
                   target="_blank"
-                  className="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-neutral-50"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 font-semibold text-primary-600 hover:text-primary-800"
                 >
-                  <span className="truncate font-medium text-neutral-800 group-hover:text-primary-700">
-                    {article.title}
-                  </span>
-                  <ExternalLink className="h-3 w-3 shrink-0 text-neutral-300 group-hover:text-primary-500" />
+                  View
+                  <ExternalLink className="h-3 w-3" aria-hidden />
                 </Link>
               </li>
             ))}
