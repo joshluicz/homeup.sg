@@ -1,4 +1,5 @@
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
+import { PlaybookShareButton } from "@/components/playbook/PlaybookShareButton";
 import { CATEGORY_LABELS, TOPIC_LABELS } from "@/lib/data/playbook";
 import type { PlaybookVideo } from "@/lib/data/playbook";
 import { getPlaybookAgentName } from "@/lib/playbook/agent-attribution";
@@ -21,9 +22,11 @@ function readTimeMinutes(article: string): number {
 export function PlaybookArticleHeader({
   video,
   hideDescription = false,
+  shareUrl,
 }: {
   video: PlaybookVideo;
   hideDescription?: boolean;
+  shareUrl?: string;
 }) {
   const topicLabel = video.topic ? TOPIC_LABELS[video.topic] : null;
   const readTime = readTimeMinutes(video.article ?? "");
@@ -60,16 +63,21 @@ export function PlaybookArticleHeader({
         </p>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-neutral-200 pb-6 text-sm text-neutral-600">
-        <span className="font-semibold text-neutral-900">{agentName}</span>
-        <span className="text-neutral-300" aria-hidden>
-          ·
-        </span>
-        <span>Published {published}</span>
-        <span className="text-neutral-300" aria-hidden>
-          ·
-        </span>
-        <span>{readTime} min read</span>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 pb-6">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600">
+          <span className="font-semibold text-neutral-900">{agentName}</span>
+          <span className="text-neutral-300" aria-hidden>
+            ·
+          </span>
+          <span>Published {published}</span>
+          <span className="text-neutral-300" aria-hidden>
+            ·
+          </span>
+          <span>{readTime} min read</span>
+        </div>
+        {shareUrl ? (
+          <PlaybookShareButton url={shareUrl} title={video.title} className="shrink-0" />
+        ) : null}
       </div>
     </header>
   );

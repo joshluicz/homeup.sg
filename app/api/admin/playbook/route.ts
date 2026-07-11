@@ -1,6 +1,12 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
 import { revalidatePlaybookPaths } from "@/lib/playbook/revalidate-playbook";
+import {
+  isArticleSections,
+  normalizeArticleSections,
+  serializeArticleSectionsToMarkdown,
+  validateArticleSections,
+} from "@/lib/playbook/article-sections";
 
 // Push article + metadata changes live without a redeploy: revalidate the affected
 // pages so the ISR-cached /playbook/[slug] (and the listing) regenerate on next request.
@@ -39,6 +45,19 @@ export async function POST(request: Request) {
   const article = (fields.article ?? "").trim();
   const videoUrl = (fields.videoUrl ?? "").trim();
   const contentKind = fields.contentKind === "video" ? "video" : "article";
+  const rawSections = fields.articleSections ?? fields.article_sections;
+  const articleSections =
+    contentKind === "article" && isArticleSections(rawSections)
+      ? normalizeArticleSections(rawSections)
+      : null;
+  const faqEntries =
+    contentKind === "article" && Array.isArray(fields.faq)
+      ? fields.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
+      : [];
+  const serializedArticle =
+    contentKind === "article" && articleSections
+      ? serializeArticleSectionsToMarkdown(articleSections)
+      : article;
 
   if (contentKind === "article" && videoUrl) {
     return NextResponse.json(
@@ -54,11 +73,18 @@ export async function POST(request: Request) {
     );
   }
 
-  if (contentKind === "article" && !article) {
+  if (contentKind === "article" && !serializedArticle) {
     return NextResponse.json(
       { error: "Article body is required for playbook articles." },
       { status: 400 },
     );
+  }
+
+  if (contentKind === "article" && articleSections) {
+    const validation = validateArticleSections(articleSections, faqEntries);
+    if (!validation.ok) {
+      return NextResponse.json({ error: validation.errors.join(" ") }, { status: 400 });
+    }
   }
 
   if (contentKind === "video" && !videoUrl) {
@@ -87,10 +113,9 @@ export async function POST(request: Request) {
     featured: fields.featured ?? false,
     published_at: fields.publishedAt ?? new Date().toISOString().slice(0, 10),
     tags: fields.tags ?? [],
-    article: contentKind === "article" ? (fields.article ?? "") : "",
-    faq: contentKind === "article" && Array.isArray(fields.faq)
-      ? fields.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
-      : [],
+    article: contentKind === "article" ? serializedArticle : "",
+    article_sections: contentKind === "article" ? articleSections : null,
+    faq: faqEntries,
     meta_description: contentKind === "article" ? (fields.metaDescription ?? "") : "",
     topic: fields.topic ?? null,
     agent_slug: fields.agentSlug || null,

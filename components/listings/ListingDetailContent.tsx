@@ -21,6 +21,7 @@ import {
 } from "@/lib/listings/public-utils";
 import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
 import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
+import { playbookItemCtaLabel, playbookItemPath } from "@/lib/playbook/content-kind";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { buildListingLocationQuery } from "@/lib/listings/nearby-places";
 import type { NearestMrtResult } from "@/lib/listings/mrt-proximity";
@@ -212,7 +213,7 @@ export function ListingDetailContent({
               {playbookVideos.map((video) => (
                 <Link
                   key={video.id}
-                  href={`/playbook?video=${video.slug}`}
+                  href={playbookItemPath(video)}
                   className="group flex gap-4 rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/30"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -227,7 +228,7 @@ export function ListingDetailContent({
                     </p>
                     <p className="mt-1 line-clamp-2 text-sm text-neutral-500">{video.description}</p>
                     <span className="mt-2 inline-block text-xs font-semibold text-primary-600">
-                      Watch in Playbook
+                      {playbookItemCtaLabel(video)}
                     </span>
                   </div>
                 </Link>

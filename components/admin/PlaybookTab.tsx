@@ -10,8 +10,18 @@ import { getPlaybookAgentOptions } from "@/lib/playbook/agent-attribution";
 import { resolveThumbnail, resolveVideoThumbnailCandidatesForDisplay } from "@/lib/playbook/embed";
 import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import type { PlaybookTopic } from "@/lib/data/playbook";
-import { RichArticleEditor } from "@/components/admin/RichArticleEditor";
-import { ArticleFormatGuide } from "@/components/admin/ArticleFormatGuide";
+import { StructuredArticleEditor } from "@/components/admin/StructuredArticleEditor";
+import {
+  emptyArticleSections,
+  isArticleSections,
+  normalizeArticleSections,
+  parseLegacyArticleToSections,
+  serializeArticleSectionsToMarkdown,
+  validateArticleSections,
+  createSectionId,
+  type ArticleSections,
+  type FaqEntry as SectionFaqEntry,
+} from "@/lib/playbook/article-sections";
 import { createClient } from "@/lib/supabase/client";
 import {
   uploadPlaybookArticleImage,
@@ -76,7 +86,7 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
 const inputClass =
   "w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100";
 
-type FaqEntry = { q: string; a: string };
+type FaqEntry = SectionFaqEntry;
 
 type Video = {
   id: string;
@@ -91,6 +101,7 @@ type Video = {
   published_at: string;
   tags: string[];
   article?: string;
+  article_sections?: ArticleSections | null;
   faq?: FaqEntry[];
   meta_description?: string;
   topic?: PlaybookTopic | null;
@@ -109,10 +120,16 @@ const emptyForm = {
   featured: false,
   published_at: new Date().toISOString().slice(0, 10),
   tags: "",
-  article: "",
   meta_description: "",
   agentSlug: "",
 };
+
+function defaultNewArticleSections(): ArticleSections {
+  return {
+    ...emptyArticleSections(),
+    sections: [{ id: createSectionId(), title: "", body: "" }],
+  };
+}
 
 // Grab a poster frame from an uploaded video file, entirely in the browser (no server/ffmpeg).
 function capturePoster(file: File): Promise<Blob | null> {
@@ -186,7 +203,9 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [faq, setFaq] = useState<FaqEntry[]>([]);
+  const [articleSections, setArticleSections] = useState<ArticleSections>(defaultNewArticleSections);
+  const [faq, setFaq] = useState<FaqEntry[]>([{ q: "", a: "" }]);
+  const [sectionErrors, setSectionErrors] = useState<string[]>([]);
   const [uploadTab, setUploadTab] = useState<"link" | "file">("link");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -268,24 +287,15 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function setFaqItem(index: number, key: keyof FaqEntry, value: string) {
-    setFaq((items) => items.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
-  }
-  function addFaqItem() {
-    setFaq((items) => [...items, { q: "", a: "" }]);
-  }
-  function removeFaqItem(index: number) {
-    setFaq((items) => items.filter((_, i) => i !== index));
-  }
-
   function openAdd() {
     setEditId(null);
     setForm({
       ...emptyForm,
       topic: "upgraders",
-      article: "",
     });
-    setFaq([]);
+    setArticleSections(defaultNewArticleSections());
+    setFaq([{ q: "", a: "" }]);
+    setSectionErrors([]);
     setError(null);
     setUploadTab("link");
     setUploadProgress(null);
@@ -305,11 +315,27 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       featured: v.featured,
       published_at: v.published_at,
       tags: v.tags?.join(", ") ?? "",
-      article: isVideoMode ? "" : (v.article ?? ""),
       meta_description: isVideoMode ? "" : (v.meta_description ?? ""),
       agentSlug: v.agent_slug ?? "",
     });
-    setFaq(isVideoMode ? [] : (v.faq ?? []));
+
+    if (!isVideoMode) {
+      const sections =
+        v.article_sections && isArticleSections(v.article_sections)
+          ? v.article_sections
+          : parseLegacyArticleToSections(v.article ?? "");
+      setArticleSections(
+        sections.sections.length > 0
+          ? sections
+          : { ...sections, sections: [{ id: createSectionId(), title: "", body: "" }] },
+      );
+      setFaq(v.faq?.length ? v.faq : [{ q: "", a: "" }]);
+    } else {
+      setArticleSections(defaultNewArticleSections());
+      setFaq([]);
+    }
+
+    setSectionErrors([]);
     setError(null);
     setUploadTab(v.video_url?.startsWith("http") ? "link" : "file");
     setUploadProgress(null);
@@ -388,13 +414,8 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     e.preventDefault();
     if (!form.title.trim()) { setError("Title is required."); return; }
 
-    const hasArticle = Boolean(form.article.trim());
     const hasVideo = Boolean(form.video_url.trim());
 
-    if (mode === "article" && !hasArticle) {
-      setError("Article body is required.");
-      return;
-    }
     if (mode === "video" && !hasVideo) {
       setError("Add a video link or upload a file.");
       return;
@@ -402,6 +423,21 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
     if (!form.topic || !PLAYBOOK_TOPICS.includes(form.topic as PlaybookTopic)) {
       setError("Choose a playbook section (Sell/Upgrade, Buy Tips, or Insights).");
       return;
+    }
+
+    const normalizedFaq = faq
+      .map((item) => ({ q: item.q.trim(), a: item.a.trim() }))
+      .filter((item) => item.q && item.a);
+
+    if (mode === "article") {
+      const normalizedSections = normalizeArticleSections(articleSections);
+      const validation = validateArticleSections(normalizedSections, normalizedFaq);
+      if (!validation.ok) {
+        setSectionErrors(validation.errors);
+        setError("Fix the highlighted article sections before saving.");
+        return;
+      }
+      setSectionErrors([]);
     }
 
     setSaving(true);
@@ -413,8 +449,14 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
         ? resolveThumbnail(form.thumbnail.trim(), form.video_url.trim())
         : "";
 
-    // Compute slug once so the INSERT and the revalidation/warmup use the identical value.
     const newSlug = (!editId || isSheetCatalogue) ? slugify(form.title) : undefined;
+
+    const normalizedSections =
+      mode === "article" ? normalizeArticleSections(articleSections) : null;
+    const serializedArticle =
+      mode === "article" && normalizedSections
+        ? serializeArticleSectionsToMarkdown(normalizedSections)
+        : "";
 
     const payload = {
       slug: isSheetCatalogue ? editingSlug : newSlug,
@@ -431,11 +473,11 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       featured: form.featured,
       published_at: form.published_at,
       tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      article: mode === "article" ? form.article : "",
+      article: serializedArticle,
+      article_sections: normalizedSections,
       meta_description: mode === "article" ? form.meta_description.trim() : "",
-      faq: mode === "article"
-        ? faq.map((item) => ({ q: item.q.trim(), a: item.a.trim() })).filter((item) => item.q && item.a)
-        : [],
+      faq: mode === "article" ? normalizedFaq : [],
+      content_kind: mode === "article" ? "article" : "video",
       agent_slug: form.agentSlug || null,
       updated_at: new Date().toISOString(),
     };
@@ -794,7 +836,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
             {!isVideoMode && (
             <FormSection
               title="Article & SEO"
-              description="Written guide for search and the public /playbook/[slug] page."
+              description="Fill in each section below — the published page layout is fixed so articles always match the HomeUp design."
             >
               <div>
                 <FieldLabel>Cover image</FieldLabel>
@@ -864,53 +906,13 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
                 <p className="mt-1 text-xs font-normal text-neutral-400">{form.meta_description.length}/155 recommended</p>
               </div>
 
-              <ArticleFormatGuide />
-
-              <div>
-                <FieldLabel required>Article</FieldLabel>
-                <RichArticleEditor
-                  value={form.article}
-                  onChange={(article) => set("article", article)}
-                />
-              </div>
-
-              <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <FieldLabel>FAQ</FieldLabel>
-                  <button type="button" onClick={addFaqItem} className="text-xs font-bold text-primary-600 hover:underline">
-                    + Add question
-                  </button>
-                </div>
-                {faq.length === 0 && (
-                  <p className="text-xs font-normal text-neutral-400">Optional — helps SEO and AI answers.</p>
-                )}
-                <div className="space-y-3">
-                  {faq.map((item, i) => (
-                    <div key={i} className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-bold text-neutral-600">Question {i + 1}</span>
-                        <button type="button" onClick={() => removeFaqItem(i)} aria-label="Remove question" className="text-neutral-400 hover:text-red-500">
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={item.q}
-                        onChange={(e) => setFaqItem(i, "q", e.target.value)}
-                        placeholder="Question"
-                        className={cn(inputClass, "mb-2")}
-                      />
-                      <textarea
-                        value={item.a}
-                        onChange={(e) => setFaqItem(i, "a", e.target.value)}
-                        rows={2}
-                        placeholder="Answer"
-                        className={inputClass}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <StructuredArticleEditor
+                sections={articleSections}
+                faq={faq}
+                onSectionsChange={setArticleSections}
+                onFaqChange={setFaq}
+                validationErrors={sectionErrors}
+              />
             </FormSection>
             )}
 

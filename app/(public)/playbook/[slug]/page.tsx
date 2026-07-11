@@ -3,7 +3,10 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ArticleBody } from "@/components/sections/ArticleBody";
-import { articleHasInlineFaq, parsePlaybookArticleBlocks } from "@/lib/playbook/article-format";
+import { PlaybookFaqSection } from "@/components/playbook/PlaybookFaqSection";
+import { resolvePlaybookArticleFaq } from "@/lib/playbook/article-faq";
+import { parsePlaybookArticleBlocks } from "@/lib/playbook/article-format";
+import { articleSectionsToBlocks } from "@/lib/playbook/article-sections";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { PlaybookArticleHeader } from "@/components/sections/PlaybookArticleHeader";
@@ -18,6 +21,7 @@ import { resolveArticleThumbnail } from "@/lib/playbook/article-thumbnails";
 import { getPlaybookAgentName, inferPlaybookAgentSlug } from "@/lib/playbook/agent-attribution";
 import { getAgentBySlug } from "@/lib/data/agents";
 import { buildPageMetadata } from "@/lib/seo/metadata";
+import { playbookArticleUrl } from "@/lib/seo/indexnow";
 import {
   articleSchema,
   breadcrumbSchema,
@@ -62,15 +66,12 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
   const video = await getPlaybookVideoBySlugServer(params.slug);
   if (!video?.article?.trim()) notFound();
 
-  const hasFaq = (video.faq?.length ?? 0) > 0;
-  const articleBlocks = parsePlaybookArticleBlocks(video.article!);
-  const showStructuredFaq = articleHasInlineFaq(articleBlocks);
-  const showDbFaq = hasFaq && !showStructuredFaq;
-  const inlineFaqBlock = articleBlocks.find(
-    (block): block is Extract<typeof articleBlocks[number], { kind: "faq" }> => block.kind === "faq",
-  );
-  const faqSchemaItems =
-    hasFaq ? video.faq! : inlineFaqBlock?.items?.length ? inlineFaqBlock.items : [];
+  const usesStructuredSections = Boolean(video.articleSections);
+  const articleBlocks = usesStructuredSections
+    ? articleSectionsToBlocks(video.articleSections!)
+    : parsePlaybookArticleBlocks(video.article!);
+  const faqItems = resolvePlaybookArticleFaq(video, articleBlocks);
+  const faqSchemaItems = faqItems;
   const authorSlug = inferPlaybookAgentSlug(video);
   const author = getAgentBySlug(authorSlug);
 
@@ -101,32 +102,19 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             <PlaybookArticleHeader
               video={video}
               hideDescription={articleBlocks.some((block) => block.kind === "quick_answer")}
+              shareUrl={playbookArticleUrl(video.slug)}
             />
             <PlaybookArticleHeroMedia video={video} />
 
             <div className="mt-10 sm:mt-12">
-              <ArticleBody markdown={video.article!} />
+              <ArticleBody
+                markdown={video.article!}
+                articleSections={video.articleSections}
+                omitFaqFromBody={faqItems.length > 0}
+              />
             </div>
 
-            {showDbFaq && (
-              <section className="playbook-article-body mt-14 border-t border-neutral-200 pt-10">
-                <h2 className="font-display text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">
-                  Frequently asked questions
-                </h2>
-                <div className="mt-6 divide-y divide-neutral-200">
-                  {video.faq!.map((item, i) => (
-                    <details key={i} className="group py-5">
-                      <summary className="cursor-pointer list-none text-base font-semibold text-neutral-900 marker:content-none">
-                        {item.q}
-                      </summary>
-                      <p className="speakable-faq-answer mt-3 text-base leading-relaxed text-neutral-700">
-                        {item.a}
-                      </p>
-                    </details>
-                  ))}
-                </div>
-              </section>
-            )}
+            {faqItems.length > 0 && <PlaybookFaqSection items={faqItems} className="mt-14" />}
 
             <footer className="mt-14 border-t border-neutral-200 pt-8">
               <p className="text-sm font-medium text-neutral-500">

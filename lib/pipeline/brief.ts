@@ -1,7 +1,12 @@
+import { getAgentBySlug } from "@/lib/data/agents";
 import { BRAND } from "./brand";
 import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 import { briefPrompt } from "./prompt";
 import type { Brief, TopicCandidate } from "./types";
+
+export interface BriefOptions {
+  authorSlug?: string;
+}
 
 /** Routes a topic to the most relevant author by expertise match. */
 function assignAuthor(topic: TopicCandidate): (typeof BRAND.authors)[number] {
@@ -12,8 +17,28 @@ function assignAuthor(topic: TopicCandidate): (typeof BRAND.authors)[number] {
   return BRAND.authors[0];
 }
 
+function resolveAuthor(
+  topic: TopicCandidate,
+  authorSlug?: string,
+): Pick<Brief, "authorSlug" | "authorName" | "authorCea"> {
+  if (authorSlug) {
+    const agent = getAgentBySlug(authorSlug);
+    if (agent) {
+      return { authorSlug: agent.slug, authorName: agent.name, authorCea: agent.cea };
+    }
+  }
+
+  const brandAuthor = assignAuthor(topic);
+  const agent = getAgentBySlug(brandAuthor.slug);
+  return {
+    authorSlug: brandAuthor.slug,
+    authorName: brandAuthor.name,
+    authorCea: agent?.cea ?? "",
+  };
+}
+
 /** Calls Claude to generate a structured article brief for the given topic. */
-export async function generateBrief(topic: TopicCandidate): Promise<Brief> {
+export async function generateBrief(topic: TopicCandidate, opts?: BriefOptions): Promise<Brief> {
   const client = getAnthropicClient();
   const message = await client.messages.create({
     model: getLlmModel(),
@@ -37,7 +62,7 @@ export async function generateBrief(topic: TopicCandidate): Promise<Brief> {
     parsed = {};
   }
 
-  const author = assignAuthor(topic);
+  const author = resolveAuthor(topic, opts?.authorSlug);
 
   return {
     topic,
@@ -45,8 +70,7 @@ export async function generateBrief(topic: TopicCandidate): Promise<Brief> {
     h2Questions: parsed.h2Questions ?? [],
     primaryKeywords: parsed.primaryKeywords ?? topic.tags,
     secondaryKeywords: parsed.secondaryKeywords ?? [],
-    authorSlug: author.slug,
-    authorName: author.name,
+    ...author,
     targetWordCount: parsed.targetWordCount ?? 550,
   };
 }

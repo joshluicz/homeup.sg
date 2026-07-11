@@ -33,6 +33,8 @@ export interface Brief {
   secondaryKeywords: string[];
   authorSlug: string;
   authorName: string;
+  /** CEA registration number for the assigned author */
+  authorCea: string;
   targetWordCount: number;
 }
 

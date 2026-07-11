@@ -3,6 +3,10 @@
 import DOMPurify from "isomorphic-dompurify";
 import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
 import { trackWhatsAppClick } from "@/lib/analytics";
+import {
+  convertMarkdownTablesInHtml,
+  wrapHtmlTables,
+} from "@/lib/playbook/convert-html-markdown-tables";
 
 type Props = { html: string };
 
@@ -86,100 +90,6 @@ function wrapSectionBoxes(html: string): string {
 }
 
 /**
- * Convert Markdown GFM table syntax embedded in consecutive <p> elements into
- * real <table> HTML. This handles articles where the content was pasted from
- * Google Docs (or a Markdown editor) and the WYSIWYG editor wrapped each pipe
- * row in a <p> tag instead of producing a <table>.
- *
- * Recognises blocks of 2+ consecutive <p> elements whose text content (tags
- * stripped) starts and ends with | and contains at least 3 pipe characters.
- * The second row must be a GFM separator row (cells containing only -, : and
- * spaces) for the block to be treated as a table; otherwise the paragraphs are
- * left unchanged.
- */
-function convertMarkdownTables(html: string): string {
-  // Split into tokens — alternating [gap, <p>…</p>, gap, <p>…</p>, …]
-  const tokens = html.split(/(<p(?:\s[^>]*)?>[\s\S]*?<\/p>)/i);
-  const out: string[] = [];
-  const buf: string[] = []; // buffered table-row <p> elements
-
-  const flushBuf = () => {
-    if (!buf.length) return;
-
-    if (buf.length < 2) {
-      out.push(...buf);
-      buf.length = 0;
-      return;
-    }
-
-    const rows = buf.map((p) => {
-      const text = p.replace(/<[^>]+>/g, "").trim();
-      return text
-        .replace(/^\|/, "")
-        .replace(/\|$/, "")
-        .split("|")
-        .map((c) => c.trim());
-    });
-
-    const isSepRow = (r: string[]) => r.every((c) => /^[-: ]+$/.test(c));
-
-    if (rows.length >= 2 && isSepRow(rows[1])) {
-      const head = rows[0].map((c) => `<th>${c}</th>`).join("");
-      const body = rows
-        .slice(2)
-        .map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`)
-        .join("");
-      out.push(
-        `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`,
-      );
-    } else {
-      out.push(...buf); // not a valid GFM table — leave as-is
-    }
-
-    buf.length = 0;
-  };
-
-  for (const tok of tokens) {
-    if (!tok) continue;
-
-    const isP = /^<p(?:\s[^>]*)?>/.test(tok);
-
-    if (isP) {
-      const text = tok.replace(/<[^>]+>/g, "").trim();
-      const pipeCount = (text.match(/\|/g) ?? []).length;
-      const isTableRow = text.startsWith("|") && text.endsWith("|") && pipeCount >= 3;
-
-      if (isTableRow) {
-        buf.push(tok);
-      } else {
-        flushBuf();
-        out.push(tok);
-      }
-    } else {
-      if (buf.length > 0 && !tok.trim()) {
-        // Whitespace-only gap between table-row paragraphs — swallow it
-      } else {
-        flushBuf();
-        out.push(tok);
-      }
-    }
-  }
-
-  flushBuf();
-  return out.join("");
-}
-
-/**
- * Wrap bare <table> elements in a scroll container to match the Markdown renderer.
- * Uses a lookahead so it matches both <table> and <table ...attributes...>.
- */
-function wrapTables(html: string): string {
-  return html
-    .replace(/<table(?=[\s>])/gi, '<div class="table-wrapper"><table')
-    .replace(/<\/table>/gi, "</table></div>");
-}
-
-/**
  * Renders rich HTML produced by the WYSIWYG article editor.
  * Content is sanitised with DOMPurify before being injected.
  *
@@ -201,13 +111,13 @@ export function PlaybookArticleHtml({ html }: Props) {
   const mdNormalised = normalizeHtmlArticle(sectioned);
 
   // 4. Convert Markdown pipe-table syntax in <p> elements to real <table> HTML
-  const withRealTables = convertMarkdownTables(mdNormalised);
+  const withRealTables = convertMarkdownTablesInHtml(mdNormalised);
 
   // 5. Wrap Quick Answer / HomeUp sections in card containers
   const withBoxes = wrapSectionBoxes(withRealTables);
 
   // 6. Wrap tables in scroll containers
-  const withWrappedTables = wrapTables(withBoxes);
+  const withWrappedTables = wrapHtmlTables(withBoxes);
 
   // 7. Sanitise with DOMPurify
   const clean = DOMPurify.sanitize(withWrappedTables, {

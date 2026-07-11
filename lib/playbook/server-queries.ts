@@ -18,7 +18,13 @@ import {
   getAllAgentProfileVideoSlugsServer,
 } from "@/lib/agents/profile-videos";
 import { agentProfileVideoToPlaybookVideo } from "@/lib/playbook/public-videos";
-import { getPlaybookArticleFromJson } from "@/lib/playbook/json-fallback";
+import {
+  getPlaybookArticleFromJson,
+} from "@/lib/playbook/json-fallback";
+import {
+  getPublishedPlaybookArticlesServer,
+  type PlaybookPublishedArticleRef,
+} from "@/lib/playbook/published-articles";
 
 function resolveTopic(row: Record<string, unknown>): PlaybookTopic {
   const topic = row.topic as PlaybookTopic | null;
@@ -123,6 +129,8 @@ function filterPublishedPlaybookArticleRows(
     return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
   });
 }
+
+export { getPublishedPlaybookArticlesServer, type PlaybookPublishedArticleRef };
 
 /** Server/build-time Supabase queries (no cookies). Used by generateStaticParams and the
  *  static-rendered /playbook/[slug] article pages. Mirrors lib/listings/server-queries.ts. */

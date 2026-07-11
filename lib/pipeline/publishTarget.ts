@@ -1,66 +1,24 @@
-import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
+import {
+  articleSectionsFromMarkdownArticle,
+  normalizeArticleSections,
+  serializeArticleSectionsToMarkdown,
+} from "@/lib/playbook/article-sections";
+import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/published-articles";
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
 
 export interface PublishedArticleRef {
   slug: string;
   title: string;
-  article: string;
-}
-
-function serviceClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars.");
-  }
-  return createClient(supabaseUrl, serviceKey);
-}
-
-function mergePublishedWithJson(dbRows: PublishedArticleRef[]): PublishedArticleRef[] {
-  const bySlug = new Map<string, PublishedArticleRef>();
-  for (const row of dbRows) bySlug.set(row.slug, row);
-  for (const jsonRow of getAllPlaybookArticlesFromJson()) {
-    if (!bySlug.has(jsonRow.slug)) bySlug.set(jsonRow.slug, jsonRow);
-  }
-  return [...bySlug.values()];
+  article?: string;
 }
 
 /**
- * All live /playbook articles that have body content — Supabase rows plus JSON fallback
- * articles not yet in the DB. Used by the topic radar to skip duplicates.
+ * All live /playbook articles — same anon read path as the public site, plus JSON fallback.
+ * Used by the topic radar to skip duplicates.
  */
 export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
-  try {
-    const supabase = serviceClient();
-    const { data, error } = await supabase
-      .from("playbook_videos")
-      .select("slug, title, article")
-      .not("article", "is", null)
-      .neq("article", "");
-
-    if (error) {
-      console.error("[pipeline] getPublishedArticles failed:", error.message);
-      return mergePublishedWithJson([]);
-    }
-
-    const dbRows = (data ?? [])
-      .filter(
-        (row) =>
-          typeof row.slug === "string" &&
-          row.slug.length > 0 &&
-          typeof row.title === "string" &&
-          row.title.length > 0 &&
-          typeof row.article === "string" &&
-          row.article.trim().length > 0,
-      )
-      .map(({ slug, title, article }) => ({ slug, title, article }));
-
-    return mergePublishedWithJson(dbRows);
-  } catch (err) {
-    console.error("[pipeline] getPublishedArticles error:", err);
-    return mergePublishedWithJson([]);
-  }
+  return getPublishedPlaybookArticlesServer();
 }
 
 /** Slugs of all published playbook articles (convenience wrapper). */
@@ -104,12 +62,17 @@ export async function publishArticle(
 
   const { draft } = article;
   const slug = slugify(draft.title);
+  const articleSections = normalizeArticleSections(
+    articleSectionsFromMarkdownArticle(draft.article),
+  );
+  const serializedArticle = serializeArticleSectionsToMarkdown(articleSections);
 
   const payload = {
     slug,
     title: draft.title,
     description: draft.description,
-    article: draft.article,
+    article: serializedArticle,
+    article_sections: articleSections,
     faq: draft.faq,
     meta_description: draft.metaDescription,
     tags: article.tags,
@@ -118,6 +81,7 @@ export async function publishArticle(
     thumbnail: draft.thumbnail ?? "",
     video_url: "",
     featured: false,
+    content_kind: "article",
     published_at: new Date().toISOString().slice(0, 10),
     updated_at: new Date().toISOString(),
   };

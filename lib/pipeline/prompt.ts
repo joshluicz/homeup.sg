@@ -83,8 +83,12 @@ export function draftPrompt(brief: Brief, transactionStats?: string | null, slug
     ? `\nHOMEUP FIRST-PARTY DATA — use 1–2 of these stats naturally where relevant. Cite as "based on our [N] sales in [Town]". Do not invent or extrapolate beyond what is listed:\n${transactionStats}\n`
     : "";
 
+  const authorLine = brief.authorCea
+    ? `${brief.authorName} (CEA Reg No. ${brief.authorCea})`
+    : brief.authorName;
+
   return `You are writing a Playbook article for ${BRAND.name} (${BRAND.tagline}).
-Author: ${brief.authorName}
+Author: ${authorLine}
 Audience: Singapore homeowners researching "${brief.topic.title}"
 Tone: ${BRAND.voice.tone}
 
