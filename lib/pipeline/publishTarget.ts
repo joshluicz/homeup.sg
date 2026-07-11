@@ -101,15 +101,17 @@ export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
       return [];
     }
 
-    return (data ?? []).filter(
-      (row): row is PublishedArticleRef =>
-        typeof row.slug === "string" &&
-        row.slug.length > 0 &&
-        typeof row.title === "string" &&
-        row.title.length > 0 &&
-        typeof row.article === "string" &&
-        row.article.trim().length > 0,
-    );
+    return (data ?? [])
+      .filter(
+        (row) =>
+          typeof row.slug === "string" &&
+          row.slug.length > 0 &&
+          typeof row.title === "string" &&
+          row.title.length > 0 &&
+          typeof row.article === "string" &&
+          row.article.trim().length > 0,
+      )
+      .map(({ slug, title }) => ({ slug, title }));
   } catch (err) {
     console.error("[pipeline] getPublishedArticles error:", err);
     return [];
