@@ -5,10 +5,12 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { BuyTeamAwards } from "@/components/ui/BuyTeamAwards";
 import { FadeInUp } from "@/components/ui/motion-primitives";
 import { BuyHeroPanel } from "@/components/sections/BuyHeroPanel";
+import { SectionBlendTop } from "@/components/ui/SectionBlend";
 
 export function BuyCta() {
   return (
-    <section aria-label="Buying services" className="bg-neutral-50 section-padding">
+    <section aria-label="Buying services" className="relative overflow-hidden bg-neutral-50 section-padding">
+      <SectionBlendTop from="white" />
       <div className="container-page">
         <FadeInUp>
           <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm">

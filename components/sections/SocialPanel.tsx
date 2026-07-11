@@ -1,4 +1,5 @@
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionBlendTop } from "@/components/ui/SectionBlend";
 import { FadeInUp } from "@/components/ui/motion-primitives";
 
 const SOCIALS = [
@@ -46,7 +47,8 @@ const SOCIALS = [
 
 export function SocialPanel() {
   return (
-    <section aria-label="Follow HOMEUP on social media" className="bg-primary-50 py-12 sm:py-14">
+    <section aria-label="Follow HOMEUP on social media" className="relative overflow-hidden bg-primary-50 py-12 sm:py-14">
+      <SectionBlendTop from="neutral-50" />
       <div className="container-page">
         <FadeInUp>
           <div className="mx-auto flex max-w-2xl flex-col items-center text-center">

@@ -1,6 +1,12 @@
+import {
+  getPropertyTypeStyle,
+  type PropertyTypePalette,
+  type PropertyTypeStyle,
+} from "@/lib/data/property-type-styles";
+
 export type BuyPropertyType = "HDB" | "CondoLanded" | "NewLaunch";
 
-export type BuyTheme = "blue" | "green" | "amber";
+export type BuyTheme = PropertyTypePalette;
 
 export interface BuyPlan {
   name: string;
@@ -20,7 +26,7 @@ export const BUY_PLANS: BuyPlan[] = [
   {
     name: "HDB Purchase",
     tag: "HDB Flat",
-    theme: "blue",
+    theme: "sky",
     type: "HDB",
     price: "$1,999",
     description:
@@ -37,7 +43,7 @@ export const BUY_PLANS: BuyPlan[] = [
   {
     name: "Condo/Landed Purchase",
     tag: "Condo / Landed",
-    theme: "green",
+    theme: "indigo",
     type: "CondoLanded",
     price: BUY_NO_FEE_LABEL,
     description:
@@ -82,38 +88,8 @@ export const BUY_TYPE_LABELS: Record<BuyPropertyType, string> = {
   NewLaunch: "New Launch",
 };
 
-export const BUY_THEME_STYLES = {
-  blue: {
-    topBar: "bg-blue-500",
-    header: "bg-blue-50",
-    border: "border-blue-200",
-    badge: "bg-blue-100 text-blue-800",
-    price: "text-blue-700",
-    check: "text-blue-600",
-    cta: "bg-blue-600 text-white hover:bg-blue-700",
-    ctaOutline: "border-blue-200 text-blue-700 hover:bg-blue-50",
-    shadow: "shadow-[0_4px_24px_rgba(59,130,246,0.12)]",
-  },
-  green: {
-    topBar: "bg-primary-600",
-    header: "bg-primary-50",
-    border: "border-primary-300",
-    badge: "bg-primary-100 text-primary-800",
-    price: "text-primary-700",
-    check: "text-primary-600",
-    cta: "bg-primary-600 text-white hover:bg-primary-700",
-    ctaOutline: "border-primary-200 text-primary-700 hover:bg-primary-50",
-    shadow: "shadow-[0_4px_32px_rgba(0,154,68,0.15)]",
-  },
-  amber: {
-    topBar: "bg-amber-500",
-    header: "bg-amber-50",
-    border: "border-amber-200",
-    badge: "bg-amber-100 text-amber-900",
-    price: "text-amber-800",
-    check: "text-amber-600",
-    cta: "bg-amber-600 text-white hover:bg-amber-700",
-    ctaOutline: "border-amber-200 text-amber-700 hover:bg-amber-50",
-    shadow: "shadow-[0_4px_24px_rgba(245,158,11,0.15)]",
-  },
-} as const;
+export const BUY_THEME_STYLES: Record<BuyTheme, PropertyTypeStyle> = {
+  sky: getPropertyTypeStyle("HDB"),
+  indigo: getPropertyTypeStyle("Condo"),
+  amber: getPropertyTypeStyle("Landed"),
+};

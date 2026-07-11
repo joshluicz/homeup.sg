@@ -1,9 +1,22 @@
 "use client";
 import { Eyebrow } from "@/components/ui/Eyebrow";
+import { SectionBlendTop } from "@/components/ui/SectionBlend";
 import { FadeInUp, StaggerContainer, StaggerItem } from "@/components/ui/motion-primitives";
 import { SavingsSlider } from "@/components/ui/SavingsSlider";
 import { SellPlanCard } from "@/components/ui/SellPlanCard";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { motion } from "motion/react";
+import { cn } from "@/lib/utils";
+import { getPropertyTypeStyle, type PropertyTypeKey } from "@/lib/data/property-type-styles";
 import { SELL_PLANS, type SellPropertyType } from "@/lib/data/sell-pricing";
 
 const GST_RATE = 0.09;
@@ -23,9 +36,9 @@ function formatHomeupFee(base: number): string {
 }
 
 const COMPARISON_SOURCE = [
-  { type: "HDB Flat", salePrice: 500_000, homeupBase: SELL_PLANS[0].price },
-  { type: "Condo / EC", salePrice: 1_200_000, homeupBase: SELL_PLANS[1].price },
-  { type: "Landed Home", salePrice: 3_000_000, homeupBase: SELL_PLANS[2].price },
+  { propertyType: "HDB" as PropertyTypeKey, type: "HDB Flat", salePrice: 500_000, homeupBase: SELL_PLANS[0].price },
+  { propertyType: "Condo" as PropertyTypeKey, type: "Condo / EC", salePrice: 1_200_000, homeupBase: SELL_PLANS[1].price },
+  { propertyType: "Landed" as PropertyTypeKey, type: "Landed Home", salePrice: 3_000_000, homeupBase: SELL_PLANS[2].price },
 ] as const;
 
 const COMPARISON_ROWS = COMPARISON_SOURCE.map((row) => {
@@ -53,94 +66,114 @@ interface PricingSection4Props {
 function ComparisonCards() {
   return (
     <div className="grid gap-4 md:hidden">
-      {COMPARISON_ROWS.map((row) => (
-        <article
-          key={row.type}
-          className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
-        >
-          <h4 className="text-sm font-bold text-neutral-900">{row.type}</h4>
-          <p className="mt-1 text-sm font-normal text-neutral-500">
-            Example sale: {formatSgd(row.salePrice)}
-          </p>
-          <dl className="mt-4 grid gap-3 text-sm">
-            <div className="flex items-center justify-between gap-4">
-              <dt className="font-normal text-neutral-600">Typical 2% (incl. GST)</dt>
-              <dd className="font-semibold text-neutral-900">{formatSgd(row.typicalInclGst)}</dd>
+      {COMPARISON_ROWS.map((row) => {
+        const typeStyle = getPropertyTypeStyle(row.propertyType);
+        return (
+          <Card key={row.type} className="overflow-hidden border-neutral-200 shadow-sm">
+            <div className={cn("border-b border-neutral-100 px-5 py-3", typeStyle.header)}>
+              <p className="font-semibold text-neutral-900">{row.type}</p>
+              <p className="mt-0.5 text-xs text-neutral-500">
+                Example sale {formatSgd(row.salePrice)}
+              </p>
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt className="font-normal text-neutral-600">HomeUP fixed fee*</dt>
-              <dd className="font-semibold text-neutral-900">{formatHomeupFee(row.homeupBase)}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4 border-t border-neutral-100 pt-3">
-              <dt className="font-semibold text-primary-700">You save</dt>
-              <dd className="font-bold text-primary-700">{formatSgd(row.savings)}</dd>
-            </div>
-          </dl>
-        </article>
-      ))}
+            <CardContent className="p-5 pt-4">
+              <dl className="grid gap-2.5 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-neutral-600">Typical 2% (incl. GST)</dt>
+                  <dd className="font-medium tabular-nums text-neutral-900">
+                    {formatSgd(row.typicalInclGst)}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-neutral-600">HomeUP fixed fee*</dt>
+                  <dd className="font-medium tabular-nums text-neutral-900">
+                    {formatHomeupFee(row.homeupBase)}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-4 border-t border-neutral-100 pt-2.5">
+                  <dt className="font-semibold text-neutral-900">You save</dt>
+                  <dd className="font-display font-bold tabular-nums text-primary-700">
+                    {formatSgd(row.savings)}
+                  </dd>
+                </div>
+              </dl>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
 
 function ComparisonTable() {
   return (
-    <div className="hidden overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm md:block">
-      <table className="w-full border-collapse text-sm">
-        <caption className="sr-only">
-          HomeUP fixed fee compared to typical 2% agent commission in Singapore. HomeUP fees
-          shown before GST; savings use GST-inclusive amounts.
-        </caption>
-        <thead>
-          <tr className="border-b border-neutral-200 bg-neutral-50 text-left">
-            <th scope="col" className="px-6 py-4 font-semibold text-neutral-900">
-              Property type
-            </th>
-            <th scope="col" className="px-6 py-4 font-semibold text-neutral-900">
-              Example sale price
-            </th>
-            <th scope="col" className="px-6 py-4 font-semibold text-neutral-900">
-              Typical 2% fee
-              <span className="mt-0.5 block text-xs font-normal text-neutral-500">
-                incl. 9% GST
-              </span>
-            </th>
-            <th scope="col" className="px-6 py-4 font-semibold text-neutral-900">
-              HomeUP fixed fee*
-              <span className="mt-0.5 block text-xs font-normal text-neutral-500">
-                + 9% GST
-              </span>
-            </th>
-            <th scope="col" className="bg-primary-50/80 px-6 py-4 font-semibold text-primary-800">
-              You save
-              <span className="mt-0.5 block text-xs font-normal text-primary-700">
-                after GST on both
-              </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {COMPARISON_ROWS.map((row) => (
-            <tr key={row.type} className="border-b border-neutral-100 last:border-b-0">
-              <th scope="row" className="px-6 py-5 text-left font-semibold text-neutral-900">
-                {row.type}
-              </th>
-              <td className="px-6 py-5 font-normal text-neutral-600">
-                {formatSgd(row.salePrice)}
-              </td>
-              <td className="px-6 py-5 font-normal text-neutral-600">
-                {formatSgd(row.typicalInclGst)}
-              </td>
-              <td className="px-6 py-5 font-semibold text-neutral-900">
-                {formatHomeupFee(row.homeupBase)}
-              </td>
-              <td className="bg-primary-50/50 px-6 py-5 font-bold text-primary-700">
-                {formatSgd(row.savings)}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Card className="hidden overflow-hidden rounded-xl border-neutral-200 shadow-sm md:block">
+      <CardContent className="p-0">
+        <Table>
+          <TableCaption className="sr-only">
+            HomeUP fixed fee compared to typical 2% agent commission in Singapore. HomeUP fees
+            shown before GST; savings use GST-inclusive amounts.
+          </TableCaption>
+          <TableHeader>
+            <TableRow className="border-b border-neutral-200 bg-neutral-50 hover:bg-neutral-50">
+              <TableHead className="h-auto px-6 py-3.5 font-semibold normal-case tracking-normal text-neutral-900">
+                Property type
+              </TableHead>
+              <TableHead className="h-auto px-6 py-3.5 font-semibold normal-case tracking-normal text-neutral-900">
+                Example sale price
+              </TableHead>
+              <TableHead className="h-auto px-6 py-3.5 font-semibold normal-case tracking-normal text-neutral-900">
+                Typical 2% fee
+                <span className="mt-0.5 block text-xs font-normal text-neutral-500">
+                  incl. 9% GST
+                </span>
+              </TableHead>
+              <TableHead className="h-auto px-6 py-3.5 font-semibold normal-case tracking-normal text-neutral-900">
+                HomeUP fixed fee*
+                <span className="mt-0.5 block text-xs font-normal text-neutral-500">
+                  + 9% GST
+                </span>
+              </TableHead>
+              <TableHead className="h-auto bg-primary-50/70 px-6 py-3.5 font-semibold normal-case tracking-normal text-primary-800">
+                You save
+                <span className="mt-0.5 block text-xs font-normal text-primary-700">
+                  after GST on both
+                </span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {COMPARISON_ROWS.map((row) => {
+              const typeStyle = getPropertyTypeStyle(row.propertyType);
+              return (
+                <TableRow key={row.type} className="border-neutral-100 last:border-b-0">
+                  <TableCell
+                    className={cn(
+                      "border-l-[3px] px-6 py-4 font-semibold text-neutral-900",
+                      typeStyle.accentBorder,
+                    )}
+                  >
+                    {row.type}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 tabular-nums text-neutral-700">
+                    {formatSgd(row.salePrice)}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 tabular-nums text-neutral-600">
+                    {formatSgd(row.typicalInclGst)}
+                  </TableCell>
+                  <TableCell className="px-6 py-4 font-semibold tabular-nums text-neutral-900">
+                    {formatHomeupFee(row.homeupBase)}
+                  </TableCell>
+                  <TableCell className="bg-primary-50/40 px-6 py-4 font-semibold tabular-nums text-primary-700">
+                    {formatSgd(row.savings)}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -165,8 +198,9 @@ export default function PricingSection4({
     <section
       aria-label="Fixed-fee pricing packages"
       id={id}
-      className="section-padding bg-neutral-50"
+      className="relative overflow-hidden section-padding bg-neutral-50"
     >
+      <SectionBlendTop from="primary-50" />
       <div className="container-page">
         {showSlider && (
           <FadeInUp delay={0.06}>

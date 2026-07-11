@@ -5,10 +5,12 @@ import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp } from "@/components/ui/motion-primitives";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingCount } from "@/components/listings/ListingCount";
+import { SectionBlendTop } from "@/components/ui/SectionBlend";
 import type { Listing } from "@/lib/listings/types";
 import type { FlatTypeFilter } from "@/lib/listings/public-utils";
 import { flatTypeFilterMatches } from "@/lib/listings/public-utils";
 import { getActiveListings } from "@/lib/listings/queries";
+import { getPropertyTypeStyle } from "@/lib/data/property-type-styles";
 import { Loader2 } from "lucide-react";
 
 const PREVIEW_COUNT = 6;
@@ -19,9 +21,9 @@ const FILTERS: FilterType[] = ["All", "HDB", "Condo", "Landed"];
 
 const filterActive: Record<FilterType, string> = {
   All: "bg-neutral-900 text-white border-neutral-900",
-  HDB: "bg-blue-600 text-white border-blue-600",
-  Condo: "bg-primary-600 text-white border-primary-600",
-  Landed: "bg-amber-600 text-white border-amber-600",
+  HDB: `${getPropertyTypeStyle("HDB").badgeSolid} border-transparent`,
+  Condo: `${getPropertyTypeStyle("Condo").badgeSolid} border-transparent`,
+  Landed: `${getPropertyTypeStyle("Landed").badgeSolid} border-transparent`,
 };
 
 export function PropertyListings({
@@ -51,7 +53,8 @@ export function PropertyListings({
   const hasMore = filtered.length > PREVIEW_COUNT;
 
   return (
-    <section aria-label="Current property listings" className="bg-white section-padding">
+    <section aria-label="Current property listings" className="relative overflow-hidden bg-white section-padding">
+      <SectionBlendTop from="neutral-50" />
       <div className="container-page">
         <FadeInUp className="section-header">
           <Eyebrow>Current Listings</Eyebrow>

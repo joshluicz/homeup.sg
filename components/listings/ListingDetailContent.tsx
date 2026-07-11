@@ -2,6 +2,10 @@ import type { ComponentType } from "react";
 import Link from "next/link";
 import { BedDouble, Bath, Maximize2, MapPin, ArrowLeft } from "lucide-react";
 import { ListingImageGallery } from "@/components/listings/ListingImageGallery";
+import { ListingAffordabilityCalculator } from "@/components/listings/ListingAffordabilityCalculator";
+import { ListingKeySpecs } from "@/components/listings/ListingKeySpecs";
+import { ListingMrtProximity } from "@/components/listings/ListingMrtProximity";
+import { ListingNearbyMap } from "@/components/listings/ListingNearbyMap";
 import { ListingCardStatic } from "@/components/listings/ListingCardStatic";
 import { ListingWhatsAppButton } from "@/components/listings/ListingWhatsAppButton";
 import type { Listing } from "@/lib/listings/types";
@@ -18,10 +22,16 @@ import {
 import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
 import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
+import { buildListingLocationQuery } from "@/lib/listings/nearby-places";
+import type { NearestMrtResult } from "@/lib/listings/mrt-proximity";
+import { badgeClassForFlatType } from "@/lib/data/property-type-styles";
+import { cn } from "@/lib/utils";
 
 type ListingDetailContentProps = {
   listing: Listing;
   related?: Listing[];
+  mapCoords?: { lat: number; lng: number } | null;
+  nearestMrt?: NearestMrtResult | null;
 };
 
 function Spec({
@@ -44,7 +54,12 @@ function Spec({
   );
 }
 
-export function ListingDetailContent({ listing, related = [] }: ListingDetailContentProps) {
+export function ListingDetailContent({
+  listing,
+  related = [],
+  mapCoords = null,
+  nearestMrt = null,
+}: ListingDetailContentProps) {
   const gallery = getListingGallery(listing);
   const priceLabel = formatListingPrice(listing);
   const pricePsf = getListingPricePsf(listing);
@@ -99,7 +114,12 @@ export function ListingDetailContent({ listing, related = [] }: ListingDetailCon
 
           <div>
             <div className="mb-3 flex flex-wrap gap-2">
-              <span className="rounded-full border border-primary-200 bg-primary-50 px-3 py-0.5 text-xs font-semibold text-primary-700">
+              <span
+                className={cn(
+                  "rounded-full px-3 py-0.5 text-xs font-semibold",
+                  badgeClassForFlatType(listing.flat_type),
+                )}
+              >
                 {typeLabel}
               </span>
               <span className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-0.5 text-xs font-semibold text-neutral-700">
@@ -119,6 +139,9 @@ export function ListingDetailContent({ listing, related = [] }: ListingDetailCon
             )}
 
             <p className="mt-4 font-display text-2xl font-extrabold text-primary-600">{priceLabel}</p>
+
+            <ListingKeySpecs listing={listing} />
+            <ListingMrtProximity nearestMrt={nearestMrt} />
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {listing.rooms != null && (
@@ -141,6 +164,20 @@ export function ListingDetailContent({ listing, related = [] }: ListingDetailCon
           </div>
         </div>
       </div>
+
+      <ListingNearbyMap
+        locationQuery={buildListingLocationQuery(listing)}
+        displayAddress={listing.address_line_1 ?? listing.title}
+        title={listing.title}
+        initialCoords={mapCoords}
+      />
+
+      {listing.listed_as === "sell" && listing.price > 0 && (
+        <ListingAffordabilityCalculator
+          propertyPrice={Number(listing.price)}
+          flatType={listing.flat_type}
+        />
+      )}
 
       {related.length > 0 && (
         <section className="border-t border-neutral-100 bg-neutral-50 section-padding">

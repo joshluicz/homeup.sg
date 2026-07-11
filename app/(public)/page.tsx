@@ -32,15 +32,6 @@ export const metadata = buildPageMetadata({
   path: "/",
 });
 
-function GreenDivider() {
-  return (
-    <div
-      aria-hidden="true"
-      className="h-16 bg-gradient-to-b from-primary-50/60 to-white"
-    />
-  );
-}
-
 export default async function Home() {
   const [stats, previewListings] = await Promise.all([
     getListingStatsServer(),
@@ -72,15 +63,10 @@ export default async function Home() {
         <Hero />
         <WhyCheaperTeaser listingCount={stats.total} />
         <PricingSection4 />
-        <GreenDivider />
         <Testimonials />
-        <GreenDivider />
         <PropertyListings listingCount={stats.total} initialListings={previewListings} />
-        <GreenDivider />
         <BuyCta />
-        <GreenDivider />
         <AgentProfiles />
-        <GreenDivider />
         <FAQSection
           items={HOMEPAGE_FAQ}
           listingCount={stats.total}

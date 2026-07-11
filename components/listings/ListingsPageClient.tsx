@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { ListingsGrid } from "@/components/sections/ListingsGrid";
 import { ListingsGridStatic } from "@/components/listings/ListingsGridStatic";
 import type { Listing } from "@/lib/listings/types";
@@ -29,11 +29,12 @@ function ListingCardSkeleton() {
 
 function ListingsGridSkeleton() {
   return (
-    <section className="section-padding bg-white">
+    <section className="bg-white px-[var(--gutter)] pb-12 pt-6 sm:pt-8">
       <div className="container-page">
-        <div className="mb-10 h-10 w-64 animate-pulse rounded-lg bg-neutral-100" />
+        <div className="mb-5 h-12 animate-pulse rounded-full bg-neutral-100" />
+        <div className="mb-6 h-10 animate-pulse rounded-lg bg-neutral-100" />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 8 }).map((_, i) => (
             <ListingCardSkeleton key={i} />
           ))}
         </div>
@@ -51,11 +52,8 @@ export function ListingsPageClient({ initialListings, initialStats }: Props) {
   const [listings, setListings] = useState<Listing[]>(initialListings);
   const hasInitialData = initialListings.length > 0 || initialStats.total > 0;
   const [loading, setLoading] = useState(!hasInitialData);
-  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
-
     if (initialListings.length > 0) {
       setLoading(false);
       return;
@@ -73,9 +71,9 @@ export function ListingsPageClient({ initialListings, initialStats }: Props) {
     return <ListingsGridSkeleton />;
   }
 
-  if (!hydrated && hasInitialData) {
-    return <ListingsGridStatic listings={listings} />;
-  }
-
-  return <ListingsGrid listings={listings} />;
+  return (
+    <Suspense fallback={<ListingsGridStatic listings={listings} />}>
+      <ListingsGrid listings={listings} />
+    </Suspense>
+  );
 }

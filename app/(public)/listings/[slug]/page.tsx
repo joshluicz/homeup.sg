@@ -10,6 +10,7 @@ import {
   getListingBySlugServer,
   getRelatedListingsServer,
 } from "@/lib/listings/server-queries";
+import { getListingLocationContext } from "@/lib/listings/location-context";
 import { formatListingPrice } from "@/lib/listings/public-utils";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, realEstateListingSchema } from "@/lib/seo/schema";
@@ -43,6 +44,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   if (!listing) notFound();
 
   const related = await getRelatedListingsServer(listing.flat_type, listing.slug);
+  const { mapCoords, nearestMrt } = await getListingLocationContext(listing);
 
   return (
     <>
@@ -58,7 +60,12 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
       />
       <Navbar />
       <main>
-        <ListingDetailContent listing={listing} related={related} />
+        <ListingDetailContent
+          listing={listing}
+          related={related}
+          mapCoords={mapCoords}
+          nearestMrt={nearestMrt}
+        />
         <CtaBanner />
       </main>
       <Footer />
