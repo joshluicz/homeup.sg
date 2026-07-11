@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { ListingDetailContent } from "@/components/listings/ListingDetailContent";
+import { ListingViewTracker } from "@/components/analytics/ListingViewTracker";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import {
@@ -59,6 +60,11 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         ]}
       />
       <Navbar />
+      <ListingViewTracker
+        slug={listing.slug}
+        listingType={listing.flat_type ?? listing.listed_as ?? "property"}
+        price={listing.price ? Number(listing.price) : undefined}
+      />
       <main>
         <ListingDetailContent
           listing={listing}

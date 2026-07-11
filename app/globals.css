@@ -795,3 +795,48 @@ input[type="date"]::-webkit-datetime-edit {
   padding: 0;
   line-height: inherit;
 }
+
+/* ─── Listing nearby map (Leaflet) ───────────────────────────────────────── */
+.listing-nearby-map-shell {
+  overscroll-behavior: contain;
+  isolation: isolate;
+}
+
+.listing-nearby-map-shell .listing-nearby-map {
+  overscroll-behavior: contain;
+}
+
+.listing-nearby-map .leaflet-container {
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+
+.listing-map-pin-icon {
+  background: transparent;
+  border: none;
+}
+
+.listing-nearby-map .leaflet-control-attribution {
+  font-size: 10px;
+  opacity: 0.75;
+}
+
+.listing-nearby-map .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+
+.listing-nearby-map .leaflet-popup-content {
+  margin: 10px 12px;
+}
+
+.listing-nearby-map .leaflet-control-zoom {
+  border: none;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.listing-nearby-map .leaflet-control-zoom a {
+  border-radius: 8px;
+  color: #334155;
+}
+

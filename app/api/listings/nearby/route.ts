@@ -10,6 +10,7 @@ import {
   DEFAULT_SEARCH_RADIUS_M,
   fetchNearestAcrossCategories,
   fetchPlacesForCategory,
+  limitPlacesForList,
   SEARCH_RADIUS_OPTIONS,
   type NearbyCategory,
   type NearbyPlace,
@@ -77,14 +78,20 @@ export async function GET(request: NextRequest) {
 
     const places =
       category === "mrt"
-        ? findNearestMrtStations(geocoded.lat, geocoded.lng, 12, radiusM).map(mrtStationToNearbyPlace)
+        ? limitPlacesForList(
+            findNearestMrtStations(geocoded.lat, geocoded.lng, 12, radiusM).map(mrtStationToNearbyPlace),
+            category,
+          )
         : category === "nearest"
           ? mergeStaticMrtIntoNearest(
               await fetchNearestAcrossCategories(geocoded.lat, geocoded.lng, radiusM),
               geocoded.lat,
               geocoded.lng,
             )
-          : (await fetchPlacesForCategory(geocoded.lat, geocoded.lng, category, radiusM)).slice(0, 12);
+          : limitPlacesForList(
+              await fetchPlacesForCategory(geocoded.lat, geocoded.lng, category, radiusM),
+              category,
+            );
 
     const nearestMrt = findNearestMrtStation(geocoded.lat, geocoded.lng);
 

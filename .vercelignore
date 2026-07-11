@@ -6,4 +6,5 @@ apps/*
 .claude/
 **/__pycache__/
 supabase/.temp/
+.tmp-claude-seo/
 seo-audit*.docx

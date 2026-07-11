@@ -1,4 +1,5 @@
 import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
+import type { GaDateRange } from "@/lib/analytics/dateRange";
 import { createPrivateKey, sign } from "node:crypto";
 
 interface ServiceAccount {
@@ -130,7 +131,7 @@ export function getGaConfig():
   return { ok: true, sa, propertyId, measurementId };
 }
 
-export async function fetchGaAnalytics(days: number) {
+export async function fetchGaAnalytics(dateRange: GaDateRange) {
   const config = getGaConfig();
   if (!config.ok) return { error: "GA4_NOT_CONFIGURED" as const };
 
@@ -164,12 +165,28 @@ export async function fetchGaAnalytics(days: number) {
     }
   }
 
-  const dateRange = [{ startDate: `${days}daysAgo`, endDate: "today" }];
+  const dateRanges = [{ startDate: dateRange.startDate, endDate: dateRange.endDate }];
 
-  const [overview, sources, campaigns, topPages, scrollDepth, conversions, timeSeries, buttonClicks] =
-    await Promise.all([
+  const [
+    overview,
+    sources,
+    campaigns,
+    topPages,
+    scrollDepth,
+    conversions,
+    timeSeries,
+    buttonClicks,
+    devices,
+    countries,
+    landingPages,
+    playbookPages,
+    eventBreakdown,
+    timeSeriesUsers,
+    timeSeriesPageviews,
+    articleViews,
+  ] = await Promise.all([
       runGaReport(token, propertyId, {
-        dateRanges: dateRange,
+        dateRanges,
         metrics: [
           { name: "sessions" },
           { name: "totalUsers" },
@@ -177,31 +194,34 @@ export async function fetchGaAnalytics(days: number) {
           { name: "newUsers" },
           { name: "bounceRate" },
           { name: "averageSessionDuration" },
+          { name: "engagedSessions" },
+          { name: "engagementRate" },
+          { name: "eventCount" },
         ],
       }),
       runGaReport(token, propertyId, {
-        dateRanges: dateRange,
+        dateRanges,
         dimensions: [{ name: "sessionSource" }, { name: "sessionMedium" }],
         metrics: [{ name: "sessions" }],
         orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
-        limit: 8,
-      }),
-      runGaReport(token, propertyId, {
-        dateRanges: dateRange,
-        dimensions: [{ name: "sessionCampaignName" }],
-        metrics: [{ name: "sessions" }, { name: "conversions" }],
-        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
-        limit: 8,
-      }),
-      runGaReport(token, propertyId, {
-        dateRanges: dateRange,
-        dimensions: [{ name: "pagePath" }],
-        metrics: [{ name: "screenPageViews" }, { name: "averageSessionDuration" }],
-        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
         limit: 10,
       }),
       runGaReport(token, propertyId, {
-        dateRanges: dateRange,
+        dateRanges,
+        dimensions: [{ name: "sessionCampaignName" }],
+        metrics: [{ name: "sessions" }, { name: "conversions" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+        limit: 10,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "pagePath" }],
+        metrics: [{ name: "screenPageViews" }, { name: "averageSessionDuration" }],
+        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
+        limit: 15,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
         dimensions: [{ name: "eventName" }],
         metrics: [{ name: "eventCount" }],
         dimensionFilter: {
@@ -214,26 +234,32 @@ export async function fetchGaAnalytics(days: number) {
         },
       }),
       runGaReport(token, propertyId, {
-        dateRanges: dateRange,
+        dateRanges,
         dimensions: [{ name: "eventName" }],
         metrics: [{ name: "eventCount" }],
         dimensionFilter: {
           filter: {
             fieldName: "eventName",
             inListFilter: {
-              values: ["click_whatsapp", "generate_lead", "video_play", "listing_view"],
+              values: [
+                "click_whatsapp",
+                "generate_lead",
+                "video_play",
+                "listing_view",
+                "article_view",
+              ],
             },
           },
         },
       }),
       runGaReport(token, propertyId, {
-        dateRanges: dateRange,
+        dateRanges,
         dimensions: [{ name: "date" }],
         metrics: [{ name: "sessions" }],
         orderBys: [{ dimension: { dimensionName: "date" } }],
       }),
       runGaReport(token, propertyId, {
-        dateRanges: dateRange,
+        dateRanges,
         dimensions: [{ name: "customEvent:button_label" }],
         metrics: [{ name: "eventCount" }],
         dimensionFilter: {
@@ -243,7 +269,76 @@ export async function fetchGaAnalytics(days: number) {
           },
         },
         orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+        limit: 12,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "deviceCategory" }],
+        metrics: [{ name: "sessions" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+        limit: 5,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "country" }],
+        metrics: [{ name: "sessions" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
         limit: 10,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "landingPage" }],
+        metrics: [{ name: "sessions" }],
+        orderBys: [{ metric: { metricName: "sessions" }, desc: true }],
+        limit: 10,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "pagePath" }],
+        metrics: [{ name: "screenPageViews" }, { name: "averageSessionDuration" }],
+        dimensionFilter: {
+          filter: {
+            fieldName: "pagePath",
+            stringFilter: {
+              matchType: "FULL_REGEXP",
+              value: "^/playbook/[^/]+/?$",
+            },
+          },
+        },
+        orderBys: [{ metric: { metricName: "screenPageViews" }, desc: true }],
+        limit: 20,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "eventName" }],
+        metrics: [{ name: "eventCount" }],
+        orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+        limit: 20,
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "date" }],
+        metrics: [{ name: "totalUsers" }],
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "date" }],
+        metrics: [{ name: "screenPageViews" }],
+        orderBys: [{ dimension: { dimensionName: "date" } }],
+      }),
+      runGaReport(token, propertyId, {
+        dateRanges,
+        dimensions: [{ name: "customEvent:article_slug" }],
+        metrics: [{ name: "eventCount" }],
+        dimensionFilter: {
+          filter: {
+            fieldName: "eventName",
+            stringFilter: { matchType: "EXACT", value: "article_view" },
+          },
+        },
+        orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
+        limit: 25,
       }),
     ]);
 
@@ -265,7 +360,15 @@ export async function fetchGaAnalytics(days: number) {
     conversions,
     timeSeries,
     buttonClicks,
-    days,
+    devices,
+    countries,
+    landingPages,
+    playbookPages,
+    eventBreakdown,
+    timeSeriesUsers,
+    timeSeriesPageviews,
+    articleViews,
+    dateRange,
     propertyId,
     measurementId,
   };

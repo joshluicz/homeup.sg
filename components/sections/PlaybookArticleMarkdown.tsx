@@ -5,6 +5,7 @@ import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import { normalizePlaybookMarkdown } from "@/lib/playbook/markdown";
+import { trackWhatsAppClick } from "@/lib/analytics";
 import { PlaybookArticleFigure } from "@/components/sections/PlaybookArticleFigure";
 import { cn } from "@/lib/utils";
 
@@ -63,16 +64,24 @@ function buildMarkdownComponents(variant: PlaybookArticleMarkdownProps["variant"
     strong: ({ children }) => (
       <strong className="font-semibold text-neutral-900">{children}</strong>
     ),
-    a: ({ href, children }) => (
-      <a
-        href={href}
-        className="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-800 hover:decoration-primary-500"
-        target={href?.startsWith("http") ? "_blank" : undefined}
-        rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
-      >
-        {children}
-      </a>
-    ),
+    a: ({ href, children }) => {
+      const isWaLink = href?.startsWith("/go/whatsapp");
+      return (
+        <a
+          href={href}
+          className="font-semibold text-primary-700 underline decoration-primary-300 underline-offset-2 hover:text-primary-800 hover:decoration-primary-500"
+          target={href?.startsWith("http") ? "_blank" : undefined}
+          rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
+          onClick={
+            isWaLink
+              ? () => trackWhatsAppClick(href ?? "/go/whatsapp")
+              : undefined
+          }
+        >
+          {children}
+        </a>
+      );
+    },
     table: ({ children }) => (
       <div className="my-8 overflow-x-auto border border-neutral-200 bg-white [-webkit-overflow-scrolling:touch]">
         <table className="w-full min-w-[640px] border-collapse text-sm">{children}</table>

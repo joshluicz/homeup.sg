@@ -1,4 +1,5 @@
 import type { Listing } from "@/lib/listings/types";
+import { findBusStopsWithinRadius } from "@/lib/listings/bus-proximity";
 
 export type NearbyCategory =
   | "nearest"
@@ -91,7 +92,23 @@ export const OVERPASS_ENDPOINTS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 
-const OVERPASS_TIMEOUT_MS = 12_000;
+const OVERPASS_TIMEOUT_MS = 3_500;
+
+export function limitPlacesForList(
+  places: NearbyPlace[],
+  category: NearbyCategory,
+): NearbyPlace[] {
+  if (category === "bus") return places;
+  return places.slice(0, 12);
+}
+
+function filterWithinRadius(places: NearbyPlace[], radiusM: number): NearbyPlace[] {
+  return places.filter((place) => place.distanceM <= radiusM);
+}
+
+function sortPlacesByDistance(places: NearbyPlace[]): NearbyPlace[] {
+  return [...places].sort((a, b) => a.distanceM - b.distanceM);
+}
 
 function categoryFilter(
   category: Exclude<NearbyCategory, "nearest">,
@@ -100,7 +117,6 @@ function categoryFilter(
   radiusM: number,
 ): string {
   const r = Math.round(radiusM);
-  const busR = Math.round(Math.min(radiusM, 1200));
 
   switch (category) {
     case "mrt":
@@ -112,7 +128,11 @@ function categoryFilter(
         node["station"="light_rail"](around:${r},${lat},${lng});
       `;
     case "bus":
-      return `node["highway"="bus_stop"](around:${busR},${lat},${lng});`;
+      return `
+        node["highway"="bus_stop"](around:${r},${lat},${lng});
+        node["public_transport"="platform"]["bus"="yes"](around:${r},${lat},${lng});
+        node["public_transport"="stop_position"]["bus"="yes"](around:${r},${lat},${lng});
+      `;
     case "schools":
       return `
         node["amenity"="school"](around:${r},${lat},${lng});
@@ -142,7 +162,11 @@ export function buildOverpassQuery(
   lng: number,
   radiusM: number,
 ): string {
-  return `[out:json][timeout:20];(${categoryFilter(category, lat, lng, radiusM)});out center 40;`;
+  const timeout = category === "bus" ? 25 : 20;
+  // Bus: no output cap — Overpass's numeric limit returns an arbitrary subset, which
+  // drops the nearest stops when the search radius is large. We sort client-side.
+  const output = category === "bus" ? "out center;" : "out center 80;";
+  return `[out:json][timeout:${timeout}];(${categoryFilter(category, lat, lng, radiusM)});${output}`;
 }
 
 /** Single combined query across every category (used by the "Nearest" tab). */
@@ -159,6 +183,8 @@ export function classifyElement(tags: Record<string, string>): Exclude<NearbyCat
     return "mrt";
   }
   if (tags.highway === "bus_stop") return "bus";
+  if (tags.public_transport === "platform" && tags.bus === "yes") return "bus";
+  if (tags.public_transport === "stop_position" && tags.bus === "yes") return "bus";
   if (tags.amenity === "school") return "schools";
   if (["mall", "supermarket", "department_store"].includes(tags.shop ?? "")) return "shopping";
   if (["hospital", "clinic", "doctors"].includes(tags.amenity ?? "")) return "healthcare";
@@ -166,21 +192,29 @@ export function classifyElement(tags: Record<string, string>): Exclude<NearbyCat
   return null;
 }
 
-async function runOverpassQuery(query: string): Promise<OverpassElement[]> {
+async function runOverpassQuery(
+  query: string,
+  timeoutMs = OVERPASS_TIMEOUT_MS,
+): Promise<OverpassElement[]> {
   for (const endpoint of OVERPASS_ENDPOINTS) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "HomeUP/1.0 (homeup.sg; listings nearby map)",
+        },
         body: `data=${encodeURIComponent(query)}`,
         cache: "no-store",
         signal: controller.signal,
       });
       clearTimeout(timeout);
       if (!response.ok) continue;
-      const data = (await response.json()) as { elements?: OverpassElement[] };
+      const text = await response.text();
+      if (!text.trimStart().startsWith("{")) continue;
+      const data = JSON.parse(text) as { elements?: OverpassElement[] };
       return data.elements ?? [];
     } catch {
       clearTimeout(timeout);
@@ -211,14 +245,19 @@ export function mapOverpassElement(
 
   const tags = element.tags ?? {};
 
+  const busStopCode = tags.ref ?? tags.local_ref ?? tags["ref:SG:bus"];
   const name =
-    tags.name ??
-    tags["name:en"] ??
-    tags.operator ??
-    tags.brand ??
-    tags.amenity ??
-    tags.shop ??
-    "Unnamed place";
+    category === "bus"
+      ? (tags.name ??
+        tags["name:en"] ??
+        (busStopCode ? `Bus Stop ${busStopCode}` : "Bus stop"))
+      : (tags.name ??
+        tags["name:en"] ??
+        tags.operator ??
+        tags.brand ??
+        tags.amenity ??
+        tags.shop ??
+        "Unnamed place");
 
   const distanceM = Math.round(haversineDistanceM(originLat, originLng, lat, lng));
 
@@ -237,11 +276,141 @@ export function mapOverpassElement(
 export function dedupePlaces(places: NearbyPlace[]): NearbyPlace[] {
   const seen = new Set<string>();
   return places.filter((place) => {
-    const key = `${place.name.toLowerCase()}|${Math.round(place.lat * 1000)}|${Math.round(place.lng * 1000)}`;
+    const key =
+      place.category === "bus"
+        ? place.id
+        : `${place.name.toLowerCase()}|${Math.round(place.lat * 1000)}|${Math.round(place.lng * 1000)}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+}
+
+type NominatimPlace = {
+  place_id: number;
+  display_name: string;
+  name?: string;
+  lat: string;
+  lon: string;
+  type?: string;
+  class?: string;
+};
+
+const NOMINATIM_QUERIES: Record<Exclude<NearbyCategory, "nearest">, string[]> = {
+  mrt: [],
+  bus: ["bus stop"],
+  schools: ["school"],
+  shopping: ["shopping mall", "supermarket"],
+  healthcare: ["clinic", "hospital"],
+  food: ["restaurant", "cafe"],
+};
+
+function bboxForRadius(lat: number, lng: number, radiusM: number): string {
+  const latDelta = radiusM / 111_320;
+  const lngDelta = radiusM / (111_320 * Math.cos((lat * Math.PI) / 180));
+  return [
+    lng - lngDelta,
+    lat + latDelta,
+    lng + lngDelta,
+    lat - latDelta,
+  ].join(",");
+}
+
+function nameFromDisplayName(displayName: string): string {
+  return displayName.split(",")[0]?.trim() || "Nearby place";
+}
+
+async function fetchNominatimPlacesForCategory(
+  lat: number,
+  lng: number,
+  category: Exclude<NearbyCategory, "nearest">,
+  radiusM: number,
+): Promise<NearbyPlace[]> {
+  const queries = NOMINATIM_QUERIES[category];
+  if (queries.length === 0) return [];
+
+  const places: NearbyPlace[] = [];
+  const viewbox = bboxForRadius(lat, lng, radiusM);
+
+  for (const query of queries) {
+    const url = new URL("https://nominatim.openstreetmap.org/search");
+    url.searchParams.set("q", query);
+    url.searchParams.set("format", "json");
+    url.searchParams.set("limit", "10");
+    url.searchParams.set("countrycodes", "sg");
+    url.searchParams.set("bounded", "1");
+    url.searchParams.set("viewbox", viewbox);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3_500);
+    try {
+      const response = await fetch(url.toString(), {
+        headers: {
+          "User-Agent": "HomeUP/1.0 (homeup.sg listings nearby fallback)",
+          Accept: "application/json",
+        },
+        next: { revalidate: 86400 },
+        signal: controller.signal,
+      });
+      if (!response.ok) continue;
+
+      const results = (await response.json()) as NominatimPlace[];
+      for (const result of results) {
+        const placeLat = Number(result.lat);
+        const placeLng = Number(result.lon);
+        if (!Number.isFinite(placeLat) || !Number.isFinite(placeLng)) continue;
+
+        const distanceM = Math.round(haversineDistanceM(lat, lng, placeLat, placeLng));
+        if (distanceM > radiusM) continue;
+
+        places.push({
+          id: `nominatim-${result.place_id}`,
+          name: result.name || nameFromDisplayName(result.display_name),
+          lat: placeLat,
+          lng: placeLng,
+          distanceM,
+          walkMins: walkMinutes(distanceM),
+          category,
+          tag: result.type ?? result.class,
+        });
+      }
+    } catch {
+      // Try the next query term.
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  return dedupePlaces(places).sort((a, b) => a.distanceM - b.distanceM);
+}
+
+function fetchBusStopsNearby(
+  lat: number,
+  lng: number,
+  radiusM: number,
+): NearbyPlace[] {
+  return findBusStopsWithinRadius(lat, lng, radiusM);
+}
+
+function fetchOverpassPlacesForCategory(
+  lat: number,
+  lng: number,
+  category: Exclude<NearbyCategory, "nearest">,
+  radiusM: number,
+): Promise<NearbyPlace[]> {
+  const elements = runOverpassQuery(buildOverpassQuery(category, lat, lng, radiusM));
+  return elements.then((resolved) =>
+    sortPlacesByDistance(
+      filterWithinRadius(
+        dedupePlaces(
+          resolved
+            .map((element) => mapOverpassElement(element, lat, lng, category))
+            .filter((place): place is NearbyPlace => place != null),
+        ),
+        radiusM,
+      ),
+    ),
+  );
 }
 
 export async function fetchPlacesForCategory(
@@ -250,13 +419,15 @@ export async function fetchPlacesForCategory(
   category: Exclude<NearbyCategory, "nearest">,
   radiusM: number,
 ): Promise<NearbyPlace[]> {
-  const elements = await runOverpassQuery(buildOverpassQuery(category, lat, lng, radiusM));
-  return dedupePlaces(
-    elements
-      .map((element) => mapOverpassElement(element, lat, lng, category))
-      .filter((place): place is NearbyPlace => place != null)
-      .sort((a, b) => a.distanceM - b.distanceM),
-  );
+  if (category === "bus") {
+    return fetchBusStopsNearby(lat, lng, radiusM);
+  }
+
+  const nominatimPlaces = await fetchNominatimPlacesForCategory(lat, lng, category, radiusM);
+  const overpassPlaces = await fetchOverpassPlacesForCategory(lat, lng, category, radiusM);
+
+  if (overpassPlaces.length > 0) return overpassPlaces;
+  return nominatimPlaces;
 }
 
 /**
@@ -268,18 +439,37 @@ export async function fetchNearestAcrossCategories(
   lng: number,
   radiusM: number,
 ): Promise<NearbyPlace[]> {
-  const elements = await runOverpassQuery(buildCombinedOverpassQuery(lat, lng, radiusM));
-
   const nearestByCategory = new Map<Exclude<NearbyCategory, "nearest">, NearbyPlace>();
+  const categories: Exclude<NearbyCategory, "nearest">[] = [
+    "bus",
+    "schools",
+    "shopping",
+    "healthcare",
+    "food",
+  ];
 
-  for (const element of elements) {
-    const category = classifyElement(element.tags ?? {});
-    if (!category) continue;
-    const place = mapOverpassElement(element, lat, lng, category);
-    if (!place) continue;
-    const existing = nearestByCategory.get(category);
-    if (!existing || place.distanceM < existing.distanceM) {
-      nearestByCategory.set(category, place);
+  for (const category of categories) {
+    if (category === "bus") {
+      const busStops = fetchBusStopsNearby(lat, lng, radiusM);
+      if (busStops[0]) nearestByCategory.set(category, busStops[0]);
+      continue;
+    }
+
+    const fallback = await fetchNominatimPlacesForCategory(lat, lng, category, radiusM);
+    if (fallback[0]) nearestByCategory.set(category, fallback[0]);
+  }
+
+  if (nearestByCategory.size === 0) {
+    const elements = await runOverpassQuery(buildCombinedOverpassQuery(lat, lng, radiusM));
+    for (const element of elements) {
+      const category = classifyElement(element.tags ?? {});
+      if (!category) continue;
+      const place = mapOverpassElement(element, lat, lng, category);
+      if (!place) continue;
+      const existing = nearestByCategory.get(category);
+      if (!existing || place.distanceM < existing.distanceM) {
+        nearestByCategory.set(category, place);
+      }
     }
   }
 

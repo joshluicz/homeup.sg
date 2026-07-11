@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { href: "/playbook", label: "Playbook" },
   { href: "/admin/transactions", label: "Transaction Data" },
   { href: "/admin/agent-profiles", label: "Agent Videos" },
-  { href: "/admin/listings?tab=analytics", label: "Analytics" },
+  { href: "/admin/listings?tab=analytics", label: "Site Insights" },
   { href: "/admin/sync-kit-handoff", label: "Sync Kit Guide" },
 ];
 

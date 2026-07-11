@@ -8,6 +8,7 @@ import { CtaBanner } from "@/components/sections/CtaBanner";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { PlaybookArticleHeader } from "@/components/sections/PlaybookArticleHeader";
 import { PlaybookArticleHeroMedia } from "@/components/sections/PlaybookArticleHeroMedia";
+import { PlaybookArticleTracker } from "@/components/analytics/PlaybookArticleTracker";
 import {
   getAllPlaybookSlugs,
   getPlaybookVideoBySlugServer,
@@ -93,6 +94,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
         ]}
       />
       <Navbar />
+      <PlaybookArticleTracker slug={video.slug} title={video.title} />
       <main className="playbook-article-theme">
         <article className="container-page py-8 sm:py-12">
           <div className="mx-auto max-w-[680px]">

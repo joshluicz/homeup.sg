@@ -2,6 +2,7 @@
 
 import DOMPurify from "isomorphic-dompurify";
 import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
+import { trackWhatsAppClick } from "@/lib/analytics";
 
 type Props = { html: string };
 
@@ -230,6 +231,12 @@ export function PlaybookArticleHtml({ html }: Props) {
       className="playbook-article-body playbook-article-html max-w-none"
       // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: clean }}
+      onClick={(e) => {
+        const anchor = (e.target as HTMLElement).closest("a");
+        if (anchor?.href && anchor.getAttribute("href")?.startsWith("/go/whatsapp")) {
+          trackWhatsAppClick(anchor.getAttribute("href") ?? "/go/whatsapp");
+        }
+      }}
     />
   );
 }

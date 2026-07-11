@@ -141,7 +141,11 @@ export function ListingDetailContent({
             <p className="mt-4 font-display text-2xl font-extrabold text-primary-600">{priceLabel}</p>
 
             <ListingKeySpecs listing={listing} />
-            <ListingMrtProximity nearestMrt={nearestMrt} />
+            <ListingMrtProximity
+              nearestMrt={nearestMrt}
+              locationQuery={buildListingLocationQuery(listing)}
+              title={listing.title}
+            />
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {listing.rooms != null && (

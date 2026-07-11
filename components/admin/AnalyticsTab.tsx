@@ -1,33 +1,32 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { GA_MEASUREMENT_ID } from "@/lib/analytics/constants";
-import { BarChart2, Users, Eye, Clock, TrendingUp, MessageCircle, Play, FileText, Loader2, AlertCircle } from "lucide-react";
+import {
+  BarChart2,
+  Users,
+  Eye,
+  Clock,
+  TrendingUp,
+  MessageCircle,
+  Play,
+  FileText,
+  Loader2,
+  AlertCircle,
+  BookOpen,
+  Megaphone,
+  Zap,
+} from "lucide-react";
+import type { InsightsSnapshot } from "@/lib/analytics/insights";
+import type { DatePreset, GaDateRange } from "@/lib/analytics/dateRange";
+import { resolveDateRange } from "@/lib/analytics/dateRange";
+import { AnalyticsDateRangePicker } from "@/components/admin/AnalyticsDateRangePicker";
+import { AnalyticsAskPanel } from "@/components/admin/AnalyticsAskPanel";
+import { GoogleIndexingPanel } from "@/components/admin/GoogleIndexingPanel";
 
-// ── GA4 response helpers ──────────────────────────────────────────────────────
-
-interface GA4Row {
-  dimensionValues?: { value: string }[];
-  metricValues: { value: string }[];
-}
-
-interface GA4Report {
-  rows?: GA4Row[];
-}
-
-function rows(report: GA4Report): GA4Row[] {
-  return report?.rows ?? [];
-}
-
-function metricVal(row: GA4Row, index = 0): number {
-  return parseFloat(row.metricValues?.[index]?.value ?? "0") || 0;
-}
-
-function dimVal(row: GA4Row, index = 0): string {
-  return row.dimensionValues?.[index]?.value ?? "";
-}
+// ── Formatters ────────────────────────────────────────────────────────────────
 
 function fmtNum(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(Math.round(n));
 }
@@ -43,39 +42,96 @@ function fmtPct(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }
 
-// ── Sparkline ─────────────────────────────────────────────────────────────────
+// ── Time series chart ─────────────────────────────────────────────────────────
 
-function Sparkline({ values }: { values: number[] }) {
+function compactDateLabel(date: string): string {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("en-SG", { month: "short", day: "numeric" });
+}
+
+function TimeSeriesChart({
+  values,
+  dates,
+  color = "#2563eb",
+}: {
+  values: number[];
+  dates: string[];
+  color?: string;
+}) {
   if (values.length < 2) return null;
   const max = Math.max(...values, 1);
   const min = Math.min(...values);
-  const W = 300;
-  const H = 48;
+  const W = 720;
+  const H = 220;
+  const pad = { top: 18, right: 18, bottom: 34, left: 54 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+  const ticks = [max, min + (max - min) / 2, min].map((v) => Math.round(v));
+  const yFor = (v: number) => pad.top + plotH - ((v - min) / (max - min || 1)) * plotH;
+  const xFor = (i: number) => pad.left + (i / (values.length - 1)) * plotW;
   const pts = values
-    .map((v, i) => {
-      const x = (i / (values.length - 1)) * W;
-      const y = H - ((v - min) / (max - min || 1)) * (H - 4) - 2;
-      return `${x},${y}`;
-    })
+    .map((v, i) => `${xFor(i)},${yFor(v)}`)
     .join(" ");
+  const markerStep = Math.max(1, Math.ceil(values.length / 6));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: 48 }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Daily trend chart">
+      {ticks.map((tick) => {
+        const y = yFor(tick);
+        return (
+          <g key={tick}>
+            <line x1={pad.left} x2={W - pad.right} y1={y} y2={y} stroke="#f1f5f9" />
+            <text x={pad.left - 10} y={y + 4} textAnchor="end" className="fill-neutral-400 text-[11px]">
+              {fmtNum(tick)}
+            </text>
+          </g>
+        );
+      })}
       <polyline
         points={pts}
         fill="none"
-        stroke="#2563eb"
-        strokeWidth="1.5"
+        stroke={color}
+        strokeWidth="2.5"
         strokeLinejoin="round"
         strokeLinecap="round"
       />
+      {values.map((v, i) => (
+        <circle key={`${dates[i]}-${i}`} cx={xFor(i)} cy={yFor(v)} r={i % markerStep === 0 || i === values.length - 1 ? 3 : 1.8} fill="#fff" stroke={color} strokeWidth="2">
+          <title>{`${dates[i] ?? ""}: ${fmtNum(v)}`}</title>
+        </circle>
+      ))}
+      {dates.map((date, i) => {
+        if (i % markerStep !== 0 && i !== dates.length - 1) return null;
+        return (
+          <text
+            key={date}
+            x={xFor(i)}
+            y={H - 10}
+            textAnchor={i === 0 ? "start" : i === dates.length - 1 ? "end" : "middle"}
+            className="fill-neutral-400 text-[11px]"
+          >
+            {compactDateLabel(date)}
+          </text>
+        );
+      })}
     </svg>
   );
 }
 
 // ── Bar row ───────────────────────────────────────────────────────────────────
 
-function BarRow({ label, value, max, sub }: { label: string; value: number; max: number; sub?: string }) {
+function BarRow({
+  label,
+  value,
+  max,
+  sub,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  sub?: string;
+}) {
   const pct = max > 0 ? (value / max) * 100 : 0;
   return (
     <div className="space-y-1">
@@ -110,7 +166,7 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-[0_14px_35px_rgba(15,23,42,0.04)] transition-shadow hover:shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
       <div className="mb-3 flex items-center gap-2 text-neutral-500">
         <Icon className="h-4 w-4" />
         <span className="text-xs font-medium uppercase tracking-wider">{label}</span>
@@ -121,7 +177,26 @@ function StatCard({
   );
 }
 
-// ── Setup guide (shown when GA4 not configured) ───────────────────────────────
+// ── Section wrapper ───────────────────────────────────────────────────────────
+
+function Section({
+  title,
+  children,
+  className,
+}: {
+  title: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`rounded-2xl border border-neutral-200 bg-white p-5 shadow-[0_14px_35px_rgba(15,23,42,0.04)] ${className ?? ""}`}>
+      <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+// ── Setup guide ───────────────────────────────────────────────────────────────
 
 function SetupGuide() {
   return (
@@ -129,32 +204,23 @@ function SetupGuide() {
       <div className="flex items-start gap-3">
         <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
         <div>
-          <p className="font-semibold text-amber-900">GA4 not configured yet</p>
+          <p className="font-semibold text-amber-900">Site tracking not configured</p>
           <p className="mt-1 text-sm text-amber-700">
-            Follow these steps to connect Google Analytics.
+            Connect your analytics service account to see site insights.
           </p>
         </div>
       </div>
       <ol className="space-y-3 text-sm text-amber-800 list-decimal list-inside">
-        <li>
-          Site tracking uses measurement ID{" "}
-          <code className="bg-amber-100 px-1 rounded">{GA_MEASUREMENT_ID}</code> (override with{" "}
-          <code className="bg-amber-100 px-1 rounded">NEXT_PUBLIC_GA_MEASUREMENT_ID</code> in your
-          server env if needed)
-        </li>
-        <li>In GA4 → Admin → Data Streams → Enhanced Measurement → enable Scrolls &amp; Video Engagement</li>
         <li>
           In <strong>Google Cloud Console</strong> → enable the <strong>Google Analytics Data API</strong> and{" "}
           <strong>Google Analytics Admin API</strong> → create a Service Account → download the JSON key
         </li>
         <li>In GA4 → Admin → Property Access Management → add the service account email as <strong>Viewer</strong></li>
         <li>
-          On the server that runs this Next.js app, add{" "}
-          <code className="bg-amber-100 px-1 rounded">GA_SERVICE_ACCOUNT_JSON</code> (paste the full JSON key).
-          Optional: <code className="bg-amber-100 px-1 rounded">GA_PROPERTY_ID</code> (numeric ID) — otherwise it is
-          resolved automatically from {GA_MEASUREMENT_ID}.
+          Add <code className="bg-amber-100 px-1 rounded">GA_SERVICE_ACCOUNT_JSON</code> to your server env.
+          Optional: <code className="bg-amber-100 px-1 rounded">GA_PROPERTY_ID</code> (numeric ID).
         </li>
-        <li>Restart or redeploy after saving env vars</li>
+        <li>Redeploy after saving env vars</li>
       </ol>
     </div>
   );
@@ -162,77 +228,92 @@ function SetupGuide() {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-interface AnalyticsData {
-  overview: GA4Report;
-  sources: GA4Report;
-  campaigns: GA4Report;
-  topPages: GA4Report;
-  scrollDepth: GA4Report;
-  conversions: GA4Report;
-  timeSeries: GA4Report;
-  buttonClicks: GA4Report;
-  days: number;
-}
+type ChartMetric = "sessions" | "pageviews" | "users";
 
 export function AnalyticsTab() {
-  const [days, setDays] = useState(30);
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [dateRange, setDateRange] = useState<GaDateRange>(() => resolveDateRange({ preset: "last30days" }));
+  const [data, setData] = useState<InsightsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [notConfigured, setNotConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [chartMetric, setChartMetric] = useState<ChartMetric>("sessions");
+  const [gscRefreshing, setGscRefreshing] = useState(false);
 
-  const load = useCallback(async (d: number) => {
+  const load = useCallback(async (range: GaDateRange) => {
     setLoading(true);
     setError(null);
     try {
       const resp = await fetch("/api/admin/analytics", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ days: d }),
+        body: JSON.stringify({
+          preset: range.preset,
+          startIso: range.startIso,
+          endIso: range.endIso,
+        }),
       });
       const result = await resp.json();
       if (!resp.ok && !result?.error) {
-        throw new Error(`Analytics request failed (${resp.status})`);
+        throw new Error(`Insights request failed (${resp.status})`);
       }
       if (result?.error === "GA4_NOT_CONFIGURED") {
         setNotConfigured(true);
         return;
       }
-      // Surface GA read-back failures (bad property ID, no service-account access, invalid key)
-      // instead of rendering them as empty/zeroed reports.
       if (result?.error) {
         const detail = result.detail ? ` — ${result.detail}` : "";
-        const hint =
-          result.error === "GA_API_ERROR"
-            ? " Check that GA_PROPERTY_ID is the numeric Property ID (not the G-XXXX Measurement ID) and that the service account has Viewer access on the GA4 property."
-            : result.error === "GA_AUTH_FAILED"
-              ? " The GA service-account key could not authenticate — re-check GA_SERVICE_ACCOUNT_JSON on the server."
-              : "";
-        setError(`${result.error}${detail}.${hint}`);
+        setError(`${result.error}${detail}`);
         return;
       }
-      setData(result as AnalyticsData);
+      setData(result as InsightsSnapshot);
+      setDateRange(result.dateRange as GaDateRange);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load analytics");
+      setError(e instanceof Error ? e.message : "Failed to load insights");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(days); }, [days, load]);
+  useEffect(() => {
+    load(dateRange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateRange.preset, dateRange.startIso, dateRange.endIso]);
+
+  function handleDateChange(preset: DatePreset, startIso?: string, endIso?: string) {
+    setDateRange(resolveDateRange({ preset, startIso, endIso }));
+  }
+
+  async function refreshGscData() {
+    setGscRefreshing(true);
+    setError(null);
+    try {
+      const resp = await fetch("/api/admin/analytics/gsc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ days: 90 }),
+      });
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.detail ?? result.error ?? "GSC refresh failed");
+      await load(dateRange);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "GSC refresh failed");
+    } finally {
+      setGscRefreshing(false);
+    }
+  }
 
   if (notConfigured) return <SetupGuide />;
 
-  if (loading) {
+  if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-24 text-neutral-400">
         <Loader2 className="h-5 w-5 animate-spin mr-2" />
-        <span className="text-sm">Loading analytics…</span>
+        <span className="text-sm">Loading insights…</span>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !data) {
     return (
       <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
         <strong>Error:</strong> {error}
@@ -242,252 +323,394 @@ export function AnalyticsTab() {
 
   if (!data) return null;
 
-  // Parse overview
-  const overviewRow = rows(data.overview)[0];
-  const sessions = overviewRow ? metricVal(overviewRow, 0) : 0;
-  const users = overviewRow ? metricVal(overviewRow, 1) : 0;
-  const pageviews = overviewRow ? metricVal(overviewRow, 2) : 0;
-  const newUsers = overviewRow ? metricVal(overviewRow, 3) : 0;
-  const bounceRate = overviewRow ? metricVal(overviewRow, 4) : 0;
-  const avgDuration = overviewRow ? metricVal(overviewRow, 5) : 0;
+  const { overview, events, timeSeries } = data;
+  const chartValues =
+    chartMetric === "sessions"
+      ? timeSeries.sessions
+      : chartMetric === "pageviews"
+        ? timeSeries.pageviews
+        : timeSeries.users;
 
-  // Parse sources
-  const sourceRows = rows(data.sources);
-  const maxSessions = Math.max(...sourceRows.map((r) => metricVal(r, 0)), 1);
+  const maxSource = Math.max(...data.trafficSources.map((s) => s.sessions), 1);
+  const maxCampaign = Math.max(...data.campaigns.map((c) => c.sessions), 1);
+  const maxPage = Math.max(...data.topPages.map((p) => p.views), 1);
+  const maxDevice = Math.max(...data.devices.map((d) => d.sessions), 1);
+  const maxCountry = Math.max(...data.countries.map((c) => c.sessions), 1);
+  const maxLanding = Math.max(...data.landingPages.map((l) => l.sessions), 1);
+  const maxButton = Math.max(...events.buttonClicks.map((b) => b.count), 1);
+  const scrollTotal = events.scrollDepth[0]?.count ?? 0;
 
-  // Parse campaigns
-  const campaignRows = rows(data.campaigns).filter((r) => {
-    const name = dimVal(r, 0);
-    return name && name !== "(not set)";
-  });
-  const maxCampaignSessions = Math.max(...campaignRows.map((r) => metricVal(r, 0)), 1);
-
-  // Parse top pages
-  const pageRows = rows(data.topPages);
-  const maxPageViews = Math.max(...pageRows.map((r) => metricVal(r, 0)), 1);
-
-  // Parse scroll depth
-  const scrollMap: Record<string, number> = {};
-  rows(data.scrollDepth).forEach((r) => {
-    scrollMap[dimVal(r, 0)] = metricVal(r, 0);
-  });
-  const scrollTotal = scrollMap["scroll_25"] || 0;
-
-  // Parse conversions
-  const convMap: Record<string, number> = {};
-  rows(data.conversions).forEach((r) => {
-    convMap[dimVal(r, 0)] = metricVal(r, 0);
-  });
-
-  // Parse time series for sparkline
-  const timeValues = rows(data.timeSeries).map((r) => metricVal(r, 0));
-
-  // Parse button clicks
-  const buttonClickRows = rows(data.buttonClicks);
-  const maxButtonClicks = Math.max(...buttonClickRows.map((r) => metricVal(r, 0)), 1);
+  const totalWaClicks =
+    events.whatsappClicks +
+    events.buttonClicks
+      .filter((b) => b.label.toLowerCase().includes("whatsapp"))
+      .reduce((s, b) => s + b.count, 0);
 
   return (
-    <div className="space-y-8">
+    <div className="-mx-2 space-y-8 rounded-3xl bg-gradient-to-b from-neutral-50/80 to-white px-2 py-2 sm:-mx-4 sm:px-4">
 
-      {/* Header + date range */}
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4 rounded-3xl border border-neutral-200 bg-white px-5 py-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
         <div>
-          <h2 className="font-display text-lg font-bold text-neutral-900">Analytics</h2>
-          <p className="mt-0.5 text-xs text-neutral-400">GA4 · {GA_MEASUREMENT_ID}</p>
-        </div>
-        <div className="flex gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-1">
-          {[7, 30, 90].map((d) => (
-            <button
-              key={d}
-              onClick={() => setDays(d)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
-                days === d
-                  ? "bg-white text-neutral-900 shadow-sm"
-                  : "text-neutral-500 hover:text-neutral-700"
-              }`}
-            >
-              {d}d
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Sessions" value={fmtNum(sessions)} icon={TrendingUp} sub={`${fmtPct(bounceRate)} bounce`} />
-        <StatCard label="Users" value={fmtNum(users)} icon={Users} sub={`${fmtNum(newUsers)} new`} />
-        <StatCard label="Pageviews" value={fmtNum(pageviews)} icon={Eye} sub={`${(pageviews / (sessions || 1)).toFixed(1)} per session`} />
-        <StatCard label="Avg Duration" value={fmtDuration(avgDuration)} icon={Clock} />
-      </div>
-
-      {/* Sessions sparkline */}
-      {timeValues.length > 1 && (
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            Sessions — last {days} days
+          <h2 className="font-display text-2xl font-bold text-neutral-900">Site Insights</h2>
+          <p className="mt-1 text-sm text-neutral-500">
+            Traffic, engagement, conversions &amp; content performance
           </p>
-          <Sparkline values={timeValues} />
         </div>
+        <div className="flex items-center gap-2">
+          {loading && <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />}
+          <AnalyticsDateRangePicker value={dateRange} onChange={handleDateChange} />
+        </div>
+      </div>
+
+      {/* Period banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white border border-neutral-200 px-4 py-3 text-sm text-neutral-600 shadow-sm">
+        <div>
+          Showing data for <strong className="text-neutral-900">{data.dateRange.label}</strong>
+          {!data.configured.searchConsole && (
+            <span className="ml-2 text-xs text-amber-600">
+              · Search metrics unavailable — connect Search Console for per-article data
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={refreshGscData}
+          disabled={gscRefreshing || !data.configured.searchConsole}
+          className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:bg-white disabled:opacity-40"
+        >
+          {gscRefreshing ? "Refreshing GSC…" : "Refresh GSC data"}
+        </button>
+      </div>
+
+      {/* Overview stats */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:grid-cols-6">
+        <StatCard
+          label="Sessions"
+          value={fmtNum(overview.sessions)}
+          icon={TrendingUp}
+          sub={`${fmtPct(overview.bounceRate)} bounce`}
+        />
+        <StatCard
+          label="Users"
+          value={fmtNum(overview.users)}
+          icon={Users}
+          sub={`${fmtNum(overview.newUsers)} new`}
+        />
+        <StatCard
+          label="Pageviews"
+          value={fmtNum(overview.pageviews)}
+          icon={Eye}
+          sub={`${overview.pagesPerSession.toFixed(1)} per session`}
+        />
+        <StatCard
+          label="Avg Duration"
+          value={fmtDuration(overview.avgDurationSeconds)}
+          icon={Clock}
+        />
+        <StatCard
+          label="Engagement"
+          value={fmtPct(overview.engagementRate)}
+          icon={Zap}
+          sub={`${fmtNum(overview.engagedSessions)} engaged sessions`}
+        />
+        <StatCard
+          label="WhatsApp"
+          value={fmtNum(totalWaClicks)}
+          icon={MessageCircle}
+          sub={`${fmtNum(data.articles.reduce((s, a) => s + a.whatsappLeads, 0))} article leads`}
+        />
+      </div>
+
+      {/* Trend chart */}
+      {chartValues.length > 1 && (
+        <Section title={`Daily trend — ${data.dateRange.label}`}>
+          <div className="mb-4 flex gap-1">
+            {(["sessions", "pageviews", "users"] as ChartMetric[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setChartMetric(m)}
+                className={`rounded-md px-3 py-1 text-xs font-semibold capitalize transition-all ${
+                  chartMetric === m
+                    ? "bg-primary-100 text-primary-800"
+                    : "text-neutral-500 hover:text-neutral-700"
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          <TimeSeriesChart
+            values={chartValues}
+            dates={timeSeries.dates}
+            color={chartMetric === "sessions" ? "#2563eb" : chartMetric === "pageviews" ? "#009A44" : "#7c3aed"}
+          />
+        </Section>
       )}
 
-      {/* Sources + Campaigns */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* AI Analyst */}
+      <AnalyticsAskPanel dateRange={data.dateRange} />
 
-        {/* Traffic sources */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            Traffic Sources
-          </p>
-          {sourceRows.length === 0 ? (
+      <GoogleIndexingPanel />
+
+      {/* Conversions */}
+      <Section title="Conversions &amp; engagement events">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            { label: "WhatsApp Clicks", value: totalWaClicks, icon: MessageCircle, color: "text-green-600 bg-green-50" },
+            { label: "Article Views", value: events.articleViews, icon: BookOpen, color: "text-indigo-600 bg-indigo-50" },
+            { label: "Listing Views", value: events.listingViews, icon: BarChart2, color: "text-orange-600 bg-orange-50" },
+            { label: "Videos Played", value: events.videoPlays, icon: Play, color: "text-purple-600 bg-purple-50" },
+            { label: "Form Leads", value: events.formLeads, icon: FileText, color: "text-blue-600 bg-blue-50" },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} className="rounded-lg border border-neutral-100 p-3">
+              <div className={`mb-2 inline-flex rounded-lg p-1.5 ${color}`}>
+                <Icon className="h-4 w-4" />
+              </div>
+              <p className="font-display text-xl font-bold text-neutral-900">{fmtNum(value)}</p>
+              <p className="text-xs text-neutral-500">{label}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Traffic breakdown */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Section title="Traffic sources">
+          {data.trafficSources.length === 0 ? (
             <p className="text-sm text-neutral-400">No data yet</p>
           ) : (
             <div className="space-y-3">
-              {sourceRows.map((r, i) => {
-                const source = dimVal(r, 0);
-                const medium = dimVal(r, 1);
-                const label = medium && medium !== "(none)" ? `${source} / ${medium}` : source;
-                return (
-                  <BarRow
-                    key={i}
-                    label={label || "Direct"}
-                    value={metricVal(r, 0)}
-                    max={maxSessions}
-                  />
-                );
+              {data.trafficSources.map((s, i) => {
+                const label =
+                  s.medium && s.medium !== "(none)" ? `${s.source} / ${s.medium}` : s.source || "Direct";
+                return <BarRow key={i} label={label} value={s.sessions} max={maxSource} />;
               })}
             </div>
           )}
-        </div>
+        </Section>
 
-        {/* UTM Campaigns */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            UTM Campaigns
-          </p>
-          {campaignRows.length === 0 ? (
-            <p className="text-sm text-neutral-400">No UTM campaign traffic yet</p>
+        <Section title="Campaigns">
+          {data.campaigns.length === 0 ? (
+            <p className="text-sm text-neutral-400">No campaign traffic yet</p>
           ) : (
             <div className="space-y-3">
-              {campaignRows.map((r, i) => (
+              {data.campaigns.map((c, i) => (
                 <BarRow
                   key={i}
-                  label={dimVal(r, 0)}
-                  value={metricVal(r, 0)}
-                  max={maxCampaignSessions}
-                  sub={metricVal(r, 1) > 0 ? `${fmtNum(metricVal(r, 1))} conv` : undefined}
+                  label={c.name}
+                  value={c.sessions}
+                  max={maxCampaign}
+                  sub={c.conversions > 0 ? `${fmtNum(c.conversions)} conv` : undefined}
                 />
               ))}
             </div>
           )}
-        </div>
+        </Section>
       </div>
 
-      {/* Top pages */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-          Top Pages
-        </p>
-        {pageRows.length === 0 ? (
-          <p className="text-sm text-neutral-400">No data yet</p>
-        ) : (
-          <div className="space-y-3">
-            {pageRows.map((r, i) => (
-              <BarRow
-                key={i}
-                label={dimVal(r, 0) || "/"}
-                value={metricVal(r, 0)}
-                max={maxPageViews}
-                sub={fmtDuration(metricVal(r, 1))}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Button Clicks */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-          Button Clicks
-        </p>
-        {buttonClickRows.length === 0 ? (
-          <p className="text-sm text-neutral-400">No button click data yet</p>
-        ) : (
-          <div className="space-y-3">
-            {buttonClickRows.map((r, i) => (
-              <BarRow
-                key={i}
-                label={dimVal(r, 0) || "Unknown"}
-                value={metricVal(r, 0)}
-                max={maxButtonClicks}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Scroll depth + Conversions */}
+      {/* Devices + Countries */}
       <div className="grid gap-6 lg:grid-cols-2">
+        <Section title="Devices">
+          {data.devices.length === 0 ? (
+            <p className="text-sm text-neutral-400">No data yet</p>
+          ) : (
+            <div className="space-y-3">
+              {data.devices.map((d, i) => (
+                <BarRow key={i} label={d.device} value={d.sessions} max={maxDevice} />
+              ))}
+            </div>
+          )}
+        </Section>
 
-        {/* Scroll depth */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            Scroll Depth
+        <Section title="Countries">
+          {data.countries.length === 0 ? (
+            <p className="text-sm text-neutral-400">No data yet</p>
+          ) : (
+            <div className="space-y-3">
+              {data.countries.map((c, i) => (
+                <BarRow key={i} label={c.country} value={c.sessions} max={maxCountry} />
+              ))}
+            </div>
+          )}
+        </Section>
+      </div>
+
+      {/* Top pages + Landing pages */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Section title="Top pages">
+          {data.topPages.length === 0 ? (
+            <p className="text-sm text-neutral-400">No data yet</p>
+          ) : (
+            <div className="space-y-3">
+              {data.topPages.map((p, i) => (
+                <BarRow
+                  key={i}
+                  label={p.path || "/"}
+                  value={p.views}
+                  max={maxPage}
+                  sub={fmtDuration(p.avgDurationSeconds)}
+                />
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <Section title="Landing pages">
+          {data.landingPages.length === 0 ? (
+            <p className="text-sm text-neutral-400">No data yet</p>
+          ) : (
+            <div className="space-y-3">
+              {data.landingPages.map((l, i) => (
+                <BarRow key={i} label={l.path || "/"} value={l.sessions} max={maxLanding} />
+              ))}
+            </div>
+          )}
+        </Section>
+      </div>
+
+      {/* Playbook articles */}
+      <Section title="Playbook article performance">
+        {data.articles.length === 0 ? (
+          <p className="text-sm text-neutral-400">No article data for this period</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-100 text-left text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                  <th className="pb-2 pr-4">Article</th>
+                  <th className="pb-2 pr-4 text-right">Views</th>
+                  <th className="pb-2 pr-4 text-right">Avg time</th>
+                  <th className="pb-2 pr-4 text-right">Search clicks</th>
+                  <th className="pb-2 text-right">WA leads</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.articles.slice(0, 15).map((a) => (
+                  <tr key={a.slug} className="border-b border-neutral-50">
+                    <td className="py-2.5 pr-4">
+                      <span className="font-medium text-neutral-900">{a.slug}</span>
+                    </td>
+                    <td className="py-2.5 pr-4 text-right tabular-nums">{fmtNum(a.pageViews)}</td>
+                    <td className="py-2.5 pr-4 text-right tabular-nums text-neutral-500">
+                      {a.avgDurationSeconds > 0 ? fmtDuration(a.avgDurationSeconds) : "—"}
+                    </td>
+                    <td className="py-2.5 pr-4 text-right tabular-nums text-neutral-500">
+                      {a.searchClicks > 0 ? fmtNum(a.searchClicks) : "—"}
+                    </td>
+                    <td className="py-2.5 text-right tabular-nums">
+                      {a.whatsappLeads > 0 ? (
+                        <span className="font-semibold text-green-700">{a.whatsappLeads}</span>
+                      ) : (
+                        <span className="text-neutral-300">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Section>
+
+      {/* Ad readiness */}
+      <Section title="Ad placement signals">
+        <div className="mb-4 flex items-start gap-3 rounded-lg bg-amber-50 border border-amber-100 px-4 py-3">
+          <Megaphone className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-800">
+            These metrics help decide where to place ads in playbook articles — high views, long read times,
+            and strong scroll completion indicate engaged readers.
           </p>
+        </div>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div className="rounded-lg border border-neutral-100 p-3">
+            <p className="text-xs text-neutral-400">Playbook views</p>
+            <p className="font-display text-xl font-bold text-neutral-900">
+              {fmtNum(data.adReadiness.totalPlaybookViews)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-neutral-100 p-3">
+            <p className="text-xs text-neutral-400">Avg read time</p>
+            <p className="font-display text-xl font-bold text-neutral-900">
+              {fmtDuration(data.adReadiness.avgPlaybookDurationSeconds)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-neutral-100 p-3">
+            <p className="text-xs text-neutral-400">Engagement rate</p>
+            <p className="font-display text-xl font-bold text-neutral-900">
+              {fmtPct(data.adReadiness.engagementRate)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-neutral-100 p-3">
+            <p className="text-xs text-neutral-400">Scroll completion</p>
+            <p className="font-display text-xl font-bold text-neutral-900">
+              {fmtPct(data.adReadiness.scrollCompletionRate)}
+            </p>
+          </div>
+        </div>
+        {data.adReadiness.topArticlesByViews.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-semibold text-neutral-500">Top articles by views</p>
+            {data.adReadiness.topArticlesByViews.map((a, i) => (
+              <BarRow key={i} label={a.slug} value={a.views} max={data.adReadiness.topArticlesByViews[0]?.views ?? 1} />
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Button clicks + Scroll depth */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Section title="Button clicks">
+          {events.buttonClicks.length === 0 ? (
+            <p className="text-sm text-neutral-400">No button click data yet</p>
+          ) : (
+            <div className="space-y-3">
+              {events.buttonClicks.map((b, i) => (
+                <BarRow key={i} label={b.label} value={b.count} max={maxButton} />
+              ))}
+            </div>
+          )}
+        </Section>
+
+        <Section title="Scroll depth">
           {scrollTotal === 0 ? (
-            <p className="text-sm text-neutral-400">No scroll data yet — tracking fires after first deploy</p>
+            <p className="text-sm text-neutral-400">No scroll data yet</p>
           ) : (
             <div className="space-y-4">
-              {[
-                { label: "25%", key: "scroll_25" },
-                { label: "50%", key: "scroll_50" },
-                { label: "75%", key: "scroll_75" },
-                { label: "100%", key: "scroll_100" },
-              ].map(({ label, key }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <span className="w-8 text-xs font-semibold text-neutral-500">{label}</span>
+              {events.scrollDepth.map(({ depth, count }) => (
+                <div key={depth} className="flex items-center gap-3">
+                  <span className="w-8 text-xs font-semibold text-neutral-500">{depth}</span>
                   <div className="flex-1 h-2 rounded-full bg-neutral-100">
                     <div
                       className="h-2 rounded-full bg-primary-500 transition-all duration-500"
-                      style={{ width: `${scrollTotal > 0 ? ((scrollMap[key] || 0) / scrollTotal) * 100 : 0}%` }}
+                      style={{ width: `${scrollTotal > 0 ? (count / scrollTotal) * 100 : 0}%` }}
                     />
                   </div>
                   <span className="w-12 text-right text-xs font-semibold text-neutral-700">
-                    {fmtNum(scrollMap[key] || 0)}
+                    {fmtNum(count)}
                   </span>
                 </div>
               ))}
               <p className="text-xs text-neutral-400 pt-1">
-                Users who scrolled to each depth ({fmtNum(scrollTotal)} reached 25%)
+                {fmtNum(scrollTotal)} users reached 25% scroll depth
               </p>
             </div>
           )}
-        </div>
-
-        {/* Conversion events */}
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">
-            Conversions
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { key: "click_whatsapp", label: "WhatsApp Clicks", icon: MessageCircle, color: "text-green-600 bg-green-50" },
-              { key: "generate_lead", label: "Form Leads", icon: FileText, color: "text-blue-600 bg-blue-50" },
-              { key: "video_play", label: "Videos Played", icon: Play, color: "text-purple-600 bg-purple-50" },
-              { key: "listing_view", label: "Listing Views", icon: BarChart2, color: "text-orange-600 bg-orange-50" },
-            ].map(({ key, label, icon: Icon, color }) => (
-              <div key={key} className="rounded-lg border border-neutral-100 p-3">
-                <div className={`mb-2 inline-flex rounded-lg p-1.5 ${color}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <p className="font-display text-xl font-bold text-neutral-900">
-                  {fmtNum(convMap[key] || 0)}
-                </p>
-                <p className="text-xs text-neutral-500">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        </Section>
       </div>
+
+      {/* Top events */}
+      {events.topEvents.length > 0 && (
+        <Section title="All tracked events">
+          <div className="space-y-3">
+            {events.topEvents.slice(0, 12).map((e, i) => {
+              const maxEvent = events.topEvents[0]?.count ?? 1;
+              return <BarRow key={i} label={e.name} value={e.count} max={maxEvent} />;
+            })}
+          </div>
+        </Section>
+      )}
     </div>
   );
 }

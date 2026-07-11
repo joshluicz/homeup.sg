@@ -14,15 +14,28 @@ export interface LeadCount {
   lastClick: string | null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const { error } = await requireAuth();
   if (error) return error;
 
+  const { searchParams } = new URL(request.url);
+  const startIso = searchParams.get("startIso");
+  const endIso = searchParams.get("endIso");
+
   const supabase = createServiceClient();
-  const { data, error: dbError } = await supabase
+  let query = supabase
     .from("lead_events")
     .select("slug, created_at")
     .order("created_at", { ascending: false });
+
+  if (startIso) query = query.gte("created_at", `${startIso}T00:00:00.000Z`);
+  if (endIso) {
+    const endExclusive = new Date(endIso);
+    endExclusive.setDate(endExclusive.getDate() + 1);
+    query = query.lt("created_at", endExclusive.toISOString());
+  }
+
+  const { data, error: dbError } = await query;
 
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 

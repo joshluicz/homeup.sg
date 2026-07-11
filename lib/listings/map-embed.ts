@@ -16,8 +16,25 @@ export function buildOsmEmbedUrl(coords: MapCoords, zoom = 15): string {
   return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${encodeURIComponent(marker)}`;
 }
 
-export function buildGoogleMapsEmbedUrl(query: string, coords?: MapCoords | null): string {
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY?.trim();
+export function buildGoogleMapsDirectionsEmbedUrl(
+  origin: MapCoords,
+  destination: MapCoords,
+  embedKey?: string,
+): string | null {
+  const key = embedKey?.trim() || process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY?.trim();
+  if (!key) return null;
+
+  const originQ = `${origin.lat},${origin.lng}`;
+  const destinationQ = `${destination.lat},${destination.lng}`;
+  return `https://www.google.com/maps/embed/v1/directions?key=${encodeURIComponent(key)}&origin=${encodeURIComponent(originQ)}&destination=${encodeURIComponent(destinationQ)}&mode=walking`;
+}
+
+export function buildGoogleMapsEmbedUrl(
+  query: string,
+  coords?: MapCoords | null,
+  embedKey?: string,
+): string {
+  const key = embedKey?.trim() || process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY?.trim();
   if (key) {
     const q = coords ? `${coords.lat},${coords.lng}` : query;
     return `https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(key)}&q=${encodeURIComponent(q)}&zoom=15`;
@@ -27,8 +44,12 @@ export function buildGoogleMapsEmbedUrl(query: string, coords?: MapCoords | null
   return `https://maps.google.com/maps?q=${q}&hl=en&z=15&output=embed`;
 }
 
-export function buildMapEmbedUrl(query: string, coords?: MapCoords | null): string {
-  return buildGoogleMapsEmbedUrl(query, coords);
+export function buildMapEmbedUrl(
+  query: string,
+  coords?: MapCoords | null,
+  embedKey?: string,
+): string {
+  return buildGoogleMapsEmbedUrl(query, coords, embedKey);
 }
 
 export function buildGoogleMapsSearchUrl(query: string, coords?: MapCoords | null): string {

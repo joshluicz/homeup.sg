@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,10 +18,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  buildGoogleMapsSearchUrl,
-  buildMapEmbedUrl,
-} from "@/lib/listings/map-embed";
+import { MrtStationBadges } from "@/components/listings/MrtStationBadges";
+import { buildGoogleMapsSearchUrl } from "@/lib/listings/map-embed";
+import { mrtStopFromPlaceName } from "@/lib/listings/mrt-proximity";
 import {
   categoryLabel,
   DEFAULT_SEARCH_RADIUS_M,
@@ -30,6 +30,14 @@ import {
   type NearbyPlace,
   type SearchRadiusM,
 } from "@/lib/listings/nearby-places";
+
+const ListingLeafletMap = dynamic(
+  () => import("@/components/listings/ListingLeafletMap").then((mod) => mod.ListingLeafletMap),
+  {
+    ssr: false,
+    loading: () => <div className="absolute inset-0 animate-pulse bg-neutral-100" />,
+  },
+);
 
 type NearbyResponse = {
   coords: { lat: number; lng: number } | null;
@@ -93,7 +101,7 @@ export function ListingNearbyMap({
         const nextPlaces = Array.isArray(data.places) ? data.places : [];
         setCoords(data.coords ?? initialCoords ?? null);
         setPlaces(nextPlaces);
-        setSelectedId(nextPlaces[0]?.id ?? null);
+        setSelectedId(null);
         if (data.error) setError("Could not load nearby places.");
       })
       .catch(() => {
@@ -111,20 +119,19 @@ export function ListingNearbyMap({
     };
   }, [locationQuery, title, category, radiusM, initialCoords]);
 
-  const selected = places.find((place) => place.id === selectedId) ?? places[0] ?? null;
+  const selected = places.find((place) => place.id === selectedId) ?? null;
 
-  const mapCoords = useMemo(() => {
-    if (selected) return { lat: selected.lat, lng: selected.lng };
-    return coords;
-  }, [coords, selected]);
+  const propertyPoint =
+    coords != null
+      ? { lat: coords.lat, lng: coords.lng, label: title }
+      : null;
 
-  const mapQuery = useMemo(() => {
-    if (selected) return `${selected.name}, Singapore`;
-    return locationQuery;
-  }, [locationQuery, selected]);
-
-  const mapSrc = buildMapEmbedUrl(mapQuery, mapCoords);
-  const usesOsmFallback = !process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY && Boolean(mapCoords);
+  const placePoints = places.map((place) => ({
+    id: place.id,
+    lat: place.lat,
+    lng: place.lng,
+    label: place.name,
+  }));
 
   const emptyLabel =
     category === "nearest"
@@ -184,16 +191,17 @@ export function ListingNearbyMap({
           </div>
         </div>
 
-        <div className="relative mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 shadow-sm">
-          <div className="relative aspect-[16/10] w-full sm:aspect-[16/9]">
-            {mapCoords ? (
-              <iframe
-                title={`Map showing ${title}`}
-                src={mapSrc}
-                className="absolute inset-0 h-full w-full border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
+        <div className="relative mt-5 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-100 shadow-sm overscroll-contain">
+          <div className="relative aspect-[16/10] w-full overscroll-contain sm:aspect-[16/9]">
+            {propertyPoint ? (
+              <ListingLeafletMap
+                property={propertyPoint}
+                places={placePoints}
+                selectedPlaceId={selectedId}
+                fitAllPlaces={category === "bus" && places.length > 0}
+                showRadiusCircle={category === "bus" && radiusM > 0}
+                radiusM={category === "bus" ? radiusM : undefined}
+                className="absolute inset-0 z-0 h-full w-full"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 px-6 text-center text-sm text-neutral-500">
@@ -202,7 +210,7 @@ export function ListingNearbyMap({
             )}
 
             {panelOpen && (
-              <div className="absolute left-3 top-3 z-10 w-[min(100%-1.5rem,20rem)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg sm:left-4 sm:top-4">
+              <div className="pointer-events-auto absolute left-3 top-3 z-[1000] w-[min(100%-1.5rem,20rem)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-lg sm:left-4 sm:top-4">
                 <div className="border-b border-neutral-100 px-4 py-3">
                   <div className="flex items-start gap-2">
                     <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-white">
@@ -211,11 +219,17 @@ export function ListingNearbyMap({
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-neutral-900">{title}</p>
                       <p className="truncate text-xs text-neutral-500">{displayAddress}</p>
+                      {category === "bus" && !loading && places.length > 0 && (
+                        <p className="mt-1 text-xs font-medium text-primary-600">
+                          {places.length} bus stops within{" "}
+                          {radiusM >= 1000 ? `${radiusM / 1000} km` : `${radiusM} m`}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <div className="max-h-52 overflow-y-auto">
+                <div className="max-h-72 overflow-y-auto">
                   {loading ? (
                     <div className="space-y-2 p-3">
                       {Array.from({ length: 3 }).map((_, i) => (
@@ -233,11 +247,13 @@ export function ListingNearbyMap({
                     places.map((place) => {
                       const Icon = CATEGORY_ICONS[place.category];
                       const active = selected?.id === place.id;
+                      const mrtStop =
+                        place.category === "mrt" ? mrtStopFromPlaceName(place.name) : null;
                       return (
                         <button
                           key={place.id}
                           type="button"
-                          onClick={() => setSelectedId(place.id)}
+                          onClick={() => setSelectedId((current) => (current === place.id ? null : place.id))}
                           className={cn(
                             "flex w-full cursor-pointer items-start gap-3 border-b border-neutral-100 px-4 py-3 text-left transition-colors last:border-b-0",
                             active ? "bg-primary-50/60" : "hover:bg-neutral-50",
@@ -257,9 +273,18 @@ export function ListingNearbyMap({
                                 {categoryLabel(place.category)}
                               </span>
                             )}
-                            <span className="block truncate text-sm font-semibold text-neutral-900">
-                              {place.name}
-                            </span>
+                            {mrtStop ? (
+                              <span className="mb-1 flex items-center gap-2">
+                                <MrtStationBadges stop={mrtStop} size="sm" />
+                                <span className="truncate text-sm font-semibold text-neutral-900">
+                                  {mrtStop.name}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="block truncate text-sm font-semibold text-neutral-900">
+                                {place.name}
+                              </span>
+                            )}
                             <span className="mt-0.5 flex items-center gap-2 text-xs text-neutral-500">
                               <Footprints className="h-3.5 w-3.5" />
                               {place.walkMins} mins · {place.distanceM} m
@@ -288,24 +313,25 @@ export function ListingNearbyMap({
               type="button"
               aria-label={panelOpen ? "Hide nearby panel" : "Show nearby panel"}
               onClick={() => setPanelOpen((open) => !open)}
-              className="absolute bottom-4 left-[min(calc(100%-3rem),19rem)] z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-neutral-200 bg-white shadow-md transition-colors hover:bg-neutral-50 sm:left-[21rem]"
+              className="pointer-events-auto absolute bottom-4 left-[min(calc(100%-3rem),19rem)] z-[1000] flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-neutral-200 bg-white shadow-md transition-colors hover:bg-neutral-50 sm:left-[21rem]"
             >
               {panelOpen ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
-        {usesOsmFallback && (
-          <p className="mt-2 text-xs text-neutral-400">
-            Map powered by OpenStreetMap. Add a Google Maps Embed API key for Google map tiles.
+        {selected && propertyPoint && !loading && (
+          <p className="mt-3 text-sm text-neutral-500">
+            <span className="font-semibold text-neutral-700">{selected.name}</span> ·{" "}
+            {selected.walkMins} min walk ({selected.distanceM} m)
           </p>
         )}
 
-        {coords && selected && !loading && (
+        {!selected && coords && places.length > 0 && !loading && (
           <p className="mt-3 text-sm text-neutral-500">
             {category === "nearest" ? "Closest overall" : `Nearest ${categoryLabel(category)}`}:{" "}
-            <span className="font-semibold text-neutral-700">{selected.name}</span> ·{" "}
-            {selected.walkMins} min walk ({selected.distanceM} m) within{" "}
+            <span className="font-semibold text-neutral-700">{(selected ?? places[0]).name}</span> ·{" "}
+            {(selected ?? places[0]).walkMins} min walk ({(selected ?? places[0]).distanceM} m) within{" "}
             {radiusM >= 1000 ? `${radiusM / 1000} km` : `${radiusM} m`}
           </p>
         )}

@@ -101,13 +101,21 @@ function b64url(input: string | Buffer): string {
   return buf.toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-async function getGscAccessToken(sa: ServiceAccount): Promise<string> {
+async function getGscAccessToken(
+  sa: ServiceAccount,
+  scope = "https://www.googleapis.com/auth/webmasters.readonly",
+): Promise<string> {
+  const cacheKey = `${sa.client_email}:${scope}`;
+  if (gscTokenCache?.cacheKey === cacheKey && gscTokenCache.expiresAt > Date.now() + 60_000) {
+    return gscTokenCache.token;
+  }
+
   const now = Math.floor(Date.now() / 1000);
   const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
   const payload = b64url(
     JSON.stringify({
       iss: sa.client_email,
-      scope: "https://www.googleapis.com/auth/webmasters.readonly",
+      scope,
       aud: "https://oauth2.googleapis.com/token",
       exp: now + 3600,
       iat: now,
@@ -140,11 +148,33 @@ async function getGscAccessToken(sa: ServiceAccount): Promise<string> {
     }),
   });
 
-  const data = (await resp.json()) as { access_token?: string; error?: string };
+  const data = await readJsonResponse<{ access_token?: string; error?: string; expires_in?: number }>(
+    resp,
+    "GSC auth",
+  );
   if (!resp.ok || !data.access_token) {
     throw new Error(`GSC auth failed: ${data.error ?? resp.statusText}`);
   }
+  gscTokenCache = {
+    cacheKey,
+    token: data.access_token,
+    expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000,
+  };
   return data.access_token;
+}
+
+let gscTokenCache: { cacheKey: string; token: string; expiresAt: number } | null = null;
+
+async function readJsonResponse<T>(resp: Response, label: string): Promise<T> {
+  const text = await resp.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    const snippet = text.replace(/\s+/g, " ").trim().slice(0, 180);
+    throw new Error(
+      `${label} returned a non-JSON response (${resp.status}): ${snippet || resp.statusText}`,
+    );
+  }
 }
 
 // ── Config helpers ────────────────────────────────────────────────────────────
@@ -197,9 +227,9 @@ function parseServiceAccount(raw: string): ServiceAccount {
 }
 
 function loadConfig(): { sa: ServiceAccount; siteUrl: string } | null {
-  const raw = process.env.GSC_SERVICE_ACCOUNT_JSON;
-  const siteUrl = process.env.GSC_SITE_URL;
-  if (!raw || !siteUrl) return null;
+  const raw = process.env.GSC_SERVICE_ACCOUNT_JSON ?? process.env.GA_SERVICE_ACCOUNT_JSON;
+  const siteUrl = process.env.GSC_SITE_URL ?? "sc-domain:homeup.sg";
+  if (!raw) return null;
   try {
     const sa = parseServiceAccount(raw);
     if (!sa.client_email || !sa.private_key) {
@@ -219,6 +249,75 @@ function loadConfig(): { sa: ServiceAccount; siteUrl: string } | null {
 
 export function isGscConfigured(): boolean {
   return loadConfig() !== null;
+}
+
+export type UrlInspectionStatus = {
+  url: string;
+  verdict: string | null;
+  coverageState: string | null;
+  robotsTxtState: string | null;
+  indexingState: string | null;
+  pageFetchState: string | null;
+  lastCrawlTime: string | null;
+  googleCanonical: string | null;
+  userCanonical: string | null;
+  crawledAs: string | null;
+};
+
+export async function inspectGscUrl(inspectionUrl: string): Promise<UrlInspectionStatus | null> {
+  const config = loadConfig();
+  if (!config) return null;
+
+  const token = await getGscAccessToken(config.sa);
+  const resp = await fetch("https://searchconsole.googleapis.com/v1/urlInspection/index:inspect", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      inspectionUrl,
+      siteUrl: config.siteUrl,
+      languageCode: "en",
+    }),
+  });
+
+  const data = await readJsonResponse<{
+    inspectionResult?: {
+      indexStatusResult?: {
+        verdict?: string;
+        coverageState?: string;
+        robotsTxtState?: string;
+        indexingState?: string;
+        pageFetchState?: string;
+        lastCrawlTime?: string;
+        googleCanonical?: string;
+        userCanonical?: string;
+        crawledAs?: string;
+      };
+    };
+    error?: { message?: string };
+  }>(resp, "URL Inspection");
+
+  if (!resp.ok) {
+    throw new Error(data.error?.message ?? `URL Inspection failed (${resp.status})`);
+  }
+
+  const status = data.inspectionResult?.indexStatusResult;
+  if (!status) return null;
+
+  return {
+    url: inspectionUrl,
+    verdict: status.verdict ?? null,
+    coverageState: status.coverageState ?? null,
+    robotsTxtState: status.robotsTxtState ?? null,
+    indexingState: status.indexingState ?? null,
+    pageFetchState: status.pageFetchState ?? null,
+    lastCrawlTime: status.lastCrawlTime ?? null,
+    googleCanonical: status.googleCanonical ?? null,
+    userCanonical: status.userCanonical ?? null,
+    crawledAs: status.crawledAs ?? null,
+  };
 }
 
 function isoDate(d: Date): string {
@@ -268,7 +367,7 @@ async function queryGsc(
     }),
   });
 
-  const data = (await resp.json()) as GscResponse;
+  const data = await readJsonResponse<GscResponse>(resp, "GSC search analytics");
   if (!resp.ok) throw new Error(data.error?.message ?? `GSC API error ${resp.status}`);
   return data.rows ?? [];
 }
