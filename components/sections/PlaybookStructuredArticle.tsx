@@ -1,5 +1,6 @@
 "use client";
 
+import { PlaybookFaqSection } from "@/components/playbook/PlaybookFaqSection";
 import type { PlaybookArticleBlock } from "@/lib/playbook/article-format";
 import { PlaybookArticleMarkdown } from "@/components/sections/PlaybookArticleMarkdown";
 import { PlaybookSectionContent } from "@/components/sections/PlaybookSectionContent";
@@ -70,19 +71,7 @@ function InlineFaqBlock({ items }: { items: Array<{ q: string; a: string }> }) {
 
   return (
     <section className="border-t border-neutral-200 pt-12">
-      <SectionEyebrow>FAQ</SectionEyebrow>
-      <div className="divide-y divide-neutral-200">
-        {items.map((item, index) => (
-          <details key={index} className="group py-5 first:pt-0">
-            <summary className="cursor-pointer list-none text-base font-semibold text-neutral-900 marker:content-none">
-              {item.q}
-            </summary>
-            <p className="speakable-faq-answer mt-3 text-base leading-relaxed text-neutral-700">
-              {item.a}
-            </p>
-          </details>
-        ))}
-      </div>
+      <PlaybookFaqSection items={items} className="border-t-0 pt-0" title="FAQ" />
     </section>
   );
 }
