@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  articleSectionsToBlocks,
+  hasStructuredArticleContent,
+  type ArticleSections,
+} from "@/lib/playbook/article-sections";
 import { parsePlaybookArticleBlocks } from "@/lib/playbook/article-format";
 import { PlaybookStructuredArticle } from "@/components/sections/PlaybookStructuredArticle";
 import { PlaybookArticleMarkdown } from "@/components/sections/PlaybookArticleMarkdown";
@@ -7,16 +12,23 @@ import { PlaybookArticleHtml } from "@/components/sections/PlaybookArticleHtml";
 import { normalizePlaybookMarkdown } from "@/lib/playbook/markdown";
 import { isHtmlContent } from "@/lib/playbook/is-html-content";
 
+type ArticleBodyProps = {
+  markdown: string;
+  articleSections?: ArticleSections | null;
+};
+
 /**
- * Renders a playbook article. Handles three content formats:
- *  1. Rich HTML — produced by the WYSIWYG editor (new articles)
- *  2. Structured Markdown — legacy articles with section labels
- *  3. Plain Markdown — legacy articles without section labels
+ * Renders a playbook article. Prefers structured section fields when present;
+ * otherwise falls back to legacy HTML / markdown blob parsing.
  */
-export function ArticleBody({ markdown }: { markdown: string }) {
+export function ArticleBody({ markdown, articleSections }: ArticleBodyProps) {
+  if (hasStructuredArticleContent(articleSections)) {
+    const blocks = articleSectionsToBlocks(articleSections!);
+    return <PlaybookStructuredArticle blocks={blocks} />;
+  }
+
   if (!markdown?.trim()) return null;
 
-  // New articles saved by the WYSIWYG editor are stored as HTML
   if (isHtmlContent(markdown)) {
     return <PlaybookArticleHtml html={markdown} />;
   }

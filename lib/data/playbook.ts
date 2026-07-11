@@ -99,6 +99,8 @@ export interface PlaybookVideo {
   publishedAt: string;  // ISO date string "YYYY-MM-DD"
   tags: string[];
   article?: string;          // Markdown article body shown on /playbook/[slug]
+  /** Structured section fields (Phase 2). When set, public page renders from this. */
+  articleSections?: import("@/lib/playbook/article-sections").ArticleSections | null;
   faq?: FaqEntry[];          // Q&A pairs rendered as FAQ + FAQPage schema
   metaDescription?: string;  // SEO meta description for the article page
   topic?: PlaybookTopic | null; // Which journey stage this article/video belongs to

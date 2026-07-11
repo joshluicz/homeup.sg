@@ -39,6 +39,7 @@ import {
   Table as TableIcon,
 } from "lucide-react";
 import { uploadPlaybookArticleImage } from "@/lib/playbook/storage";
+import { sanitizeArticleHtml } from "@/lib/playbook/sanitize-article-html";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -46,6 +47,11 @@ import { cn } from "@/lib/utils";
 type RichArticleEditorProps = {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
+  minHeight?: string;
+  compact?: boolean;
+  showSectionMenu?: boolean;
+  showTables?: boolean;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -278,10 +284,14 @@ function Toolbar({
   editor,
   onImageUpload,
   uploading,
+  showSectionMenu = true,
+  showTables = true,
 }: {
   editor: Editor;
   onImageUpload: () => void;
   uploading: boolean;
+  showSectionMenu?: boolean;
+  showTables?: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 border-b border-neutral-200 bg-neutral-50 px-2 py-1.5">
@@ -412,15 +422,19 @@ function Toolbar({
         )}
       </ToolbarButton>
 
-      <ToolbarDivider />
+      {showSectionMenu && (
+        <>
+          <ToolbarDivider />
+          <InsertSectionMenu editor={editor} />
+        </>
+      )}
 
-      {/* Section labels */}
-      <InsertSectionMenu editor={editor} />
-
-      <ToolbarDivider />
-
-      {/* Table */}
-      <TableMenu editor={editor} />
+      {showTables && (
+        <>
+          <ToolbarDivider />
+          <TableMenu editor={editor} />
+        </>
+      )}
     </div>
   );
 }
@@ -563,7 +577,15 @@ function TableMenu({ editor }: { editor: Editor }) {
 
 // ─── Main editor ─────────────────────────────────────────────────────────────
 
-export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
+export function RichArticleEditor({
+  value,
+  onChange,
+  placeholder = "Start writing your article here… Use the toolbar above to format text, add headings, callout boxes, and images.",
+  minHeight = "420px",
+  compact = false,
+  showSectionMenu = true,
+  showTables = true,
+}: RichArticleEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -590,21 +612,21 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
       TableRow,
       TableHeader,
       TableCell,
-      Placeholder.configure({
-        placeholder:
-          "Start writing your article here… Use the toolbar above to format text, add headings, callout boxes, and images.",
-      }),
+      Placeholder.configure({ placeholder }),
     ],
     // Accept HTML (new articles) or plain text/Markdown (legacy) as initial content
     content: prepareEditorContent(value),
     onUpdate({ editor: ed }) {
       internalChange.current = true;
-      onChange(ed.getHTML());
+      onChange(sanitizeArticleHtml(ed.getHTML()));
     },
     editorProps: {
       attributes: {
-        class:
-          "prose prose-neutral max-w-none min-h-[420px] px-8 py-6 outline-none focus:outline-none [&>*:first-child]:mt-0",
+        class: cn(
+          "prose prose-neutral max-w-none outline-none focus:outline-none [&>*:first-child]:mt-0",
+          compact ? "min-h-[120px] px-4 py-3 text-sm" : "min-h-[420px] px-8 py-6",
+        ),
+        ...(minHeight ? { style: `min-height: ${minHeight}` } : {}),
       },
       /**
        * Strip all inline styles except text-align and color when content is
@@ -699,15 +721,24 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
           editor={editor}
           onImageUpload={() => fileInputRef.current?.click()}
           uploading={uploading}
+          showSectionMenu={showSectionMenu}
+          showTables={showTables}
         />
 
         <div
           className={cn(
-            "relative bg-neutral-50 px-4 py-4 transition-colors",
+            "relative transition-colors",
+            compact ? "bg-white px-0 py-0" : "bg-neutral-50 px-4 py-4",
             dragging && "bg-primary-50",
           )}
         >
-          <div className="mx-auto max-w-3xl rounded bg-white shadow-sm ring-1 ring-neutral-200">
+          <div
+            className={cn(
+              compact
+                ? "rounded-lg border border-neutral-200 bg-white"
+                : "mx-auto max-w-3xl rounded bg-white shadow-sm ring-1 ring-neutral-200",
+            )}
+          >
             <EditorContent editor={editor} />
           </div>
 
@@ -721,10 +752,12 @@ export function RichArticleEditor({ value, onChange }: RichArticleEditorProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 border-t border-neutral-100 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-400">
-          <Upload className="h-3 w-3 shrink-0" />
-          Drag &amp; drop an image anywhere in the editor, or click the image icon in the toolbar
-        </div>
+        {!compact && (
+          <div className="flex items-center gap-1.5 border-t border-neutral-100 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-400">
+            <Upload className="h-3 w-3 shrink-0" />
+            Drag &amp; drop an image anywhere in the editor, or click the image icon in the toolbar
+          </div>
+        )}
       </div>
 
       {uploadStatus && (

@@ -1,6 +1,11 @@
 import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
+import {
+  articleSectionsFromMarkdownArticle,
+  normalizeArticleSections,
+  serializeArticleSectionsToMarkdown,
+} from "@/lib/playbook/article-sections";
 
 export interface PublishedArticleRef {
   slug: string;
@@ -104,12 +109,17 @@ export async function publishArticle(
 
   const { draft } = article;
   const slug = slugify(draft.title);
+  const articleSections = normalizeArticleSections(
+    articleSectionsFromMarkdownArticle(draft.article),
+  );
+  const serializedArticle = serializeArticleSectionsToMarkdown(articleSections);
 
   const payload = {
     slug,
     title: draft.title,
     description: draft.description,
-    article: draft.article,
+    article: serializedArticle,
+    article_sections: articleSections,
     faq: draft.faq,
     meta_description: draft.metaDescription,
     tags: article.tags,
@@ -118,6 +128,7 @@ export async function publishArticle(
     thumbnail: draft.thumbnail ?? "",
     video_url: "",
     featured: false,
+    content_kind: "article",
     published_at: new Date().toISOString().slice(0, 10),
     updated_at: new Date().toISOString(),
   };

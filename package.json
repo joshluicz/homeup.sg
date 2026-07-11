@@ -25,6 +25,9 @@
     "indexnow:playbook": "node scripts/submit-indexnow.mjs --playbook",
     "indexnow:all": "node scripts/submit-indexnow.mjs --all",
     "playbook:warm": "node scripts/warm-playbook-pages.mjs",
+    "playbook:backfill": "npx tsx scripts/backfill-playbook-article-sections.ts --dry-run",
+    "playbook:backfill:apply": "npx tsx scripts/backfill-playbook-article-sections.ts --apply",
+    "playbook:backfill:audit": "npx tsx scripts/backfill-playbook-article-sections.ts --audit",
     "build:sync-kit": "python scripts/build-listings-sync-kit.py"
   },
   "dependencies": {

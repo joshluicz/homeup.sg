@@ -297,7 +297,10 @@ export function PlaybookLibrary({ videos: initialVideos }: PlaybookLibraryProps)
                 {/* Article body */}
                 {activeArticle.article && (
                   <div className="mt-6">
-                    <ArticleBody markdown={activeArticle.article} />
+                    <ArticleBody
+                      markdown={activeArticle.article}
+                      articleSections={activeArticle.articleSections}
+                    />
                   </div>
                 )}
 

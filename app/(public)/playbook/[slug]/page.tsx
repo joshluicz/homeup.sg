@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ArticleBody } from "@/components/sections/ArticleBody";
 import { articleHasInlineFaq, parsePlaybookArticleBlocks } from "@/lib/playbook/article-format";
+import { articleSectionsToBlocks } from "@/lib/playbook/article-sections";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { PlaybookArticleHeader } from "@/components/sections/PlaybookArticleHeader";
@@ -62,7 +63,10 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
   if (!video?.article?.trim()) notFound();
 
   const hasFaq = (video.faq?.length ?? 0) > 0;
-  const articleBlocks = parsePlaybookArticleBlocks(video.article!);
+  const usesStructuredSections = Boolean(video.articleSections);
+  const articleBlocks = usesStructuredSections
+    ? articleSectionsToBlocks(video.articleSections!)
+    : parsePlaybookArticleBlocks(video.article!);
   const showStructuredFaq = articleHasInlineFaq(articleBlocks);
   const showDbFaq = hasFaq && !showStructuredFaq;
   const inlineFaqBlock = articleBlocks.find(
@@ -103,7 +107,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
             <PlaybookArticleHeroMedia video={video} />
 
             <div className="mt-10 sm:mt-12">
-              <ArticleBody markdown={video.article!} />
+              <ArticleBody markdown={video.article!} articleSections={video.articleSections} />
             </div>
 
             {showDbFaq && (

@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import type { FaqEntry, PlaybookVideo, PlaybookTopic } from "@/lib/data/playbook";
+import { isArticleSections } from "@/lib/playbook/article-sections";
 
 export function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
+  const rawSections = row.article_sections;
+  const articleSections = isArticleSections(rawSections) ? rawSections : null;
+
   return {
     id: row.id as string,
     slug: row.slug as string,
@@ -15,6 +19,7 @@ export function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
     publishedAt: row.published_at as string,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
     article: (row.article as string) ?? "",
+    articleSections,
     faq: ((row.faq as FaqEntry[]) ?? []).filter((f) => f?.q && f?.a),
     metaDescription: (row.meta_description as string) ?? "",
     topic: (row.topic as PlaybookVideo["topic"]) ?? null,
