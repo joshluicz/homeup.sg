@@ -12,7 +12,7 @@ import {
   getCachedMetrics,
   isGscConfigured,
 } from "@/lib/analytics/gsc";
-import { getPublishedSlugs } from "@/lib/pipeline/publishTarget";
+import { getPublishedSlugs } from "@/lib/playbook/published-articles";
 import { NextResponse } from "next/server";
 
 /** All live /playbook article slugs — same public read path as the site. */

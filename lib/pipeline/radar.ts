@@ -1,6 +1,9 @@
 import { matchTopicAgainstCatalog } from "./dedup";
 import { RADAR_TOPICS, RADAR_WEIGHTS } from "./radarConfig";
-import { getPublishedArticles, type PublishedArticleRef } from "./publishTarget";
+import {
+  getPublishedPlaybookArticlesServer,
+  type PublishedArticleRef,
+} from "@/lib/playbook/published-articles";
 import type { TopicCandidate } from "./types";
 
 export type GenerationTopicResolution =
@@ -45,7 +48,7 @@ export function scoreRadarTopics(published: PublishedArticleRef[]): TopicCandida
  * Marks topics that semantically match a live /playbook article as alreadyPublished.
  */
 export async function runRadar(): Promise<TopicCandidate[]> {
-  const published = await getPublishedArticles();
+  const published = await getPublishedPlaybookArticlesServer();
   return scoreRadarTopics(published);
 }
 
@@ -69,7 +72,7 @@ export async function resolveGenerationTopic(
   explicit?: TopicCandidate | null,
   options?: { allowCovered?: boolean },
 ): Promise<GenerationTopicResolution> {
-  const published = await getPublishedArticles();
+  const published = await getPublishedPlaybookArticlesServer();
 
   if (explicit?.title?.trim()) {
     if (!options?.allowCovered) {

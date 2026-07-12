@@ -1,4 +1,4 @@
-import type { PublishedArticleRef } from "./publishTarget";
+import type { PublishedArticleRef } from "@/lib/playbook/published-articles";
 
 /** Why a radar topic was marked as already covered on /playbook. */
 export type CoverageMatchReason = "jaccard" | "entity_tuple" | "topic_id";

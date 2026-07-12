@@ -7,6 +7,9 @@ export type PlaybookPublishedArticleRef = {
   article?: string;
 };
 
+/** Alias used by pipeline dedup / radar. */
+export type PublishedArticleRef = PlaybookPublishedArticleRef;
+
 /** Same filter as the public /playbook page — article with content in either field. */
 export function filterPublishedPlaybookArticleRows(
   rows: Record<string, unknown>[],
@@ -64,4 +67,10 @@ export async function getPublishedPlaybookArticlesServer(): Promise<PlaybookPubl
   }));
 
   return mergePublishedArticlesWithJson(dbRows);
+}
+
+/** Slugs of all published playbook articles. */
+export async function getPublishedSlugs(): Promise<string[]> {
+  const articles = await getPublishedPlaybookArticlesServer();
+  return articles.map((a) => a.slug);
 }

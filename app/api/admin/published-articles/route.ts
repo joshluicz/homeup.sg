@@ -1,5 +1,5 @@
 import { requireAuth } from "@/lib/supabase/auth";
-import { getPublishedArticles } from "@/lib/pipeline/publishTarget";
+import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/published-articles";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export async function GET() {
   if (error) return error;
 
   try {
-    const articles = await getPublishedArticles();
+    const articles = await getPublishedPlaybookArticlesServer();
     return NextResponse.json(
       articles.map(({ slug, title }) => ({ slug, title })),
     );

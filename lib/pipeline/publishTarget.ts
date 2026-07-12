@@ -3,29 +3,10 @@ import {
   normalizeArticleSections,
   serializeArticleSectionsToMarkdown,
 } from "@/lib/playbook/article-sections";
-import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/published-articles";
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
 
-export interface PublishedArticleRef {
-  slug: string;
-  title: string;
-  article?: string;
-}
-
-/**
- * All live /playbook articles — same anon read path as the public site, plus JSON fallback.
- * Used by the topic radar to skip duplicates.
- */
-export async function getPublishedArticles(): Promise<PublishedArticleRef[]> {
-  return getPublishedPlaybookArticlesServer();
-}
-
-/** Slugs of all published playbook articles (convenience wrapper). */
-export async function getPublishedSlugs(): Promise<string[]> {
-  const articles = await getPublishedArticles();
-  return articles.map((a) => a.slug);
-}
+export type { PublishedArticleRef } from "@/lib/playbook/published-articles";
 
 function slugify(title: string): string {
   return (

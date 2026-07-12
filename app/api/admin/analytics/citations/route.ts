@@ -14,7 +14,7 @@ import {
   checkArticleCitations,
   getCitationSummaries,
 } from "@/lib/analytics/aiCitations";
-import { getPublishedArticles } from "@/lib/pipeline/publishTarget";
+import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/published-articles";
 import { NextResponse } from "next/server";
 
 // Citation checks involve multiple sequential Perplexity calls
@@ -30,7 +30,7 @@ export async function GET() {
   }
 
   // All live /playbook article slugs — same public read path as the site.
-  const slugs = (await getPublishedArticles()).map((a) => a.slug);
+  const slugs = (await getPublishedPlaybookArticlesServer()).map((a) => a.slug);
   const summaries = await getCitationSummaries(slugs);
 
   return NextResponse.json({ configured: true, summaries });
