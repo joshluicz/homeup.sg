@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "check:admin-catalog-imports": "node scripts/check-admin-catalog-imports.mjs",
     "pg:install": "patchright install chrome",
     "pg:diagnostic": "node scripts/pg-sync-diagnostic.mjs",
     "pg:fetch": "npx tsx scripts/run-pg-fetch.ts",

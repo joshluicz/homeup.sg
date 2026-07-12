@@ -1,3 +1,14 @@
+/**
+ * Lightweight catalog of live /playbook articles for admin list UIs, dedup, and analytics.
+ *
+ * KEEP THIS MODULE MINIMAL — no imports from:
+ *   - lib/playbook/queries (→ next/headers via supabase/server)
+ *   - lib/playbook/server-queries (→ react cache + queries)
+ *   - lib/playbook/article-sections (→ isomorphic-dompurify)
+ *   - lib/pipeline/publishTarget (write path only)
+ *
+ * CI: scripts/check-admin-catalog-imports.mjs + ESLint no-restricted-imports.
+ */
 import { createClient } from "@supabase/supabase-js";
 import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
 

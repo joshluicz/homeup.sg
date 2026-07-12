@@ -1,3 +1,10 @@
+/**
+ * Write path only — inserts generated articles into playbook_videos.
+ *
+ * Do NOT import this module from catalog/list API routes (published-articles, GSC, etc.).
+ * Top-level imports include article-sections → isomorphic-dompurify, which crashes some
+ * serverless route bundles at module load. Reads belong in lib/playbook/published-articles.ts.
+ */
 import {
   articleSectionsFromMarkdownArticle,
   normalizeArticleSections,

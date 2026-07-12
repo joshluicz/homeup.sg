@@ -1,3 +1,54 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": ["lib/playbook/published-articles.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/playbook/queries",
+                "message": "published-articles is a lightweight catalog read — do not import queries (pulls next/headers)."
+              },
+              {
+                "name": "@/lib/playbook/server-queries",
+                "message": "published-articles must not import server-queries (pulls react cache and queries)."
+              },
+              {
+                "name": "@/lib/playbook/article-sections",
+                "message": "published-articles must not import article-sections (pulls isomorphic-dompurify)."
+              },
+              {
+                "name": "@/lib/supabase/server",
+                "message": "published-articles uses anon Supabase only — do not import supabase/server."
+              },
+              {
+                "name": "@/lib/pipeline/publishTarget",
+                "message": "publishTarget is write-only — keep reads in published-articles."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["app/api/admin/**/route.ts"],
+      "excludedFiles": ["app/api/admin/publish/route.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/pipeline/publishTarget",
+                "message": "Use @/lib/playbook/published-articles for catalog reads. publishTarget loads article-sections at module init."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

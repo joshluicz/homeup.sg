@@ -36,5 +36,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
+      - name: Check admin catalog import boundaries
+        run: npm run check:admin-catalog-imports
+
       - name: Build Next.js (server mode)
         run: npm run build
