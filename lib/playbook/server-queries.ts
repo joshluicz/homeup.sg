@@ -26,6 +26,7 @@ import {
   getPlaybookArticleFromJson,
 } from "@/lib/playbook/json-fallback";
 import {
+  filterPublishedPlaybookArticleRows,
   getPublishedPlaybookArticlesServer,
   type PlaybookPublishedArticleRef,
 } from "@/lib/playbook/published-articles";
@@ -138,15 +139,6 @@ export type WatchPageSitemapEntry = {
 export async function getWatchPageSitemapEntries(): Promise<WatchPageSitemapEntry[]> {
   const slugs = await getAllWatchSlugsServer();
   return slugs.map((slug) => ({ slug, updatedAt: null }));
-}
-
-function filterPublishedPlaybookArticleRows(
-  rows: Record<string, unknown>[],
-): Record<string, unknown>[] {
-  return rows.filter((row) => {
-    const entry = rowToVideo(row);
-    return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
-  });
 }
 
 export { getPublishedPlaybookArticlesServer, type PlaybookPublishedArticleRef };

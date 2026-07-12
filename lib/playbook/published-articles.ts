@@ -2,8 +2,6 @@ import { createClient } from "@supabase/supabase-js";
 import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
 import { isPlaybookArticle } from "@/lib/playbook/content-kind";
 import { rowToVideo } from "@/lib/playbook/queries";
-import { hasStructuredArticleContent } from "@/lib/playbook/article-sections";
-import type { PlaybookVideo } from "@/lib/data/playbook";
 
 export type PlaybookPublishedArticleRef = {
   slug: string;
@@ -11,17 +9,13 @@ export type PlaybookPublishedArticleRef = {
   article?: string;
 };
 
-function isPublishedPlaybookArticle(entry: PlaybookVideo): boolean {
-  if (isPlaybookArticle(entry)) return true;
-  return Boolean(entry.contentKind === "article" && hasStructuredArticleContent(entry.articleSections));
-}
-
-function filterPublishedPlaybookArticleRows(
+/** Same filter as getPlaybookArticlesByTopicServer — isPlaybookArticle + non-empty body. */
+export function filterPublishedPlaybookArticleRows(
   rows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return rows.filter((row) => {
     const entry = rowToVideo(row);
-    return isPublishedPlaybookArticle(entry);
+    return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
   });
 }
 
