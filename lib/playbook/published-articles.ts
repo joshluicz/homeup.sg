@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
-import { rowToVideo } from "@/lib/playbook/queries";
 
 export type PlaybookPublishedArticleRef = {
   slug: string;
@@ -13,9 +12,11 @@ export function filterPublishedPlaybookArticleRows(
   rows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return rows.filter((row) => {
-    const entry = rowToVideo(row);
-    if (entry.contentKind === "video") return false;
-    return Boolean(entry.article?.trim()) || Boolean(entry.articleSections);
+    const contentKind = (row.content_kind as string | null) ?? null;
+    if (contentKind === "video") return false;
+    const hasArticle = Boolean((row.article as string | null)?.trim());
+    const hasSections = row.article_sections != null;
+    return hasArticle || hasSections;
   });
 }
 
@@ -56,14 +57,11 @@ export async function getPublishedPlaybookArticlesServer(): Promise<PlaybookPubl
     return mergePublishedArticlesWithJson([]);
   }
 
-  const dbRows = filterPublishedPlaybookArticleRows(data ?? []).map((row) => {
-    const entry = rowToVideo(row);
-    return {
-      slug: entry.slug,
-      title: entry.title,
-      article: entry.article?.trim() || undefined,
-    };
-  });
+  const dbRows = filterPublishedPlaybookArticleRows(data ?? []).map((row) => ({
+    slug: row.slug as string,
+    title: row.title as string,
+    article: (row.article as string | null)?.trim() || undefined,
+  }));
 
   return mergePublishedArticlesWithJson(dbRows);
 }
