@@ -14,6 +14,7 @@ import {
   checkArticleCitations,
   getCitationSummaries,
 } from "@/lib/analytics/aiCitations";
+import { getPublishedArticles } from "@/lib/pipeline/publishTarget";
 import { NextResponse } from "next/server";
 
 // Citation checks involve multiple sequential Perplexity calls
@@ -28,14 +29,8 @@ export async function GET() {
     return NextResponse.json({ configured: false, summaries: [] });
   }
 
-  // Get all article slugs
-  const supabase = createServiceClient();
-  const { data: articles } = await supabase
-    .from("playbook_videos")
-    .select("slug")
-    .neq("article", "");
-
-  const slugs = (articles ?? []).map((a: { slug: string }) => a.slug);
+  // All live /playbook article slugs — same public read path as the site.
+  const slugs = (await getPublishedArticles()).map((a) => a.slug);
   const summaries = await getCitationSummaries(slugs);
 
   return NextResponse.json({ configured: true, summaries });

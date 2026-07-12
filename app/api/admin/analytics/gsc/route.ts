@@ -12,17 +12,12 @@ import {
   getCachedMetrics,
   isGscConfigured,
 } from "@/lib/analytics/gsc";
-import { createServiceClient } from "@/lib/supabase/service";
+import { getPublishedSlugs } from "@/lib/pipeline/publishTarget";
 import { NextResponse } from "next/server";
 
-/** Fetch all article slugs that have article content from the DB */
+/** All live /playbook article slugs — same public read path as the site. */
 async function getArticleSlugs(): Promise<string[]> {
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from("playbook_videos")
-    .select("slug")
-    .neq("article", "");
-  return (data ?? []).map((r: { slug: string }) => r.slug);
+  return getPublishedSlugs();
 }
 
 /** GET — returns cached metrics (fast, no external call) */

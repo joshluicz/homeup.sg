@@ -30,7 +30,6 @@ import type { RefreshQueueItem } from "@/app/api/admin/analytics/refresh-queue/r
 interface Article {
   slug: string;
   title: string;
-  published_at: string;
 }
 
 interface RowData {
@@ -147,16 +146,26 @@ export function ArticleAnalyticsDashboard() {
     setError(null);
     try {
       const [artRes, gscRes, leadsRes, citRes, queueRes] = await Promise.all([
-        fetch("/api/admin/playbook"),
+        fetch("/api/admin/published-articles"),
         fetch("/api/admin/analytics/gsc"),
         fetch("/api/admin/analytics/leads"),
         fetch("/api/admin/analytics/citations"),
         fetch("/api/admin/analytics/refresh-queue"),
       ]);
 
-      const artData = artRes.ok ? (await artRes.json() as Article[]) : [];
-      // Filter to articles only (have article content)
-      setArticles(artData.filter((a: Article & { article?: string }) => a.article));
+      const artPayload: unknown = artRes.ok ? await artRes.json() : null;
+      if (!artRes.ok) {
+        const detail =
+          typeof artPayload === "object" &&
+          artPayload !== null &&
+          "error" in artPayload &&
+          typeof (artPayload as { error?: unknown }).error === "string"
+            ? (artPayload as { error: string }).error
+            : `Failed to load articles (${artRes.status})`;
+        throw new Error(detail);
+      }
+      if (!Array.isArray(artPayload)) throw new Error("Invalid articles response");
+      setArticles(artPayload as Article[]);
 
       if (gscRes.ok) {
         const gscData = await gscRes.json() as { configured: boolean; metrics: SlugMetric[] };
