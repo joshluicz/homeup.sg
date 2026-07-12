@@ -1,6 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 import { getAllPlaybookArticlesFromJson } from "@/lib/playbook/json-fallback";
-import { isPlaybookArticle } from "@/lib/playbook/content-kind";
 import { rowToVideo } from "@/lib/playbook/queries";
 
 export type PlaybookPublishedArticleRef = {
@@ -9,13 +8,14 @@ export type PlaybookPublishedArticleRef = {
   article?: string;
 };
 
-/** Same filter as getPlaybookArticlesByTopicServer — isPlaybookArticle + non-empty body. */
+/** Same filter as the public /playbook page — article with content in either field. */
 export function filterPublishedPlaybookArticleRows(
   rows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return rows.filter((row) => {
     const entry = rowToVideo(row);
-    return isPlaybookArticle(entry) && Boolean(entry.article?.trim());
+    if (entry.contentKind === "video") return false;
+    return Boolean(entry.article?.trim()) || Boolean(entry.articleSections);
   });
 }
 

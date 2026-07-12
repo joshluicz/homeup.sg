@@ -61,9 +61,8 @@ export async function getPlaybookArticlesByTopicServer(): Promise<
   }
 
   const articles = emptyArticlesByTopic();
-  for (const row of data ?? []) {
+  for (const row of filterPublishedPlaybookArticleRows(data ?? [])) {
     const entry = rowToVideo(row);
-    if (!isPlaybookArticle(entry) || !entry.article?.trim()) continue;
     const topic = resolveTopic(row);
     articles[topic].push({ ...entry, topic });
   }

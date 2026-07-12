@@ -145,27 +145,25 @@ export function ArticleAnalyticsDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [artRes, gscRes, leadsRes, citRes, queueRes] = await Promise.all([
-        fetch("/api/admin/published-articles"),
+      const artRes = await fetch("/api/admin/published-articles");
+      if (!artRes.ok) {
+        let detail = `Failed to load articles (${artRes.status})`;
+        try {
+          const errBody = await artRes.json() as { error?: string };
+          if (typeof errBody.error === "string") detail = errBody.error;
+        } catch { /* response wasn't JSON */ }
+        throw new Error(detail);
+      }
+      const artPayload: unknown = await artRes.json();
+      if (!Array.isArray(artPayload)) throw new Error("Invalid articles response");
+      setArticles(artPayload as Article[]);
+
+      const [gscRes, leadsRes, citRes, queueRes] = await Promise.all([
         fetch("/api/admin/analytics/gsc"),
         fetch("/api/admin/analytics/leads"),
         fetch("/api/admin/analytics/citations"),
         fetch("/api/admin/analytics/refresh-queue"),
       ]);
-
-      const artPayload: unknown = artRes.ok ? await artRes.json() : null;
-      if (!artRes.ok) {
-        const detail =
-          typeof artPayload === "object" &&
-          artPayload !== null &&
-          "error" in artPayload &&
-          typeof (artPayload as { error?: unknown }).error === "string"
-            ? (artPayload as { error: string }).error
-            : `Failed to load articles (${artRes.status})`;
-        throw new Error(detail);
-      }
-      if (!Array.isArray(artPayload)) throw new Error("Invalid articles response");
-      setArticles(artPayload as Article[]);
 
       if (gscRes.ok) {
         const gscData = await gscRes.json() as { configured: boolean; metrics: SlugMetric[] };

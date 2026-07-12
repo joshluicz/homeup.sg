@@ -311,17 +311,15 @@ export function ArticleGenerationTab() {
     setCoverageError(null);
     try {
       const res = await fetch("/api/admin/published-articles");
-      const data: unknown = await res.json();
       if (!res.ok) {
-        const detail =
-          typeof data === "object" &&
-          data !== null &&
-          "error" in data &&
-          typeof (data as { error?: unknown }).error === "string"
-            ? (data as { error: string }).error
-            : `Failed to load coverage (${res.status})`;
+        let detail = `Failed to load coverage (${res.status})`;
+        try {
+          const errBody = await res.json() as { error?: string };
+          if (typeof errBody.error === "string") detail = errBody.error;
+        } catch { /* response wasn't JSON */ }
         throw new Error(detail);
       }
+      const data: unknown = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid coverage response");
       setPublishedCoverage(data as { slug: string; title: string }[]);
     } catch (err) {
