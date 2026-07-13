@@ -45,6 +45,11 @@ function matchesMode(v: Video, mode: ContentType): boolean {
   return mode === "video" ? isPlaybookVideo(row) : isPlaybookArticle(row);
 }
 
+function playbookSubmitLabel(mode: ContentType, editing: boolean): string {
+  if (mode === "article") return editing ? "Save & publish" : "Publish article";
+  return editing ? "Save changes" : "Add video";
+}
+
 const TOPIC_BADGE: Record<PlaybookTopic, string> = {
   upgraders: "bg-amber-50 text-amber-800 ring-amber-200",
   buying_first: "bg-sky-50 text-sky-800 ring-sky-200",
@@ -216,6 +221,7 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const thumbFileInputRef = useRef<HTMLInputElement>(null);
+  const submitBarRef = useRef<HTMLDivElement>(null);
 
   const editingEntry = editId ? videos.find((v) => v.id === editId) : null;
   const editingSlug = editingEntry?.slug ?? "";
@@ -412,16 +418,22 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.title.trim()) { setError("Title is required."); return; }
+    if (!form.title.trim()) {
+      setError("Title is required.");
+      submitBarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      return;
+    }
 
     const hasVideo = Boolean(form.video_url.trim());
 
     if (mode === "video" && !hasVideo) {
       setError("Add a video link or upload a file.");
+      submitBarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       return;
     }
     if (!form.topic || !PLAYBOOK_TOPICS.includes(form.topic as PlaybookTopic)) {
       setError("Choose a playbook section (Sell/Upgrade, Buy Tips, or Insights).");
+      submitBarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       return;
     }
 
@@ -434,7 +446,8 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       const validation = validateArticleSections(normalizedSections, normalizedFaq);
       if (!validation.ok) {
         setSectionErrors(validation.errors);
-        setError("Fix the highlighted article sections before saving.");
+        setError("Fix the highlighted article sections before publishing.");
+        submitBarRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
         return;
       }
       setSectionErrors([]);
@@ -1050,11 +1063,28 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
               </FormSection>
             )}
 
-            <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-              <Button type="submit" disabled={saving || uploading} className="min-w-[100px]">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editId ? "Save changes" : "Add guide"}
-              </Button>
-              <Button type="button" variant="outline" onClick={cancelForm}>Cancel</Button>
+            <div
+              ref={submitBarRef}
+              className="sticky bottom-0 z-20 -mx-4 border-t border-neutral-200 bg-white/95 px-4 py-4 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur sm:-mx-6 sm:px-6"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="submit" disabled={saving || uploading} className="min-w-[140px]">
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    playbookSubmitLabel(mode, Boolean(editId))
+                  )}
+                </Button>
+                <Button type="button" variant="outline" onClick={cancelForm}>
+                  Cancel
+                </Button>
+                {!isVideoMode && (
+                  <p className="text-xs font-normal text-neutral-500">
+                    Publishes immediately to{" "}
+                    <span className="font-medium text-neutral-700">/playbook/your-slug</span>
+                  </p>
+                )}
+              </div>
             </div>
           </form>
         </div>
