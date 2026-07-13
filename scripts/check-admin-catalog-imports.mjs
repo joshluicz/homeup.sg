@@ -18,6 +18,7 @@ const CATALOG_READ_ROUTES = [
   "app/api/admin/published-articles/route.ts",
   "app/api/admin/analytics/gsc/route.ts",
   "app/api/admin/analytics/citations/route.ts",
+  "app/api/admin/topics/route.ts",
 ];
 
 /** publishTarget is write-only — only the publish handler may import it. */

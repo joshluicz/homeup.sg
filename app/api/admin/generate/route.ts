@@ -5,8 +5,9 @@ import { resolveGenerationTopic } from "@/lib/pipeline/radar";
 import { NextResponse } from "next/server";
 import type { TopicCandidate } from "@/lib/pipeline/types";
 
-// Article generation involves 3 Claude calls — allow up to 90 seconds
+// Article generation involves 3 Claude calls — allow up to 90 seconds (Vercel Pro).
 export const maxDuration = 90;
+export const dynamic = "force-dynamic";
 
 /**
  * POST /api/admin/generate
@@ -17,66 +18,65 @@ export const maxDuration = 90;
  * Returns: PackagedArticle + optional selectedTopic when auto-picked
  */
 export async function POST(request: Request) {
-  const { error } = await requireAuth();
-  if (error) return error;
-
   try {
-    requireAnthropicApiKey();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "ANTHROPIC_API_KEY is not configured";
-    return NextResponse.json({ error: "Configuration error", detail: message }, { status: 503 });
-  }
+    const { error } = await requireAuth();
+    if (error) return error;
 
-  let body: {
-    topic?: TopicCandidate;
-    auto?: boolean;
-    refresh?: boolean;
-    authorSlug?: string;
-  } = {};
-  try {
-    body = await request.json();
-  } catch {
-    // Empty body is valid for auto-generate
-    body = {};
-  }
+    try {
+      requireAnthropicApiKey();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "ANTHROPIC_API_KEY is not configured";
+      return NextResponse.json({ error: "Configuration error", detail: message }, { status: 503 });
+    }
 
-  const wantsAuto = body.auto === true || !body.topic?.title?.trim();
-  const allowCoveredRefresh =
-    body.refresh === true && !wantsAuto && Boolean(body.topic?.title?.trim());
+    let body: {
+      topic?: TopicCandidate;
+      auto?: boolean;
+      refresh?: boolean;
+      authorSlug?: string;
+    } = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
 
-  const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic, {
-    allowCovered: allowCoveredRefresh,
-  });
+    const wantsAuto = body.auto === true || !body.topic?.title?.trim();
+    const allowCoveredRefresh =
+      body.refresh === true && !wantsAuto && Boolean(body.topic?.title?.trim());
 
-  if (resolved.status === "all_covered") {
-    return NextResponse.json(
-      {
-        error: "NO_UNPUBLISHED_TOPICS",
-        detail:
-          "Every trending topic is already on the Playbook — add new seeds in radarConfig.ts or enter a custom topic below.",
-      },
-      { status: 404 },
-    );
-  }
+    const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic, {
+      allowCovered: allowCoveredRefresh,
+    });
 
-  if (resolved.status === "topic_covered") {
-    return NextResponse.json(
-      {
-        error: "TOPIC_ALREADY_COVERED",
-        detail: `This topic is already covered by "${resolved.matchedArticle.title}".`,
-        matchedArticle: resolved.matchedArticle,
-      },
-      { status: 409 },
-    );
-  }
+    if (resolved.status === "all_covered") {
+      return NextResponse.json(
+        {
+          error: "NO_UNPUBLISHED_TOPICS",
+          detail:
+            "Every trending topic is already on the Playbook — add new seeds in radarConfig.ts or enter a custom topic below.",
+        },
+        { status: 404 },
+      );
+    }
 
-  const { topic, autoSelected } = resolved;
-  const authorSlug =
-    typeof body.authorSlug === "string" && body.authorSlug.trim()
-      ? body.authorSlug.trim()
-      : undefined;
+    if (resolved.status === "topic_covered") {
+      return NextResponse.json(
+        {
+          error: "TOPIC_ALREADY_COVERED",
+          detail: `This topic is already covered by "${resolved.matchedArticle.title}".`,
+          matchedArticle: resolved.matchedArticle,
+        },
+        { status: 409 },
+      );
+    }
 
-  try {
+    const { topic, autoSelected } = resolved;
+    const authorSlug =
+      typeof body.authorSlug === "string" && body.authorSlug.trim()
+        ? body.authorSlug.trim()
+        : undefined;
+
     const result = await generateArticle(topic, authorSlug ? { authorSlug } : undefined);
     return NextResponse.json({
       ...result,

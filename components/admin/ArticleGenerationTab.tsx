@@ -22,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { parseAdminJsonResponse } from "@/lib/admin/parse-admin-json";
 import { AGENTS } from "@/lib/data/agents";
 import type { PackagedArticle, TopicCandidate } from "@/lib/pipeline/types";
 import { PUBLISH_THRESHOLD } from "@/lib/pipeline/types";
@@ -295,10 +296,8 @@ export function ArticleGenerationTab() {
     setLoadingTopics(true);
     try {
       const res = await fetch("/api/admin/topics");
-      if (!res.ok) throw new Error("Failed to load topics");
-      const data: unknown = await res.json();
-      if (!Array.isArray(data)) throw new Error("Invalid topics response");
-      setTopics(data as TopicCandidate[]);
+      const data = await parseAdminJsonResponse<TopicCandidate[]>(res, "Load topics");
+      setTopics(data);
     } catch {
       setTopics([]);
     } finally {
@@ -311,17 +310,11 @@ export function ArticleGenerationTab() {
     setCoverageError(null);
     try {
       const res = await fetch("/api/admin/published-articles");
-      if (!res.ok) {
-        let detail = `Failed to load coverage (${res.status})`;
-        try {
-          const errBody = await res.json() as { error?: string };
-          if (typeof errBody.error === "string") detail = errBody.error;
-        } catch { /* response wasn't JSON */ }
-        throw new Error(detail);
-      }
-      const data: unknown = await res.json();
-      if (!Array.isArray(data)) throw new Error("Invalid coverage response");
-      setPublishedCoverage(data as { slug: string; title: string }[]);
+      const data = await parseAdminJsonResponse<{ slug: string; title: string }[]>(
+        res,
+        "Load Playbook coverage",
+      );
+      setPublishedCoverage(data);
     } catch (err) {
       setPublishedCoverage([]);
       setCoverageError(err instanceof Error ? err.message : "Failed to load coverage");
@@ -396,15 +389,13 @@ export function ArticleGenerationTab() {
         }),
       });
 
-      const data = (await res.json()) as PackagedArticle & {
-        selectedTopic?: TopicCandidate;
-        detail?: string;
-        error?: string;
-      };
-
-      if (!res.ok) {
-        throw new Error(data.detail || data.error || "Generation failed");
-      }
+      const data = await parseAdminJsonResponse<
+        PackagedArticle & {
+          selectedTopic?: TopicCandidate;
+          detail?: string;
+          error?: string;
+        }
+      >(res, "Article generation");
 
       if (!data.draft?.article?.trim()) {
         throw new Error(
@@ -475,7 +466,7 @@ export function ArticleGenerationTab() {
       body: JSON.stringify({ title }),
     });
     if (res.ok) {
-      const topic: TopicCandidate = await res.json();
+      const topic = await parseAdminJsonResponse<TopicCandidate>(res, "Add custom topic");
       setTopics((prev) => [topic, ...prev]);
       setSelectedTopic(topic);
       setCustomTitle("");
@@ -506,16 +497,7 @@ export function ArticleGenerationTab() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ article: patched, topic: playbookTopic }),
       });
-      if (!res.ok) {
-        const err = (await res.json()) as {
-          detail?: string;
-          error?: string;
-          issues?: string[];
-        };
-        const issueList = err.issues?.length ? `: ${err.issues.join("; ")}` : "";
-        throw new Error(err.detail || err.error || `Publish failed${issueList}`);
-      }
-      const data = await res.json();
+      const data = await parseAdminJsonResponse<{ slug: string; id: string }>(res, "Publish");
       setPublishResult(data);
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : "Publish failed");

@@ -10,7 +10,7 @@
  * articles are found — always degrades gracefully.
  */
 
-import { createServiceClient } from "@/lib/supabase/service";
+import { getPublishedPlaybookArticlesServer } from "@/lib/playbook/published-articles";
 import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -26,22 +26,11 @@ async function fetchExistingArticles(
   excludeSlug?: string,
 ): Promise<{ slug: string; title: string }[]> {
   try {
-    const supabase = createServiceClient();
-    const q = supabase
-      .from("playbook_videos")
-      .select("slug, title")
-      .neq("article", "")
-      .order("published_at", { ascending: false })
-      .limit(60); // cap to keep the prompt reasonable
-
-    const { data } = excludeSlug
-      ? await q.neq("slug", excludeSlug)
-      : await q;
-
-    return (data ?? []).map((r: { slug: string; title: string }) => ({
-      slug: r.slug,
-      title: r.title,
-    }));
+    const articles = await getPublishedPlaybookArticlesServer();
+    return articles
+      .filter((a) => !excludeSlug || a.slug !== excludeSlug)
+      .slice(0, 60)
+      .map(({ slug, title }) => ({ slug, title }));
   } catch {
     return [];
   }
