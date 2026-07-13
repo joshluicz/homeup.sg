@@ -134,10 +134,9 @@ export const AGENTS: Agent[] = [
     quoteThirdPerson: true,
     accolades: [
       "NUS Real Estate (Hons)",
+      "Top Agent Under 40 & Top 3 Producer | C&H 2025",
       "#1 Transactor in Agency | C&H 2025 (Private Residential Purchase)¹",
       "#1 Transactor in Singapore | 2025 (Private Resale Purchase)²",
-      "Top Agent Under 40 & Top 3 Producer | C&H 2025",
-      "Centurion Award 2025³",
     ],
     accoladeFootnotes: [
       {
@@ -147,10 +146,6 @@ export const AGENTS: Agent[] = [
       {
         marker: "²",
         text: "Rankings based on Buyer-represented Purchase transactions (Resale Private Properties) | 2025 | Source: Data.gov.sg",
-      },
-      {
-        marker: "³",
-        text: "Global Award for Top 2% Achievers | C21",
       },
     ],
     about: [],
