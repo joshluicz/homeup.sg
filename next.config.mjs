@@ -7,6 +7,22 @@ const deployAssetId =
   process.env.VERCEL_DEPLOYMENT_ID?.slice(0, 12) ??
   "local";
 
+/** Legacy demo slugs from PLAYBOOK_VIDEOS — no article body; redirect to index. */
+const legacyPlaybookPlaceholderSlugs = [
+  "homeup-fixed-fee-advantage",
+  "hdb-selling-process-explained",
+  "condo-selling-what-to-expect",
+  "staging-home-quick-sale",
+  "buying-hdb-resale-guide",
+  "singapore-property-market-2025",
+  "otp-process-singapore",
+  "sell-and-buy-simultaneously",
+  "common-seller-mistakes",
+  "complimentary-condo-buyer-rep",
+  "valuation-vs-asking-price",
+  "meet-the-homeup-team",
+];
+
 const nextConfig = {
   assetPrefix:
     process.env.VERCEL === "1" ? `/_assets/${deployAssetId}` : undefined,
@@ -112,6 +128,11 @@ const nextConfig = {
         destination: "/playbook",
         permanent: true,
       },
+      ...legacyPlaybookPlaceholderSlugs.map((slug) => ({
+        source: `/playbook/${slug}`,
+        destination: "/playbook",
+        permanent: false,
+      })),
     ];
   },
   async headers() {

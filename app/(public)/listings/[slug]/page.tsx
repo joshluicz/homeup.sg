@@ -11,6 +11,7 @@ import {
   getListingBySlugServer,
   getRelatedListingsServer,
 } from "@/lib/listings/server-queries";
+import { getRelatedPlaybookArticlesForListingServer } from "@/lib/playbook/related-for-listing";
 import { getListingLocationContext } from "@/lib/listings/location-context";
 import { formatListingPrice } from "@/lib/listings/public-utils";
 import { buildPageMetadata } from "@/lib/seo/metadata";
@@ -45,6 +46,10 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
   if (!listing) notFound();
 
   const related = await getRelatedListingsServer(listing.flat_type, listing.slug);
+  const relatedPlaybookArticles = await getRelatedPlaybookArticlesForListingServer({
+    flat_type: listing.flat_type,
+    listed_as: listing.listed_as,
+  });
   const { mapCoords, nearestMrt } = await getListingLocationContext(listing);
 
   return (
@@ -69,6 +74,7 @@ export default async function ListingDetailPage({ params }: ListingDetailPagePro
         <ListingDetailContent
           listing={listing}
           related={related}
+          relatedPlaybookArticles={relatedPlaybookArticles}
           mapCoords={mapCoords}
           nearestMrt={nearestMrt}
         />

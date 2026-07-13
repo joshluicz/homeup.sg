@@ -5,8 +5,8 @@ import {
   PLAYBOOK_TOPICS,
   inferPlaybookTopicFromCategory,
 } from "@/lib/data/playbook";
-import { rowToVideo } from "@/lib/playbook/queries";
-import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import { rowToVideo } from "@/lib/playbook/row-to-video";
+import { hasPlaybookArticleContent, isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
 import {
   findPlaybookVideoBySlug,
   groupPlaybookVideosByTopic,
@@ -182,7 +182,7 @@ async function fetchPlaybookVideoBySlug(slug: string): Promise<PlaybookVideo | n
 
       if (!error && data) {
         const video = rowToVideo(data);
-        if (isPlaybookArticle(video) && video.article?.trim()) return video;
+        if (hasPlaybookArticleContent(video) && !isPlaybookVideo(video)) return video;
       }
     } catch (error) {
       console.warn("fetchPlaybookVideoBySlug Supabase:", error);

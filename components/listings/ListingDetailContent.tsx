@@ -20,7 +20,7 @@ import {
   listedAsLabel,
 } from "@/lib/listings/public-utils";
 import { CONDITION_LABELS, FLAT_TYPE_LABELS } from "@/lib/listings/utils";
-import { getRelatedPlaybookVideos } from "@/lib/data/playbook";
+import type { PlaybookVideo } from "@/lib/data/playbook";
 import { playbookItemCtaLabel, playbookItemPath } from "@/lib/playbook/content-kind";
 import { buildListingWhatsAppUrl } from "@/lib/whatsapp";
 import { buildListingLocationQuery } from "@/lib/listings/nearby-places";
@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 type ListingDetailContentProps = {
   listing: Listing;
   related?: Listing[];
+  relatedPlaybookArticles?: PlaybookVideo[];
   mapCoords?: { lat: number; lng: number } | null;
   nearestMrt?: NearestMrtResult | null;
 };
@@ -58,6 +59,7 @@ function Spec({
 export function ListingDetailContent({
   listing,
   related = [],
+  relatedPlaybookArticles = [],
   mapCoords = null,
   nearestMrt = null,
 }: ListingDetailContentProps) {
@@ -65,10 +67,7 @@ export function ListingDetailContent({
   const priceLabel = formatListingPrice(listing);
   const pricePsf = getListingPricePsf(listing);
   const areaSqm = getListingAreaSqm(listing);
-  const playbookVideos = getRelatedPlaybookVideos({
-    flat_type: listing.flat_type,
-    listed_as: listing.listed_as,
-  });
+  const playbookVideos = relatedPlaybookArticles;
   const typeLabel = flatTypeBadgeLabel(listing.flat_type);
   const whatsAppHref = buildListingWhatsAppUrl(listing.title, priceLabel);
 

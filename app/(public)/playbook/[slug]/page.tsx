@@ -7,6 +7,7 @@ import { PlaybookFaqSection } from "@/components/playbook/PlaybookFaqSection";
 import { resolvePlaybookArticleFaq } from "@/lib/playbook/article-faq";
 import { parsePlaybookArticleBlocks } from "@/lib/playbook/article-format";
 import { articleSectionsToBlocks } from "@/lib/playbook/article-sections";
+import { hasPlaybookArticleContent } from "@/lib/playbook/content-kind";
 import { CtaBanner } from "@/components/sections/CtaBanner";
 import { PlaybookReturnLink } from "@/components/playbook/PlaybookReturnLink";
 import { PlaybookArticleHeader } from "@/components/sections/PlaybookArticleHeader";
@@ -48,7 +49,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: ArticlePageProps) {
   const video = await getPlaybookVideoBySlugServer(params.slug);
-  if (!video?.article?.trim()) notFound();
+  if (!video || !hasPlaybookArticleContent(video)) notFound();
 
   return buildPageMetadata({
     title: video.title,
@@ -64,12 +65,12 @@ export async function generateMetadata({ params }: ArticlePageProps) {
 
 export default async function PlaybookArticlePage({ params }: ArticlePageProps) {
   const video = await getPlaybookVideoBySlugServer(params.slug);
-  if (!video?.article?.trim()) notFound();
+  if (!video || !hasPlaybookArticleContent(video)) notFound();
 
   const usesStructuredSections = Boolean(video.articleSections);
   const articleBlocks = usesStructuredSections
     ? articleSectionsToBlocks(video.articleSections!)
-    : parsePlaybookArticleBlocks(video.article!);
+    : parsePlaybookArticleBlocks(video.article ?? "");
   const faqItems = resolvePlaybookArticleFaq(video, articleBlocks);
   const faqSchemaItems = faqItems;
   const authorSlug = inferPlaybookAgentSlug(video);
@@ -108,7 +109,7 @@ export default async function PlaybookArticlePage({ params }: ArticlePageProps) 
 
             <div className="mt-10 sm:mt-12">
               <ArticleBody
-                markdown={video.article!}
+                markdown={video.article ?? ""}
                 articleSections={video.articleSections}
                 omitFaqFromBody={faqItems.length > 0}
               />

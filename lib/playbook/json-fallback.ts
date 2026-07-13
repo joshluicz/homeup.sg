@@ -57,3 +57,10 @@ export function getAllPlaybookArticlesFromJson(): { slug: string; title: string;
     .filter((row) => Boolean(row.article?.trim()))
     .map((row) => ({ slug: row.slug, title: row.title, article: row.article as string }));
 }
+
+/** Full PlaybookVideo objects from build-time JSON fallback. */
+export function getAllPlaybookVideosFromJson(): PlaybookVideo[] {
+  return (finalTenArticles as JsonArticleEntry[])
+    .filter((row) => Boolean(row.article?.trim()))
+    .map((entry) => jsonEntryToVideo(entry));
+}

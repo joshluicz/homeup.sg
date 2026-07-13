@@ -3,10 +3,15 @@ import { playbookVideoHref } from "@/lib/playbook/embed";
 
 export type PlaybookContentKind = "article" | "video";
 
-type PlaybookRow = Pick<PlaybookVideo, "article" | "videoUrl"> & {
+type PlaybookRow = Pick<PlaybookVideo, "article" | "videoUrl" | "articleSections"> & {
   content_kind?: PlaybookContentKind | null;
   contentKind?: PlaybookContentKind | null;
 };
+
+/** True when the row has renderable article body (flat markdown or structured sections). */
+export function hasPlaybookArticleContent(row: PlaybookRow): boolean {
+  return Boolean(row.article?.trim()) || Boolean(row.articleSections);
+}
 
 export function resolvePlaybookContentKind(row: PlaybookRow): PlaybookContentKind {
   const explicit = row.content_kind ?? row.contentKind;
@@ -35,7 +40,10 @@ export function playbookItemPath(row: PlaybookRow & { slug: string }): string {
   if (isPlaybookVideo(row)) {
     return playbookVideoHref({ slug: row.slug, videoUrl: row.videoUrl }).href;
   }
-  return `/playbook/${row.slug}`;
+  if (hasPlaybookArticleContent(row)) {
+    return `/playbook/${row.slug}`;
+  }
+  return "/playbook";
 }
 
 export function playbookItemCtaLabel(row: PlaybookRow): string {
