@@ -32,25 +32,32 @@ function inspectionReason(
 export async function getCachedIndexRows(urls: string[]): Promise<Map<string, UrlIndexRow>> {
   if (urls.length === 0) return new Map();
   const supabase = createServiceClient();
-  const { data } = await supabase.from("url_index_checks").select("*").in("url", urls);
-
   const map = new Map<string, UrlIndexRow>();
-  for (const row of data ?? []) {
-    map.set(row.url, {
-      url: row.url,
-      slug: row.slug,
-      kind: row.kind,
-      label: row.label,
-      updatedAt: null,
-      verdict: row.verdict,
-      coverageState: row.coverage_state,
-      pageFetchState: row.page_fetch_state,
-      lastCrawlTime: row.last_crawl_time,
-      reason: row.reason ?? "Not checked yet",
-      needsAttention: row.needs_attention,
-      checkedAt: row.checked_at,
-    });
+  const chunkSize = 40;
+
+  for (let i = 0; i < urls.length; i += chunkSize) {
+    const chunk = urls.slice(i, i + chunkSize);
+    const { data, error } = await supabase.from("url_index_checks").select("*").in("url", chunk);
+    if (error) throw new Error(`Failed to load cached index rows: ${error.message}`);
+
+    for (const row of data ?? []) {
+      map.set(row.url, {
+        url: row.url,
+        slug: row.slug,
+        kind: row.kind,
+        label: row.label,
+        updatedAt: null,
+        verdict: row.verdict,
+        coverageState: row.coverage_state,
+        pageFetchState: row.page_fetch_state,
+        lastCrawlTime: row.last_crawl_time,
+        reason: row.reason ?? "Not checked yet",
+        needsAttention: row.needs_attention,
+        checkedAt: row.checked_at,
+      });
+    }
   }
+
   return map;
 }
 

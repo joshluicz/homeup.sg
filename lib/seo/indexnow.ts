@@ -67,7 +67,7 @@ export async function collectIndexNowUrls(
   scope: IndexNowScope,
 ): Promise<string[]> {
   const { getAllListingSlugsServer } = await import("@/lib/listings/server-queries");
-  const { getPlaybookArticleSitemapEntries } = await import("@/lib/playbook/server-queries");
+  const { getPlaybookArticleSitemapEntries } = await import("@/lib/playbook/sitemap-entries");
 
   const urls: string[] = [];
 

@@ -1,7 +1,7 @@
 import { getAllAgentSlugs } from "@/lib/data/agents";
 import { PLAYBOOK_TOPICS } from "@/lib/data/playbook";
 import { getAllListingSlugsServer } from "@/lib/listings/server-queries";
-import { getPlaybookArticleSitemapEntries } from "@/lib/playbook/server-queries";
+import { getPlaybookArticleSitemapEntries } from "@/lib/playbook/sitemap-entries";
 import { SITE_URL } from "@/lib/seo/constants";
 
 export type SitemapUrlKind = "core" | "listing" | "playbook";
