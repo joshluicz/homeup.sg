@@ -18,10 +18,13 @@ export async function POST() {
       result.linked_manual.length > 0 ||
       purged > 0
     ) {
-      revalidateListingPaths([
-        ...result.price_updates.map((update) => update.slug),
-        ...result.linked_manual.map((linked) => linked.slug),
-      ]);
+      revalidateListingPaths(
+        [
+          ...result.price_updates.map((update) => update.slug),
+          ...result.linked_manual.map((linked) => linked.slug),
+        ],
+        { warm: true },
+      );
     }
     return NextResponse.json({ success: true, ...result, purged });
   } catch (err) {

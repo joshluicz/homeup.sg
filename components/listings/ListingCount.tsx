@@ -20,10 +20,13 @@ export function ListingCount({
   const [count, setCount] = useState<number | null>(initialCount ?? null);
 
   useEffect(() => {
-    if (initialCount != null) return;
+    // Always soft-refresh from Supabase so stale ISR HTML doesn't leave the
+    // wrong count on screen after an admin sync (SSR initialCount is a hint).
     getListingStats()
       .then((stats) => setCount(stats.total))
-      .catch(() => setCount(null));
+      .catch(() => {
+        if (initialCount == null) setCount(null);
+      });
   }, [initialCount]);
 
   if (count === null) {

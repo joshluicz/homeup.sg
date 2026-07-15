@@ -11,12 +11,15 @@ export async function triggerListingRevalidate(slugs?: string | string[]): Promi
     : [];
 
   try {
-    await fetch("/api/listings/revalidate", {
+    const res = await fetch("/api/listings/revalidate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slugs: slugList }),
+      body: JSON.stringify({ slugs: slugList, warm: true }),
     });
-  } catch {
-    // Ignore — revalidation is a cache hint, not a critical operation.
+    if (!res.ok) {
+      console.warn("[listings] revalidate request failed:", res.status, await res.text());
+    }
+  } catch (error) {
+    console.warn("[listings] revalidate request error:", error);
   }
 }

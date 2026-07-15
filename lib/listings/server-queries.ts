@@ -1,6 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { ListingStats } from "@/lib/listings/queries";
 import type { FlatType, Listing } from "@/lib/listings/types";
+
+/** Shared tag for on-demand ISR. Bust with revalidateTag(LISTINGS_CACHE_TAG). */
+export const LISTINGS_CACHE_TAG = "listings";
 
 function mapListingRow(row: Record<string, unknown>): Listing {
   return {
@@ -11,13 +15,28 @@ function mapListingRow(row: Record<string, unknown>): Listing {
   } as Listing;
 }
 
-/** Server/build-time Supabase queries (no cookies). Used by sitemap and generateStaticParams. */
-export async function getAllListingSlugsServer(): Promise<string[]> {
+/**
+ * Server Supabase client that never participates in Next's fetch Data Cache.
+ * Listing pages are cached via the Full Route Cache / unstable_cache tags instead —
+ * otherwise revalidatePath can regenerate a page that still reads a stale fetch entry.
+ */
+function serverSupabase(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
+  if (!url || !key) return null;
 
-  const supabase = createClient(url, key);
+  return createClient(url, key, {
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+        fetch(input, { ...init, cache: "no-store" }),
+    },
+  });
+}
+
+async function fetchAllListingSlugs(): Promise<string[]> {
+  const supabase = serverSupabase();
+  if (!supabase) return [];
+
   const { data, error } = await supabase
     .from("listings")
     .select("slug")
@@ -32,12 +51,10 @@ export async function getAllListingSlugsServer(): Promise<string[]> {
   return (data ?? []).map((row) => row.slug as string);
 }
 
-export async function getListingBySlugServer(slug: string): Promise<Listing | null> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
+async function fetchListingBySlug(slug: string): Promise<Listing | null> {
+  const supabase = serverSupabase();
+  if (!supabase) return null;
 
-  const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("listings")
     .select("*")
@@ -50,14 +67,12 @@ export async function getListingBySlugServer(slug: string): Promise<Listing | nu
   return mapListingRow(data);
 }
 
-export async function getListingStatsServer(): Promise<ListingStats> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
+async function fetchListingStats(): Promise<ListingStats> {
+  const supabase = serverSupabase();
+  if (!supabase) {
     return { total: 0, hdb: 0, condo: 0, landed: 0, apartment: 0 };
   }
 
-  const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("listings")
     .select("flat_type")
@@ -81,16 +96,14 @@ export async function getListingStatsServer(): Promise<ListingStats> {
   };
 }
 
-export async function getRelatedListingsServer(
+async function fetchRelatedListings(
   flatType: FlatType,
   excludeSlug: string,
-  limit = 4,
+  limit: number,
 ): Promise<Listing[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
+  const supabase = serverSupabase();
+  if (!supabase) return [];
 
-  const supabase = createClient(url, key);
   const { data, error } = await supabase
     .from("listings")
     .select("*")
@@ -109,12 +122,10 @@ export async function getRelatedListingsServer(
   return (data ?? []).map(mapListingRow);
 }
 
-export async function getActiveListingsServer(limit?: number): Promise<Listing[]> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
+async function fetchActiveListings(limit?: number): Promise<Listing[]> {
+  const supabase = serverSupabase();
+  if (!supabase) return [];
 
-  const supabase = createClient(url, key);
   let query = supabase
     .from("listings")
     .select("*")
@@ -131,4 +142,47 @@ export async function getActiveListingsServer(limit?: number): Promise<Listing[]
   }
 
   return (data ?? []).map(mapListingRow);
+}
+
+/** Server/build-time Supabase queries (no cookies). Used by sitemap and generateStaticParams. */
+export function getAllListingSlugsServer(): Promise<string[]> {
+  return unstable_cache(fetchAllListingSlugs, ["listing-slugs"], {
+    tags: [LISTINGS_CACHE_TAG],
+    revalidate: 300,
+  })();
+}
+
+export function getListingBySlugServer(slug: string): Promise<Listing | null> {
+  return unstable_cache(
+    () => fetchListingBySlug(slug),
+    ["listing-by-slug", slug],
+    { tags: [LISTINGS_CACHE_TAG], revalidate: 300 },
+  )();
+}
+
+export function getListingStatsServer(): Promise<ListingStats> {
+  return unstable_cache(fetchListingStats, ["listing-stats"], {
+    tags: [LISTINGS_CACHE_TAG],
+    revalidate: 300,
+  })();
+}
+
+export function getRelatedListingsServer(
+  flatType: FlatType,
+  excludeSlug: string,
+  limit = 4,
+): Promise<Listing[]> {
+  return unstable_cache(
+    () => fetchRelatedListings(flatType, excludeSlug, limit),
+    ["related-listings", flatType, excludeSlug, String(limit)],
+    { tags: [LISTINGS_CACHE_TAG], revalidate: 300 },
+  )();
+}
+
+export function getActiveListingsServer(limit?: number): Promise<Listing[]> {
+  return unstable_cache(
+    () => fetchActiveListings(limit),
+    ["active-listings", limit == null ? "all" : String(limit)],
+    { tags: [LISTINGS_CACHE_TAG], revalidate: 300 },
+  )();
 }

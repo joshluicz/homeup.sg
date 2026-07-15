@@ -37,7 +37,8 @@ export async function POST(request: Request) {
         error: outcome.error,
       });
     }
-    revalidateListingPaths([outcome.slug]);
+    // Tag/path only — skip page warming on each import. Bulk sync warms once at the end.
+    revalidateListingPaths([outcome.slug], { warm: false });
     return NextResponse.json({
       success: true,
       title: outcome.title,

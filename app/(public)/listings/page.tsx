@@ -3,7 +3,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ListingsPageClient } from "@/components/listings/ListingsPageClient";
 import { CtaBanner } from "@/components/sections/CtaBanner";
-import { ListingsHero } from "@/components/sections/ListingsHero";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, listingsItemListSchema } from "@/lib/seo/schema";
 import { getActiveListingsServer, getListingStatsServer } from "@/lib/listings/server-queries";
@@ -15,7 +14,8 @@ export const metadata = buildPageMetadata({
   path: "/listings",
 });
 
-export const revalidate = 3600;
+/** Safety net: listing data also busts via revalidateTag("listings") after sync. */
+export const revalidate = 300;
 
 export default async function ListingsPage() {
   const [listings, stats] = await Promise.all([
@@ -42,7 +42,6 @@ export default async function ListingsPage() {
       />
       <Navbar />
       <main className="bg-white">
-        <ListingsHero stats={stats} />
         <ListingsPageClient initialListings={listings} initialStats={stats} />
         <CtaBanner />
       </main>

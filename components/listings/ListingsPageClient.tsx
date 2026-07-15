@@ -3,8 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { ListingsGrid } from "@/components/sections/ListingsGrid";
 import { ListingsGridStatic } from "@/components/listings/ListingsGridStatic";
+import { ListingsHero } from "@/components/sections/ListingsHero";
 import type { Listing } from "@/lib/listings/types";
-import { getActiveListings, type ListingStats } from "@/lib/listings/queries";
+import { getActiveListings, getListingStats, type ListingStats } from "@/lib/listings/queries";
 
 function ListingCardSkeleton() {
   return (
@@ -50,30 +51,31 @@ type Props = {
 
 export function ListingsPageClient({ initialListings, initialStats }: Props) {
   const [listings, setListings] = useState<Listing[]>(initialListings);
+  const [stats, setStats] = useState<ListingStats>(initialStats);
   const hasInitialData = initialListings.length > 0 || initialStats.total > 0;
   const [loading, setLoading] = useState(!hasInitialData);
 
   useEffect(() => {
-    if (initialListings.length > 0) {
-      setLoading(false);
-      return;
-    }
-
-    getActiveListings()
-      .then((listingsData) => {
+    // Soft-refresh so /listings reflects admin syncs even when ISR HTML is stale.
+    Promise.all([getActiveListings(), getListingStats()])
+      .then(([listingsData, statsData]) => {
         setListings(listingsData);
+        setStats(statsData);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [initialListings.length]);
-
-  if (loading) {
-    return <ListingsGridSkeleton />;
-  }
+  }, []);
 
   return (
-    <Suspense fallback={<ListingsGridStatic listings={listings} />}>
-      <ListingsGrid listings={listings} />
-    </Suspense>
+    <>
+      <ListingsHero stats={stats} />
+      {loading ? (
+        <ListingsGridSkeleton />
+      ) : (
+        <Suspense fallback={<ListingsGridStatic listings={listings} />}>
+          <ListingsGrid listings={listings} />
+        </Suspense>
+      )}
+    </>
   );
 }

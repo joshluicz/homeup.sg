@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, TrendingUp } from "lucide-react";
@@ -7,6 +8,7 @@ import { ListingCount } from "@/components/listings/ListingCount";
 import { BackgroundPathsLayer } from "@/components/ui/background-paths";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { FadeInUp } from "@/components/ui/motion-primitives";
+import { getListingStats } from "@/lib/listings/queries";
 
 export const ACTIVE_LISTINGS_GOAL = 400;
 
@@ -108,7 +110,15 @@ function formatAsOfDate(date: Date): string {
 
 export function AboutListingsGoal({ listingCount, asOfDate }: AboutListingsGoalProps) {
   const prefersReducedMotion = useReducedMotion();
-  const effectiveCount = listingCount ?? COUNT_FALLBACK;
+  const [liveCount, setLiveCount] = useState(listingCount);
+
+  useEffect(() => {
+    getListingStats()
+      .then((stats) => setLiveCount(stats.total))
+      .catch(() => {});
+  }, []);
+
+  const effectiveCount = liveCount ?? listingCount ?? COUNT_FALLBACK;
   const progressPct = Math.min(
     100,
     Math.round((effectiveCount / ACTIVE_LISTINGS_GOAL) * 100),
@@ -169,7 +179,7 @@ export function AboutListingsGoal({ listingCount, asOfDate }: AboutListingsGoalP
                       </p>
                     </div>
 
-                    <AnimatedGoalNumber listingCount={listingCount} goal={ACTIVE_LISTINGS_GOAL} />
+                    <AnimatedGoalNumber listingCount={liveCount ?? listingCount} goal={ACTIVE_LISTINGS_GOAL} />
 
                     <p className="mt-1 text-sm font-semibold text-primary-300">active listings</p>
 

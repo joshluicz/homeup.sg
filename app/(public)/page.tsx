@@ -32,6 +32,9 @@ export const metadata = buildPageMetadata({
   path: "/",
 });
 
+/** Safety net: listing counts also bust via revalidateTag("listings") after sync. */
+export const revalidate = 300;
+
 export default async function Home() {
   const [stats, previewListings] = await Promise.all([
     getListingStatsServer(),

@@ -16,6 +16,9 @@ export const metadata = buildPageMetadata({
   path: "/sell",
 });
 
+/** Safety net: listing counts also bust via revalidateTag("listings") after sync. */
+export const revalidate = 300;
+
 export default async function SellPage() {
   const stats = await getListingStatsServer();
 

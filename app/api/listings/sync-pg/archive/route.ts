@@ -12,7 +12,11 @@ export async function POST() {
     const archived = await archiveRemovedPgListings(supabase);
     const { purged } = await purgeExpiredArchivedListings(supabase);
     if (archived.length > 0 || purged > 0) {
-      revalidateListingPaths(archived.map((row) => row.slug));
+      // Panel sync warms once at the end after imports complete.
+      revalidateListingPaths(
+        archived.map((row) => row.slug),
+        { warm: false },
+      );
     }
     return NextResponse.json({ success: true, archived, purged });
   } catch (err) {

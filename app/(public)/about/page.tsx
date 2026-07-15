@@ -14,6 +14,9 @@ export const metadata = buildPageMetadata({
   path: "/about",
 });
 
+/** Safety net: listing counts also bust via revalidateTag("listings") after sync. */
+export const revalidate = 300;
+
 export default async function AboutPage() {
   const stats = await getListingStatsServer();
   const asOfDate = new Date().toLocaleDateString("en-SG", {
