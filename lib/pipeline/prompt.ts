@@ -25,12 +25,6 @@ How HomeUp Approaches This:
 Conclusion:
 
 [Summary + optional CTA — 2–3 sentences]
-
-FAQ:
-
-Q: [question]? A: [answer.]
-
-[Repeat Q/A pairs — 3–5 total]
 `.trim();
 
 const FORMAT_RULES = `
@@ -122,22 +116,23 @@ Return valid JSON only (no markdown fences):
   "title": "...",
   "description": "1–2 sentence card description, max 35 words",
   "metaDescription": "SEO meta description, max 155 chars, includes primary keyword",
-  "article": "full article using the EXACT section format above",
-  "faq": [{"q": "...", "a": "..."}]
+  "article": "full article using the EXACT section format above (Quick Answer through Conclusion — do NOT include FAQ in article body)",
+  "faq": [{"q": "...", "a": "..."}, ... at least 3 pairs]
 }`;
 }
 
 /** Prompt to check CEA compliance and structural correctness. */
-export function compliancePrompt(article: string): string {
+export function compliancePrompt(article: string, faqCount = 0): string {
   return `You are a CEA (Council for Estate Agencies) compliance reviewer for a Singapore property blog.
 
 Check this article for:
 1. Guaranteed returns or yield claims
 2. False urgency ("act now", "never been a better time", etc.)
 3. Misleading legal/financial figures not attributed to official sources
-4. Missing required sections: Quick Answer, How HomeUp Approaches This, Conclusion, FAQ
-5. Incorrect Singapore-specific facts (wrong ABSD rates, MOP period, etc.)
-6. CEA terminology violations — HomeUp/HomeUP must NEVER be called an "agency", "estate agency", or "property agency". Use "fixed-fee property agent", "CEA-licensed agent", or "HomeUP team" instead.
+4. Incorrect Singapore-specific facts (wrong ABSD rates, MOP period, etc.)
+5. CEA terminology violations — HomeUp/HomeUP must NEVER be called an "agency", "estate agency", or "property agency". Use "fixed-fee property agent", "CEA-licensed agent", or "HomeUP team" instead.
+
+Structure is already validated (${faqCount} FAQ pairs stored separately for schema). Focus on factual and CEA copy issues only.
 
 ${CEA_TERMINOLOGY_GUIDANCE}
 

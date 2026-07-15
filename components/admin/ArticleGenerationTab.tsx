@@ -77,8 +77,9 @@ function qualityVerdict(overall: number): string {
 
 function QualityScorePanel({ result }: { result: PackagedArticle }) {
   const llm = result.audit.llm;
+  const llmTotal = llm ? llm.seo + llm.geo + llm.aeo : 0;
 
-  if (llm) {
+  if (llm && llmTotal > 0) {
     const overall = (llm.seo + llm.geo + llm.aeo) / 3;
     const verdict = qualityVerdict(overall);
     const verdictColor =
@@ -1074,7 +1075,8 @@ export function ArticleGenerationTab() {
               </span>
             </div>
 
-            {result.audit.llm ? (
+            {result.audit.llm &&
+            result.audit.llm.seo + result.audit.llm.geo + result.audit.llm.aeo > 0 ? (
               // Real LLM audit — show SEO / GEO / AEO on 0–10 scale
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-3">
@@ -1244,7 +1246,10 @@ export function ArticleGenerationTab() {
                         publishing ||
                         !allStepsDone ||
                         editedMeta.length > 155 ||
-                        (!!result?.audit?.llm && !result.audit.llm.passesGate && !auditOverride)
+                        (!!result?.audit?.llm &&
+                          result.audit.llm.seo + result.audit.llm.geo + result.audit.llm.aeo > 0 &&
+                          !result.audit.llm.passesGate &&
+                          !auditOverride)
                       }
                       className="shrink-0"
                     >

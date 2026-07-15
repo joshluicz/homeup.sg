@@ -102,6 +102,8 @@ export async function runLlmAudit(
     const geo = clamp(Math.round(parsed.geo ?? 0));
     const aeo = clamp(Math.round(parsed.aeo ?? 0));
 
+    if (seo + geo + aeo === 0) return null;
+
     // Weighted overall: SEO 30%, GEO 40%, AEO 30%
     const overall = Math.round((seo * 0.3 + geo * 0.4 + aeo * 0.3) * 10) / 10;
 

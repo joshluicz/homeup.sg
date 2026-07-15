@@ -55,9 +55,15 @@ export async function publishArticle(
   const { draft } = article;
   const slug = slugify(draft.title);
   const articleSections = normalizeArticleSections(
-    articleSectionsFromMarkdownArticle(draft.article),
+    draft.articleSections ??
+      articleSectionsFromMarkdownArticle(draft.article),
   );
   const serializedArticle = serializeArticleSectionsToMarkdown(articleSections);
+  const relatedMatch = draft.article.match(/\nRelated guides:\s*\n[\s\S]*$/i);
+  const articleWithLinks =
+    relatedMatch && !serializedArticle.includes("Related guides:")
+      ? `${serializedArticle}${relatedMatch[0]}`
+      : serializedArticle;
 
   const payload = buildPlaybookVideoDbPayload(
     {
@@ -71,7 +77,7 @@ export async function publishArticle(
       featured: false,
       publishedAt: new Date().toISOString().slice(0, 10),
       tags: article.tags,
-      article: serializedArticle,
+      article: articleWithLinks,
       articleSections,
       faq: draft.faq,
       metaDescription: draft.metaDescription,

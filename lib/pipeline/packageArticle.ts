@@ -1,11 +1,26 @@
 import type { AuditScores, ComplianceResult, Draft, PackagedArticle } from "./types";
 import type { LlmAuditResult } from "./audit";
+import {
+  articleSectionsFromMarkdownArticle,
+  validateArticleSections,
+} from "@/lib/playbook/article-sections";
 
-const REQUIRED_SECTIONS = ["Quick Answer:", "How HomeUp Approaches This:", "Conclusion:", "FAQ:"];
+function scoreStructure(draft: Draft): number {
+  const sections =
+    draft.articleSections ?? articleSectionsFromMarkdownArticle(draft.article);
+  const validation = validateArticleSections(sections, draft.faq);
+  if (validation.ok) return 100;
 
-function scoreStructure(article: string): number {
-  const present = REQUIRED_SECTIONS.filter((s) => article.includes(s)).length;
-  return Math.round((present / REQUIRED_SECTIONS.length) * 100);
+  const requiredChecks = [
+    sections.quickAnswer,
+    sections.introduction,
+    sections.homeup,
+    sections.conclusion,
+    draft.faq.length >= 3,
+    sections.sections.some((s) => s.title.trim()),
+  ];
+  const passed = requiredChecks.filter(Boolean).length;
+  return Math.round((passed / requiredChecks.length) * 100);
 }
 
 function scoreSeo(draft: Draft): number {
@@ -13,25 +28,22 @@ function scoreSeo(draft: Draft): number {
   const article = draft.article.toLowerCase();
   const meta = draft.metaDescription;
 
-  // Meta description present and within length
   if (meta && meta.length >= 50 && meta.length <= 155) score += 30;
   else if (meta && meta.length > 0) score += 15;
 
-  // Title present
   if (draft.title && draft.title.length <= 70) score += 20;
 
-  // Primary keywords appear in article
   const keywords = draft.brief.primaryKeywords;
   const hits = keywords.filter((kw) => article.includes(kw.toLowerCase()));
   score += Math.round((hits.length / Math.max(keywords.length, 1)) * 30);
 
-  // FAQ section adds structured data value
   if (draft.faq.length >= 3) score += 20;
 
   return Math.min(score, 100);
 }
 
 function scoreCompliance(compliance: ComplianceResult): number {
+  if (compliance.passed) return 100;
   if (compliance.issues.length === 0) return 100;
   const deduction = compliance.issues.length * 20;
   return Math.max(0, 100 - deduction);
@@ -46,36 +58,39 @@ function slugify(title: string): string {
     .replace(/-+/g, "-");
 }
 
+function isUsableLlmAudit(llm: LlmAuditResult | null | undefined): llm is LlmAuditResult {
+  if (!llm) return false;
+  return llm.seo + llm.geo + llm.aeo > 0;
+}
+
 /**
  * Assembles the final packaged article with audit scores and suggested slug.
- * @param llmAudit  Real LLM audit result (Phase 4). When provided, its scores
- *                  drive the headline numbers; heuristic scores remain as structure/compliance.
  */
 export function packageArticle(
   draft: Draft,
   compliance: ComplianceResult,
   llmAudit?: LlmAuditResult | null,
 ): PackagedArticle {
-  const structure = scoreStructure(compliance.patchedArticle || draft.article);
+  const structure = scoreStructure(draft);
   const heuristicSeo = scoreSeo(draft);
   const comp = scoreCompliance(compliance);
 
-  // Prefer real LLM overall (×10 to convert 0–10 → 0–100 scale), fall back to heuristic
-  const overall = llmAudit
-    ? Math.round(llmAudit.overall * 10)
+  const llm = isUsableLlmAudit(llmAudit) ? llmAudit : undefined;
+
+  const overall = llm
+    ? Math.round(llm.overall * 10)
     : Math.round(structure * 0.4 + heuristicSeo * 0.35 + comp * 0.25);
 
-  const seo = llmAudit ? Math.round(llmAudit.seo * 10) : heuristicSeo;
+  const seo = llm ? Math.round(llm.seo * 10) : heuristicSeo;
 
   const audit: AuditScores = {
     structure,
     seo,
     compliance: comp,
     overall,
-    ...(llmAudit ? { llm: llmAudit } : {}),
+    ...(llm ? { llm } : {}),
   };
 
-  // Combine topic tags with detected property terms
   const tags = Array.from(
     new Set([
       ...draft.brief.topic.tags,

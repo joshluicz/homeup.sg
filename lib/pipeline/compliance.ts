@@ -3,36 +3,34 @@ import {
   detectAgencyTerminologyViolations,
   sanitizeAgencyTerminology,
 } from "./cea-terminology";
+import {
+  articleSectionsFromMarkdownArticle,
+  validateArticleSections,
+} from "@/lib/playbook/article-sections";
 import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 import type { ComplianceResult, Draft } from "./types";
 
-const REQUIRED_SECTIONS = [
-  "Quick Answer:",
-  "How HomeUp Approaches This:",
-  "Conclusion:",
-  "FAQ:",
-];
-
-/** Fast structural check without a Claude call. */
-function structureCheck(article: string): { issues: string[]; warnings: string[] } {
+/** Fast structural check — matches admin Playbook editor requirements. */
+function structureCheck(draft: Draft): { issues: string[]; warnings: string[] } {
   const issues: string[] = [];
   const warnings: string[] = [];
 
-  for (const section of REQUIRED_SECTIONS) {
-    if (!article.includes(section)) {
-      issues.push(`Missing required section: "${section}"`);
-    }
+  const sections =
+    draft.articleSections ?? articleSectionsFromMarkdownArticle(draft.article);
+  const validation = validateArticleSections(sections, draft.faq);
+  if (!validation.ok) {
+    issues.push(...validation.errors);
   }
 
-  if (/^\\s*</.test(article.trim())) {
+  if (/^\s*</.test(draft.article.trim())) {
     issues.push("Article appears to contain HTML — must use plain structured Markdown format.");
   }
 
-  const wordCount = article.split(/\s+/).filter(Boolean).length;
+  const wordCount = draft.article.split(/\s+/).filter(Boolean).length;
   if (wordCount < 300) warnings.push(`Article is short (${wordCount} words); aim for 450–700.`);
   if (wordCount > 900) warnings.push(`Article is long (${wordCount} words); consider trimming.`);
 
-  const terminologyIssues = detectAgencyTerminologyViolations(article);
+  const terminologyIssues = detectAgencyTerminologyViolations(draft.article);
   for (const issue of terminologyIssues) {
     issues.push(issue);
   }
@@ -45,9 +43,8 @@ function structureCheck(article: string): { issues: string[]; warnings: string[]
  * Returns patched article if issues are found and Claude can fix them.
  */
 export async function checkCompliance(draft: Draft): Promise<ComplianceResult> {
-  const { issues: structIssues, warnings: structWarnings } = structureCheck(draft.article);
+  const { issues: structIssues, warnings: structWarnings } = structureCheck(draft);
 
-  // Structural or terminology issues — sanitize what we can without burning Claude tokens
   if (structIssues.length > 0) {
     const { text: sanitized } = sanitizeAgencyTerminology(draft.article);
     const remaining = detectAgencyTerminologyViolations(sanitized);
@@ -63,7 +60,7 @@ export async function checkCompliance(draft: Draft): Promise<ComplianceResult> {
   const message = await client.messages.create({
     model: getLlmModel(),
     max_tokens: 4096,
-    messages: [{ role: "user", content: compliancePrompt(draft.article) }],
+    messages: [{ role: "user", content: compliancePrompt(draft.article, draft.faq.length) }],
   });
 
   const raw = extractTextContent(message);

@@ -46,6 +46,8 @@ export interface Draft {
   article: string;
   faq: { q: string; a: string }[];
   thumbnail?: string;
+  /** Structured sections matching the admin Playbook editor (set by finalizePipelineDraft). */
+  articleSections?: import("@/lib/playbook/article-sections").ArticleSections;
 }
 
 export interface ComplianceResult {
