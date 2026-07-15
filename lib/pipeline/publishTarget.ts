@@ -10,6 +10,10 @@ import {
   normalizeArticleSections,
   serializeArticleSectionsToMarkdown,
 } from "@/lib/playbook/article-sections";
+import {
+  buildPlaybookVideoDbPayload,
+  writePlaybookVideoRow,
+} from "@/lib/playbook/playbook-db-write";
 import { createClient } from "@supabase/supabase-js";
 import type { PackagedArticle } from "./types";
 
@@ -55,32 +59,31 @@ export async function publishArticle(
   );
   const serializedArticle = serializeArticleSectionsToMarkdown(articleSections);
 
-  const payload = {
-    slug,
-    title: draft.title,
-    description: draft.description,
-    article: serializedArticle,
-    article_sections: articleSections,
-    faq: draft.faq,
-    meta_description: draft.metaDescription,
-    tags: article.tags,
-    topic,
-    agent_slug: draft.brief.authorSlug,
-    thumbnail: draft.thumbnail ?? "",
-    video_url: "",
-    featured: false,
-    content_kind: "article",
-    published_at: new Date().toISOString().slice(0, 10),
-    updated_at: new Date().toISOString(),
-  };
+  const payload = buildPlaybookVideoDbPayload(
+    {
+      slug,
+      title: draft.title,
+      description: draft.description,
+      category: "tips",
+      topic,
+      thumbnail: draft.thumbnail ?? "",
+      videoUrl: "",
+      featured: false,
+      publishedAt: new Date().toISOString().slice(0, 10),
+      tags: article.tags,
+      article: serializedArticle,
+      articleSections,
+      faq: draft.faq,
+      metaDescription: draft.metaDescription,
+      agentSlug: draft.brief.authorSlug,
+      contentKind: "article",
+    },
+    { slugify: () => slug },
+  );
 
-  const { data, error } = await supabase
-    .from("playbook_videos")
-    .insert(payload)
-    .select("id, slug")
-    .single();
+  const { data, error } = await writePlaybookVideoRow(supabase, { payload });
 
-  if (error) throw new Error(error.message);
+  if (error || !data) throw new Error(error?.message ?? "Publish failed");
 
-  return { slug: data.slug, id: data.id };
+  return { slug: data.slug as string, id: data.id as string };
 }

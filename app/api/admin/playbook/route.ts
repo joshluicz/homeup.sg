@@ -7,10 +7,13 @@ import {
   serializeArticleSectionsToMarkdown,
   validateArticleSections,
 } from "@/lib/playbook/article-sections";
+import {
+  buildPlaybookVideoDbPayload,
+  writePlaybookVideoRow,
+  type PlaybookContentKind,
+} from "@/lib/playbook/playbook-db-write";
 
-// Push article + metadata changes live without a redeploy: revalidate the affected
-// pages so the ISR-cached /playbook/[slug] (and the listing) regenerate on next request.
-function revalidatePlaybook(slug?: string, contentKind?: "article" | "video") {
+function revalidatePlaybook(slug?: string, contentKind?: PlaybookContentKind) {
   const slugs = slug && contentKind === "article" ? [slug] : [];
   revalidatePlaybookPaths(slugs);
 }
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
 
   const article = (fields.article ?? "").trim();
   const videoUrl = (fields.videoUrl ?? "").trim();
-  const contentKind = fields.contentKind === "video" ? "video" : "article";
+  const contentKind: PlaybookContentKind = fields.contentKind === "video" ? "video" : "article";
   const rawSections = fields.articleSections ?? fields.article_sections;
   const articleSections =
     contentKind === "article" && isArticleSections(rawSections)
@@ -102,52 +105,44 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = {
-    slug: fields.slug || slugify(fields.title),
-    title: fields.title,
-    description: fields.description ?? "",
-    category: fields.category,
-    duration: contentKind === "video" ? (fields.duration ?? "") : "",
-    thumbnail: fields.thumbnail ?? "",
-    video_url: contentKind === "video" ? (fields.videoUrl ?? "") : "",
-    featured: fields.featured ?? false,
-    published_at: fields.publishedAt ?? new Date().toISOString().slice(0, 10),
-    tags: fields.tags ?? [],
-    article: contentKind === "article" ? serializedArticle : "",
-    article_sections: contentKind === "article" ? articleSections : null,
-    faq: faqEntries,
-    meta_description: contentKind === "article" ? (fields.metaDescription ?? "") : "",
-    topic: fields.topic ?? null,
-    agent_slug: fields.agentSlug || null,
-    updated_at: new Date().toISOString(),
-  };
+  const payload = buildPlaybookVideoDbPayload(
+    {
+      slug: fields.slug,
+      title: fields.title,
+      description: fields.description ?? "",
+      category: fields.category,
+      topic: fields.topic,
+      duration: fields.duration,
+      thumbnail: fields.thumbnail,
+      videoUrl: fields.videoUrl,
+      featured: fields.featured,
+      publishedAt: fields.publishedAt,
+      tags: fields.tags,
+      article: serializedArticle,
+      articleSections,
+      faq: faqEntries,
+      metaDescription: fields.metaDescription,
+      agentSlug: fields.agentSlug,
+      contentKind,
+    },
+    { slugify },
+  );
 
-  if (id) {
-    const { data, error: dbError } = await supabase
-      .from("playbook_videos")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
-    if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-    revalidatePlaybook(payload.slug, contentKind);
-    return NextResponse.json({ video: data });
-  }
-
-  const { data, error: dbError } = await supabase
-    .from("playbook_videos")
-    .insert(payload)
-    .select()
-    .single();
+  const { data, error: dbError } = await writePlaybookVideoRow(supabase, {
+    id: id || undefined,
+    payload,
+  });
 
   if (dbError) {
-    if (dbError.code === "23505")
+    if (dbError.code === "23505") {
       return NextResponse.json({ error: "A video with this slug already exists" }, { status: 409 });
+    }
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
 
-  revalidatePlaybook(payload.slug, contentKind);
-  return NextResponse.json({ video: data }, { status: 201 });
+  const slug = String(data.slug ?? payload.slug);
+  revalidatePlaybook(slug, contentKind);
+  return NextResponse.json({ video: data }, { status: id ? 200 : 201 });
 }
 
 export async function DELETE(request: Request) {
@@ -159,14 +154,16 @@ export async function DELETE(request: Request) {
 
   const { data: row } = await supabase
     .from("playbook_videos")
-    .select("slug, article, video_url")
+    .select("slug, article, video_url, article_sections")
     .eq("id", id)
     .maybeSingle();
 
   const { error: dbError } = await supabase.from("playbook_videos").delete().eq("id", id);
   if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
 
-  const wasArticle = Boolean((row?.article as string | null)?.trim());
+  const wasArticle = Boolean(
+    (row?.article as string | null)?.trim() || row?.article_sections != null,
+  );
   revalidatePlaybook(row?.slug as string | undefined, wasArticle ? "article" : "video");
   return NextResponse.json({ ok: true });
 }

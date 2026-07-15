@@ -28,7 +28,7 @@ import {
   uploadPlaybookThumbnail,
   uploadPlaybookVideoFile,
 } from "@/lib/playbook/storage";
-import { isPlaybookArticle, isPlaybookVideo } from "@/lib/playbook/content-kind";
+import { isPlaybookVideo, hasPlaybookArticleContent } from "@/lib/playbook/content-kind";
 import {
   isSheetCatalogueAdminId,
   mergeAdminPlaybookVideos,
@@ -41,8 +41,12 @@ const CATEGORIES: VideoCategory[] = ["selling", "buying", "process", "market", "
 type ContentType = "article" | "video";
 
 function matchesMode(v: Video, mode: ContentType): boolean {
-  const row = { article: v.article, videoUrl: v.video_url };
-  return mode === "video" ? isPlaybookVideo(row) : isPlaybookArticle(row);
+  const row = {
+    article: v.article,
+    videoUrl: v.video_url,
+    articleSections: v.article_sections,
+  };
+  return mode === "video" ? isPlaybookVideo(row) : hasPlaybookArticleContent(row);
 }
 
 function playbookSubmitLabel(mode: ContentType, editing: boolean): string {
@@ -471,53 +475,52 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
         ? serializeArticleSectionsToMarkdown(normalizedSections)
         : "";
 
-    const payload = {
-      slug: isSheetCatalogue ? editingSlug : newSlug,
-      title: form.title.trim(),
-      description: form.description.trim(),
-      category: form.category,
-      topic: form.topic as PlaybookTopic,
-      duration: mode === "video" ? form.duration.trim() : "",
-      thumbnail:
-        mode === "video"
-          ? form.thumbnail.trim() || resolvedVideoThumbnail
-          : form.thumbnail.trim(),
-      video_url: mode === "video" ? form.video_url.trim() : "",
-      featured: form.featured,
-      published_at: form.published_at,
-      tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
-      article: serializedArticle,
-      article_sections: normalizedSections,
-      meta_description: mode === "article" ? form.meta_description.trim() : "",
-      faq: mode === "article" ? normalizedFaq : [],
-      content_kind: mode === "article" ? "article" : "video",
-      agent_slug: form.agentSlug || null,
-      updated_at: new Date().toISOString(),
-    };
+    try {
+      const response = await fetch("/api/admin/playbook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editId && !isSheetCatalogue ? editId : undefined,
+          slug: isSheetCatalogue ? editingSlug : newSlug,
+          title: form.title.trim(),
+          description: form.description.trim(),
+          category: form.category,
+          topic: form.topic,
+          duration: mode === "video" ? form.duration.trim() : "",
+          thumbnail:
+            mode === "video"
+              ? form.thumbnail.trim() || resolvedVideoThumbnail
+              : form.thumbnail.trim(),
+          videoUrl: mode === "video" ? form.video_url.trim() : "",
+          featured: form.featured,
+          publishedAt: form.published_at,
+          tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
+          article: serializedArticle,
+          articleSections: normalizedSections,
+          metaDescription: mode === "article" ? form.meta_description.trim() : "",
+          faq: mode === "article" ? normalizedFaq : [],
+          contentKind: mode,
+          agentSlug: form.agentSlug || null,
+        }),
+      });
 
-    if (editId && !isSheetCatalogue) {
-      const { error: dbError } = await supabase
-        .from("playbook_videos")
-        .update(payload)
-        .eq("id", editId);
-      if (dbError) { setError(dbError.message); setSaving(false); return; }
-    } else {
-      const { error: dbError } = await supabase
-        .from("playbook_videos")
-        .insert({
-          ...payload,
-          created_at: new Date().toISOString(),
-        });
-      if (dbError) { setError(dbError.message); setSaving(false); return; }
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setError(data.error || "Could not save this guide.");
+        setSaving(false);
+        return;
+      }
+
+      const articleSlug = editingSlug || newSlug || "";
+      await revalidatePlaybook(mode === "article" ? articleSlug : undefined);
+      setSaving(false);
+      setShowForm(false);
+      setEditId(null);
+      await loadVideos();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save this guide.");
+      setSaving(false);
     }
-
-    // Use the already-computed slug — never re-call slugify() here, as Date.now() changes.
-    const articleSlug = editingSlug || newSlug || "";
-    await revalidatePlaybook(mode === "article" ? articleSlug : undefined);
-    setSaving(false);
-    setShowForm(false);
-    setEditId(null);
-    await loadVideos();
   }
 
   // Push the direct-Supabase save/delete live on the ISR-cached public pages immediately.
@@ -562,7 +565,13 @@ export function PlaybookTab({ mode }: { mode: ContentType }) {
       }
 
       await revalidatePlaybook(
-        isPlaybookArticle({ article: v.article, videoUrl: v.video_url }) ? v.slug : undefined,
+        hasPlaybookArticleContent({
+          article: v.article,
+          videoUrl: v.video_url,
+          articleSections: v.article_sections,
+        })
+          ? v.slug
+          : undefined,
       );
       await loadVideos();
     } catch (err) {
