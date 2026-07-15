@@ -1,4 +1,5 @@
 import { BRAND, trackedWhatsappUrl } from "./brand";
+import { CEA_TERMINOLOGY_GUIDANCE } from "./cea-terminology";
 import { SG_FACTS } from "./sgFacts";
 import type { Brief, TopicCandidate } from "./types";
 
@@ -9,7 +10,7 @@ Quick Answer:
 
 Introduction:
 
-[Who this is for + brief Dennis/HomeUp intro — 2–3 sentences]
+[Who this is for + brief author intro as a fixed-fee property agent with HomeUp — 2–3 sentences]
 
 [Question heading ending with ? on its own line]
 
@@ -97,6 +98,8 @@ ${sgGlossary}
 
 CEA COMPLIANCE — NEVER say:
 ${BRAND.voice.avoid.map((a) => `• ${a}`).join("\n")}
+
+${CEA_TERMINOLOGY_GUIDANCE}
 ${transactionBlock}
 SEO TITLE: ${brief.seoTitle}
 PRIMARY KEYWORDS: ${brief.primaryKeywords.join(", ")}
@@ -109,7 +112,8 @@ ${ARTICLE_FORMAT}
 ${FORMAT_RULES}
 
 In "How HomeUp Approaches This:" mention:
-- HomeUp is a fixed-fee agency: HDB from ${BRAND.fees.hdb}, Condo/EC from ${BRAND.fees.condoEc}, Landed from ${BRAND.fees.landed}
+- HomeUp offers fixed-fee agent service: HDB from ${BRAND.fees.hdb}, Condo/EC from ${BRAND.fees.condoEc}, Landed from ${BRAND.fees.landed}
+- Refer to HomeUp as a team of CEA-licensed property agents — never as an "agency"
 - Include a WhatsApp CTA using EXACTLY this link: ${trackedWhatsappUrl(slugHint ?? "")}
 - Also link to ${BRAND.cta.playbook} for more guides
 
@@ -133,6 +137,9 @@ Check this article for:
 3. Misleading legal/financial figures not attributed to official sources
 4. Missing required sections: Quick Answer, How HomeUp Approaches This, Conclusion, FAQ
 5. Incorrect Singapore-specific facts (wrong ABSD rates, MOP period, etc.)
+6. CEA terminology violations — HomeUp/HomeUP must NEVER be called an "agency", "estate agency", or "property agency". Use "fixed-fee property agent", "CEA-licensed agent", or "HomeUP team" instead.
+
+${CEA_TERMINOLOGY_GUIDANCE}
 
 ARTICLE:
 ---

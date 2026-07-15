@@ -12,6 +12,7 @@ import {
   writePlaybookVideoRow,
   type PlaybookContentKind,
 } from "@/lib/playbook/playbook-db-write";
+import { sanitizeArticleSectionsFields, sanitizeDraftFields } from "@/lib/pipeline/cea-terminology";
 
 function revalidatePlaybook(slug?: string, contentKind?: PlaybookContentKind) {
   const slugs = slug && contentKind === "article" ? [slug] : [];
@@ -49,18 +50,35 @@ export async function POST(request: Request) {
   const videoUrl = (fields.videoUrl ?? "").trim();
   const contentKind: PlaybookContentKind = fields.contentKind === "video" ? "video" : "article";
   const rawSections = fields.articleSections ?? fields.article_sections;
-  const articleSections =
+  let articleSections =
     contentKind === "article" && isArticleSections(rawSections)
       ? normalizeArticleSections(rawSections)
       : null;
-  const faqEntries =
+  let faqEntries =
     contentKind === "article" && Array.isArray(fields.faq)
       ? fields.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
       : [];
-  const serializedArticle =
+  let serializedArticle =
     contentKind === "article" && articleSections
       ? serializeArticleSectionsToMarkdown(articleSections)
       : article;
+
+  if (contentKind === "article") {
+    if (articleSections) {
+      articleSections = sanitizeArticleSectionsFields(articleSections);
+      serializedArticle = serializeArticleSectionsToMarkdown(articleSections);
+    }
+    const sanitized = sanitizeDraftFields({
+      article: serializedArticle,
+      faq: faqEntries,
+      description: fields.description ?? "",
+      metaDescription: fields.metaDescription ?? "",
+    });
+    serializedArticle = sanitized.article;
+    faqEntries.splice(0, faqEntries.length, ...(sanitized.faq ?? []));
+    fields.description = sanitized.description ?? fields.description;
+    fields.metaDescription = sanitized.metaDescription ?? fields.metaDescription;
+  }
 
   if (contentKind === "article" && videoUrl) {
     return NextResponse.json(

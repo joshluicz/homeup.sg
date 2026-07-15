@@ -1,4 +1,8 @@
 import { compliancePrompt } from "./prompt";
+import {
+  detectAgencyTerminologyViolations,
+  sanitizeAgencyTerminology,
+} from "./cea-terminology";
 import { extractTextContent, getAnthropicClient, getLlmModel, stripJsonFences } from "./llm";
 import type { ComplianceResult, Draft } from "./types";
 
@@ -28,6 +32,11 @@ function structureCheck(article: string): { issues: string[]; warnings: string[]
   if (wordCount < 300) warnings.push(`Article is short (${wordCount} words); aim for 450–700.`);
   if (wordCount > 900) warnings.push(`Article is long (${wordCount} words); consider trimming.`);
 
+  const terminologyIssues = detectAgencyTerminologyViolations(article);
+  for (const issue of terminologyIssues) {
+    issues.push(issue);
+  }
+
   return { issues, warnings };
 }
 
@@ -38,13 +47,15 @@ function structureCheck(article: string): { issues: string[]; warnings: string[]
 export async function checkCompliance(draft: Draft): Promise<ComplianceResult> {
   const { issues: structIssues, warnings: structWarnings } = structureCheck(draft.article);
 
-  // Only call Claude if structure is clean (avoid burning tokens on malformed drafts)
+  // Structural or terminology issues — sanitize what we can without burning Claude tokens
   if (structIssues.length > 0) {
+    const { text: sanitized } = sanitizeAgencyTerminology(draft.article);
+    const remaining = detectAgencyTerminologyViolations(sanitized);
     return {
       passed: false,
-      issues: structIssues,
+      issues: [...structIssues.filter((i) => !i.startsWith("CEA terminology")), ...remaining],
       warnings: structWarnings,
-      patchedArticle: draft.article,
+      patchedArticle: sanitized,
     };
   }
 
@@ -70,10 +81,20 @@ export async function checkCompliance(draft: Draft): Promise<ComplianceResult> {
     parsed = { passed: true, issues: [], warnings: [], patchedArticle: draft.article };
   }
 
+  let patchedArticle = parsed.patchedArticle ?? draft.article;
+  const { text: sanitized, fixes } = sanitizeAgencyTerminology(patchedArticle);
+  patchedArticle = sanitized;
+
+  const terminologyWarnings = fixes.map((fix) => `Auto-corrected terminology: ${fix}`);
+  const remainingTerminology = detectAgencyTerminologyViolations(patchedArticle);
+
   return {
-    passed: (parsed.passed ?? true) && structIssues.length === 0,
-    issues: [...(parsed.issues ?? []), ...structIssues],
-    warnings: [...(parsed.warnings ?? []), ...structWarnings],
-    patchedArticle: parsed.patchedArticle ?? draft.article,
+    passed:
+      (parsed.passed ?? true) &&
+      structIssues.length === 0 &&
+      remainingTerminology.length === 0,
+    issues: [...(parsed.issues ?? []), ...structIssues, ...remainingTerminology],
+    warnings: [...(parsed.warnings ?? []), ...structWarnings, ...terminologyWarnings],
+    patchedArticle,
   };
 }

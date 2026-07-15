@@ -1,5 +1,6 @@
 import { generateBrief } from "./brief";
 import { checkCompliance } from "./compliance";
+import { sanitizeDraftFields } from "./cea-terminology";
 import { draftArticle } from "./draft";
 import { packageArticle } from "./packageArticle";
 import { getTransactionStats } from "./transactions";
@@ -42,7 +43,8 @@ export async function generateArticle(
     .slice(0, 80);
 
   // Step 2: draft
-  const draft = await draftArticle(brief, transactionStats, slugHint);
+  const rawDraft = await draftArticle(brief, transactionStats, slugHint);
+  const draft = sanitizeDraftFields(rawDraft);
 
   // Step 3: compliance gate (must be sequential — patches the article)
   const compliance = await checkCompliance(draft);
@@ -60,6 +62,13 @@ export async function generateArticle(
   // Merge linked article back into draft/compliance
   const finalDraft = { ...draft, article: linkedArticle };
   const finalCompliance = { ...compliance, patchedArticle: linkedArticle };
+
+  if (draft.terminologyFixes.length > 0) {
+    finalCompliance.warnings = [
+      ...finalCompliance.warnings,
+      ...draft.terminologyFixes.map((fix) => `Auto-corrected terminology: ${fix}`),
+    ];
+  }
 
   // Step 5: package
   const packaged = packageArticle(finalDraft, finalCompliance, llmAudit);

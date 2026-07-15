@@ -1,6 +1,7 @@
 import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { CEA_TERMINOLOGY_GUIDANCE, sanitizeDraftFields } from "@/lib/pipeline/cea-terminology";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -50,7 +51,9 @@ export async function POST(request: Request) {
     messages: [
       {
         role: "user",
-        content: `You are writing content for HomeUP, a Singapore fixed-fee property agency website (HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999).
+        content: `You are writing content for HomeUP, a Singapore website for fixed-fee property agents (HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999).
+
+${CEA_TERMINOLOGY_GUIDANCE}
 
 ${context}
 
@@ -68,7 +71,7 @@ Quick Answer:
 
 Introduction:
 
-[Who this is for + brief Dennis/HomeUP intro]
+[Who this is for + brief intro as a fixed-fee property agent with HomeUP — never call HomeUP an agency]
 
 [Question heading ending with ? on its own line — repeat for 2–4 sections]
 
@@ -101,14 +104,20 @@ Reply with valid JSON only, no markdown fences:
 
   try {
     const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
-    return NextResponse.json({
-      title: parsed.title,
-      description: parsed.description,
-      metaDescription: parsed.metaDescription ?? "",
+    const sanitized = sanitizeDraftFields({
       article: parsed.article ?? "",
+      description: parsed.description ?? "",
+      metaDescription: parsed.metaDescription ?? "",
       faq: Array.isArray(parsed.faq)
         ? parsed.faq.filter((f: { q?: string; a?: string }) => f?.q && f?.a)
         : [],
+    });
+    return NextResponse.json({
+      title: parsed.title,
+      description: sanitized.description ?? parsed.description,
+      metaDescription: sanitized.metaDescription ?? parsed.metaDescription ?? "",
+      article: sanitized.article,
+      faq: sanitized.faq,
       thumbnail,
     });
   } catch {

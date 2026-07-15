@@ -5,7 +5,7 @@
 export const BRAND = {
   name: "HomeUp",
   fullName: "HomeUp Singapore",
-  tagline: "Singapore's fixed-fee property agency",
+  tagline: "Singapore fixed-fee property agents",
   fees: {
     hdb: "$1,999",
     condoEc: "$4,999",
@@ -29,6 +29,8 @@ export const BRAND = {
       "limited time",
       "never been a better time",
       "risk-free",
+      'calling HomeUp or HomeUP an "agency", "estate agency", or "property agency"',
+      '"fixed-fee agency" — say "fixed-fee property agent" or "CEA-licensed agent" instead',
     ],
     prefer: [
       "short paragraphs — 2–4 sentences max",
