@@ -130,9 +130,13 @@ async function fetchActiveListings(limit?: number): Promise<Listing[]> {
   const supabase = serverSupabase();
   if (!supabase) return [];
 
+  // Lean columns for index/card views — select * + image_urls balloons the
+  // payload and was returning empty during static generation under unstable_cache.
   let query = supabase
     .from("listings")
-    .select("*")
+    .select(
+      "id, created_at, updated_at, title, slug, status, listed_as, is_sold, is_featured, price, negotiable, area_sqft, flat_type, condition, rooms, bathrooms, tenure, is_freehold, address_line_1, featured_image_url, image_urls, deleted_at, source_pg_url, source_pg_listing_id",
+    )
     .eq("status", "active")
     .is("deleted_at", null)
     .order("created_at", { ascending: false });
@@ -148,7 +152,7 @@ async function fetchActiveListings(limit?: number): Promise<Listing[]> {
   return (data ?? []).map(mapListingRow);
 }
 
-/** Server/build-time Supabase queries (no cookies). Used by sitemap and generateStaticParams. */
+/** Server/build-time slug list for sitemap and generateStaticParams. */
 export function getAllListingSlugsServer(): Promise<string[]> {
   return unstable_cache(fetchAllListingSlugs, ["listing-slugs"], {
     tags: [LISTINGS_CACHE_TAG],
@@ -156,6 +160,7 @@ export function getAllListingSlugsServer(): Promise<string[]> {
   })();
 }
 
+/** Full listing row for detail pages — keep tagged/cacheable and small (one row). */
 export function getListingBySlugServer(slug: string): Promise<Listing | null> {
   return unstable_cache(
     () => fetchListingBySlug(slug),
@@ -183,10 +188,10 @@ export function getRelatedListingsServer(
   )();
 }
 
-export function getActiveListingsServer(limit?: number): Promise<Listing[]> {
-  return unstable_cache(
-    () => fetchActiveListings(limit),
-    ["active-listings", limit == null ? "all" : String(limit)],
-    { tags: [LISTINGS_CACHE_TAG], revalidate: 300 },
-  )();
+/**
+ * Index / homepage list — do not wrap in unstable_cache.
+ * The full listing set is large; page-level ISR + fetch tags handle freshness.
+ */
+export async function getActiveListingsServer(limit?: number): Promise<Listing[]> {
+  return fetchActiveListings(limit);
 }

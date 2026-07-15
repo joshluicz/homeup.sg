@@ -19,14 +19,8 @@ export const revalidate = 300;
 
 export default async function ListingsPage() {
   const [listings, stats] = await Promise.all([
-    getActiveListingsServer().catch(() => []),
-    getListingStatsServer().catch(() => ({
-      total: 0,
-      hdb: 0,
-      condo: 0,
-      landed: 0,
-      apartment: 0,
-    })),
+    getActiveListingsServer(),
+    getListingStatsServer(),
   ]);
 
   return (
