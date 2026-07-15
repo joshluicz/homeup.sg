@@ -151,7 +151,7 @@ export function organizationSchema() {
     },
     image: `${SITE_URL}/images/team-group.png`,
     description:
-      "HomeUP is a Singapore fixed-fee property agency offering full-service property sales and purchases at a transparent flat fee. HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999. Over 1,000 transactions closed by CEA-licensed agents under C & H Properties (CEA L3007139C).",
+      "HomeUP is a team of Singapore fixed-fee property agents offering full-service property sales and purchases at a transparent flat fee. HDB sellers from $1,999, Condo/EC from $4,999, Landed from $9,999. Over 1,000 transactions closed by CEA-licensed agents under C & H Properties (CEA L3007139C).",
     address: {
       "@type": "PostalAddress",
       streetAddress: "125A Lor 2 Toa Payoh, #02-138",
@@ -202,7 +202,7 @@ export function organizationSchema() {
         author: { "@type": "Person", name: "Terrence Koh" },
         reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
         reviewBody:
-          "If I can give more than 5 stars, I will unreservedly do so. Tong Boon provided top notch agency service for the sale of my condo. His commitment towards meeting the best interests of the seller is exceptional.",
+          "If I can give more than 5 stars, I will unreservedly do so. Tong Boon provided top notch agent service for the sale of my condo. His commitment towards meeting the best interests of the seller is exceptional.",
       },
       {
         "@type": "Review",
@@ -240,7 +240,7 @@ export function organizationSchema() {
       "HDB resale",
       "Condominium sales",
       "Landed property sales",
-      "Fixed-fee estate agency",
+      "Fixed-fee property agents",
       "Property buying representation",
     ],
     hasOfferCatalog: {
@@ -409,7 +409,7 @@ export function aboutPageSchema() {
     "@id": `${SITE_URL}/about#webpage`,
     url: `${SITE_URL}/about`,
     name: "About HomeUP",
-    description: `${SITE_VISION} Learn about HomeUP, Singapore's fixed-fee property agency operated by C and H Properties Pte Ltd under the HomeUP brand, with CEA-licensed advisors and transparent pricing.`,
+    description: `${SITE_VISION} Learn about HomeUP, a team of fixed-fee property agents in Singapore operating under C and H Properties Pte Ltd (CEA L3007139C), with CEA-licensed advisors and transparent pricing.`,
     isPartOf: { "@id": ORG_ID },
     about: { "@id": ORG_ID },
     mainEntity: { "@id": ORG_ID },

@@ -1,4 +1,8 @@
 import type { FaqEntry, PlaybookTopic, PlaybookVideo } from "@/lib/data/playbook";
+import {
+  sanitizeAgencyTerminology,
+  sanitizeArticleSectionsFields,
+} from "@/lib/pipeline/cea-terminology";
 import type { ArticleSections } from "@/lib/playbook/article-sections";
 
 const ARTICLE_SECTIONS_VERSION = 1;
@@ -20,13 +24,25 @@ function isArticleSections(value: unknown): value is ArticleSections {
 /** Map a Supabase playbook_videos row to PlaybookVideo — no next/headers or DOMPurify deps. */
 export function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
   const rawSections = row.article_sections;
-  const articleSections = isArticleSections(rawSections) ? rawSections : null;
+  const articleSections = isArticleSections(rawSections)
+    ? sanitizeArticleSectionsFields(rawSections)
+    : null;
+
+  const article = sanitizeAgencyTerminology((row.article as string) ?? "").text;
+  const description = sanitizeAgencyTerminology((row.description as string) ?? "").text;
+  const metaDescription = sanitizeAgencyTerminology((row.meta_description as string) ?? "").text;
+  const faq = ((row.faq as FaqEntry[]) ?? [])
+    .filter((f) => f?.q && f?.a)
+    .map((f) => ({
+      q: sanitizeAgencyTerminology(f.q).text,
+      a: sanitizeAgencyTerminology(f.a).text,
+    }));
 
   return {
     id: row.id as string,
     slug: row.slug as string,
     title: row.title as string,
-    description: row.description as string,
+    description,
     category: row.category as PlaybookVideo["category"],
     duration: row.duration as string,
     thumbnail: row.thumbnail as string,
@@ -34,10 +50,10 @@ export function rowToVideo(row: Record<string, unknown>): PlaybookVideo {
     featured: row.featured as boolean,
     publishedAt: row.published_at as string,
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
-    article: (row.article as string) ?? "",
+    article,
     articleSections,
-    faq: ((row.faq as FaqEntry[]) ?? []).filter((f) => f?.q && f?.a),
-    metaDescription: (row.meta_description as string) ?? "",
+    faq,
+    metaDescription,
     topic: (row.topic as PlaybookTopic | null) ?? null,
     contentKind: (row.content_kind as PlaybookVideo["contentKind"]) ?? undefined,
     agentSlug: (row.agent_slug as string | null) ?? null,

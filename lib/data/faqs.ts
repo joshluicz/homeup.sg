@@ -1,3 +1,5 @@
+import { sanitizeAgencyTerminology } from "@/lib/pipeline/cea-terminology";
+
 export type ListingCountFaqVariant = "hosting-scale" | "shared-marketing";
 
 export interface FaqItem {
@@ -23,14 +25,15 @@ export function faqAnswerWithListingCount(
 }
 
 export function faqItemsForSchema(items: FaqItem[], listingCount?: number): FaqItem[] {
-  if (listingCount == null) return items;
   return items.map((item) => {
-    const a = item.listingCountVariant
-      ? faqAnswerWithListingCount(item.listingCountVariant, listingCount)
-      : item.link
-        ? `${item.a} ${item.link.label} ${item.link.href}`
-        : item.a;
-    return item.listingCountVariant || item.link ? { ...item, a } : item;
+    let a =
+      listingCount != null && item.listingCountVariant
+        ? faqAnswerWithListingCount(item.listingCountVariant, listingCount)
+        : item.link
+          ? `${item.a} ${item.link.label} ${item.link.href}`
+          : item.a;
+    a = sanitizeAgencyTerminology(a).text;
+    return { ...item, a };
   });
 }
 
@@ -50,7 +53,7 @@ export const HOMEPAGE_FAQ: FaqItem[] = [
   },
   {
     q: "Are HomeUP Property Advisors Licensed Real Estate Agents in Singapore?",
-    a: "HomeUP is a division of agents under a Singapore-licensed real estate agency, C & H Properties (L3007139C) All our advisors are CEA registered property agents in Singapore.",
+    a: "HomeUP is a team of CEA-licensed property agents operating under C & H Properties (L3007139C). All our advisors are CEA-registered property agents in Singapore.",
   },
   {
     q: "Can HomeUP coordinate a sale and a purchase at the same time?",

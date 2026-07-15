@@ -57,9 +57,9 @@ export default function PrivacyPolicyPage() {
             of Singapore (<strong>&ldquo;PDPA&rdquo;</strong>).
           </p>
           <p className="mt-3 text-sm leading-relaxed text-neutral-600">
-            Property agency services marketed under the HomeUP brand are operated by C and H
-            Properties Pte Ltd (CEA Licence L3007139C). Haus Plus Pte. Ltd. (UEN 202538756D) is
-            the parent company of the HomeUP brand.
+            Property agent services marketed under the HomeUP brand are provided by CEA-licensed
+            agents operating under C and H Properties Pte Ltd (CEA Licence L3007139C). Haus Plus
+            Pte. Ltd. (UEN 202538756D) is the parent company of the HomeUP brand.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-neutral-600">
             This Notice applies to personal data in our possession or under our control, including

@@ -116,7 +116,7 @@ export function AboutContent({
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                Verify agency licence {CEA_LICENSE} on the CEA Public Register
+                Verify CEA licence {CEA_LICENSE} on the CEA Public Register
               </a>
               .
             </p>
@@ -166,7 +166,7 @@ export function AboutContent({
             <h2 className="text-sm font-bold text-neutral-900">Company information</h2>
             <dl className="mt-4 grid gap-4 text-sm text-neutral-600 sm:grid-cols-2">
               <div>
-                <dt className="font-semibold text-neutral-900">Real estate agency</dt>
+                <dt className="font-semibold text-neutral-900">CEA-licensed operator</dt>
                 <dd className="mt-1 font-normal">C &amp; H Properties Pte Ltd · L3007139C</dd>
               </div>
               <div>

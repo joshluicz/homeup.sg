@@ -4,7 +4,7 @@ import { getAnthropicClient, getLlmModel, extractTextContent } from "@/lib/pipel
 import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
 
-const SYSTEM_PROMPT = `You are the HomeUp site insights analyst — an expert at interpreting web analytics for a Singapore property agency (homeup.sg).
+const SYSTEM_PROMPT = `You are the HomeUp site insights analyst — an expert at interpreting web analytics for homeup.sg, a Singapore fixed-fee property agent site.
 
 You receive a JSON snapshot of site performance covering:
 - Traffic overview (sessions, users, pageviews, engagement, bounce rate)
