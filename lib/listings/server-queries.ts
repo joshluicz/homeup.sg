@@ -16,9 +16,9 @@ function mapListingRow(row: Record<string, unknown>): Listing {
 }
 
 /**
- * Server Supabase client that never participates in Next's fetch Data Cache.
- * Listing pages are cached via the Full Route Cache / unstable_cache tags instead —
- * otherwise revalidatePath can regenerate a page that still reads a stale fetch entry.
+ * Server Supabase client whose fetches carry the listings cache tag.
+ * Do not use cache: "no-store" here — that forces dynamic rendering and breaks
+ * static generation / ISR. Tag + revalidateTag is how we bust after sync.
  */
 function serverSupabase(): SupabaseClient | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -28,7 +28,11 @@ function serverSupabase(): SupabaseClient | null {
   return createClient(url, key, {
     global: {
       fetch: (input: RequestInfo | URL, init?: RequestInit) =>
-        fetch(input, { ...init, cache: "no-store" }),
+        fetch(input, {
+          ...init,
+          // Next.js extends RequestInit with `next` for ISR tags.
+          next: { tags: [LISTINGS_CACHE_TAG], revalidate: 300 },
+        } as RequestInit),
     },
   });
 }
