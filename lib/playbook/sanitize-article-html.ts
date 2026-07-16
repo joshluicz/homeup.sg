@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import type { ArticleSections } from "@/lib/playbook/article-sections";
 
 /** Properties allowed in inline style attributes on article HTML. */
 export const ALLOWED_INLINE_STYLE_PROPS = new Set(["text-align", "color"]);
@@ -34,14 +34,34 @@ const DOMPURIFY_OPTIONS = {
   ADD_ATTR: ["target"],
 };
 
-/** Sanitize rich-text HTML from the article editor for storage and display. */
+type DomPurifyLike = {
+  sanitize: (html: string, options?: Record<string, unknown>) => string;
+};
+
+let domPurifyCache: DomPurifyLike | null | undefined;
+
+/** Lazy-load DOMPurify so serverless routes that never call this stay safe. */
+function getDomPurify(): DomPurifyLike | null {
+  if (domPurifyCache !== undefined) return domPurifyCache;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    domPurifyCache = require("isomorphic-dompurify").default as DomPurifyLike;
+  } catch {
+    domPurifyCache = null;
+  }
+  return domPurifyCache;
+}
+
+/** Sanitize rich-text HTML from the WYSIWYG editor for storage and display. */
 export function sanitizeArticleHtml(html: string): string {
   if (!html?.trim()) return "";
   const cleaned = cleanInlineStyles(html);
-  return DOMPurify.sanitize(cleaned, DOMPURIFY_OPTIONS);
+  const dp = getDomPurify();
+  if (!dp) return cleaned;
+  return dp.sanitize(cleaned, DOMPURIFY_OPTIONS);
 }
 
-/** True when HTML has no meaningful text content. */
+/** True when HTML has no meaningful text content (editor / display paths). */
 export function isHtmlEmpty(html: string): boolean {
   const text = sanitizeArticleHtml(html)
     .replace(/<[^>]+>/g, " ")
@@ -49,4 +69,21 @@ export function isHtmlEmpty(html: string): boolean {
     .replace(/\s+/g, " ")
     .trim();
   return text.length === 0;
+}
+
+/** Full DOMPurify pass on structured sections before admin save. */
+export function sanitizeArticleSectionsDom(sections: ArticleSections): ArticleSections {
+  const clean = (value: string) => sanitizeArticleHtml(value);
+  return {
+    ...sections,
+    quickAnswer: clean(sections.quickAnswer),
+    introduction: clean(sections.introduction),
+    homeup: clean(sections.homeup),
+    conclusion: clean(sections.conclusion),
+    sections: sections.sections.map((entry) => ({
+      ...entry,
+      title: entry.title.trim(),
+      body: clean(entry.body),
+    })),
+  };
 }

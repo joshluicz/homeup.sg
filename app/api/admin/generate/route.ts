@@ -1,5 +1,4 @@
 import { requireAuth } from "@/lib/supabase/auth";
-import { generateArticle } from "@/lib/pipeline/generate";
 import { requireAnthropicApiKey } from "@/lib/pipeline/llm";
 import { resolveGenerationTopic } from "@/lib/pipeline/radar";
 import { NextResponse } from "next/server";
@@ -77,6 +76,7 @@ export async function POST(request: Request) {
         ? body.authorSlug.trim()
         : undefined;
 
+    const { generateArticle } = await import("@/lib/pipeline/generate");
     const result = await generateArticle(topic, authorSlug ? { authorSlug } : undefined);
     return NextResponse.json({
       ...result,

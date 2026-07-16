@@ -12,6 +12,7 @@
     "check:playbook-db-write": "node scripts/check-playbook-db-write.mjs",
     "check:cea-terminology": "node scripts/check-cea-terminology.mjs",
     "check:pipeline-finalize": "npx tsx scripts/check-pipeline-finalize.ts",
+    "check:generate-route-imports": "node scripts/check-generate-route-imports.mjs",
     "pg:install": "patchright install chrome",
     "pg:diagnostic": "node scripts/pg-sync-diagnostic.mjs",
     "pg:fetch": "npx tsx scripts/run-pg-fetch.ts",

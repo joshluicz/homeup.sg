@@ -3,7 +3,7 @@ import {
   type PlaybookArticleBlock,
 } from "@/lib/playbook/article-format";
 import { isHtmlContent } from "@/lib/playbook/is-html-content";
-import { isHtmlEmpty, sanitizeArticleHtml } from "@/lib/playbook/sanitize-article-html";
+import { isHtmlEmpty, sanitizeArticleHtml } from "@/lib/playbook/html-text-utils";
 
 export const ARTICLE_SECTIONS_VERSION = 1 as const;
 

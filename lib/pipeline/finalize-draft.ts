@@ -13,7 +13,7 @@ import {
   type ArticleSections,
   type FaqEntry,
 } from "@/lib/playbook/article-sections";
-import { isHtmlEmpty } from "@/lib/playbook/sanitize-article-html";
+import { isHtmlEmpty } from "@/lib/playbook/html-text-utils";
 import {
   normalizeArticleFormat,
   parseInlineFaq,

@@ -12,6 +12,7 @@ import {
   writePlaybookVideoRow,
   type PlaybookContentKind,
 } from "@/lib/playbook/playbook-db-write";
+import { sanitizeArticleSectionsDom } from "@/lib/playbook/sanitize-article-html";
 import { sanitizeArticleSectionsFields, sanitizeDraftFields } from "@/lib/pipeline/cea-terminology";
 
 function revalidatePlaybook(slug?: string, contentKind?: PlaybookContentKind) {
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
 
   if (contentKind === "article") {
     if (articleSections) {
+      articleSections = sanitizeArticleSectionsDom(articleSections);
       articleSections = sanitizeArticleSectionsFields(articleSections);
       serializedArticle = serializeArticleSectionsToMarkdown(articleSections);
     }
