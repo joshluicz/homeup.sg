@@ -3,6 +3,7 @@ name: Admin CMS CI
 on:
   push:
     branches:
+      - master
       - "feature/**"
       - "feat/**"
       - "chore/**"
@@ -39,5 +40,11 @@ jobs:
       - name: Check admin catalog import boundaries
         run: npm run check:admin-catalog-imports
 
+      - name: Check generate route import boundaries
+        run: npm run check:generate-route-imports
+
+      - name: Check pipeline finalize smoke test
+        run: npm run check:pipeline-finalize
+
       - name: Build Next.js (server mode)
-        run: npm run build
+        run: CI=true npm run build

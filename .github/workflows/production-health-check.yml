@@ -1,0 +1,21 @@
+name: Production health check after deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Vercel production deploy
+        run: sleep 240
+
+      - name: Verify admin generate route is healthy
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS "https://homeup.sg/api/admin/generate")"
+          echo "$body"
+          echo "$body" | grep -q '"ok":true'
+          echo "$body" | grep -q '"route":"admin/generate"'
