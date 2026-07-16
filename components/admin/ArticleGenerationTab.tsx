@@ -56,6 +56,18 @@ const AUTHOR_OPTIONS = [...AGENTS].sort((a, b) => a.name.localeCompare(b.name));
 
 type PlaybookTopic = "upgraders" | "buying_first" | "condo_tips";
 
+type FaqPair = { q: string; a: string };
+
+function cloneFaqPairs(faq: FaqPair[]): FaqPair[] {
+  return faq.map(({ q, a }) => ({ q, a }));
+}
+
+function normalizeFaqPairs(faq: FaqPair[]): FaqPair[] {
+  return faq
+    .map(({ q, a }) => ({ q: q.trim(), a: a.trim() }))
+    .filter(({ q, a }) => q.length > 0 && a.length > 0);
+}
+
 const DEMAND_BADGE: Record<string, string> = {
   high: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
   medium: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
@@ -271,6 +283,7 @@ export function ArticleGenerationTab() {
   const [editedTitle, setEditedTitle] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
   const [editedMeta, setEditedMeta] = useState("");
+  const [editedFaq, setEditedFaq] = useState<FaqPair[]>([]);
   const [playbookTopic, setPlaybookTopic] = useState<PlaybookTopic>("upgraders");
 
   // Publish state
@@ -457,6 +470,7 @@ export function ArticleGenerationTab() {
       setEditedTitle(data.draft.title);
       setEditedDescription(data.draft.description);
       setEditedMeta(data.draft.metaDescription);
+      setEditedFaq(cloneFaqPairs(data.draft.faq));
 
       const cat = data.draft.brief.topic.category;
       if (cat === "buying_first" || cat === "hdb_bto" || cat === "hdb_resale") {
@@ -554,6 +568,7 @@ export function ArticleGenerationTab() {
         title: editedTitle,
         description: editedDescription,
         metaDescription: editedMeta,
+        faq: normalizeFaqPairs(editedFaq),
       },
     };
 
@@ -570,7 +585,7 @@ export function ArticleGenerationTab() {
     } finally {
       setPublishing(false);
     }
-  }, [result, editedArticle, editedTitle, editedDescription, editedMeta, playbookTopic]);
+  }, [result, editedArticle, editedTitle, editedDescription, editedMeta, editedFaq, playbookTopic]);
 
   // ── Reset ───────────────────────────────────────────────────────────────────
   const handleReset = () => {
@@ -583,6 +598,7 @@ export function ArticleGenerationTab() {
     setAutoGenerating(false);
     setRefreshOverride(false);
     setCustomTitle("");
+    setEditedFaq([]);
     setShowTopicList(true);
     setPipelineStatus({ brief: "idle", draft: "idle", compliance: "idle", package: "idle" });
   };
@@ -1233,17 +1249,92 @@ export function ArticleGenerationTab() {
             )}
           </div>
 
-          {/* FAQ preview */}
-          {result.draft.faq.length > 0 && (
+          {/* FAQ editor (optional — edits apply on publish only; pipeline output unchanged) */}
+          {result && (
             <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-sm font-bold text-neutral-900">
-                FAQ ({result.draft.faq.length} pairs)
-              </h2>
-              <div className="space-y-3">
-                {result.draft.faq.map((faq, i) => (
-                  <div key={i} className="rounded-lg bg-neutral-50 p-3">
-                    <p className="text-xs font-semibold text-neutral-800">Q: {faq.q}</p>
-                    <p className="mt-1 text-xs text-neutral-600">A: {faq.a}</p>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-bold text-neutral-900">
+                    FAQ ({normalizeFaqPairs(editedFaq).length} pairs)
+                  </h2>
+                  <p className="mt-0.5 text-xs text-neutral-500">
+                    Fix AI mistakes here before publishing. Generation still runs automatically — these edits are optional.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditedFaq((prev) => [...prev, { q: "", a: "" }])}
+                  className="gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add pair
+                </Button>
+              </div>
+              {normalizeFaqPairs(editedFaq).length < 3 && (
+                <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  At least 3 complete Q&amp;A pairs are recommended for Playbook schema and SEO.
+                </p>
+              )}
+              {editedFaq.length === 0 && (
+                <p className="mb-3 text-sm text-neutral-500">
+                  No FAQ pairs yet — use Add pair to create one before publishing.
+                </p>
+              )}
+              <div className="space-y-4">
+                {editedFaq.map((faq, i) => (
+                  <div
+                    key={i}
+                    className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                        Pair {i + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditedFaq((prev) => prev.filter((_, index) => index !== i))
+                        }
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-neutral-500 transition-colors hover:bg-white hover:text-red-600"
+                        aria-label={`Remove FAQ pair ${i + 1}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Remove
+                      </button>
+                    </div>
+                    <label className="mb-1.5 block text-xs font-semibold text-neutral-700">
+                      Question
+                    </label>
+                    <input
+                      type="text"
+                      value={faq.q}
+                      onChange={(e) =>
+                        setEditedFaq((prev) =>
+                          prev.map((item, index) =>
+                            index === i ? { ...item, q: e.target.value } : item,
+                          ),
+                        )
+                      }
+                      className="mb-2 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                    />
+                    <label className="mb-1.5 block text-xs font-semibold text-neutral-700">
+                      Answer
+                    </label>
+                    <textarea
+                      value={faq.a}
+                      onChange={(e) =>
+                        setEditedFaq((prev) =>
+                          prev.map((item, index) =>
+                            index === i ? { ...item, a: e.target.value } : item,
+                          ),
+                        )
+                      }
+                      rows={3}
+                      spellCheck
+                      className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm leading-relaxed text-neutral-900 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+                    />
                   </div>
                 ))}
               </div>
