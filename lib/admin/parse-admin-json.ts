@@ -13,7 +13,7 @@ export async function parseAdminJsonResponse<T>(
   if (text.trimStart().startsWith("<")) {
     const hint =
       res.status === 504 || res.status === 408
-        ? " The request timed out — article generation can take up to 90 seconds on Vercel Pro."
+        ? " The request timed out — try again; generation now runs in shorter steps."
         : res.status >= 500
           ? " The server route crashed — check Vercel function logs."
           : "";

@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "app/api/admin/generate/route.ts": {
+      "maxDuration": 120
+    }
+  }
+}

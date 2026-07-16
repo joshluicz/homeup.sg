@@ -359,7 +359,7 @@ export function ArticleGenerationTab() {
     }
   }, [searchParams]);
 
-  // ── Generate article ────────────────────────────────────────────────────────
+  // ── Generate article (phased — one Claude call per request to avoid 504 timeouts) ─
   const runGenerate = useCallback(async (topic: TopicCandidate | null, auto = false, refresh = false) => {
     const useRefresh = refresh || refreshOverride;
     const authorSlug = selectedAuthorSlug.trim() || undefined;
@@ -373,30 +373,76 @@ export function ArticleGenerationTab() {
     setGenerating(true);
     setPipelineStatus({
       brief: "running",
-      draft: "running",
-      compliance: "running",
-      package: "running",
+      draft: "idle",
+      compliance: "idle",
+      package: "idle",
     });
 
     setTimeout(() => pipelineRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
 
-    try {
+    const postGenerate = async <T,>(payload: Record<string, unknown>): Promise<T> => {
       const res = await fetch("/api/admin/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...(auto ? { auto: true } : { topic, ...(useRefresh ? { refresh: true } : {}) }),
           ...(authorSlug ? { authorSlug } : {}),
+          ...payload,
         }),
       });
+      return parseAdminJsonResponse<T>(res, "Article generation");
+    };
 
-      const data = await parseAdminJsonResponse<
-        PackagedArticle & {
+    try {
+      const briefPayload = auto
+        ? { phase: "brief" as const, auto: true }
+        : {
+            phase: "brief" as const,
+            topic,
+            ...(useRefresh ? { refresh: true } : {}),
+          };
+
+      const briefData = await postGenerate<
+        {
+          brief: PackagedArticle["draft"]["brief"];
+          transactionStats: string | null;
+          slugHint: string;
           selectedTopic?: TopicCandidate;
-          detail?: string;
-          error?: string;
         }
-      >(res, "Article generation");
+      >(briefPayload);
+
+      if (briefData.selectedTopic) {
+        setAutoSelectedTopic(briefData.selectedTopic);
+        setSelectedTopic(briefData.selectedTopic);
+      } else if (topic) {
+        setSelectedTopic(topic);
+      }
+
+      setPipelineStatus({
+        brief: "done",
+        draft: "running",
+        compliance: "idle",
+        package: "idle",
+      });
+
+      const draftData = await postGenerate<{ draft: PackagedArticle["draft"] }>({
+        phase: "draft",
+        brief: briefData.brief,
+        transactionStats: briefData.transactionStats,
+        slugHint: briefData.slugHint,
+      });
+
+      setPipelineStatus({
+        brief: "done",
+        draft: "done",
+        compliance: "running",
+        package: "running",
+      });
+
+      const data = await postGenerate<PackagedArticle>({
+        phase: "package",
+        draft: draftData.draft,
+        slugHint: briefData.slugHint,
+      });
 
       if (!data.draft?.article?.trim()) {
         throw new Error(
@@ -406,14 +452,6 @@ export function ArticleGenerationTab() {
 
       setPipelineStatus({ brief: "done", draft: "done", compliance: "done", package: "done" });
       setShowTopicList(false);
-
-      if (data.selectedTopic) {
-        setAutoSelectedTopic(data.selectedTopic);
-        setSelectedTopic(data.selectedTopic);
-      } else if (topic) {
-        setSelectedTopic(topic);
-      }
-
       setResult(data);
       setEditedArticle(data.draft.article);
       setEditedTitle(data.draft.title);
@@ -432,6 +470,33 @@ export function ArticleGenerationTab() {
       void loadTopics();
       void loadCoverage();
       setTimeout(() => previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+
+      // Quality scores + internal links — runs after preview is visible (avoids blocking the main flow).
+      void postGenerate<{
+        audit: PackagedArticle["audit"];
+        draft: Pick<PackagedArticle["draft"], "article" | "metaDescription">;
+        tags: string[];
+      }>({
+        phase: "enrich",
+        packaged: data,
+        slugHint: briefData.slugHint,
+      })
+        .then((enrich) => {
+          setResult((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  audit: enrich.audit,
+                  draft: { ...prev.draft, ...enrich.draft },
+                  tags: enrich.tags,
+                }
+              : prev,
+          );
+          setEditedArticle(enrich.draft.article);
+        })
+        .catch(() => {
+          /* heuristic scores already shown */
+        });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       setGenerateError(msg);
