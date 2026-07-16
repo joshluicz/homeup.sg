@@ -13,7 +13,6 @@ let anthropicCtor: AnthropicConstructor | null | undefined;
 function getAnthropicCtor(): AnthropicConstructor {
   if (anthropicCtor) return anthropicCtor;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     anthropicCtor = require("@anthropic-ai/sdk").default as AnthropicConstructor;
     return anthropicCtor;
   } catch (err) {

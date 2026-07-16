@@ -44,7 +44,6 @@ let domPurifyCache: DomPurifyLike | null | undefined;
 function getDomPurify(): DomPurifyLike | null {
   if (domPurifyCache !== undefined) return domPurifyCache;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     domPurifyCache = require("isomorphic-dompurify").default as DomPurifyLike;
   } catch {
     domPurifyCache = null;
