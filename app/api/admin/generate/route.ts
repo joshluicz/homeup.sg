@@ -1,12 +1,15 @@
 import { requireAuth } from "@/lib/supabase/auth";
-import { requireAnthropicApiKey } from "@/lib/pipeline/llm";
-import { resolveGenerationTopic } from "@/lib/pipeline/radar";
 import { NextResponse } from "next/server";
 import type { TopicCandidate } from "@/lib/pipeline/types";
 
 // Article generation involves 3 Claude calls — allow up to 90 seconds (Vercel Pro).
 export const maxDuration = 90;
 export const dynamic = "force-dynamic";
+
+/** Lightweight health probe — must not import pipeline/LLM modules at load time. */
+export async function GET() {
+  return NextResponse.json({ ok: true, route: "admin/generate" });
+}
 
 /**
  * POST /api/admin/generate
@@ -21,6 +24,7 @@ export async function POST(request: Request) {
     const { error } = await requireAuth();
     if (error) return error;
 
+    const { requireAnthropicApiKey } = await import("@/lib/pipeline/llm");
     try {
       requireAnthropicApiKey();
     } catch (err) {
@@ -44,6 +48,7 @@ export async function POST(request: Request) {
     const allowCoveredRefresh =
       body.refresh === true && !wantsAuto && Boolean(body.topic?.title?.trim());
 
+    const { resolveGenerationTopic } = await import("@/lib/pipeline/radar");
     const resolved = await resolveGenerationTopic(wantsAuto ? null : body.topic, {
       allowCovered: allowCoveredRefresh,
     });

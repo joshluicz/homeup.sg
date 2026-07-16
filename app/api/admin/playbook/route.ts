@@ -2,18 +2,11 @@ import { requireAuth } from "@/lib/supabase/auth";
 import { NextResponse } from "next/server";
 import { revalidatePlaybookPaths } from "@/lib/playbook/revalidate-playbook";
 import {
-  isArticleSections,
-  normalizeArticleSections,
-  serializeArticleSectionsToMarkdown,
-  validateArticleSections,
-} from "@/lib/playbook/article-sections";
-import {
   buildPlaybookVideoDbPayload,
   writePlaybookVideoRow,
   type PlaybookContentKind,
 } from "@/lib/playbook/playbook-db-write";
-import { sanitizeArticleSectionsDom } from "@/lib/playbook/sanitize-article-html";
-import { sanitizeArticleSectionsFields, sanitizeDraftFields } from "@/lib/pipeline/cea-terminology";
+import { sanitizeDraftFields } from "@/lib/pipeline/cea-terminology";
 
 function revalidatePlaybook(slug?: string, contentKind?: PlaybookContentKind) {
   const slugs = slug && contentKind === "article" ? [slug] : [];
@@ -43,6 +36,15 @@ function slugify(title: string): string {
 export async function POST(request: Request) {
   const { supabase, error } = await requireAuth();
   if (error) return error;
+
+  const {
+    isArticleSections,
+    normalizeArticleSections,
+    serializeArticleSectionsToMarkdown,
+    validateArticleSections,
+  } = await import("@/lib/playbook/article-sections");
+  const { sanitizeArticleSectionsDom } = await import("@/lib/playbook/sanitize-article-html");
+  const { sanitizeArticleSectionsFields } = await import("@/lib/pipeline/cea-terminology");
 
   const body = await request.json();
   const { id, ...fields } = body;

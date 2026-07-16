@@ -1,10 +1,26 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { Message } from "@anthropic-ai/sdk/resources/messages/messages";
 
 /** Minimum article body length — shorter output is treated as a failed draft. */
 export const MIN_DRAFT_WORDS = 200;
 
 const PLACEHOLDER_KEYS = new Set(["", "your-anthropic-api-key", "paste_anthropic_key_here"]);
+
+type AnthropicConstructor = typeof import("@anthropic-ai/sdk").default;
+
+let anthropicCtor: AnthropicConstructor | null | undefined;
+
+/** Lazy-load Anthropic SDK — top-level import crashes some Vercel serverless bundles. */
+function getAnthropicCtor(): AnthropicConstructor {
+  if (anthropicCtor) return anthropicCtor;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    anthropicCtor = require("@anthropic-ai/sdk").default as AnthropicConstructor;
+    return anthropicCtor;
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "unknown error";
+    throw new Error(`Anthropic SDK failed to load (${detail})`);
+  }
+}
 
 /** Default Claude model for the article pipeline (override via HOMEUP_LLM_MODEL). */
 export function getLlmModel(): string {
@@ -22,7 +38,8 @@ export function requireAnthropicApiKey(): string {
   return key;
 }
 
-export function getAnthropicClient(): Anthropic {
+export function getAnthropicClient() {
+  const Anthropic = getAnthropicCtor();
   return new Anthropic({ apiKey: requireAnthropicApiKey() });
 }
 

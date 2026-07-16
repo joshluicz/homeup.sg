@@ -1,5 +1,4 @@
 import { requireAuth } from "@/lib/supabase/auth";
-import { publishArticle } from "@/lib/pipeline/publishTarget";
 import { revalidatePlaybookPaths } from "@/lib/playbook/revalidate-playbook";
 import { NextResponse } from "next/server";
 import type { PackagedArticle } from "@/lib/pipeline/types";
@@ -43,6 +42,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const { publishArticle } = await import("@/lib/pipeline/publishTarget");
     const { slug, id } = await publishArticle(article, topic);
 
     // Warm ISR cache for the new article
