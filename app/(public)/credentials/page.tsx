@@ -1,19 +1,23 @@
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { CredentialsContent } from "@/components/sections/CredentialsContent";
-import { CtaBanner } from "@/components/sections/CtaBanner";
+import { CredentialsExperience } from "@/components/sections/credentials/CredentialsExperience";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 import { breadcrumbSchema, organizationSchema } from "@/lib/seo/schema";
+import { getListingStatsServer } from "@/lib/listings/server-queries";
 
 export const metadata = buildPageMetadata({
-  title: "Credentials & Awards | HomeUP Singapore",
+  title: "Why HomeUP | Credentials, Licensing & Track Record",
   description:
-    "HomeUP's licences, CEA registration numbers and industry awards, published in full. CEA licence L3007139C, operated by C & H Properties Pte Ltd.",
+    "1,000+ transactions closed by CEA-licensed advisors under C & H Properties (CEA L3007139C). Fixed fees from $1,999, live listings across Singapore, and registration numbers you can verify.",
   path: "/credentials",
 });
 
-export default function CredentialsPage() {
+export default async function CredentialsPage() {
+  // Listing count is read live rather than written into the copy — the site quotes a figure that
+  // moves weekly, and a hardcoded one would be wrong within days.
+  const stats = await getListingStatsServer();
+
   return (
     <>
       <JsonLd
@@ -26,9 +30,8 @@ export default function CredentialsPage() {
         ]}
       />
       <Navbar />
-      <main className="bg-white">
-        <CredentialsContent />
-        <CtaBanner />
+      <main>
+        <CredentialsExperience listingCount={stats.total} />
       </main>
       <Footer />
     </>
