@@ -62,6 +62,7 @@ export const HOMEUP_NAV_MENU: MenuItem[] = [
   { title: "Listings", url: "/listings" },
   { title: "Playbook", url: "/playbook" },
   { title: "About", url: "/about" },
+  { title: "Credentials", url: "/credentials" },
   { title: "Our Team", url: "/agents" },
 ];
 

@@ -41,6 +41,7 @@ const footerSections: FooterSection[] = [
     links: [
       { title: "About", href: "/about" },
       { title: "Our team", href: "/agents" },
+      { title: "Credentials & awards", href: "/credentials" },
       { title: "Listings", href: "/listings" },
       { title: "Playbook", href: "/playbook" },
       { title: "Privacy policy", href: "/privacy-policy" },
