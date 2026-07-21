@@ -148,6 +148,97 @@ export function CredentialsExperience({ listingCount }: { listingCount: number }
         </div>
       </div>
 
+      {/* ─── 2b · Who we are ─────────────────────────────────────────────── */}
+      <div className="bg-white py-28 sm:py-36">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 lg:grid-cols-2">
+          <Section>
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-neutral-100">
+              <Image
+                src="/images/buy-hero-condo-interior.png"
+                alt=""
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+          </Section>
+          <Section>
+            <p className="text-xs uppercase tracking-[0.2em] text-primary-600">Who we are</p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-neutral-900 sm:text-5xl">
+              Real estate should finally be fair.
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-neutral-600">
+              HomeUP was created around a simple belief: homeowners deserve expert advice without
+              paying traditional percentage commissions. By using technology, automation and
+              efficient operating systems, HomeUP provides full professional guidance while keeping
+              fees transparent and predictable. The goal isn&apos;t simply to sell homes — it is to
+              help Singaporeans sell, buy and upgrade with confidence.
+            </p>
+          </Section>
+        </div>
+      </div>
+
+      {/* ─── 2c · People + technology ────────────────────────────────────── */}
+      <div className="bg-neutral-50 py-28 sm:py-36">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 lg:grid-cols-2">
+          <Section className="lg:order-2">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-neutral-100">
+              <Image
+                src="/images/team-group.png"
+                alt="The HomeUP team"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+          </Section>
+          <Section className="lg:order-1">
+            <p className="text-xs uppercase tracking-[0.2em] text-primary-600">A modern advisory</p>
+            <h2 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight text-neutral-900 sm:text-5xl">
+              Built around people, strengthened by technology.
+            </h2>
+            <p className="mt-6 text-lg leading-relaxed text-neutral-600">
+              HomeUP combines experienced CEA-registered advisors with research, automation and
+              digital tools to simplify complex property decisions. Technology handles the repetitive
+              work so advisors can spend more time helping families make informed decisions — not
+              less.
+            </p>
+          </Section>
+        </div>
+      </div>
+
+      {/* ─── 2d · A growing network ──────────────────────────────────────── */}
+      <div className="bg-primary-950 py-28 text-white sm:py-36">
+        <Section className="mx-auto max-w-3xl px-6 text-center">
+          <p className="text-xs uppercase tracking-[0.2em] text-primary-400">A growing network</p>
+          <h2 className="mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+            Growing one neighbourhood at a time.
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl text-white/60">
+            HomeUP is actively building toward 400 listings. More listings strengthen buyer reach,
+            increase shared marketing exposure, and support the fixed-fee model.
+          </p>
+
+          <div className="mx-auto mt-12 max-w-md">
+            <div className="flex items-end justify-between">
+              <span className="font-display text-6xl font-semibold tabular-nums">
+                <CredentialCounter value={listingCount} suffix="" />
+              </span>
+              <span className="pb-2 text-lg text-white/50">/ 400 listings</span>
+            </div>
+            <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-primary-400"
+                style={{ width: `${Math.min(100, Math.round((listingCount / 400) * 100))}%` }}
+              />
+            </div>
+            <p className="mt-3 text-xs text-white/40">
+              Live count from our listings database, against the 400-listing goal.
+            </p>
+          </div>
+        </Section>
+      </div>
+
       {/* ─── 3 · What's at stake ─────────────────────────────────────────── */}
       <section className="relative flex min-h-[70vh] items-center overflow-hidden">
         <Image src="/images/buy-hero-hdb-interior.png" alt="" fill sizes="100vw" className="object-cover" />
