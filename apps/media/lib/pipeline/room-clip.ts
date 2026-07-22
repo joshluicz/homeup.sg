@@ -4,6 +4,9 @@ export const FAL_MODEL_SEEDANCE_2 = "bytedance/seedance-2.0/reference-to-video";
 export const FAL_MODEL_SEEDANCE_15 =
   "fal-ai/bytedance/seedance/v1.5/pro/image-to-video";
 
+/** All new clip jobs use Seedance 1.5; Seedance 2.0 is kept only for historic reference. */
+export const FAL_MODEL_DEFAULT = FAL_MODEL_SEEDANCE_15;
+
 const SUBMIT_TIMEOUT_MS = 30_000;
 const STATUS_TIMEOUT_MS = 12_000;
 const RESULT_TIMEOUT_MS = 30_000;
@@ -83,15 +86,10 @@ function resolveImageUrls(body: RoomClipRequest): string[] {
   return [];
 }
 
-function resolveFalModel(body: RoomClipRequest, imageUrls: string[]): string {
-  if (
-    body.fal_model === FAL_MODEL_SEEDANCE_2 ||
-    body.fal_model === FAL_MODEL_SEEDANCE_15
-  ) {
-    return body.fal_model;
-  }
-  if (imageUrls.length > 1) {
-    return FAL_MODEL_SEEDANCE_2;
+function resolveFalModel(body: RoomClipRequest, _imageUrls: string[]): string {
+  // Only honour an explicit Seedance 1.5 override; ignore anything else.
+  if (body.fal_model === FAL_MODEL_SEEDANCE_15) {
+    return FAL_MODEL_SEEDANCE_15;
   }
   return FAL_MODEL_SEEDANCE_15;
 }
@@ -138,11 +136,11 @@ function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
   }
 
   const singleRefSuffix =
-    "Animate the still photo with visible but controlled in-frame motion: slow pan, slight parallax, or gentle push within @Image1 only. " +
-    "Ignore any static locked-off or tripod wording if present. " +
-    "Do not freeze the shot; the camera motion should be noticeable while staying realistic. " +
-    "Do not invent new walls, doors, windows, furniture, or rooms. " +
-    "Keep architecture, layout, colours, and objects identical to the reference image. " +
+    "Camera motion must be smooth and continuous throughout — no static or frozen shot. " +
+    "Use a slow pan (left to right, or right to left) OR a gentle push-in within @Image1. " +
+    "Do not cut, jump, or reveal space outside @Image1. " +
+    "Keep all architecture, layout, colours, and objects identical to @Image1. " +
+    "Do not invent walls, doors, windows, or furniture not visible in @Image1. " +
     "Empty room, no people.";
 
   return `${trimmed} ${singleRefSuffix}`;
@@ -264,14 +262,11 @@ export async function startRoomClip(
   try {
     configureFal();
 
-    const input =
-      falModel === FAL_MODEL_SEEDANCE_2
-        ? buildSeedance2Input(image_urls, higgsfield_prompt, duration_seconds)
-        : buildSeedance15Input(
-            image_urls[0],
-            higgsfield_prompt,
-            duration_seconds,
-          );
+    const input = buildSeedance15Input(
+      image_urls[0],
+      higgsfield_prompt,
+      duration_seconds,
+    );
 
     const submitted = await withTimeout(
       fal.queue.submit(falModel, { input }),
@@ -453,11 +448,8 @@ export async function fetchRoomClipResult(
 }
 
 export function resolveFalModelForTask(
-  imageUrls: string[],
-  falModel?: string,
+  _imageUrls: string[],
+  _falModel?: string,
 ): string {
-  return resolveFalModel(
-    { blueprint_id: "", label: "", higgsfield_prompt: "", fal_model: falModel },
-    imageUrls,
-  );
+  return FAL_MODEL_SEEDANCE_15;
 }

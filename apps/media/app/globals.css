@@ -4,4 +4,6 @@
 
 body {
   @apply bg-neutral-50 text-neutral-900 antialiased;
+  /* iPhone home indicator safe area */
+  padding-bottom: env(safe-area-inset-bottom);
 }

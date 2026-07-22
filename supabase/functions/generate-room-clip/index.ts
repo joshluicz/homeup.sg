@@ -78,14 +78,12 @@ function resolveImageUrls(body: ClipRequest): string[] {
   return [];
 }
 
-function resolveFalModel(body: ClipRequest, imageUrls: string[]): string {
-  if (body.fal_model === FAL_MODEL_SEEDANCE_2 || body.fal_model === FAL_MODEL_SEEDANCE_15) {
-    return body.fal_model;
+function resolveFalModel(body: ClipRequest, _imageUrls: string[]): string {
+  // All new clip jobs use Seedance 1.5; each room photo is a separate single-image job.
+  if (body.fal_model === FAL_MODEL_SEEDANCE_15) {
+    return FAL_MODEL_SEEDANCE_15;
   }
-  if (imageUrls.length >= 1) {
-    return FAL_MODEL_SEEDANCE_2;
-  }
-  return FAL_MODEL_SEEDANCE_2;
+  return FAL_MODEL_SEEDANCE_15;
 }
 
 /** Count how many distinct @Image{n} tokens (e.g. @Image1, @Image2) a prompt already contains. */
@@ -141,9 +139,11 @@ function buildSeedancePrompt(roomPrompt: string, imageCount = 1): string {
   }
 
   const singleRefSuffix =
-    "Photo-faithful animation only: slow camera movement across the visible scene in @Image1. " +
-    "Do not invent new walls, doors, windows, furniture, or rooms. " +
-    "Keep architecture, layout, colours, and objects identical to the reference image. " +
+    "Camera motion must be smooth and continuous throughout — no static or frozen shot. " +
+    "Use a slow pan (left to right, or right to left) OR a gentle push-in within @Image1. " +
+    "Do not cut, jump, or reveal space outside @Image1. " +
+    "Keep all architecture, layout, colours, and objects identical to @Image1. " +
+    "Do not invent walls, doors, windows, or furniture not visible in @Image1. " +
     "Empty room, no people.";
 
   return `${trimmed} ${singleRefSuffix}`;
@@ -249,14 +249,11 @@ async function handleStart(body: ClipRequest): Promise<Response> {
   try {
     configureFal();
 
-    const input =
-      falModel === FAL_MODEL_SEEDANCE_2
-        ? buildSeedance2Input(image_urls, higgsfield_prompt, duration_seconds)
-        : buildSeedance15Input(
-            image_urls[0],
-            higgsfield_prompt,
-            duration_seconds,
-          );
+    const input = buildSeedance15Input(
+      image_urls[0],
+      higgsfield_prompt,
+      duration_seconds,
+    );
 
     console.log(
       `[${label}] Submitting fal ${falModel} job (${image_urls.length} image(s))`,

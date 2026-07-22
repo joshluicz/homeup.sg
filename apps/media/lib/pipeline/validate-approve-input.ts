@@ -2,6 +2,7 @@ import {
   assignUniqueClipSlugs,
   clipFileNameForSlug,
   clipR2KeyForSlug,
+  expandPhotoLabels,
 } from "@/lib/pipeline/room-label";
 import type {
   ApproveRoomPhoto,
@@ -41,29 +42,62 @@ export function validateApproveInput(body: unknown): {
   };
 }
 
+type ExpandedPhotoEntry = {
+  label: string;
+  imageUrl: string;
+  higgsfield_prompt: string;
+  duration_seconds: number;
+};
+
+/**
+ * Expand each room into one task per photo.
+ * A room with N photos produces N tasks, labelled "Room", "Room (2)", "Room (3)", etc.
+ * Each task targets a single image so it always uses Seedance 1.5.
+ */
 export function splitRoomsForProcessing(
   blueprint_id: string,
   room_photos: ApproveRoomPhoto[],
 ): RoomClipTask[] {
-  const slugs = assignUniqueClipSlugs(room_photos.map((photo) => photo.label));
-
-  return room_photos.map((photo, index) => {
-    const image_urls =
+  const entries: ExpandedPhotoEntry[] = room_photos.flatMap((photo) => {
+    const urls =
       Array.isArray(photo.image_urls) && photo.image_urls.length > 0
-        ? photo.image_urls
+        ? photo.image_urls.filter((u) => typeof u === "string" && u.trim() !== "")
         : photo.r2_url
           ? [photo.r2_url]
           : [];
-    const r2_url = image_urls[0] ?? photo.r2_url;
-    const slug = slugs[index]!;
 
-    return {
-      blueprint_id,
-      label: photo.label,
-      r2_url,
-      image_urls,
+    const subLabels = expandPhotoLabels(photo.label, urls.length || 1);
+
+    if (urls.length === 0) {
+      return [
+        {
+          label: subLabels[0],
+          imageUrl: photo.r2_url,
+          higgsfield_prompt: photo.higgsfield_prompt,
+          duration_seconds: photo.duration_seconds || 6,
+        },
+      ];
+    }
+
+    return urls.map((url, i) => ({
+      label: subLabels[i],
+      imageUrl: url,
       higgsfield_prompt: photo.higgsfield_prompt,
       duration_seconds: photo.duration_seconds || 6,
+    }));
+  });
+
+  const slugs = assignUniqueClipSlugs(entries.map((e) => e.label));
+
+  return entries.map((entry, index) => {
+    const slug = slugs[index]!;
+    return {
+      blueprint_id,
+      label: entry.label,
+      r2_url: entry.imageUrl,
+      image_urls: [entry.imageUrl],
+      higgsfield_prompt: entry.higgsfield_prompt,
+      duration_seconds: entry.duration_seconds,
       file_name: clipFileNameForSlug(slug),
       r2_key: clipR2KeyForSlug(blueprint_id, slug),
     };
