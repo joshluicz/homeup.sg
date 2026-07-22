@@ -218,6 +218,7 @@ export const AGENTS: Agent[] = [
     quote:
       "Kenji Ching provides patient, practical support for homeowners navigating resale or their first upgrade. He is known for responsive follow-through on viewings and offers, with experience across HDB and private property transactions from listing through completion.",
     quoteThirdPerson: true,
+    accolades: ["BBA (Hons), NUS", "Top Rookie | C&H 2025"],
     about: [],
     specialties: ["First-time sellers", "HDB resale", "Viewing coordination"],
     social: {
