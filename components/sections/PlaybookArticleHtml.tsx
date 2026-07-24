@@ -1,41 +1,14 @@
 "use client";
 
-import DOMPurify from "isomorphic-dompurify";
 import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
 import { trackWhatsAppClick } from "@/lib/analytics";
 import {
   convertMarkdownTablesInHtml,
   wrapHtmlTables,
 } from "@/lib/playbook/convert-html-markdown-tables";
+import { cleanInlineStyles, sanitizeArticleHtml } from "@/lib/playbook/sanitize-article-html";
 
 type Props = { html: string };
-
-/**
- * Properties allowed in inline `style` attributes on the public article page.
- * We intentionally omit font-family, font-size, line-height, margin, padding, etc.
- * so that pasted Google Docs content cannot override the brand typography.
- */
-const ALLOWED_STYLE_PROPS = new Set(["text-align", "color"]);
-
-/**
- * Strip disallowed CSS properties from every inline style="…" attribute.
- * Keeps only text-align (layout) and color (emphasis), removing font-family,
- * font-size, background-color, line-height, margin, padding and anything else
- * that would break visual consistency with the rest of the site.
- */
-function cleanInlineStyles(html: string): string {
-  return html.replace(/\bstyle="([^"]*)"/gi, (_match, styleContent: string) => {
-    const kept = styleContent
-      .split(";")
-      .map((rule) => rule.trim())
-      .filter((rule) => {
-        const prop = rule.split(":")[0]?.trim().toLowerCase() ?? "";
-        return ALLOWED_STYLE_PROPS.has(prop) && rule.includes(":");
-      });
-    if (!kept.length) return "";
-    return `style="${kept.join("; ")}"`;
-  });
-}
 
 /**
  * Section labels that correspond to the structured article format.
@@ -119,22 +92,8 @@ export function PlaybookArticleHtml({ html }: Props) {
   // 6. Wrap tables in scroll containers
   const withWrappedTables = wrapHtmlTables(withBoxes);
 
-  // 7. Sanitise with DOMPurify
-  const clean = DOMPurify.sanitize(withWrappedTables, {
-    ALLOWED_TAGS: [
-      "p", "br", "strong", "b", "em", "i", "u", "s", "del",
-      "h1", "h2", "h3", "h4", "h5", "h6",
-      "ul", "ol", "li",
-      "blockquote", "hr",
-      "a", "img",
-      "span", "div",
-      "table", "thead", "tbody", "tr", "th", "td",
-      "code", "pre",
-    ],
-    ALLOWED_ATTR: ["href", "src", "alt", "target", "rel", "style", "class", "loading"],
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|\/)/i,
-    ADD_ATTR: ["target"],
-  });
+  // 7. Sanitise (lazy DOMPurify — no top-level import; safe on Vercel SSR)
+  const clean = sanitizeArticleHtml(withWrappedTables);
 
   return (
     <div

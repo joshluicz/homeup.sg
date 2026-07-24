@@ -39,6 +39,11 @@ const PIPELINE_FORBIDDEN = [
   "from '@/lib/playbook/sanitize-article-html'",
 ];
 
+const PUBLIC_PLAYBOOK_HTML = [
+  "components/sections/PlaybookArticleHtml.tsx",
+  "components/sections/PlaybookArticleHtmlContent.tsx",
+];
+
 let failed = false;
 
 const generateSrc = readFileSync(join(ROOT, GENERATE_ROUTE), "utf8");
@@ -75,6 +80,14 @@ if (
 ) {
   console.error("FAIL: html-text-utils.ts must not import DOMPurify");
   failed = true;
+}
+
+for (const rel of PUBLIC_PLAYBOOK_HTML) {
+  const text = readFileSync(join(ROOT, rel), "utf8");
+  if (/^import\s+DOMPurify\s+from\s+["']isomorphic-dompurify["']/m.test(text)) {
+    console.error(`FAIL: ${rel} must not top-level import isomorphic-dompurify (Vercel SSR 500)`);
+    failed = true;
+  }
 }
 
 if (failed) process.exit(1);

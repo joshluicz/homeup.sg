@@ -32,6 +32,7 @@ import {
 } from "@/lib/seo/schema";
 
 export const dynamicParams = true;
+export const revalidate = 3600;
 // Pre-rendered via generateStaticParams at build; updated only via explicit admin revalidation.
 // Avoid force-static — it prevented Vercel from serving PRERENDER HTML (caused blanket 5xx).
 export const maxDuration = 60;

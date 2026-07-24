@@ -2,7 +2,8 @@
 
 import { normalizeHtmlArticle } from "@/lib/playbook/normalize-html-article";
 import { prepareSectionHtml } from "@/lib/playbook/convert-html-markdown-tables";
-import { sanitizeArticleHtml } from "@/lib/playbook/sanitize-article-html";
+import { cleanInlineStyles } from "@/lib/playbook/sanitize-article-html";
+import { sanitizeArticleHtmlLite } from "@/lib/playbook/html-text-utils";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -22,7 +23,7 @@ const variantClasses = {
 export function PlaybookArticleHtmlContent({ html, variant = "default" }: Props) {
   if (!html?.trim()) return null;
 
-  const clean = sanitizeArticleHtml(prepareSectionHtml(normalizeHtmlArticle(html)));
+  const clean = sanitizeArticleHtmlLite(cleanInlineStyles(prepareSectionHtml(normalizeHtmlArticle(html))));
 
   return (
     <div
